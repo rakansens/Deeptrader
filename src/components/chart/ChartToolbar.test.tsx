@@ -22,4 +22,19 @@ describe('ChartToolbar', () => {
     await user.click(screen.getByLabelText('MA'))
     expect(onInd).toHaveBeenLastCalledWith({ ma: true, rsi: false, macd: false, boll: false })
   })
+
+  it('renders controls in a single row', () => {
+    render(
+      <ChartToolbar
+        timeframe="1m"
+        onTimeframeChange={() => {}}
+        indicators={{ ma: false, rsi: false, macd: false, boll: false }}
+        onIndicatorsChange={() => {}}
+      />
+    )
+
+    const toolbar = screen.getByTestId('chart-toolbar')
+    expect(toolbar.className).toContain('flex-wrap')
+    expect(toolbar.className).not.toContain('flex-col')
+  })
 })

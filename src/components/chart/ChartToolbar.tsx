@@ -1,5 +1,10 @@
 'use client'
 
+/**
+ * チャートの期間やインジケーターを切り替えるツールバー
+ * すべてのコントロールを横一列に配置して切替を容易にする
+ */
+
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -36,7 +41,10 @@ export default function ChartToolbar({
   onIndicatorsChange,
 }: ChartToolbarProps) {
   return (
-    <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+    <div
+      data-testid="chart-toolbar"
+      className="flex flex-wrap items-center gap-4 p-4"
+    >
       <div className="flex gap-4 items-center">
         {onSymbolChange && (
           <select
@@ -63,45 +71,57 @@ export default function ChartToolbar({
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" aria-hidden="true" />
           <Switch
             id="ma-toggle"
             checked={indicators.ma}
-            onCheckedChange={(v) => onIndicatorsChange({ ...indicators, ma: v })}
+            onCheckedChange={(v) =>
+              onIndicatorsChange({ ...indicators, ma: v })
+            }
           />
-          <Label htmlFor="ma-toggle" className="flex items-center gap-1">
-            <TrendingUp className="w-4 h-4" /> MA
+          <Label htmlFor="ma-toggle" className="text-xs sm:text-sm">
+            MA
           </Label>
         </div>
         <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4" aria-hidden="true" />
           <Switch
             id="rsi-toggle"
             data-testid="switch-rsi"
             checked={indicators.rsi}
-            onCheckedChange={(v) => onIndicatorsChange({ ...indicators, rsi: v })}
+            onCheckedChange={(v) =>
+              onIndicatorsChange({ ...indicators, rsi: v })
+            }
           />
-          <Label htmlFor="rsi-toggle" className="flex items-center gap-1">
-            <Activity className="w-4 h-4" /> RSI
+          <Label htmlFor="rsi-toggle" className="text-xs sm:text-sm">
+            RSI
           </Label>
         </div>
         <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4" aria-hidden="true" />
           <Switch
             id="macd-toggle"
             data-testid="switch-macd"
             checked={!!indicators.macd}
-            onCheckedChange={(v) => onIndicatorsChange({ ...indicators, macd: v })}
+            onCheckedChange={(v) =>
+              onIndicatorsChange({ ...indicators, macd: v })
+            }
           />
-          <Label htmlFor="macd-toggle" className="flex items-center gap-1">
-            <BarChart3 className="w-4 h-4" /> MACD
+          <Label htmlFor="macd-toggle" className="text-xs sm:text-sm">
+            MACD
           </Label>
         </div>
         <div className="flex items-center gap-2">
+          <Waves className="h-4 w-4" aria-hidden="true" />
           <Switch
             id="boll-toggle"
             checked={!!indicators.boll}
-            onCheckedChange={(v) => onIndicatorsChange({ ...indicators, boll: v })}
+            onCheckedChange={(v) =>
+              onIndicatorsChange({ ...indicators, boll: v })
+            }
           />
-          <Label htmlFor="boll-toggle" className="flex items-center gap-1">
-            <Waves className="w-4 h-4" /> BOLL
+          <Label htmlFor="boll-toggle" className="text-xs sm:text-sm">
+            BOLL
           </Label>
         </div>
         <ThemeToggle />
