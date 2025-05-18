@@ -347,6 +347,7 @@ export default function CandlestickChart({
     }
   }, [theme, getThemeColors])
 
+  // データの前処理：タイムスタンプでソートし、重複を除去する関数
   const preprocessLineData = (arr: LineData[]): LineData[] => {
     if (!arr || arr.length === 0) return []
 
@@ -357,27 +358,46 @@ export default function CandlestickChart({
         const bd = t as { year: number; month: number; day: number }
         return Math.floor(new Date(bd.year, bd.month - 1, bd.day).getTime() / 1000)
       }
+      // オブジェクトでvalueOfがあれば使用
+      if (typeof t === 'object' && t !== null && 'valueOf' in t) {
+        return (t as any).valueOf();
+      }
       // string fallback
       return Math.floor(new Date(t as unknown as string).getTime() / 1000)
     }
 
-    // ソート（昇順かつ安定）
-    const sorted = [...arr].sort((a, b) => {
-      const ta = getNumTime(a.time)
-      const tb = getNumTime(b.time)
-      return ta - tb
-    })
-    // 重複除去（最初の出現を保持）
-    const dedup: LineData[] = []
-    let lastTime: number | null = null
-    for (const item of sorted) {
-      const t = getNumTime(item.time)
-      if (t !== lastTime) {
-        dedup.push(item)
-        lastTime = t
+    // Step 1: タイムスタンプをキーとして使用して重複を除去するMap
+    const timeMap = new Map<number, LineData>();
+    arr.forEach(item => {
+      const timeKey = getNumTime(item.time);
+      if (!timeMap.has(timeKey)) {
+        timeMap.set(timeKey, item);
+      }
+    });
+
+    // Step 2: 一意のデータを配列に変換
+    const uniqueData = Array.from(timeMap.values());
+
+    // Step 3: 厳密に昇順でソート
+    const sortedData = uniqueData.sort((a, b) => {
+      const timeA = getNumTime(a.time);
+      const timeB = getNumTime(b.time);
+      return timeA - timeB;
+    });
+
+    // Step 4: 最終確認 - 隣接する項目が同じタイムスタンプを持っていないことを確認
+    const finalData: LineData[] = [];
+    let prevTime: number | null = null;
+    
+    for (const item of sortedData) {
+      const currentTime = getNumTime(item.time);
+      if (prevTime !== currentTime) {
+        finalData.push(item);
+        prevTime = currentTime;
       }
     }
-    return dedup
+
+    return finalData;
   }
 
   const ensureSeries = (
@@ -410,24 +430,29 @@ export default function CandlestickChart({
     if (!chartRef.current) return
     const chart = chartRef.current
 
+    // MAシリーズの表示・非表示
     ensureSeries(indicators.ma, maSeriesRef, { color: '#f59e0b', lineWidth: 2, priceLineVisible: false }, ma)
 
+    // MACDはメインチャートには表示せず、専用パネルで表示するため、
+    // メインチャートからMACDシリーズを常に削除
     if (macdSeriesRef.current) {
       try {
         chart.removeSeries(macdSeriesRef.current)
+        macdSeriesRef.current = null
       } catch (e) {
         console.error('Error removing MACD series:', e)
       }
-      macdSeriesRef.current = null
     }
     if (signalSeriesRef.current) {
       try {
         chart.removeSeries(signalSeriesRef.current)
+        signalSeriesRef.current = null
       } catch (e) {
         console.error('Error removing signal series:', e)
       }
-      signalSeriesRef.current = null
     }
+
+    // ボリンジャーバンドの表示・非表示
     if (indicators.boll) {
       ensureSeries(true, bollUpperSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollUpper)
       ensureSeries(true, bollLowerSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollLower)
@@ -435,18 +460,18 @@ export default function CandlestickChart({
       if (bollUpperSeriesRef.current && chart) {
         try {
           chart.removeSeries(bollUpperSeriesRef.current)
+          bollUpperSeriesRef.current = null
         } catch (e) {
           console.error('Error removing bollinger upper series:', e)
         }
-        bollUpperSeriesRef.current = null
       }
       if (bollLowerSeriesRef.current && chart) {
         try {
           chart.removeSeries(bollLowerSeriesRef.current)
+          bollLowerSeriesRef.current = null
         } catch (e) {
           console.error('Error removing bollinger lower series:', e)
         }
-        bollLowerSeriesRef.current = null
       }
     }
   }, [indicators, ma, bollUpper, bollLower])
@@ -459,47 +484,40 @@ export default function CandlestickChart({
     if (!data || data.length === 0) return [];
 
     try {
-      // タイムスタンプを数値に変換して、タイムスタンプと元のデータをペアにする
-      const withTimestamps = data.map(item => ({
-        timestamp: timeToNumber(item.time),
-        data: item
-      }));
-
-      // タイムスタンプでソート (厳密な昇順)
-      const sorted = [...withTimestamps].sort((a, b) => {
-        // 同じタイムスタンプの場合は、元の順序を維持するために
-        // 配列内のインデックスを使用して安定したソートを確保
-        if (a.timestamp === b.timestamp) {
-          return withTimestamps.indexOf(a) - withTimestamps.indexOf(b);
-        }
-        return a.timestamp - b.timestamp;
-      });
-
-      // 重複を削除（同じタイムスタンプの場合は最初のエントリを保持）
-      const uniqueEntries: Array<T> = [];
-      const seenTimestamps = new Set<number>();
+      // Step 1: タイムスタンプをキーとして使用して重複を除去するMap
+      const timeMap = new Map<number, T>();
       
-      for (const { timestamp, data } of sorted) {
-        if (!seenTimestamps.has(timestamp)) {
-          seenTimestamps.add(timestamp);
-          uniqueEntries.push(data);
+      // 各データ項目を処理
+      data.forEach(item => {
+        const timeKey = timeToNumber(item.time);
+        if (!timeMap.has(timeKey)) {
+          timeMap.set(timeKey, item);
+        }
+      });
+      
+      // Step 2: 一意のデータを配列に変換
+      const uniqueData = Array.from(timeMap.values());
+      
+      // Step 3: 厳密に昇順でソート
+      const sortedData = uniqueData.sort((a, b) => {
+        const timeA = timeToNumber(a.time);
+        const timeB = timeToNumber(b.time);
+        return timeA - timeB;
+      });
+      
+      // Step 4: 最終確認 - 隣接する項目が同じタイムスタンプを持っていないことを確認
+      const finalData: T[] = [];
+      let prevTime: number | null = null;
+      
+      for (const item of sortedData) {
+        const currentTime = timeToNumber(item.time);
+        if (prevTime !== currentTime) {
+          finalData.push(item);
+          prevTime = currentTime;
         }
       }
-
-      // 最終確認: 時間が厳密に昇順であることを確認
-      for (let i = 1; i < uniqueEntries.length; i++) {
-        const prevTime = timeToNumber(uniqueEntries[i-1].time);
-        const currTime = timeToNumber(uniqueEntries[i].time);
-        if (prevTime > currTime) {
-          console.warn(`Data not in ascending order at index ${i}, fixing...`);
-          // 問題があれば再度ソート (通常はここには来ないはず)
-          return [...uniqueEntries].sort((a, b) => 
-            timeToNumber(a.time) - timeToNumber(b.time)
-          );
-        }
-      }
-
-      return uniqueEntries;
+      
+      return finalData;
     } catch (error) {
       console.error('Error processing time series data:', error);
       return [];
@@ -581,148 +599,309 @@ export default function CandlestickChart({
     (el: HTMLDivElement) => {
       const rsiChart = createChart(el, {
         width: el.clientWidth,
-        height: height * 0.2,
+        height: height * 0.25,
         layout: {
           background: { color: theme === 'dark' ? '#1e1e1e' : '#ffffff' },
           textColor: theme === 'dark' ? '#d1d5db' : '#111827',
+          fontFamily: 'Inter, sans-serif',
         },
         grid: {
           vertLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
           horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
         },
-        rightPriceScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+        rightPriceScale: { 
+          borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          }
+        },
         timeScale: {
           borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
           timeVisible: true,
-          visible: false,
+          secondsVisible: false,
         },
-        handleScroll: { vertTouchDrag: false },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: { 
+            labelVisible: true,
+          },
+          horzLine: { 
+            labelVisible: true,
+          }
+        },
       })
 
       rsiChartRef.current = rsiChart
+      
+      // RSIラインの追加
       rsiSeriesRef.current = rsiChart.addLineSeries({
         color: '#2962FF',
-        lineWidth: 1,
+        lineWidth: 2,
         title: 'RSI',
         priceLineVisible: false,
         lastValueVisible: true,
       })
+      
+      // オーバーボート/オーバーソールドラインの追加
+      const overSoldLine = rsiChart.addLineSeries({
+        color: 'rgba(239, 83, 80, 0.5)',
+        lineWidth: 1,
+        lineStyle: 1, // 点線
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      
+      const overBoughtLine = rsiChart.addLineSeries({
+        color: 'rgba(38, 166, 154, 0.5)',
+        lineWidth: 1,
+        lineStyle: 1, // 点線
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+      
+      // RSIの一般的な閾値
+      const timeFrom = Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 30; // 30日前
+      const timeTo = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 1日後
+      
+      // オーバーソールド(30)ライン
+      overSoldLine.setData([
+        { time: timeFrom as UTCTimestamp, value: 30 },
+        { time: timeTo as UTCTimestamp, value: 30 }
+      ]);
+      
+      // オーバーボート(70)ライン
+      overBoughtLine.setData([
+        { time: timeFrom as UTCTimestamp, value: 70 },
+        { time: timeTo as UTCTimestamp, value: 70 }
+      ]);
+      
+      // RSIデータの設定
       if (rsiSeriesRef.current && rsi && rsi.length > 0) {
-        rsiSeriesRef.current.setData(rsi as LineData[])
+        rsiSeriesRef.current.setData(preprocessLineData(rsi as LineData[]))
+      } else if (rsiSeriesRef.current) {
+        // データがない場合でもグラフを表示するためのダミーデータ
+        rsiSeriesRef.current.setData([{ time: Math.floor(Date.now() / 1000) as UTCTimestamp, value: 50 }])
       }
+      
+      // メインチャートとの同期
       if (chartRef.current) {
-        const sub = (range: any) => {
+        const syncTimeScale = (range: any) => {
           if (rsiChartRef.current && range !== null) {
             rsiChartRef.current.timeScale().setVisibleLogicalRange(range)
           }
         }
-        chartRef.current.timeScale().subscribeVisibleLogicalRangeChange(sub)
+        
+        chartRef.current.timeScale().subscribeVisibleLogicalRangeChange(syncTimeScale)
+        
         return () => {
-          chartRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sub)
+          chartRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(syncTimeScale)
           rsiChart.remove()
           rsiChartRef.current = null
+          rsiSeriesRef.current = null
         }
       }
+      
       return () => {
         rsiChart.remove()
         rsiChartRef.current = null
+        rsiSeriesRef.current = null
       }
     },
-    [theme, height]
+    [theme, height, rsi, preprocessLineData]
   )
 
   const initMacdChart = useCallback(
     (el: HTMLDivElement) => {
       const macdChart = createChart(el, {
         width: el.clientWidth,
-        height: height * 0.2,
+        height: height * 0.25,
         layout: {
           background: { color: theme === 'dark' ? '#1e1e1e' : '#ffffff' },
           textColor: theme === 'dark' ? '#d1d5db' : '#111827',
+          fontFamily: 'Inter, sans-serif',
         },
         grid: {
           vertLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
           horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
         },
-        rightPriceScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
-        timeScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0', timeVisible: true },
+        rightPriceScale: { 
+          borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          }
+        },
+        timeScale: { 
+          borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0', 
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: { 
+            labelVisible: true,
+          },
+          horzLine: { 
+            labelVisible: true,
+          }
+        },
       })
 
       macdChartRef.current = macdChart
       macdSeriesRef.current = macdChart.addLineSeries({
         color: '#2962FF',
-        lineWidth: 1,
+        lineWidth: 2,
         title: 'MACD',
         priceLineVisible: false,
+        lastValueVisible: true,
       })
+      
       signalSeriesRef.current = macdChart.addLineSeries({
         color: '#FF6D00',
-        lineWidth: 1,
+        lineWidth: 2,
         title: 'Signal',
         priceLineVisible: false,
+        lastValueVisible: true,
       })
+      
+      // MACDヒストグラムの追加
       histogramSeriesRef.current = macdChart.addHistogramSeries({
         color: '#26a69a',
         priceFormat: { type: 'price' },
+        priceScaleId: 'right',
         priceLineVisible: false,
+        lastValueVisible: false,
       })
+
+      // データの設定
       if (macdSeriesRef.current && macd && macd.length > 0) {
-        macdSeriesRef.current.setData(macd as LineData[])
+        macdSeriesRef.current.setData(preprocessLineData(macd as LineData[]))
+      } else if (macdSeriesRef.current) {
+        // データがない場合でもグラフを表示するためのダミーデータ
+        macdSeriesRef.current.setData([{ time: Math.floor(Date.now() / 1000) as UTCTimestamp, value: 0 }])
       }
+      
       if (signalSeriesRef.current && signalData && signalData.length > 0) {
-        signalSeriesRef.current.setData(signalData as LineData[])
+        signalSeriesRef.current.setData(preprocessLineData(signalData as LineData[]))
+      } else if (signalSeriesRef.current) {
+        // データがない場合でもグラフを表示するためのダミーデータ
+        signalSeriesRef.current.setData([{ time: Math.floor(Date.now() / 1000) as UTCTimestamp, value: 0 }])
       }
-      if (chartRef.current) {
-        const sub = (range: any) => {
-          if (macdChartRef.current) {
-            macdChartRef.current.timeScale().setVisibleLogicalRange(range)
+      
+      // ヒストグラムデータの設定
+      if (histogramSeriesRef.current && macd && macd.length > 0 && signalData && signalData.length > 0) {
+        // MACDとシグナルの差分を計算してヒストグラムデータを生成
+        const rawHistogramData = macd.map((item, index) => {
+          if (index < signalData.length) {
+            const macdValue = (item as LineData).value as number;
+            const signalValue = (signalData[index] as LineData).value as number;
+            const diff = macdValue - signalValue;
+            
+            return {
+              time: (item as LineData).time,
+              value: diff,
+              color: diff >= 0 ? '#26a69a' : '#ef5350'
+            };
+          }
+          return null;
+        }).filter(item => item !== null) as HistogramData[];
+        
+        // タイムスタンプの重複を取り除く処理
+        const timeMap = new Map<number, HistogramData>();
+        
+        // タイムスタンプを数値化する関数
+        const getTimeAsNumber = (time: unknown): number => {
+          if (typeof time === 'number') return time;
+          if (typeof time === 'object' && time !== null && 'valueOf' in time) {
+            return (time as any).valueOf();
+          }
+          return 0;
+        };
+        
+        // 重複するタイムスタンプのデータを除去（最初のエントリのみ保持）
+        rawHistogramData.forEach(item => {
+          const timeKey = getTimeAsNumber(item.time);
+          if (!timeMap.has(timeKey)) {
+            timeMap.set(timeKey, item);
+          }
+        });
+        
+        // Map の値を配列に変換して時間順にソート
+        const uniqueHistogramData = Array.from(timeMap.values())
+          .sort((a, b) => {
+            const timeA = getTimeAsNumber(a.time);
+            const timeB = getTimeAsNumber(b.time);
+            return timeA - timeB;
+          });
+        
+        // 最終確認：隣接するタイムスタンプが同じでないことを確認
+        const finalHistogramData: HistogramData[] = [];
+        let prevTime: number | null = null;
+        
+        for (const item of uniqueHistogramData) {
+          const currentTime = getTimeAsNumber(item.time);
+          if (prevTime !== currentTime) {
+            finalHistogramData.push(item);
+            prevTime = currentTime;
           }
         }
-        chartRef.current.timeScale().subscribeVisibleLogicalRangeChange(sub)
+        
+        histogramSeriesRef.current.setData(finalHistogramData);
+      }
+
+      // メインチャートとの同期
+      if (chartRef.current) {
+        // 時間軸の同期
+        const syncTimeScale = (range: any) => {
+          if (macdChartRef.current && range !== null) {
+            macdChartRef.current.timeScale().setVisibleLogicalRange(range);
+          }
+        };
+        
+        chartRef.current.timeScale().subscribeVisibleLogicalRangeChange(syncTimeScale);
+        
         return () => {
-          chartRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sub)
-          macdChart.remove()
-          macdChartRef.current = null
-        }
+          chartRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(syncTimeScale);
+          macdChart.remove();
+          macdChartRef.current = null;
+          macdSeriesRef.current = null;
+          signalSeriesRef.current = null;
+          histogramSeriesRef.current = null;
+        };
       }
+      
       return () => {
-        macdChart.remove()
-        macdChartRef.current = null
-      }
+        macdChart.remove();
+        macdChartRef.current = null;
+        macdSeriesRef.current = null;
+        signalSeriesRef.current = null;
+        histogramSeriesRef.current = null;
+      };
     },
-    [theme, height]
+    [theme, height, macd, signalData, preprocessLineData]
   )
   
-  const subPanelHeight = height * 0.2
-  const mainChartHeight =
-    height - (indicators.rsi ? subPanelHeight : 0) - (indicators.macd ? subPanelHeight : 0)
+  // サブパネルの高さを調整（メインチャートより小さく）
+  const subPanelHeight = height * 0.25
   
+  // メインチャートの高さを調整（サブパネルの表示状態に応じて）
+  // インジケーターパネルを外部で表示するため、メインチャートでは考慮しない
+  const mainChartHeight = height
+
   return (
     <div className={className}>
-      <div className="space-y-1">
+      {/* 垂直方向のフレックスコンテナ */}
+      <div className="flex flex-col space-y-4">
         {/* メインチャート */}
-        <div ref={containerRef} className="w-full" style={{ height: mainChartHeight }} data-testid="chart-container" />
+        <div 
+          ref={containerRef} 
+          className="w-full rounded-md overflow-hidden border border-border" 
+          style={{ height: mainChartHeight }} 
+          data-testid="chart-container" 
+        />
         
-        {indicators.rsi && (
-          <IndicatorPanel
-            title="RSI"
-            height={subPanelHeight}
-            onClose={() =>
-              onIndicatorsChange?.({ ...indicators, rsi: false })
-            }
-            initChart={initRsiChart}
-          />
-        )}
-        {indicators.macd && (
-          <IndicatorPanel
-            title="MACD"
-            height={subPanelHeight}
-            onClose={() =>
-              onIndicatorsChange?.({ ...indicators, macd: false })
-            }
-            initChart={initMacdChart}
-          />
-        )}
+        {/* インジケーターパネルはメインページで表示するため、ここでは表示しない */}
       </div>
     </div>
   )

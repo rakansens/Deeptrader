@@ -12,10 +12,24 @@ const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickCha
   ssr: false,
 });
 
+const RSIChart = dynamic(() => import('@/components/chart/RSIChart'), {
+  ssr: false,
+});
+
+const MACDChart = dynamic(() => import('@/components/chart/MACDChart'), {
+  ssr: false,
+});
+
 export default function Home() {
   const [timeframe, setTimeframe] = useState('1h');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
+
+  // インジケーターの表示・非表示を切り替える関数
+  const toggleIndicator = (name: keyof typeof indicators) => {
+    setIndicators(prev => ({ ...prev, [name]: !prev[name] }));
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -62,9 +76,9 @@ export default function Home() {
                   />
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[400px] w-full">
+                  <div className="w-full">
                     <CandlestickChart
-                      height={400}
+                      height={600}
                       indicators={indicators}
                       interval={timeframe}
                       symbol={symbol}
@@ -74,44 +88,42 @@ export default function Home() {
                 </CardContent>
               </Card>
               
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>市場状況</CardTitle>
-                    <CardDescription>現在の市場トレンド</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">$103,299.17</div>
-                    <div className="text-xs text-muted-foreground">
-                      +2.5% from last 24h
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>取引状況</CardTitle>
-                    <CardDescription>最近の取引活動</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      資産配分とポジションの詳細がここに表示されます
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>シグナル</CardTitle>
-                    <CardDescription>AIによる取引シグナル</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      現在のトレーディングシグナルと推奨アクションがここに表示されます
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+              {/* インジケーターパネル */}
+              {(indicators.rsi || indicators.macd) && (
+                <div className="grid gap-4 mb-6">
+                  {indicators.rsi && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle>RSIインジケーター</CardTitle>
+                        <CardDescription>相対力指数（Relative Strength Index）</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <RSIChart
+                          symbol={symbol}
+                          interval={timeframe}
+                          height={150}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {indicators.macd && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle>MACDインジケーター</CardTitle>
+                        <CardDescription>移動平均収束拡散指標（Moving Average Convergence Divergence）</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <MACDChart
+                          symbol={symbol}
+                          interval={timeframe}
+                          height={150}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </ResizablePanel>
