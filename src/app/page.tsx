@@ -12,23 +12,10 @@ const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickCha
   ssr: false,
 });
 
-const RSIChart = dynamic(() => import('@/components/chart/RSIChart'), {
-  ssr: false,
-});
-
-const MACDChart = dynamic(() => import('@/components/chart/MACDChart'), {
-  ssr: false,
-});
-
 export default function Home() {
   const [timeframe, setTimeframe] = useState('1h');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
-
-  // インジケーターの表示・非表示を切り替える関数
-  const toggleIndicator = (name: keyof typeof indicators) => {
-    setIndicators(prev => ({ ...prev, [name]: !prev[name] }));
-  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -88,42 +75,7 @@ export default function Home() {
                 </CardContent>
               </Card>
               
-              {/* インジケーターパネル */}
-              {(indicators.rsi || indicators.macd) && (
-                <div className="grid gap-4 mb-6">
-                  {indicators.rsi && (
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle>RSIインジケーター</CardTitle>
-                        <CardDescription>相対力指数（Relative Strength Index）</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <RSIChart
-                          symbol={symbol}
-                          interval={timeframe}
-                          height={150}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                  
-                  {indicators.macd && (
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle>MACDインジケーター</CardTitle>
-                        <CardDescription>移動平均収束拡散指標（Moving Average Convergence Divergence）</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <MACDChart
-                          symbol={symbol}
-                          interval={timeframe}
-                          height={150}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
+              {/* Note: RSIとMACDパネルはCandlestickChartコンポーネント内で表示されるため、ここでは表示しません */}
             </div>
           </div>
         </ResizablePanel>
