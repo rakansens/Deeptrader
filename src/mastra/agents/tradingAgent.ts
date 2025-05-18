@@ -18,10 +18,10 @@ const memory = new Memory({
     lastMessages: 40,
     // セマンティック検索設定
     semanticRecall: {
-      topK: 5,        // 5つの類似メッセージを取得
-      messageRange: 2  // 各一致の前後2メッセージを含める
-    }
-  }
+      topK: 5, // 5つの類似メッセージを取得
+      messageRange: 2, // 各一致の前後2メッセージを含める
+    },
+  },
 }) as unknown as MastraMemory;
 
 // 市場分析結果のスキーマ定義
@@ -32,7 +32,7 @@ export const marketAnalysisSchema = z.object({
   keyPatterns: z.array(z.string()),
   riskLevel: z.enum(["low", "medium", "high", "extreme"]),
   timeframe: z.string(),
-  summary: z.string()
+  summary: z.string(),
 });
 
 // トレーディング戦略のスキーマ定義
@@ -43,7 +43,7 @@ export const tradingStrategySchema = z.object({
   takeProfit: z.array(z.number()).optional(),
   timeframe: z.string(),
   reasoning: z.string(),
-  alternativeScenarios: z.array(z.string()).optional()
+  alternativeScenarios: z.array(z.string()).optional(),
 });
 
 /**
@@ -94,17 +94,17 @@ export const tradingAgent = new Agent({
   - 理由: [文字列]
   - 代替シナリオ: [文字列の配列]（オプション）
   `,
-  
+
   // OpenAI GPT-4 モデルを使用
   model: openai("gpt-4o"),
-  
+
   // ツール設定
   tools: {
     chartAnalysisTool,
     marketDataTool,
-    tradingExecutionTool
+    tradingExecutionTool,
   },
-  
+
   // メモリ設定
-  memory: memory
-}); 
+  memory: memory,
+});
