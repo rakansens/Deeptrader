@@ -165,19 +165,103 @@ export default function CandlestickChart({
       priceScaleId: 'vol',
       color: '#4b5563',
     })
+
+    // データがあれば複数のローソク足データを再設定する
+    const storedCandles = localStorage.getItem(`candles_${symbol}_${interval}`)
+    const storedVolumes = localStorage.getItem(`volumes_${symbol}_${interval}`)
+    if (storedCandles && candleSeriesRef.current) {
+      try {
+        const candles = JSON.parse(storedCandles) as CandlestickData[]
+        candleSeriesRef.current.setData(candles)
+      } catch (e) {
+        console.error('Failed to parse stored candles', e)
+      }
+    }
+    if (storedVolumes && volumeSeriesRef.current) {
+      try {
+        const volumes = JSON.parse(storedVolumes) as HistogramData[]
+        volumeSeriesRef.current.setData(volumes)
+      } catch (e) {
+        console.error('Failed to parse stored volumes', e)
+      }
+    }
+
+    // メイン価格チャートに追加するインジケーター
     if (indicators.ma) {
-      maSeriesRef.current = chart.addLineSeries({ color: '#f59e0b', lineWidth: 2, priceLineVisible: false })
-    }
-    if (indicators.rsi) {
-      rsiSeriesRef.current = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, priceLineVisible: false })
-    }
-    if (indicators.macd) {
-      macdSeriesRef.current = chart.addLineSeries({ color: '#10b981', lineWidth: 1, priceLineVisible: false })
-      signalSeriesRef.current = chart.addLineSeries({ color: '#ef4444', lineWidth: 1, priceLineVisible: false })
+      maSeriesRef.current = chart.addLineSeries({ 
+        color: '#f59e0b', 
+        lineWidth: 2, 
+        priceLineVisible: false,
+        // メイン価格チャートに表示
+        priceScaleId: 'right' 
+      })
     }
     if (indicators.boll) {
-      bollUpperSeriesRef.current = chart.addLineSeries({ color: '#a855f7', lineWidth: 1, priceLineVisible: false })
-      bollLowerSeriesRef.current = chart.addLineSeries({ color: '#a855f7', lineWidth: 1, priceLineVisible: false })
+      bollUpperSeriesRef.current = chart.addLineSeries({ 
+        color: '#a855f7', 
+        lineWidth: 1, 
+        priceLineVisible: false,
+        // メイン価格チャートに表示
+        priceScaleId: 'right' 
+      })
+      bollLowerSeriesRef.current = chart.addLineSeries({ 
+        color: '#a855f7', 
+        lineWidth: 1, 
+        priceLineVisible: false,
+        // メイン価格チャートに表示
+        priceScaleId: 'right' 
+      })
+    }
+    
+    // RSIは独自の表示領域に表示
+    if (indicators.rsi) {
+      rsiSeriesRef.current = chart.addLineSeries({ 
+        color: '#3b82f6', 
+        lineWidth: 1, 
+        priceLineVisible: false,
+        priceScaleId: 'rsi',
+        // RSIは0-100の範囲に固定
+        autoscaleInfoProvider: () => ({
+          priceRange: {
+            minValue: 0,
+            maxValue: 100,
+          },
+        }),
+      })
+      
+      // RSIの表示領域設定
+      chart.priceScale('rsi').applyOptions({
+        scaleMargins: {
+          top: 0.1, // トップマージン
+          bottom: 0.05, // ボトムマージン
+        },
+        visible: true,
+      });
+    }
+    
+    // MACDは下部の独自領域に表示
+    if (indicators.macd) {
+      macdSeriesRef.current = chart.addLineSeries({ 
+        color: '#10b981', 
+        lineWidth: 1, 
+        priceLineVisible: false,
+        priceScaleId: 'macd',
+      })
+      signalSeriesRef.current = chart.addLineSeries({ 
+        color: '#ef4444', 
+        lineWidth: 1, 
+        priceLineVisible: false,
+        priceScaleId: 'macd',
+      })
+      
+      // MACDの表示領域設定
+      chart.priceScale('macd').applyOptions({
+        scaleMargins: {
+          top: 0.7, // 下部に表示
+          bottom: 0.05,
+        },
+        visible: true,
+      });
     }
 
     // ボリュームのスケール設定
@@ -198,7 +282,9 @@ export default function CandlestickChart({
       window.removeEventListener('resize', handleResize)
       chart.remove()
     }
-  }, [theme, height, indicators])
+  // チャートの初期化依存配列からindicatorsを除外
+  // indicatorsの変更時にチャートを再作成するとローソク足がリセットされる
+  }, [theme, height])
 
   // テーマ変更時のスタイル更新
   useEffect(() => {
@@ -226,7 +312,10 @@ export default function CandlestickChart({
       if (cond) {
         if (!ref.current) {
           ref.current = chart.addLineSeries(opts)
-          ref.current.setData(data)
+          // 系列が新しく作成された場合のみデータを設定
+          if (data && data.length > 0) {
+            ref.current.setData(data)
+          }
         }
       } else if (ref.current && chart) {
         try {
@@ -351,8 +440,17 @@ export default function CandlestickChart({
         })
 
         // チャートにデータをセット
+        // データをセットし、同時にlocalStorageに保存
         candleSeriesRef.current!.setData(candles)
         volumeSeriesRef.current!.setData(volumes)
+        
+        // データをローカルストレージに保存
+        try {
+          localStorage.setItem(`candles_${symbol}_${interval}`, JSON.stringify(candles))
+          localStorage.setItem(`volumes_${symbol}_${interval}`, JSON.stringify(volumes))
+        } catch (e) {
+          console.error('Failed to save candles to localStorage', e)
+        }
         
         // インジケーターにもデータをセット
         if (maSeriesRef.current) maSeriesRef.current.setData(maDataRef.current)
