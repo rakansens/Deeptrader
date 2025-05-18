@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { IChartApi, ISeriesApi, LineData } from 'lightweight-charts'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 
 interface UseLineSeriesParams {
   chart: IChartApi | null
@@ -27,7 +27,7 @@ export function useLineSeries({
       if (!ref.current) {
         ref.current = chart.addLineSeries(options)
       }
-      const processed = preprocessLineData(data)
+      const processed = processTimeSeriesData(data, toNumericTime)
       if (ref.current && processed.length > 0) {
         ref.current.setData(processed)
       }

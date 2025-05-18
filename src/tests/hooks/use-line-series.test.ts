@@ -1,10 +1,11 @@
 import { renderHook } from '@testing-library/react'
 import { useLineSeries } from '@/hooks/use-line-series'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 import type { IChartApi, ISeriesApi, LineData } from 'lightweight-charts'
 
 jest.mock('@/lib/chart-utils', () => ({
-  preprocessLineData: jest.fn((d: LineData[]) => d)
+  processTimeSeriesData: jest.fn((d: LineData[], fn: (t: unknown) => number) => d),
+  toNumericTime: jest.fn((t: unknown) => t as number)
 }))
 
 describe('useLineSeries', () => {

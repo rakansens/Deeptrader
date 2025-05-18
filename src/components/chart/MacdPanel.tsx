@@ -3,7 +3,7 @@ import { useRef, useCallback } from 'react'
 import { createChart, IChartApi, ISeriesApi, LineData, HistogramData, UTCTimestamp, CrosshairMode } from 'lightweight-charts'
 import IndicatorPanel from './IndicatorPanel'
 import useChartTheme from '@/hooks/use-chart-theme'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 
 interface MacdPanelProps {
   macd: LineData[]
@@ -77,44 +77,31 @@ export default function MacdPanel({ macd, signal, chart, height, onClose }: Macd
 
     if (macdRef.current) {
       if (macd && macd.length > 0) {
-        macdRef.current.setData(preprocessLineData(macd))
+        macdRef.current.setData(processTimeSeriesData(macd, toNumericTime))
       } else {
         macdRef.current.setData([{ time: Math.floor(Date.now()/1000) as UTCTimestamp, value: 0 }])
       }
     }
     if (signalRef.current) {
       if (signal && signal.length > 0) {
-        signalRef.current.setData(preprocessLineData(signal))
+        signalRef.current.setData(processTimeSeriesData(signal, toNumericTime))
       } else {
         signalRef.current.setData([{ time: Math.floor(Date.now()/1000) as UTCTimestamp, value: 0 }])
       }
     }
 
     if (histRef.current && macd && signal && macd.length > 0 && signal.length > 0) {
-      const raw: HistogramData[] = macd.map((m, idx) => {
-        if (idx < signal.length) {
-          const diff = (m.value as number) - (signal[idx].value as number)
-          return { time: m.time, value: diff, color: diff >= 0 ? '#26a69a' : '#ef5350' }
-        }
-        return null
-      }).filter(Boolean) as HistogramData[]
+      const raw: HistogramData[] = macd
+        .map((m, idx) => {
+          if (idx < signal.length) {
+            const diff = (m.value as number) - (signal[idx].value as number)
+            return { time: m.time, value: diff, color: diff >= 0 ? '#26a69a' : '#ef5350' }
+          }
+          return null
+        })
+        .filter(Boolean) as HistogramData[]
 
-      const timeMap = new Map<number, HistogramData>()
-      const getNum = (t: unknown) => typeof t === 'number' ? t : (t as any).valueOf()
-      raw.forEach(item => {
-        const key = getNum(item.time)
-        if (!timeMap.has(key)) timeMap.set(key, item)
-      })
-      const unique = Array.from(timeMap.values()).sort((a,b) => getNum(a.time)-getNum(b.time))
-      const final: HistogramData[] = []
-      let prev: number | null = null
-      unique.forEach(it => {
-        const cur = getNum(it.time)
-        if (cur !== prev) {
-          final.push(it)
-          prev = cur
-        }
-      })
+      const final = processTimeSeriesData(raw, toNumericTime)
       histRef.current.setData(final)
     }
 

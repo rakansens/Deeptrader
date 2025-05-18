@@ -3,7 +3,7 @@ import { useRef, useCallback } from 'react'
 import { createChart, IChartApi, ISeriesApi, LineData, UTCTimestamp, CrosshairMode } from 'lightweight-charts'
 import IndicatorPanel from './IndicatorPanel'
 import useChartTheme from '@/hooks/use-chart-theme'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 
 interface RsiPanelProps {
   data: LineData[]
@@ -86,7 +86,7 @@ export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps
 
     if (seriesRef.current) {
       if (data && data.length > 0) {
-        seriesRef.current.setData(preprocessLineData(data))
+        seriesRef.current.setData(processTimeSeriesData(data, toNumericTime))
       } else {
         seriesRef.current.setData([{ time: Math.floor(Date.now() / 1000) as UTCTimestamp, value: 50 }])
       }
