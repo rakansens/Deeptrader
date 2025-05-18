@@ -11,7 +11,7 @@ describe('ChartToolbar', () => {
       <ChartToolbar
         timeframe="1m"
         onTimeframeChange={onTf}
-        indicators={{ ma: false, rsi: false }}
+        indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={onInd}
       />
     )
@@ -20,6 +20,6 @@ describe('ChartToolbar', () => {
     expect(onTf).toHaveBeenCalledWith('5m')
 
     await user.click(screen.getByLabelText('MA'))
-    expect(onInd).toHaveBeenLastCalledWith({ ma: true, rsi: false })
+    expect(onInd).toHaveBeenLastCalledWith({ ma: true, rsi: false, macd: false, boll: false })
   })
 })

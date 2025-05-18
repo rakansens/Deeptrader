@@ -1,13 +1,20 @@
+'use client';
+
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Chat from '@/components/chat/Chat';
+import ChartToolbar from '@/components/chart/ChartToolbar';
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,
 });
 
 export default function Home() {
+  const [timeframe, setTimeframe] = useState('1h');
+  const [symbol, setSymbol] = useState('BTCUSDT');
+  const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -35,14 +42,27 @@ export default function Home() {
             
             <Card className="mb-6">
               <CardHeader className="pb-2">
-                <CardTitle>BTC/USDT リアルタイムチャート</CardTitle>
+                <CardTitle>{symbol} リアルタイムチャート</CardTitle>
                 <CardDescription>
-                  ビットコインの価格変動をリアルタイムで監視します
+                  {symbol}の価格変動をリアルタイムで監視します
                 </CardDescription>
+                <ChartToolbar
+                  timeframe={timeframe}
+                  onTimeframeChange={setTimeframe}
+                  symbol={symbol}
+                  onSymbolChange={setSymbol}
+                  indicators={indicators}
+                  onIndicatorsChange={setIndicators}
+                />
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] w-full">
-                  <CandlestickChart />
+                  <CandlestickChart 
+                    height={400} 
+                    indicators={indicators}
+                    interval={timeframe}
+                    symbol={symbol}
+                  />
                 </div>
               </CardContent>
             </Card>
