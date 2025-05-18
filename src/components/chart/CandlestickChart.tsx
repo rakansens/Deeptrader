@@ -80,6 +80,7 @@ export default function CandlestickChart({
   const maSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
   const bollUpperSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
   const bollLowerSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const closePricesRef = useRef<number[]>([]) // 終値データを追跡するための参照
 
   // RSIパネル用のチャートと系列の参照
   const rsiChartRef = useRef<IChartApi | null>(null)
@@ -151,7 +152,7 @@ export default function CandlestickChart({
   )
 
   useBinanceSocket({
-    url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`,
+    url: `wss://stream.binance.com:9443/ws/${initialSymbol.toLowerCase()}@kline_${initialInterval}`,
     onMessage: handleSocketMessage,
   })
 
