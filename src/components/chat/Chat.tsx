@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUpIcon, LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import MessageBubble from "./message-bubble";
-import ConversationSidebar, { type Conversation } from "./conversation-sidebar";
+import ConversationSidebar from "./conversation-sidebar";
+import { useConversations } from "@/hooks/use-conversations";
+import { useSidebar } from "@/hooks/use-sidebar";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,27 +19,19 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([
-    { id: "current", title: "現在の会話" },
-  ]);
-  const [selected, setSelected] = useState<string>("current");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  /** サイドバーの表示切替 */
-  const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
-    setTimeout(() => {
-      window.dispatchEvent(new Event("resize"));
-    }, 0);
-  };
+  const {
+    conversations,
+    selectedId,
+    selectConversation,
+    newConversation,
+  } = useConversations();
 
+  const { sidebarOpen, toggleSidebar } = useSidebar(true);
   /** 新しい会話を開始する */
   const handleNewConversation = () => {
-    const id = Date.now().toString();
-    const newConversation = { id, title: `会話 ${conversations.length + 1}` };
-    setConversations((prev) => [...prev, newConversation]);
+    newConversation();
     setMessages([]);
-    setSelected(id);
   };
 
   const sendMessage = async () => {
@@ -99,8 +93,8 @@ export default function Chat() {
       {sidebarOpen && (
         <ConversationSidebar
           conversations={conversations}
-          selectedId={selected}
-          onSelect={setSelected}
+          selectedId={selectedId}
+          onSelect={selectConversation}
           className="hidden md:block"
           footer={
             <Button variant="outline" className="w-full" onClick={handleNewConversation}>

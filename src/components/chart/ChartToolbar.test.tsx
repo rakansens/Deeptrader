@@ -34,7 +34,7 @@ describe('ChartToolbar', () => {
     )
 
     const toolbar = screen.getByTestId('chart-toolbar')
-    expect(toolbar.className).toContain('flex-wrap')
-    expect(toolbar.className).not.toContain('flex-col')
+    expect(toolbar.className).toContain('flex-col')
+    expect(toolbar.className).not.toContain('flex-wrap')
   })
 })
