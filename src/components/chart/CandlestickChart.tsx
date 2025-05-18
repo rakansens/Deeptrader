@@ -21,6 +21,7 @@ import {
   computeMACD,
   computeBollinger,
 } from '@/lib/indicators'
+import useBinanceSocket from '@/hooks/use-binance-socket'
 
 
 interface IndicatorOptions {
@@ -116,6 +117,57 @@ export default function CandlestickChart({
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const handleSocketMessage = useCallback(
+    (msg: any) => {
+      const k = msg.k
+      const candle: CandlestickData = {
+        time: (k.t / 1000) as UTCTimestamp,
+        open: parseFloat(k.o),
+        high: parseFloat(k.h),
+        low: parseFloat(k.l),
+        close: parseFloat(k.c),
+      }
+      candleSeriesRef.current?.update(candle)
+      const volume: HistogramData = {
+        time: (k.t / 1000) as UTCTimestamp,
+        value: parseFloat(k.v),
+        color: parseFloat(k.c) >= parseFloat(k.o) ? '#26a69a' : '#ef5350',
+      }
+      volumeSeriesRef.current?.update(volume)
+
+      closePricesRef.current.push(candle.close)
+      if (closePricesRef.current.length > 1000) closePricesRef.current.shift()
+
+      const ma = computeSMA(closePricesRef.current, 14)
+      if (ma !== null && maSeriesRef.current) {
+        maSeriesRef.current.update({ time: candle.time, value: ma })
+      }
+
+      const rsi = computeRSI(closePricesRef.current, 14)
+      if (rsi !== null && rsiSeriesRef.current) {
+        rsiSeriesRef.current.update({ time: candle.time, value: rsi })
+      }
+
+      const macd = computeMACD(closePricesRef.current)
+      if (macd && macdSeriesRef.current && signalSeriesRef.current) {
+        macdSeriesRef.current.update({ time: candle.time, value: macd.macd })
+        signalSeriesRef.current.update({ time: candle.time, value: macd.signal })
+      }
+
+      const boll = computeBollinger(closePricesRef.current)
+      if (boll && bollUpperSeriesRef.current && bollLowerSeriesRef.current) {
+        bollUpperSeriesRef.current.update({ time: candle.time, value: boll.upper })
+        bollLowerSeriesRef.current.update({ time: candle.time, value: boll.lower })
+      }
+    },
+    []
+  )
+
+  useBinanceSocket({
+    url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`,
+    onMessage: handleSocketMessage,
+  })
 
   // チャートの初期化
   useEffect(() => {
@@ -435,7 +487,6 @@ export default function CandlestickChart({
     if (!candleSeriesRef.current) return
 
     const controller = new AbortController()
-    let ws: WebSocket | null = null
 
     async function load() {
       try {
@@ -522,55 +573,8 @@ export default function CandlestickChart({
     }
     load()
 
-    ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`)
-    ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data)
-      const k = msg.k
-      const candle: CandlestickData = {
-        time: (k.t / 1000) as UTCTimestamp,
-        open: parseFloat(k.o),
-        high: parseFloat(k.h),
-        low: parseFloat(k.l),
-        close: parseFloat(k.c),
-      }
-      candleSeriesRef.current?.update(candle)
-      const volume: HistogramData = {
-        time: (k.t / 1000) as UTCTimestamp,
-        value: parseFloat(k.v),
-        color: parseFloat(k.c) >= parseFloat(k.o) ? '#26a69a' : '#ef5350',
-      }
-      volumeSeriesRef.current?.update(volume)
-      
-      // リアルタイムでインジケーターも更新する
-      closePricesRef.current.push(candle.close)
-      if (closePricesRef.current.length > 1000) closePricesRef.current.shift()
-
-      const ma = computeSMA(closePricesRef.current, 14)
-      if (ma !== null && maSeriesRef.current) {
-        maSeriesRef.current.update({ time: candle.time, value: ma })
-      }
-
-      const rsi = computeRSI(closePricesRef.current, 14)
-      if (rsi !== null && rsiSeriesRef.current) {
-        rsiSeriesRef.current.update({ time: candle.time, value: rsi })
-      }
-
-      const macd = computeMACD(closePricesRef.current)
-      if (macd && macdSeriesRef.current && signalSeriesRef.current) {
-        macdSeriesRef.current.update({ time: candle.time, value: macd.macd })
-        signalSeriesRef.current.update({ time: candle.time, value: macd.signal })
-      }
-
-      const boll = computeBollinger(closePricesRef.current)
-      if (boll && bollUpperSeriesRef.current && bollLowerSeriesRef.current) {
-        bollUpperSeriesRef.current.update({ time: candle.time, value: boll.upper })
-        bollLowerSeriesRef.current.update({ time: candle.time, value: boll.lower })
-      }
-    }
-
     return () => {
       controller.abort()
-      ws?.close()
       // クリーンアップ時にデータもリセット
       closePricesRef.current = []
       maDataRef.current = []
