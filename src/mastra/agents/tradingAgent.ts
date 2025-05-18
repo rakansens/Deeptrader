@@ -3,6 +3,7 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { Memory } from "@mastra/memory";
+import type { MastraMemory } from "@mastra/core";
 import { z } from "zod";
 
 // ツールのインポート
@@ -21,6 +22,28 @@ const memory = new Memory({
       messageRange: 2  // 各一致の前後2メッセージを含める
     }
   }
+}) as unknown as MastraMemory;
+
+// 市場分析結果のスキーマ定義
+export const marketAnalysisSchema = z.object({
+  trend: z.enum(["bullish", "bearish", "neutral", "uncertain"]),
+  supportLevels: z.array(z.number()),
+  resistanceLevels: z.array(z.number()),
+  keyPatterns: z.array(z.string()),
+  riskLevel: z.enum(["low", "medium", "high", "extreme"]),
+  timeframe: z.string(),
+  summary: z.string()
+});
+
+// トレーディング戦略のスキーマ定義
+export const tradingStrategySchema = z.object({
+  action: z.enum(["buy", "sell", "hold", "wait"]),
+  entryPoints: z.array(z.number()).optional(),
+  stopLoss: z.number().optional(),
+  takeProfit: z.array(z.number()).optional(),
+  timeframe: z.string(),
+  reasoning: z.string(),
+  alternativeScenarios: z.array(z.string()).optional()
 });
 
 /**
@@ -49,7 +72,28 @@ export const tradingAgent = new Agent({
   - ユーザーの経験レベルに合わせて説明の詳細度を調整する
   - 確実でない情報には適切な注釈をつける
   
-  注意: 財務アドバイスではなく、情報提供と教育目的のツールとしてのみ機能します。`,
+  注意: 財務アドバイスではなく、情報提供と教育目的のツールとしてのみ機能します。
+  
+  市場分析出力形式:
+  市場分析を行う場合は、以下の構造に従って情報を整理してください:
+  - トレンド: [bullish/bearish/neutral/uncertain]
+  - サポートレベル: [数値の配列]
+  - レジスタンスレベル: [数値の配列]
+  - 主要パターン: [文字列の配列]
+  - リスクレベル: [low/medium/high/extreme]
+  - タイムフレーム: [文字列]
+  - 要約: [文字列]
+  
+  トレーディング戦略出力形式:
+  トレーディング戦略を提案する場合は、以下の構造に従ってください:
+  - アクション: [buy/sell/hold/wait]
+  - エントリーポイント: [数値の配列]（オプション）
+  - ストップロス: [数値]（オプション）
+  - 利確目標: [数値の配列]（オプション）
+  - タイムフレーム: [文字列]
+  - 理由: [文字列]
+  - 代替シナリオ: [文字列の配列]（オプション）
+  `,
   
   // OpenAI GPT-4 モデルを使用
   model: openai("gpt-4o"),
@@ -62,30 +106,5 @@ export const tradingAgent = new Agent({
   },
   
   // メモリ設定
-  memory: memory,
-  
-  // 構造化出力スキーマの定義
-  outputSchemas: {
-    // 市場分析結果のスキーマ
-    marketAnalysis: z.object({
-      trend: z.enum(["bullish", "bearish", "neutral", "uncertain"]),
-      supportLevels: z.array(z.number()),
-      resistanceLevels: z.array(z.number()),
-      keyPatterns: z.array(z.string()),
-      riskLevel: z.enum(["low", "medium", "high", "extreme"]),
-      timeframe: z.string(),
-      summary: z.string()
-    }),
-    
-    // トレーディング戦略のスキーマ
-    tradingStrategy: z.object({
-      action: z.enum(["buy", "sell", "hold", "wait"]),
-      entryPoints: z.array(z.number()).optional(),
-      stopLoss: z.number().optional(),
-      takeProfit: z.array(z.number()).optional(),
-      timeframe: z.string(),
-      reasoning: z.string(),
-      alternativeScenarios: z.array(z.string()).optional()
-    })
-  }
+  memory: memory
 }); 

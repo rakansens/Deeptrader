@@ -7,9 +7,6 @@ import { createLogger } from "@mastra/core/logger";
 import { tradingAgent } from "./agents/tradingAgent";
 import { researchAgent } from "./agents/researchAgent";
 
-// MCPサーバー設定のインポート
-import { tradingToolsServer } from "./mcp/servers";
-
 /**
  * Mastraインスタンスの作成
  * このインスタンスはアプリケーション全体で使用され、
@@ -25,18 +22,5 @@ export const mastra = new Mastra({
   logger: createLogger({ 
     name: "DeepTrader", 
     level: "debug" 
-  }),
-  // MCPサーバー設定
-  mcpServers: {
-    tradingToolsServer
-  },
-  // ミドルウェア設定（必要に応じて）
-  serverMiddleware: [
-    {
-      handler: (c, next) => {
-        console.log("リクエスト受信:", c.request.url);
-        return next();
-      },
-    },
-  ],
+  })
 }); 

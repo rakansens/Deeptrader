@@ -1,8 +1,20 @@
 // src/mastra/mcp/servers.ts
 // MCPサーバーの定義
-import { MCPServer } from "@mastra/mcp";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+
+// 仮想的なMCPサーバークラス（実際の実装では@mastra/mcpからインポート）
+class MCPServer {
+  name: string;
+  version: string;
+  tools: Record<string, any>;
+  
+  constructor(config: { name: string; version: string; tools: Record<string, any> }) {
+    this.name = config.name;
+    this.version = config.version;
+    this.tools = config.tools;
+  }
+}
 
 // チャート分析ツール
 const chartAnalysisServerTool = createTool({

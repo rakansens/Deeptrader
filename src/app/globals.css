@@ -42,6 +42,8 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    --tv-grid: 232,232,232;
+    --tv-bg: 255,255,255;
     --radius: 0.5rem;
   }
   .dark {
@@ -69,6 +71,8 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --tv-grid: 42,46,57;
+    --tv-bg: 19,23,34;
   }
 }
 
@@ -77,6 +81,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }

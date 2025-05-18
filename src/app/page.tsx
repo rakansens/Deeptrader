@@ -3,7 +3,7 @@ import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Chat from '@/components/chat/Chat';
 
-const PriceChart = dynamic(() => import('@/components/PriceChart'), {
+const CandlestickChart = dynamic(() => import('@/components/CandlestickChart'), {
   ssr: false,
 });
 
@@ -42,7 +42,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] w-full">
-                  <PriceChart />
+                  <CandlestickChart />
                 </div>
               </CardContent>
             </Card>

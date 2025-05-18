@@ -3,6 +3,7 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { Memory } from "@mastra/memory";
+import type { MastraMemory } from "@mastra/core";
 
 // ツールのインポート
 import { newsAnalysisTool } from "../tools/newsAnalysisTool";
@@ -18,7 +19,7 @@ const memory = new Memory({
       messageRange: 2
     }
   }
-});
+}) as unknown as MastraMemory;
 
 /**
  * 市場リサーチエージェント
