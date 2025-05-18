@@ -10,7 +10,8 @@ DeepTraderは自然言語を活用した次世代の暗号資産トレーディ�
 
 - **自然言語インターフェース**: チャットGPTライクなUIで直感的なトレーディング体験
 - **AIアシスタント**: Mastra AIエージェントによる高度な市場分析と取引支援
-- **リアルタイムチャート**: LightWeightChartによる高性能チャート表示と分析ツール
+- **リアルタイムチャート**: LightWeight Chartsによる高性能チャート表示とリアルタイム価格
+  更新、移動平均線やRSIなどのテクニカル指標を表示
 - **マルチチャネル分析**: テクニカル分析、センチメント分析、ニュース分析を統合
 - **自動トレード実行**: 承認プロセスを経て取引を自動実行
 - **取引所連携**: BitGet APIを初期サポート（今後拡大予定）
@@ -45,7 +46,7 @@ npm install
 
 # 環境変数の設定
 cp .env.example .env.local
-# .env.localファイルを編集して必要なAPI鍵を設定
+# `.env.local` に Supabase の接続情報と各種 API キーを設定
 
 # 開発サーバーの起動
 npm run dev
@@ -61,6 +62,7 @@ npm run dev
 - [アーキテクチャ設計](./docs/architecture/README.md)
 - [Mastra AIエージェント](./docs/mastra/README.md)
 - [開発ガイドライン](./docs/development/README.md)
+- [Supabase セットアップ](./docs/supabase/README.md)
 
 ## ライセンス
 
