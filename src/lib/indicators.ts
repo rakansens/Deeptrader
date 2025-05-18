@@ -100,3 +100,21 @@ export function computeBollinger(
   return { upper: mean + 2 * sd, lower: mean - 2 * sd };
 }
 
+/**
+ * 主要インジケーターをまとめて計算する
+ * @param prices - 終値データの配列
+ * @returns 各インジケーターの計算結果
+ */
+export function calculateIndicators(prices: number[]) {
+  const ma = computeSMA(prices, 14);
+  const rsi = computeRSI(prices, 14);
+  const macd = computeMACD(prices);
+  const boll = computeBollinger(prices);
+  return {
+    ma,
+    rsi,
+    macd,
+    boll,
+  };
+}
+
