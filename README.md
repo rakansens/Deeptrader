@@ -10,8 +10,9 @@ DeepTraderは自然言語を活用した次世代の暗号資産トレーディ�
 
 - **自然言語インターフェース**: チャットGPTライクなUIで直感的なトレーディング体験
 - **AIアシスタント**: Mastra AIエージェントによる高度な市場分析と取引支援
-- **リアルタイムチャート**: LightWeight Chartsによる高性能チャート表示とリアルタイム価格
-  更新、移動平均線やRSI、MACDなどのテクニカル指標を表示
+- **リアルタイムチャート**: LightWeight Chartsによる高性能チャート表示とリアルタイム価格更新
+  移動平均線やボリンジャーバンドをチャート上に重ね、RSI/MACDは専用パネルとして表示可能
+  ChartToolbarからこれらのインジケーターをワンクリックで切り替え
 - **マルチチャネル分析**: テクニカル分析、センチメント分析、ニュース分析を統合
 - **自動トレード実行**: 承認プロセスを経て取引を自動実行
 - **取引所連携**: BitGet APIを初期サポート（今後拡大予定）
@@ -42,14 +43,14 @@ git clone https://github.com/rakansens/Deeptrader.git
 cd Deeptrader
 
 # 依存関係のインストール
-npm install
+pnpm install
 
 # 環境変数の設定
 cp .env.example .env.local
 # `.env.local` に Supabase の接続情報と各種 API キーを設定
 
 # 開発サーバーの起動
-npm run dev
+pnpm dev
 ```
 
 ブラウザで [http://localhost:3000](http://localhost:3000) を開いてアプリケーションにアクセスできます。

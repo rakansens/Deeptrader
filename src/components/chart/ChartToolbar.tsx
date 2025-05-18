@@ -4,6 +4,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { TrendingUp, Activity, BarChart3, Waves } from 'lucide-react'
 
 interface ChartToolbarProps {
   timeframe: string
@@ -67,7 +68,9 @@ export default function ChartToolbar({
             checked={indicators.ma}
             onCheckedChange={(v) => onIndicatorsChange({ ...indicators, ma: v })}
           />
-          <Label htmlFor="ma-toggle">MA</Label>
+          <Label htmlFor="ma-toggle" className="flex items-center gap-1">
+            <TrendingUp className="w-4 h-4" /> MA
+          </Label>
         </div>
         <div className="flex items-center gap-2">
           <Switch
@@ -75,7 +78,9 @@ export default function ChartToolbar({
             checked={indicators.rsi}
             onCheckedChange={(v) => onIndicatorsChange({ ...indicators, rsi: v })}
           />
-          <Label htmlFor="rsi-toggle">RSI</Label>
+          <Label htmlFor="rsi-toggle" className="flex items-center gap-1">
+            <Activity className="w-4 h-4" /> RSI
+          </Label>
         </div>
         <div className="flex items-center gap-2">
           <Switch
@@ -83,7 +88,9 @@ export default function ChartToolbar({
             checked={!!indicators.macd}
             onCheckedChange={(v) => onIndicatorsChange({ ...indicators, macd: v })}
           />
-          <Label htmlFor="macd-toggle">MACD</Label>
+          <Label htmlFor="macd-toggle" className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" /> MACD
+          </Label>
         </div>
         <div className="flex items-center gap-2">
           <Switch
@@ -91,7 +98,9 @@ export default function ChartToolbar({
             checked={!!indicators.boll}
             onCheckedChange={(v) => onIndicatorsChange({ ...indicators, boll: v })}
           />
-          <Label htmlFor="boll-toggle">BOLL</Label>
+          <Label htmlFor="boll-toggle" className="flex items-center gap-1">
+            <Waves className="w-4 h-4" /> BOLL
+          </Label>
         </div>
         <ThemeToggle />
       </div>
