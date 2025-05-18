@@ -3,7 +3,7 @@ import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Chat from '@/components/chat/Chat';
 
-const CandlestickChart = dynamic(() => import('@/components/CandlestickChart'), {
+const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,
 });
 

@@ -6,7 +6,7 @@ import ChartToolbar from '@/components/chart/ChartToolbar'
 import dynamic from 'next/dynamic'
 
 // CandlestickChartをクライアントサイドレンダリングするためにdynamicインポート
-const CandlestickChart = dynamic(() => import('@/components/CandlestickChart'), { 
+const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), { 
   ssr: false 
 })
 
