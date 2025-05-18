@@ -2,18 +2,17 @@
 
 import {
   createChart,
-  IChartApi,
-  LineData,
   CandlestickData,
   HistogramData,
+  IChartApi,
   ISeriesApi,
-  UTCTimestamp,
-  CrosshairMode
+  CrosshairMode,
+  LineData,
+  UTCTimestamp
 } from 'lightweight-charts'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useTheme } from 'next-themes'
 import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from '@/hooks/use-toast'
 import IndicatorPanel from './IndicatorPanel'
 import {
   computeSMA,
@@ -22,6 +21,7 @@ import {
   computeBollinger,
 } from '@/lib/indicators'
 import useBinanceSocket from '@/hooks/use-binance-socket'
+import useCandlestickData from '@/hooks/use-candlestick-data'
 
 
 interface IndicatorOptions {
@@ -91,32 +91,18 @@ export default function CandlestickChart({
   const signalSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
   const histogramSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
-  const closePricesRef = useRef<number[]>([])
-  const maDataRef = useRef<LineData[]>([])
-  const rsiDataRef = useRef<LineData[]>([])
-  const macdLineDataRef = useRef<LineData[]>([])
-  const signalLineDataRef = useRef<LineData[]>([])
-  const bollUpperDataRef = useRef<LineData[]>([])
-  const bollLowerDataRef = useRef<LineData[]>([])
-
-  const [symbol, setSymbol] = useState(initialSymbol)
-  const [interval, setInterval] = useState(initialInterval)
-
-  // 外部からのprops変更を検知して内部状態を更新
-  useEffect(() => {
-    if (initialInterval !== interval) {
-      setInterval(initialInterval)
-    }
-  }, [initialInterval])
-  
-  useEffect(() => {
-    if (initialSymbol !== symbol) {
-      setSymbol(initialSymbol)
-    }
-  }, [initialSymbol])
-
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    candles = [],
+    volumes = [],
+    ma = [],
+    rsi = [],
+    macd = [],
+    signal: signalData = [],
+    bollUpper = [],
+    bollLower = [],
+    loading,
+    error
+  } = useCandlestickData(initialSymbol, initialInterval)
 
   const handleSocketMessage = useCallback(
     (msg: any) => {
@@ -232,8 +218,8 @@ export default function CandlestickChart({
     })
 
     // データがあれば複数のローソク足データを再設定する
-    const storedCandles = localStorage.getItem(`candles_${symbol}_${interval}`)
-    const storedVolumes = localStorage.getItem(`volumes_${symbol}_${interval}`)
+    const storedCandles = localStorage.getItem(`candles_${initialSymbol}_${initialInterval}`)
+    const storedVolumes = localStorage.getItem(`volumes_${initialSymbol}_${initialInterval}`)
     if (storedCandles && candleSeriesRef.current) {
       try {
         const candles = JSON.parse(storedCandles) as CandlestickData[]
@@ -360,32 +346,71 @@ export default function CandlestickChart({
     }
   }, [theme, getThemeColors])
 
+  const preprocessLineData = (arr: LineData[]): LineData[] => {
+    if (!arr || arr.length === 0) return []
+
+    const getNumTime = (t: LineData['time']): number => {
+      if (typeof t === 'number') return t
+      // BusinessDay object -> Date
+      if (typeof t === 'object' && t !== null && 'year' in t && 'month' in t && 'day' in t) {
+        const bd = t as { year: number; month: number; day: number }
+        return Math.floor(new Date(bd.year, bd.month - 1, bd.day).getTime() / 1000)
+      }
+      // string fallback
+      return Math.floor(new Date(t as unknown as string).getTime() / 1000)
+    }
+
+    // ソート（昇順かつ安定）
+    const sorted = [...arr].sort((a, b) => {
+      const ta = getNumTime(a.time)
+      const tb = getNumTime(b.time)
+      return ta - tb
+    })
+    // 重複除去（最初の出現を保持）
+    const dedup: LineData[] = []
+    let lastTime: number | null = null
+    for (const item of sorted) {
+      const t = getNumTime(item.time)
+      if (t !== lastTime) {
+        dedup.push(item)
+        lastTime = t
+      }
+    }
+    return dedup
+  }
+
+  const ensureSeries = (
+    cond: boolean,
+    ref: React.MutableRefObject<ReturnType<IChartApi['addLineSeries']> | null>,
+    opts: any,
+    data: LineData[]
+  ) => {
+    const chartInstance = chartRef.current
+    if (cond) {
+      if (chartInstance && !ref.current) {
+        ref.current = chartInstance.addLineSeries(opts)
+      }
+      const preprocessed = preprocessLineData(data)
+      if (ref.current && preprocessed.length > 0) {
+        ref.current.setData(preprocessed)
+      }
+    } else if (ref.current && chartInstance) {
+      try {
+        chartInstance.removeSeries(ref.current)
+      } catch (e) {
+        console.error('Error removing series:', e)
+      }
+      ref.current = null
+    }
+  }
+
   // インジケーター表示切り替え
   useEffect(() => {
     if (!chartRef.current) return
     const chart = chartRef.current
 
-    const ensureSeries = (cond: boolean, ref: React.MutableRefObject<ReturnType<IChartApi['addLineSeries']> | null>, opts: any, data: LineData[]) => {
-      if (cond) {
-        if (!ref.current) {
-          ref.current = chart.addLineSeries(opts)
-          // 系列が新しく作成された場合のみデータを設定
-          if (data && data.length > 0) {
-            ref.current.setData(data)
-          }
-        }
-      } else if (ref.current && chart) {
-        try {
-          chart.removeSeries(ref.current)
-        } catch (e) {
-          console.error('Error removing series:', e)
-        }
-        ref.current = null
-      }
-    }
+    ensureSeries(indicators.ma, maSeriesRef, { color: '#f59e0b', lineWidth: 2, priceLineVisible: false }, ma)
 
-    ensureSeries(indicators.ma, maSeriesRef, { color: '#f59e0b', lineWidth: 2, priceLineVisible: false }, maDataRef.current)
-    // RSI と MACD は専用パネルで表示するためメインチャートでは系列を作成しない
     if (macdSeriesRef.current) {
       try {
         chart.removeSeries(macdSeriesRef.current)
@@ -403,131 +428,139 @@ export default function CandlestickChart({
       signalSeriesRef.current = null
     }
     if (indicators.boll) {
-      ensureSeries(true, bollUpperSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollUpperDataRef.current)
-      ensureSeries(true, bollLowerSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollLowerDataRef.current)
+      ensureSeries(true, bollUpperSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollUpper)
+      ensureSeries(true, bollLowerSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollLower)
     } else {
-      if (bollUpperSeriesRef.current && chart) { 
+      if (bollUpperSeriesRef.current && chart) {
         try {
           chart.removeSeries(bollUpperSeriesRef.current)
         } catch (e) {
           console.error('Error removing bollinger upper series:', e)
         }
-        bollUpperSeriesRef.current = null 
+        bollUpperSeriesRef.current = null
       }
-      if (bollLowerSeriesRef.current && chart) { 
+      if (bollLowerSeriesRef.current && chart) {
         try {
           chart.removeSeries(bollLowerSeriesRef.current)
         } catch (e) {
           console.error('Error removing bollinger lower series:', e)
         }
-        bollLowerSeriesRef.current = null 
+        bollLowerSeriesRef.current = null
       }
     }
-  }, [indicators])
+  }, [indicators, ma, bollUpper, bollLower])
 
-  // APIを使用したデータ取得
-  useEffect(() => {
-    if (!candleSeriesRef.current) return
+  // タイムスタンプでソートし、重複を削除する関数
+  const processTimeSeriesData = <T extends { time: unknown }>(
+    data: T[],
+    timeToNumber: (time: unknown) => number
+  ): T[] => {
+    if (!data || data.length === 0) return [];
 
-    const controller = new AbortController()
+    try {
+      // タイムスタンプを数値に変換して、タイムスタンプと元のデータをペアにする
+      const withTimestamps = data.map(item => ({
+        timestamp: timeToNumber(item.time),
+        data: item
+      }));
 
-    async function load() {
-      try {
-        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`
-        const res = await fetch(url, { signal: controller.signal })
-        if (!res.ok) throw new Error('failed to fetch')
-        const raw = (await res.json()) as unknown[]
-        const candles: CandlestickData[] = []
-        const volumes: HistogramData[] = []
-        
-        // データを処理してインジケーターに必要な情報も計算する
-        raw.forEach((d: any) => {
-          const candle: CandlestickData = {
-            time: (d[0] / 1000) as UTCTimestamp,
-            open: parseFloat(d[1]),
-            high: parseFloat(d[2]),
-            low: parseFloat(d[3]),
-            close: parseFloat(d[4]),
-          }
-          candles.push(candle)
-          
-          const volume: HistogramData = {
-            time: (d[0] / 1000) as UTCTimestamp,
-            value: parseFloat(d[5]),
-            color: parseFloat(d[4]) >= parseFloat(d[1]) ? '#26a69a' : '#ef5350',
-          }
-          volumes.push(volume)
-
-          const close = candle.close
-          closePricesRef.current.push(close)
-
-          // 移動平均の計算
-          const ma = computeSMA(closePricesRef.current, 14)
-          if (ma !== null) {
-            const point = { time: candle.time, value: ma }
-            maDataRef.current.push(point)
-          }
-
-          // RSIの計算
-          const rsi = computeRSI(closePricesRef.current, 14)
-          if (rsi !== null) {
-            const point = { time: candle.time, value: rsi }
-            rsiDataRef.current.push(point)
-          }
-
-          // MACDの計算
-          const macd = computeMACD(closePricesRef.current)
-          if (macd) {
-            macdLineDataRef.current.push({ time: candle.time, value: macd.macd })
-            signalLineDataRef.current.push({ time: candle.time, value: macd.signal })
-          }
-
-          // ボリンジャーバンドの計算
-          const boll = computeBollinger(closePricesRef.current)
-          if (boll) {
-            bollUpperDataRef.current.push({ time: candle.time, value: boll.upper })
-            bollLowerDataRef.current.push({ time: candle.time, value: boll.lower })
-          }
-        })
-
-        // チャートにデータをセット
-        // データをセットし、同時にlocalStorageに保存
-        candleSeriesRef.current!.setData(candles)
-        volumeSeriesRef.current!.setData(volumes)
-        
-        // データをローカルストレージに保存
-        try {
-          localStorage.setItem(`candles_${symbol}_${interval}`, JSON.stringify(candles))
-          localStorage.setItem(`volumes_${symbol}_${interval}`, JSON.stringify(volumes))
-        } catch (e) {
-          console.error('Failed to save candles to localStorage', e)
+      // タイムスタンプでソート (厳密な昇順)
+      const sorted = [...withTimestamps].sort((a, b) => {
+        // 同じタイムスタンプの場合は、元の順序を維持するために
+        // 配列内のインデックスを使用して安定したソートを確保
+        if (a.timestamp === b.timestamp) {
+          return withTimestamps.indexOf(a) - withTimestamps.indexOf(b);
         }
-        
-        // インジケーターにもデータをセット
-        if (maSeriesRef.current) maSeriesRef.current.setData(maDataRef.current)
-        if (rsiSeriesRef.current) rsiSeriesRef.current.setData(rsiDataRef.current)
-        if (macdSeriesRef.current) macdSeriesRef.current.setData(macdLineDataRef.current)
-        if (signalSeriesRef.current) signalSeriesRef.current.setData(signalLineDataRef.current)
-        if (bollUpperSeriesRef.current) bollUpperSeriesRef.current.setData(bollUpperDataRef.current)
-        if (bollLowerSeriesRef.current) bollLowerSeriesRef.current.setData(bollLowerDataRef.current)
-      } catch (e) {
-        console.error(e)
-      }
-    }
-    load()
+        return a.timestamp - b.timestamp;
+      });
 
-    return () => {
-      controller.abort()
-      // クリーンアップ時にデータもリセット
-      closePricesRef.current = []
-      maDataRef.current = []
-      rsiDataRef.current = []
-      macdLineDataRef.current = []
-      signalLineDataRef.current = []
-      bollUpperDataRef.current = []
-      bollLowerDataRef.current = []
+      // 重複を削除（同じタイムスタンプの場合は最初のエントリを保持）
+      const uniqueEntries: Array<T> = [];
+      const seenTimestamps = new Set<number>();
+      
+      for (const { timestamp, data } of sorted) {
+        if (!seenTimestamps.has(timestamp)) {
+          seenTimestamps.add(timestamp);
+          uniqueEntries.push(data);
+        }
+      }
+
+      // 最終確認: 時間が厳密に昇順であることを確認
+      for (let i = 1; i < uniqueEntries.length; i++) {
+        const prevTime = timeToNumber(uniqueEntries[i-1].time);
+        const currTime = timeToNumber(uniqueEntries[i].time);
+        if (prevTime > currTime) {
+          console.warn(`Data not in ascending order at index ${i}, fixing...`);
+          // 問題があれば再度ソート (通常はここには来ないはず)
+          return [...uniqueEntries].sort((a, b) => 
+            timeToNumber(a.time) - timeToNumber(b.time)
+          );
+        }
+      }
+
+      return uniqueEntries;
+    } catch (error) {
+      console.error('Error processing time series data:', error);
+      return [];
     }
-  }, [symbol, interval, useApi]);
+  };
+
+  useEffect(() => {
+    const timeToNumber = (time: unknown): number => {
+      if (time === null || time === undefined) return 0;
+      if (typeof time === 'number') return time;
+      if (typeof time === 'string') {
+        const timestamp = new Date(time).getTime() / 1000;
+        return isNaN(timestamp) ? 0 : Math.floor(timestamp);
+      }
+      if (typeof time === 'object' && time !== null) {
+        if ('timestamp' in time && time.timestamp !== undefined) {
+          return timeToNumber(time.timestamp);
+        }
+      }
+      return 0;
+    };
+
+    try {
+      // ローソク足データを処理
+      if (candleSeriesRef.current && Array.isArray(candles) && candles.length > 0) {
+        const processedCandles = processTimeSeriesData<CandlestickData>(candles, timeToNumber);
+        if (processedCandles.length > 0) {
+          candleSeriesRef.current.setData(processedCandles);
+        }
+      }
+      
+      // ボリュームデータを処理
+      if (volumeSeriesRef.current && Array.isArray(volumes) && volumes.length > 0) {
+        const processedVolumes = processTimeSeriesData<HistogramData>(volumes, timeToNumber);
+        if (processedVolumes.length > 0) {
+          volumeSeriesRef.current.setData(processedVolumes);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating chart data:', error);
+    }
+    if (maSeriesRef.current && ma && ma.length > 0) {
+      maSeriesRef.current.setData(preprocessLineData(ma as LineData[]))
+    }
+    if (rsiSeriesRef.current && rsi && rsi.length > 0) {
+      rsiSeriesRef.current.setData(preprocessLineData(rsi as LineData[]))
+    }
+    if (macdSeriesRef.current && macd && macd.length > 0) {
+      macdSeriesRef.current.setData(preprocessLineData(macd as LineData[]))
+    }
+    if (signalSeriesRef.current && signalData && signalData.length > 0) {
+      signalSeriesRef.current.setData(preprocessLineData(signalData as LineData[]))
+    }
+    if (bollUpperSeriesRef.current && bollUpper && bollUpper.length > 0) {
+      bollUpperSeriesRef.current.setData(preprocessLineData(bollUpper as LineData[]))
+    }
+    if (bollLowerSeriesRef.current && bollLower && bollLower.length > 0) {
+      bollLowerSeriesRef.current.setData(preprocessLineData(bollLower as LineData[]))
+    }
+  }, [candles, volumes, ma, rsi, macd, signalData, bollUpper, bollLower])
+
+
 
   // ローディング中の表示
   if (loading && useApi) {
@@ -573,8 +606,8 @@ export default function CandlestickChart({
         priceLineVisible: false,
         lastValueVisible: true,
       })
-      if (rsiSeriesRef.current && rsiDataRef.current.length > 0) {
-        rsiSeriesRef.current.setData(rsiDataRef.current)
+      if (rsiSeriesRef.current && rsi && rsi.length > 0) {
+        rsiSeriesRef.current.setData(rsi as LineData[])
       }
       if (chartRef.current) {
         const sub = (range: any) => {
@@ -632,11 +665,11 @@ export default function CandlestickChart({
         priceFormat: { type: 'price' },
         priceLineVisible: false,
       })
-      if (macdSeriesRef.current && macdLineDataRef.current.length > 0) {
-        macdSeriesRef.current.setData(macdLineDataRef.current)
+      if (macdSeriesRef.current && macd && macd.length > 0) {
+        macdSeriesRef.current.setData(macd as LineData[])
       }
-      if (signalSeriesRef.current && signalLineDataRef.current.length > 0) {
-        signalSeriesRef.current.setData(signalLineDataRef.current)
+      if (signalSeriesRef.current && signalData && signalData.length > 0) {
+        signalSeriesRef.current.setData(signalData as LineData[])
       }
       if (chartRef.current) {
         const sub = (range: any) => {
