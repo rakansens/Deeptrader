@@ -1,42 +1,17 @@
 'use client'
 
-<<<<<<< ours
-<<<<<<< ours
-import {
-  createChart,
-  IChartApi,
-  LineData,
-  CandlestickData,
-  HistogramData,
-  ISeriesApi,
-  UTCTimestamp,
-} from 'lightweight-charts'
-import { useEffect, useRef, useState } from 'react'
+import { createChart, IChartApi, LineData, CandlestickData, HistogramData, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTheme } from 'next-themes'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/hooks/use-toast'
+import IndicatorPanel from './IndicatorPanel'
 import {
   computeSMA,
   computeRSI,
   computeMACD,
   computeBollinger,
 } from '@/lib/indicators'
-=======
-import { createChart, IChartApi, LineData, CandlestickData, HistogramData, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { useTheme } from 'next-themes'
-import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from '@/hooks/use-toast'
-import IndicatorPanel from './IndicatorPanel'
->>>>>>> theirs
-=======
-import { createChart, IChartApi, LineData, CandlestickData, HistogramData, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { useTheme } from 'next-themes'
-import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from '@/hooks/use-toast'
-import IndicatorPanel from './IndicatorPanel'
->>>>>>> theirs
 
 
 interface IndicatorOptions {
