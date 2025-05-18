@@ -36,12 +36,16 @@ export default function PriceChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const priceData = useRef<number[]>([]);
   const chartRef = useRef<IChartApi | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   const [lastPrice, setLastPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number>(0);
   const [initTime] = useState(Date.now());
 
   useEffect(() => {
     if (!containerRef.current) return;
+    isMountedRef.current = true;
 
     // Calculate proper dimensions
     const width = containerRef.current.clientWidth;
@@ -92,52 +96,85 @@ export default function PriceChart() {
     const handleResize = () => {
       if (containerRef.current && chartRef.current) {
         chartRef.current.resize(
-          containerRef.current.clientWidth, 
+          containerRef.current.clientWidth,
           380
         );
       }
     };
-    
-    // Create WebSocket connection
-    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-    
-    // Process incoming data
-    ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data);
-      const price = parseFloat(msg.p);
-      const time = Math.floor(msg.T / 1000) as UTCTimestamp;
-      
-      priceSeries.update({ time, value: price });
-      
-      // Update state for display
-      setLastPrice(price);
-      
-      // Store price for indicators
-      priceData.current.push(price);
-      if (priceData.current.length > 500) priceData.current.shift();
-      
-      // Calculate 24h change (simulated)
-      if (priceData.current.length > 1) {
-        const startPrice = priceData.current[0];
-        const endPrice = price;
-        const changePercent = ((endPrice - startPrice) / startPrice) * 100;
-        setPriceChange(changePercent);
-      }
-      
-      // Calculate indicators
-      const ma = computeSMA(priceData.current, 14);
-      if (ma !== null) maSeries.update({ time, value: ma });
-      
-      const rsi = computeRSI(priceData.current, 14);
-      if (rsi !== null) rsiSeries.update({ time, value: rsi });
+
+    /**
+     * WebSocket 再接続戦略: 接続が閉じられた場合やエラー発生時に
+     * 3 秒後に再接続を試みる。アンマウント時にタイマーを解除し
+     * 再接続を停止する。
+     */
+    const connect = () => {
+      if (!isMountedRef.current) return;
+      const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+      socketRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket closed');
+        if (isMountedRef.current) {
+          reconnectTimeoutRef.current = setTimeout(connect, 3000);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('WebSocket error', err);
+        if (isMountedRef.current) {
+          reconnectTimeoutRef.current = setTimeout(connect, 3000);
+        }
+      };
+
+      ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
+        const price = parseFloat(msg.p);
+        const time = Math.floor(msg.T / 1000) as UTCTimestamp;
+
+        priceSeries.update({ time, value: price });
+
+        // Update state for display
+        setLastPrice(price);
+
+        // Store price for indicators
+        priceData.current.push(price);
+        if (priceData.current.length > 500) priceData.current.shift();
+
+        // Calculate 24h change (simulated)
+        if (priceData.current.length > 1) {
+          const startPrice = priceData.current[0];
+          const endPrice = price;
+          const changePercent = ((endPrice - startPrice) / startPrice) * 100;
+          setPriceChange(changePercent);
+        }
+
+        // Calculate indicators
+        const ma = computeSMA(priceData.current, 14);
+        if (ma !== null) maSeries.update({ time, value: ma });
+
+        const rsi = computeRSI(priceData.current, 14);
+        if (rsi !== null) rsiSeries.update({ time, value: rsi });
+      };
     };
+
+    connect();
 
     // Add event listeners
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMountedRef.current = false;
       window.removeEventListener('resize', handleResize);
-      ws.close();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
       chart.remove();
     };
   }, []);
