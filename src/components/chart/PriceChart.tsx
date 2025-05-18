@@ -1,6 +1,6 @@
 'use client';
 
-import { createChart, LineData, UTCTimestamp, IChartApi, ISeriesApi, LineWidth } from 'lightweight-charts';
+import { createChart, UTCTimestamp, IChartApi, ISeriesApi } from 'lightweight-charts';
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -32,6 +32,43 @@ function computeRSI(data: number[], period: number): number | null {
   return 100 - 100 / (1 + rs);
 }
 
+/**
+ * 指数移動平均を計算する
+ */
+function computeEMA(data: number[], period: number): number | null {
+  if (data.length < period) return null;
+  const k = 2 / (period + 1);
+  let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < data.length; i++) {
+    ema = data[i] * k + ema * (1 - k);
+  }
+  return ema;
+}
+
+/**
+ * MACDを計算する
+ */
+function computeMACD(
+  data: number[],
+  short = 12,
+  long = 26,
+  signalPeriod = 9
+): { macd: number; signal: number; histogram: number } | null {
+  if (data.length < long + signalPeriod) return null;
+  const macdSeries: number[] = [];
+  for (let i = long; i <= data.length; i++) {
+    const slice = data.slice(0, i);
+    const shortEma = computeEMA(slice, short);
+    const longEma = computeEMA(slice, long);
+    if (shortEma === null || longEma === null) continue;
+    macdSeries.push(shortEma - longEma);
+  }
+  const macd = macdSeries[macdSeries.length - 1];
+  const signal = computeEMA(macdSeries, signalPeriod);
+  if (signal === null) return null;
+  return { macd, signal, histogram: macd - signal };
+}
+
 export default function PriceChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const priceData = useRef<number[]>([]);
@@ -41,6 +78,7 @@ export default function PriceChart() {
   const priceSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const maSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const rsiSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const macdSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const [lastPrice, setLastPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number>(0);
   const [initTime] = useState(Date.now());
@@ -93,7 +131,12 @@ export default function PriceChart() {
           const price = parseFloat(msg.p);
           const time = Math.floor(msg.T / 1000) as UTCTimestamp;
           
-          if (priceSeriesRef.current && maSeriesRef.current && rsiSeriesRef.current) {
+          if (
+            priceSeriesRef.current &&
+            maSeriesRef.current &&
+            rsiSeriesRef.current &&
+            macdSeriesRef.current
+          ) {
             priceSeriesRef.current.update({ time, value: price });
             
             // Update state for display
@@ -117,6 +160,9 @@ export default function PriceChart() {
             
             const rsi = computeRSI(priceData.current, 14);
             if (rsi !== null) rsiSeriesRef.current.update({ time, value: rsi });
+
+            const macd = computeMACD(priceData.current);
+            if (macd !== null) macdSeriesRef.current.update({ time, value: macd.histogram });
           }
         } catch (error) {
           console.error('メッセージ処理エラー:', error);
@@ -175,13 +221,21 @@ export default function PriceChart() {
     });
     maSeriesRef.current = maSeries;
     
-    const rsiSeries = chart.addLineSeries({ 
-      color: '#3b82f6', 
+    const rsiSeries = chart.addLineSeries({
+      color: '#3b82f6',
       lineWidth: 1,
       priceScaleId: 'right',
       priceLineVisible: false,
     });
     rsiSeriesRef.current = rsiSeries;
+
+    const macdSeries = chart.addLineSeries({
+      color: '#10b981',
+      lineWidth: 1,
+      priceScaleId: 'right',
+      priceLineVisible: false,
+    });
+    macdSeriesRef.current = macdSeries;
 
     // Handle resize
     const handleResize = () => {
@@ -217,11 +271,12 @@ export default function PriceChart() {
         chartRef.current.remove();
         chartRef.current = null;
       }
-      
+
       // シリーズ参照をクリア
       priceSeriesRef.current = null;
       maSeriesRef.current = null;
       rsiSeriesRef.current = null;
+      macdSeriesRef.current = null;
     };
   }, []);
 
@@ -256,7 +311,7 @@ export default function PriceChart() {
         ref={containerRef} 
         className="w-full rounded-md overflow-hidden mb-2" 
       />
-      <div className="grid grid-cols-3 gap-2 text-xs mt-2">
+      <div className="grid grid-cols-4 gap-2 text-xs mt-2">
         <div className="border rounded-md p-2">
           <div className="text-muted-foreground">14日SMA</div>
           <div className="font-semibold text-amber-500">移動平均（オレンジ）</div>
@@ -264,6 +319,10 @@ export default function PriceChart() {
         <div className="border rounded-md p-2">
           <div className="text-muted-foreground">14日RSI</div>
           <div className="font-semibold text-blue-500">強弱指数（青）</div>
+        </div>
+        <div className="border rounded-md p-2">
+          <div className="text-muted-foreground">MACD</div>
+          <div className="font-semibold text-emerald-500">ヒストグラム（緑）</div>
         </div>
         <div className="border rounded-md p-2">
           <div className="text-muted-foreground">時間スケール</div>
