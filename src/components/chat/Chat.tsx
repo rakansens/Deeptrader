@@ -17,10 +17,19 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const conversations: Conversation[] = [
+  const [conversations, setConversations] = useState<Conversation[]>([
     { id: "current", title: "現在の会話" },
-  ];
+  ]);
   const [selected, setSelected] = useState<string>("current");
+
+  /** 新しい会話を開始する */
+  const handleNewConversation = () => {
+    const id = Date.now().toString();
+    const newConversation = { id, title: `会話 ${conversations.length + 1}` };
+    setConversations((prev) => [...prev, newConversation]);
+    setMessages([]);
+    setSelected(id);
+  };
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -83,6 +92,11 @@ export default function Chat() {
         selectedId={selected}
         onSelect={setSelected}
         className="hidden md:block"
+        footer={
+          <Button variant="outline" className="w-full" onClick={handleNewConversation}>
+            新しいチャット
+          </Button>
+        }
       />
       <div className="flex-1 flex flex-col h-full p-4">
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
