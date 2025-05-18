@@ -83,10 +83,13 @@ export default function PriceChart() {
   const [priceChange, setPriceChange] = useState<number>(0);
   const [initTime] = useState(Date.now());
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const isMountedRef = useRef(true);
 
   // WebSocket接続を作成する関数
   const createWebSocketConnection = () => {
     try {
+      if (!isMountedRef.current) return;
+
       // 既存の接続をクリーンアップ
       if (wsRef.current) {
         wsRef.current.close();
@@ -113,15 +116,24 @@ export default function PriceChart() {
         setConnectionStatus('disconnected');
         
         // 5秒後に再接続
-        reconnectTimeoutRef.current = setTimeout(() => {
-          createWebSocketConnection();
-        }, 5000);
+        if (isMountedRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            createWebSocketConnection();
+          }, 3000);
+        }
       };
       
       ws.onerror = (error) => {
         console.error('WebSocket接続エラー:', error);
         setConnectionStatus('disconnected');
         ws.close();
+        
+        // エラー発生時も再接続を試みる
+        if (isMountedRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            createWebSocketConnection();
+          }, 3000);
+        }
       };
       
       // データ処理
@@ -172,14 +184,17 @@ export default function PriceChart() {
       console.error('WebSocket作成エラー:', error);
       
       // エラー発生時も再接続を試みる
-      reconnectTimeoutRef.current = setTimeout(() => {
-        createWebSocketConnection();
-      }, 5000);
+      if (isMountedRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          createWebSocketConnection();
+        }, 3000);
+      }
     }
   };
 
   useEffect(() => {
     if (!containerRef.current) return;
+    isMountedRef.current = true;
 
     // Calculate proper dimensions
     const width = containerRef.current.clientWidth;
@@ -241,7 +256,7 @@ export default function PriceChart() {
     const handleResize = () => {
       if (containerRef.current && chartRef.current) {
         chartRef.current.resize(
-          containerRef.current.clientWidth, 
+          containerRef.current.clientWidth,
           380
         );
       }
@@ -254,6 +269,7 @@ export default function PriceChart() {
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMountedRef.current = false;
       window.removeEventListener('resize', handleResize);
       
       // クリーンアップ処理
