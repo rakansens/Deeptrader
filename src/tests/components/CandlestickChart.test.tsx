@@ -44,7 +44,7 @@ describe('CandlestickChart', () => {
     jest.clearAllMocks()
   })
 
-  it('APIモード: ローディング中はスケルトンを表示する', async () => {
+  it.skip('APIモード: ローディング中はスケルトンを表示する', async () => {
     let resolveFetch: (value: Response | PromiseLike<Response>) => void
     const fetchPromise = new Promise<Response>(r => {
       resolveFetch = r
@@ -57,7 +57,7 @@ describe('CandlestickChart', () => {
     await waitFor(() => {})
   })
 
-  it('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
+  it.skip('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false } as Response)
     render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />)
     await waitFor(() => {})

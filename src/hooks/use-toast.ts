@@ -6,7 +6,7 @@ import * as React from 'react';
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 5000;
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -179,7 +179,7 @@ function useToast() {
         listeners.splice(index, 1);
       }
     };
-  }, [state]);
+  }, []);
 
   return {
     ...state,
@@ -189,3 +189,7 @@ function useToast() {
 }
 
 export { useToast, toast };
+
+// Export listeners for testing to verify registrations
+export const __TEST__listeners =
+  process.env.NODE_ENV === 'test' ? listeners : undefined;
