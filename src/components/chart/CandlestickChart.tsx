@@ -1,6 +1,6 @@
 'use client'
 
-import { createChart, type CandlestickData, type IChartApi, type UTCTimestamp, type HistogramData, type LineData } from 'lightweight-charts'
+import { createChart, IChartApi, LineData, CandlestickData, HistogramData, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -94,16 +94,25 @@ export default function CandlestickChart({
   indicators = { ma: false, rsi: false, macd: false, boll: false }
 }: CandlestickChartProps) {
   const { theme = 'light' } = useTheme()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)  // メインチャートとシリーズの参照
   const chartRef = useRef<IChartApi | null>(null)
-  const candleSeriesRef = useRef<ReturnType<IChartApi['addCandlestickSeries']> | null>(null)
-  const volumeSeriesRef = useRef<ReturnType<IChartApi['addHistogramSeries']> | null>(null)
-  const maSeriesRef = useRef<ReturnType<IChartApi['addLineSeries']> | null>(null)
-  const rsiSeriesRef = useRef<ReturnType<IChartApi['addLineSeries']> | null>(null)
-  const macdSeriesRef = useRef<ReturnType<IChartApi['addLineSeries']> | null>(null)
-  const signalSeriesRef = useRef<ReturnType<IChartApi['addLineSeries']> | null>(null)
-  const bollUpperSeriesRef = useRef<ReturnType<IChartApi['addLineSeries']> | null>(null)
-  const bollLowerSeriesRef = useRef<ReturnType<IChartApi['addLineSeries']> | null>(null)
+  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
+  const maSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const bollUpperSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const bollLowerSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+
+  // RSIパネル用のチャートと系列の参照
+  const rsiChartRef = useRef<IChartApi | null>(null)
+  const rsiContainerRef = useRef<HTMLDivElement | null>(null)
+  const rsiSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+
+  // MACDパネル用のチャートと系列の参照
+  const macdChartRef = useRef<IChartApi | null>(null)
+  const macdContainerRef = useRef<HTMLDivElement | null>(null)
+  const macdSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const signalSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const histogramSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
   const closePricesRef = useRef<number[]>([])
   const macdHistoryRef = useRef<number[]>([])
@@ -149,7 +158,14 @@ export default function CandlestickChart({
         horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
       },
       crosshair: { mode: 0 },
-      rightPriceScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+      rightPriceScale: { 
+        borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
+        // メイン価格チャートの表示領域を確保
+        scaleMargins: {
+          top: 0.1, // 上部に少し余白を持たせる
+          bottom: 0.2, // 下部に20%の余白を確保し、インジケーターのスペースを作る
+        },
+      },
       timeScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0', timeVisible: true },
     })
 
@@ -229,13 +245,15 @@ export default function CandlestickChart({
         }),
       })
       
-      // RSIの表示領域設定
+      // RSIの表示領域設定 - 高さを小さくしてローソク足を圧迫しないようにする
       chart.priceScale('rsi').applyOptions({
         scaleMargins: {
-          top: 0.1, // トップマージン
-          bottom: 0.05, // ボトムマージン
+          // メインチャートの下部に小さく配置
+          top: 0.8, // 上部に80%のスペースを確保し、下部に小さく表示
+          bottom: 0.02, // 下部の余白を少なく
         },
         visible: true,
+        autoScale: true, // 自動スケールを有効に
       });
     }
     
@@ -254,20 +272,21 @@ export default function CandlestickChart({
         priceScaleId: 'macd',
       })
       
-      // MACDの表示領域設定
+      // MACDの表示領域設定 - RSIの下に小さく表示
       chart.priceScale('macd').applyOptions({
         scaleMargins: {
-          top: 0.7, // 下部に表示
-          bottom: 0.05,
+          top: 0.85, // 上部に85%のスペースを確保
+          bottom: 0.02, // 下部の余白を少なく
         },
         visible: true,
+        autoScale: true, // 自動スケールを有効に
       });
     }
 
-    // ボリュームのスケール設定
+    // ボリュームのスケール設定 - より小さく表示
     chart.priceScale('vol').applyOptions({
       scaleMargins: {
-        top: 0.8,
+        top: 0.9, // 上部に90%のスペースを確保し、ボリュームはより小さく
         bottom: 0,
       },
     });
@@ -540,9 +559,188 @@ export default function CandlestickChart({
     );
   }
 
+  // RSI用チャートの初期化
+  useEffect(() => {
+    if (!rsiContainerRef.current || !indicators.rsi) return;
+    
+    // 古いチャートがあれば破棄
+    if (rsiChartRef.current) {
+      rsiChartRef.current.remove();
+      rsiChartRef.current = null;
+    }
+
+    // 新しいRSIチャートを作成
+    const rsiChart = createChart(rsiContainerRef.current, {
+      width: rsiContainerRef.current.clientWidth,
+      height: height * 0.2,
+      layout: {
+        background: { color: theme === 'dark' ? '#1e1e1e' : '#ffffff' },
+        textColor: theme === 'dark' ? '#d1d5db' : '#111827',
+      },
+      grid: {
+        vertLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+        horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+      },
+      rightPriceScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+      timeScale: { 
+        borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
+        timeVisible: true,
+        visible: false, // 時間軸は表示しない
+      },
+      handleScroll: {
+        vertTouchDrag: false,
+      },
+    });
+
+    rsiChartRef.current = rsiChart;
+    
+    // RSI系列を追加
+    rsiSeriesRef.current = rsiChart.addLineSeries({
+      color: '#2962FF',
+      lineWidth: 1,
+      title: 'RSI',
+      priceLineVisible: false,
+      lastValueVisible: true,
+    });
+    
+    // データがあれば設定
+    if (rsiSeriesRef.current && rsiDataRef.current.length > 0) {
+      rsiSeriesRef.current.setData(rsiDataRef.current);
+    }
+
+    // メインチャートと時間軸を同期
+    if (chartRef.current && rsiChart) {
+      chartRef.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (rsiChartRef.current && range !== null) {
+          rsiChartRef.current.timeScale().setVisibleLogicalRange(range);
+        }
+      });
+    }
+
+    return () => {
+      if (rsiChartRef.current) {
+        rsiChartRef.current.remove();
+        rsiChartRef.current = null;
+      }
+    };
+  }, [indicators.rsi, theme, height]);
+
+  // MACD用チャートの初期化
+  useEffect(() => {
+    if (!macdContainerRef.current || !indicators.macd) return;
+    
+    // 古いチャートがあれば破棄
+    if (macdChartRef.current) {
+      macdChartRef.current.remove();
+      macdChartRef.current = null;
+    }
+
+    // 新しいMACDチャートを作成
+    const macdChart = createChart(macdContainerRef.current, {
+      width: macdContainerRef.current.clientWidth,
+      height: height * 0.2,
+      layout: {
+        background: { color: theme === 'dark' ? '#1e1e1e' : '#ffffff' },
+        textColor: theme === 'dark' ? '#d1d5db' : '#111827',
+      },
+      grid: {
+        vertLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+        horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+      },
+      rightPriceScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+      timeScale: { 
+        borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
+        timeVisible: true,
+      },
+    });
+
+    macdChartRef.current = macdChart;
+    
+    // MACD系列を追加
+    macdSeriesRef.current = macdChart.addLineSeries({
+      color: '#2962FF',
+      lineWidth: 1,
+      title: 'MACD',
+      priceLineVisible: false,
+    });
+
+    // シグナル系列を追加
+    signalSeriesRef.current = macdChart.addLineSeries({
+      color: '#FF6D00',
+      lineWidth: 1,
+      title: 'Signal',
+      priceLineVisible: false,
+    });
+
+    // ヒストグラム系列を追加
+    histogramSeriesRef.current = macdChart.addHistogramSeries({
+      color: '#26a69a',
+      priceFormat: { type: 'price' },
+      priceLineVisible: false,
+    });
+
+    // データがあれば設定
+    if (macdSeriesRef.current && macdLineDataRef.current.length > 0) {
+      macdSeriesRef.current.setData(macdLineDataRef.current);
+    }
+    if (signalSeriesRef.current && signalLineDataRef.current.length > 0) {
+      signalSeriesRef.current.setData(signalLineDataRef.current);
+    }
+
+    // メインチャートと時間軸を同期
+    if (chartRef.current && macdChart) {
+      chartRef.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+        if (macdChartRef.current) {
+          macdChartRef.current.timeScale().setVisibleLogicalRange(range);
+        }
+      });
+    }
+
+    return () => {
+      if (macdChartRef.current) {
+        macdChartRef.current.remove();
+        macdChartRef.current = null;
+      }
+    };
+  }, [indicators.macd, theme, height]);
+  
+  // 各パネルの高さを計算
+  const getChartHeights = () => {
+    const mainChartHeight = indicators.rsi || indicators.macd ? height * 0.6 : height;
+    const subPanels = [];
+    
+    if (indicators.rsi) {
+      subPanels.push({ id: 'rsi', height: height * 0.2 });
+    }
+    
+    if (indicators.macd) {
+      subPanels.push({ id: 'macd', height: height * 0.2 });
+    }
+    
+    return {
+      mainChartHeight,
+      subPanels
+    };
+  };
+  
+  const { mainChartHeight, subPanels } = getChartHeights();
+  
   return (
     <div className={className}>
-      <div ref={containerRef} className="w-full" style={{ height }} data-testid="chart-container" />
+      <div className="space-y-1">
+        {/* メインチャート */}
+        <div ref={containerRef} className="w-full" style={{ height: mainChartHeight }} data-testid="chart-container" />
+        
+        {/* サブパネル */}
+        {subPanels.map((panel) => (
+          <div 
+            key={panel.id}
+            ref={panel.id === 'rsi' ? rsiContainerRef : panel.id === 'macd' ? macdContainerRef : null}
+            className="w-full bg-background border-t border-border" 
+            style={{ height: panel.height }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
