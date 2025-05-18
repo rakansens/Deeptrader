@@ -14,11 +14,13 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
     setInput('');
+    setError(null);
     setMessages((prev) => [...prev, { role: 'user', content: text }]);
     setLoading(true);
     try {
@@ -27,15 +29,32 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
       });
+      
+      if (!res.ok) {
+        // レスポンスがJSONでない場合にエラーをキャッチ
+        let errorMessage = '';
+        try {
+          const data = await res.json();
+          errorMessage = data.error || `APIエラー: ${res.status}`;
+        } catch (e) {
+          errorMessage = `APIエラー: ${res.status}`;
+        }
+        throw new Error(errorMessage);
+      }
+      
       const data = await res.json();
       if (data.reply) {
         setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }]);
+      } else {
+        throw new Error('APIからの応答が無効です');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      const errorMessage = error instanceof Error ? error.message : 'メッセージ送信中にエラーが発生しました';
+      setError(errorMessage);
       setMessages((prev) => [
         ...prev, 
-        { role: 'assistant', content: 'すみません、エラーが発生しました。後でもう一度お試しください。' }
+        { role: 'assistant', content: `すみません、エラーが発生しました: ${errorMessage}` }
       ]);
     } finally {
       setLoading(false);
@@ -91,6 +110,16 @@ export default function Chat() {
             <div className="flex items-center">
               <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
               <span className="text-sm">考え中...</span>
+            </div>
+          </div>
+        )}
+        {error && !loading && (
+          <div className="bg-red-100 dark:bg-red-900/20 p-4 rounded-md">
+            <p className="text-sm font-medium mb-1 text-red-800 dark:text-red-300">
+              エラー
+            </p>
+            <div className="text-sm whitespace-pre-wrap text-red-700 dark:text-red-400">
+              {error}
             </div>
           </div>
         )}

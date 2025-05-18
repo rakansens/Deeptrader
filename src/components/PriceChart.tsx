@@ -1,6 +1,6 @@
 'use client';
 
-import { createChart, LineData, UTCTimestamp, IChartApi, ISeriesApi } from 'lightweight-charts';
+import { createChart, LineData, UTCTimestamp, IChartApi, ISeriesApi, LineWidth } from 'lightweight-charts';
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -36,16 +36,108 @@ export default function PriceChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const priceData = useRef<number[]>([]);
   const chartRef = useRef<IChartApi | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const priceSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const maSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const rsiSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const [lastPrice, setLastPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number>(0);
   const [initTime] = useState(Date.now());
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+
+  // WebSocket接続を作成する関数
+  const createWebSocketConnection = () => {
+    try {
+      // 既存の接続をクリーンアップ
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      setConnectionStatus('connecting');
+      
+      // 新しいWebSocket接続を作成
+      const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+      wsRef.current = ws;
+      
+      ws.onopen = () => {
+        console.log('WebSocket接続が確立されました');
+        setConnectionStatus('connected');
+      };
+      
+      ws.onclose = () => {
+        console.log('WebSocket接続が閉じられました、再接続を試みます...');
+        setConnectionStatus('disconnected');
+        
+        // 5秒後に再接続
+        reconnectTimeoutRef.current = setTimeout(() => {
+          createWebSocketConnection();
+        }, 5000);
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket接続エラー:', error);
+        setConnectionStatus('disconnected');
+        ws.close();
+      };
+      
+      // データ処理
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          const price = parseFloat(msg.p);
+          const time = Math.floor(msg.T / 1000) as UTCTimestamp;
+          
+          if (priceSeriesRef.current && maSeriesRef.current && rsiSeriesRef.current) {
+            priceSeriesRef.current.update({ time, value: price });
+            
+            // Update state for display
+            setLastPrice(price);
+            
+            // Store price for indicators
+            priceData.current.push(price);
+            if (priceData.current.length > 500) priceData.current.shift();
+            
+            // Calculate 24h change (simulated)
+            if (priceData.current.length > 1) {
+              const startPrice = priceData.current[0];
+              const endPrice = price;
+              const changePercent = ((endPrice - startPrice) / startPrice) * 100;
+              setPriceChange(changePercent);
+            }
+            
+            // Calculate indicators
+            const ma = computeSMA(priceData.current, 14);
+            if (ma !== null) maSeriesRef.current.update({ time, value: ma });
+            
+            const rsi = computeRSI(priceData.current, 14);
+            if (rsi !== null) rsiSeriesRef.current.update({ time, value: rsi });
+          }
+        } catch (error) {
+          console.error('メッセージ処理エラー:', error);
+        }
+      };
+    } catch (error) {
+      console.error('WebSocket作成エラー:', error);
+      
+      // エラー発生時も再接続を試みる
+      reconnectTimeoutRef.current = setTimeout(() => {
+        createWebSocketConnection();
+      }, 5000);
+    }
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     // Calculate proper dimensions
     const width = containerRef.current.clientWidth;
-    
+
     const chart = createChart(containerRef.current, {
       layout: {
         background: { color: 'transparent' },
@@ -74,19 +166,22 @@ export default function PriceChart() {
       lineWidth: 2,
       priceLineVisible: true,
     });
+    priceSeriesRef.current = priceSeries;
     
     const maSeries = chart.addLineSeries({ 
       color: '#f59e0b', 
       lineWidth: 2,
       priceLineVisible: false,
     });
+    maSeriesRef.current = maSeries;
     
     const rsiSeries = chart.addLineSeries({ 
       color: '#3b82f6', 
-      lineWidth: 1.5,
+      lineWidth: 1,
       priceScaleId: 'right',
       priceLineVisible: false,
     });
+    rsiSeriesRef.current = rsiSeries;
 
     // Handle resize
     const handleResize = () => {
@@ -98,47 +193,35 @@ export default function PriceChart() {
       }
     };
     
-    // Create WebSocket connection
-    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-    
-    // Process incoming data
-    ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data);
-      const price = parseFloat(msg.p);
-      const time = Math.floor(msg.T / 1000) as UTCTimestamp;
-      
-      priceSeries.update({ time, value: price });
-      
-      // Update state for display
-      setLastPrice(price);
-      
-      // Store price for indicators
-      priceData.current.push(price);
-      if (priceData.current.length > 500) priceData.current.shift();
-      
-      // Calculate 24h change (simulated)
-      if (priceData.current.length > 1) {
-        const startPrice = priceData.current[0];
-        const endPrice = price;
-        const changePercent = ((endPrice - startPrice) / startPrice) * 100;
-        setPriceChange(changePercent);
-      }
-      
-      // Calculate indicators
-      const ma = computeSMA(priceData.current, 14);
-      if (ma !== null) maSeries.update({ time, value: ma });
-      
-      const rsi = computeRSI(priceData.current, 14);
-      if (rsi !== null) rsiSeries.update({ time, value: rsi });
-    };
+    // WebSocket接続を開始
+    createWebSocketConnection();
 
     // Add event listeners
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      ws.close();
-      chart.remove();
+      
+      // クリーンアップ処理
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+      }
+      
+      // シリーズ参照をクリア
+      priceSeriesRef.current = null;
+      maSeriesRef.current = null;
+      rsiSeriesRef.current = null;
     };
   }, []);
 
@@ -150,6 +233,13 @@ export default function PriceChart() {
             <span className="text-lg font-bold">BTC/USDT</span>
             <span className={`ml-2 text-sm ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
+            </span>
+            <span className="ml-2 text-xs">
+              {connectionStatus === 'connected' 
+                ? '🟢 接続中' 
+                : connectionStatus === 'connecting' 
+                  ? '🟡 接続中...' 
+                  : '🔴 未接続'}
             </span>
           </div>
           {lastPrice && (
