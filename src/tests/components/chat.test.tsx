@@ -86,4 +86,23 @@ describe('Chat', () => {
       expect(screen.getByRole('button', { name: '会話 2' }).className).toMatch(/bg-accent/)
     })
   })
+
+  describe('サイドバー切替', () => {
+    it('toggles sidebar visibility', async () => {
+      const user = userEvent.setup()
+      render(<Chat />)
+
+      expect(screen.getByRole('button', { name: '新しいチャット' })).toBeInTheDocument()
+
+      const hideBtn = screen.getAllByLabelText('スレッドを非表示')[0]
+      await user.click(hideBtn)
+
+      expect(screen.queryByRole('button', { name: '新しいチャット' })).not.toBeInTheDocument()
+
+      const showBtn = screen.getAllByLabelText('スレッドを表示')[0]
+      await user.click(showBtn)
+
+      expect(screen.getByRole('button', { name: '新しいチャット' })).toBeInTheDocument()
+    })
+  })
 })

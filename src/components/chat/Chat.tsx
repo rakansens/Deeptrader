@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUpIcon, LoaderCircle } from "lucide-react";
+import { ArrowUpIcon, LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import ConversationSidebar, { type Conversation } from "./conversation-sidebar";
 
@@ -21,6 +21,15 @@ export default function Chat() {
     { id: "current", title: "現在の会話" },
   ]);
   const [selected, setSelected] = useState<string>("current");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  /** サイドバーの表示切替 */
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => !prev);
+    setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 0);
+  };
 
   /** 新しい会話を開始する */
   const handleNewConversation = () => {
@@ -86,19 +95,40 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex h-full">
-      <ConversationSidebar
-        conversations={conversations}
-        selectedId={selected}
-        onSelect={setSelected}
-        className="hidden md:block"
-        footer={
-          <Button variant="outline" className="w-full" onClick={handleNewConversation}>
-            新しいチャット
+    <div className="flex h-full relative">
+      {sidebarOpen && (
+        <ConversationSidebar
+          conversations={conversations}
+          selectedId={selected}
+          onSelect={setSelected}
+          className="hidden md:block"
+          footer={
+            <Button variant="outline" className="w-full" onClick={handleNewConversation}>
+              新しいチャット
+            </Button>
+          }
+        />
+      )}
+      <div className="flex-1 flex flex-col h-full p-4 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
+          onClick={toggleSidebar}
+          className="absolute -left-6 top-2 hidden md:flex"
+        >
+          {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </Button>
+        <div className="mb-2 flex justify-end md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
+            onClick={toggleSidebar}
+          >
+            {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
-        }
-      />
-      <div className="flex-1 flex flex-col h-full p-4">
+        </div>
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
