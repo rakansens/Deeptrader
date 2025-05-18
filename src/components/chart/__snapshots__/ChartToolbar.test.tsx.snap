@@ -1,0 +1,264 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ChartToolbar matches snapshot 1`] = `
+<div
+  class="flex flex-col gap-2 p-2 bg-background border-b border-border md:flex-row md:items-center md:justify-between"
+>
+  <div
+    class="flex gap-3 items-center"
+  >
+    <div
+      class="flex items-center justify-center gap-1"
+      dir="ltr"
+      role="group"
+      style="outline: none;"
+      tabindex="0"
+    >
+      <button
+        aria-checked="true"
+        aria-label="Timeframe 1m"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground bg-transparent h-10 px-3"
+        data-radix-collection-item=""
+        data-state="on"
+        role="radio"
+        tabindex="-1"
+        type="button"
+      >
+        1m
+      </button>
+      <button
+        aria-checked="false"
+        aria-label="Timeframe 5m"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground bg-transparent h-10 px-3"
+        data-radix-collection-item=""
+        data-state="off"
+        role="radio"
+        tabindex="-1"
+        type="button"
+      >
+        5m
+      </button>
+      <button
+        aria-checked="false"
+        aria-label="Timeframe 15m"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground bg-transparent h-10 px-3"
+        data-radix-collection-item=""
+        data-state="off"
+        role="radio"
+        tabindex="-1"
+        type="button"
+      >
+        15m
+      </button>
+      <button
+        aria-checked="false"
+        aria-label="Timeframe 1h"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground bg-transparent h-10 px-3"
+        data-radix-collection-item=""
+        data-state="off"
+        role="radio"
+        tabindex="-1"
+        type="button"
+      >
+        1h
+      </button>
+      <button
+        aria-checked="false"
+        aria-label="Timeframe 4h"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground bg-transparent h-10 px-3"
+        data-radix-collection-item=""
+        data-state="off"
+        role="radio"
+        tabindex="-1"
+        type="button"
+      >
+        4h
+      </button>
+      <button
+        aria-checked="false"
+        aria-label="Timeframe 1d"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground bg-transparent h-10 px-3"
+        data-radix-collection-item=""
+        data-state="off"
+        role="radio"
+        tabindex="-1"
+        type="button"
+      >
+        1d
+      </button>
+    </div>
+  </div>
+  <div
+    class="flex items-center gap-3"
+  >
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        aria-checked="false"
+        class="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+        data-state="unchecked"
+        id="ma-toggle"
+        role="switch"
+        type="button"
+        value="on"
+      >
+        <span
+          class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+          data-state="unchecked"
+        />
+      </button>
+      <label
+        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        for="ma-toggle"
+      >
+        MA
+      </label>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        aria-checked="false"
+        class="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+        data-state="unchecked"
+        id="rsi-toggle"
+        role="switch"
+        type="button"
+        value="on"
+      >
+        <span
+          class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+          data-state="unchecked"
+        />
+      </button>
+      <label
+        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        for="rsi-toggle"
+      >
+        RSI
+      </label>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        aria-checked="false"
+        class="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+        data-state="unchecked"
+        id="macd-toggle"
+        role="switch"
+        type="button"
+        value="on"
+      >
+        <span
+          class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+          data-state="unchecked"
+        />
+      </button>
+      <label
+        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        for="macd-toggle"
+      >
+        MACD
+      </label>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        aria-checked="false"
+        class="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+        data-state="unchecked"
+        id="boll-toggle"
+        role="switch"
+        type="button"
+        value="on"
+      >
+        <span
+          class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+          data-state="unchecked"
+        />
+      </button>
+      <label
+        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        for="boll-toggle"
+      >
+        BOLL
+      </label>
+    </div>
+    <button
+      aria-expanded="false"
+      aria-haspopup="menu"
+      class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10"
+      data-state="closed"
+      id="radix-:re:"
+      type="button"
+    >
+      <svg
+        class="lucide lucide-sun h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="4"
+        />
+        <path
+          d="M12 2v2"
+        />
+        <path
+          d="M12 20v2"
+        />
+        <path
+          d="m4.93 4.93 1.41 1.41"
+        />
+        <path
+          d="m17.66 17.66 1.41 1.41"
+        />
+        <path
+          d="M2 12h2"
+        />
+        <path
+          d="M20 12h2"
+        />
+        <path
+          d="m6.34 17.66-1.41 1.41"
+        />
+        <path
+          d="m19.07 4.93-1.41 1.41"
+        />
+      </svg>
+      <svg
+        class="lucide lucide-moon absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"
+        />
+      </svg>
+      <span
+        class="sr-only"
+      >
+        テーマを切り替え
+      </span>
+    </button>
+  </div>
+</div>
+`;
