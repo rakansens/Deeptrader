@@ -1,5 +1,5 @@
 // jest.setup.js
-import '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 
 // グローバルなモックの設定
 jest.mock('next/router', () => ({
@@ -17,5 +17,4 @@ jest.mock('next/router', () => ({
 process.env = {
   ...process.env,
   NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
-  // テスト用の環境変数を追加
 }; 

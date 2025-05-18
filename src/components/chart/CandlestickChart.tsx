@@ -3,24 +3,39 @@
 import { createChart, type CandlestickData, type IChartApi, type UTCTimestamp, type HistogramData } from 'lightweight-charts'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from '@/hooks/use-toast'
 
 interface CandlestickChartProps {
   className?: string
   height?: number
+  symbol?: string
+  interval?: string
+  useApi?: boolean
 }
 
 /**
  * Binanceのローソク足データを表示するチャートコンポーネント
+ * APIモードでは/api/candlesエンドポイントからデータを取得
+ * 直接モードではBinance APIに直接アクセス
  */
-export default function CandlestickChart({ className, height = 400 }: CandlestickChartProps) {
+export default function CandlestickChart({ 
+  className, 
+  height = 400, 
+  symbol: initialSymbol = 'BTCUSDT',
+  interval: initialInterval = '1m',
+  useApi = false
+}: CandlestickChartProps) {
   const { theme = 'light' } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ReturnType<IChartApi['addCandlestickSeries']> | null>(null)
   const volumeSeriesRef = useRef<ReturnType<IChartApi['addHistogramSeries']> | null>(null)
 
-  const [symbol, setSymbol] = useState('BTCUSDT')
-  const [interval, setInterval] = useState('1m')
+  const [symbol, setSymbol] = useState(initialSymbol)
+  const [interval, setInterval] = useState(initialInterval)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // チャートの初期化
   useEffect(() => {
@@ -92,91 +107,172 @@ export default function CandlestickChart({ className, height = 400 }: Candlestic
     })
   }, [theme])
 
-  // データ取得とWebSocket購読
+  // APIを使用したデータ取得
   useEffect(() => {
-    if (!candleSeriesRef.current) return
-
-    const controller = new AbortController()
-    let ws: WebSocket | null = null
-
-    async function load() {
-      try {
-        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`
-        const res = await fetch(url, { signal: controller.signal })
-        if (!res.ok) throw new Error('failed to fetch')
-        const raw = (await res.json()) as unknown[]
-        const candles: CandlestickData[] = raw.map((d: any) => ({
-          time: (d[0] / 1000) as UTCTimestamp,
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4]),
-        }))
-        const volumes: HistogramData[] = raw.map((d: any) => ({
-          time: (d[0] / 1000) as UTCTimestamp,
-          value: parseFloat(d[5]),
-          color: parseFloat(d[4]) >= parseFloat(d[1]) ? '#26a69a' : '#ef5350',
-        }))
-        candleSeriesRef.current!.setData(candles)
-        volumeSeriesRef.current!.setData(volumes)
-      } catch (e) {
-        console.error(e)
+    if (useApi) {
+      if (!candleSeriesRef.current) return;
+      
+      async function loadFromApi() {
+        try {
+          setLoading(true);
+          setError(null);
+          
+          const res = await fetch(`/api/candles?symbol=${symbol}&interval=${interval}`);
+          if (!res.ok) throw new Error('ローソク足データの取得に失敗しました');
+          
+          const json = await res.json();
+          const candles: CandlestickData[] = (json || []).map((d: any) => ({
+            time: d.time as UTCTimestamp,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+          }));
+          
+          // ボリュームデータがある場合
+          const volumes: HistogramData[] = (json || []).map((d: any) => ({
+            time: d.time as UTCTimestamp,
+            value: d.volume || 0,
+            color: d.close >= d.open ? '#26a69a' : '#ef5350',
+          }));
+          
+          candleSeriesRef.current.setData(candles);
+          volumeSeriesRef.current?.setData(volumes);
+        } catch (e) {
+          const message = (e as Error).message;
+          setError(message);
+          console.error('チャートデータ取得エラー:', e);
+          toast({
+            title: 'データ取得に失敗しました',
+            description: message,
+            variant: 'destructive',
+          });
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-    load()
+      
+      loadFromApi();
+      // WebSocketを使用しない（APIモード）
+      
+      return () => {
+        // APIモードのクリーンアップ
+      };
+    } else {
+      // 直接Binance APIを使用するモード
+      if (!candleSeriesRef.current) return;
 
-    ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`)
-    ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data)
-      const k = msg.k
-      const candle: CandlestickData = {
-        time: (k.t / 1000) as UTCTimestamp,
-        open: parseFloat(k.o),
-        high: parseFloat(k.h),
-        low: parseFloat(k.l),
-        close: parseFloat(k.c),
-      }
-      candleSeriesRef.current?.update(candle)
-      const volume: HistogramData = {
-        time: (k.t / 1000) as UTCTimestamp,
-        value: parseFloat(k.v),
-        color: parseFloat(k.c) >= parseFloat(k.o) ? '#26a69a' : '#ef5350',
-      }
-      volumeSeriesRef.current?.update(volume)
-    }
+      const controller = new AbortController();
+      let ws: WebSocket | null = null;
 
-    return () => {
-      controller.abort()
-      ws?.close()
+      async function loadDirectly() {
+        try {
+          setLoading(true);
+          setError(null);
+          
+          const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`;
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) throw new Error('failed to fetch');
+          
+          const raw = (await res.json()) as unknown[];
+          const candles: CandlestickData[] = raw.map((d: any) => ({
+            time: (d[0] / 1000) as UTCTimestamp,
+            open: parseFloat(d[1]),
+            high: parseFloat(d[2]),
+            low: parseFloat(d[3]),
+            close: parseFloat(d[4]),
+          }));
+          
+          const volumes: HistogramData[] = raw.map((d: any) => ({
+            time: (d[0] / 1000) as UTCTimestamp,
+            value: parseFloat(d[5]),
+            color: parseFloat(d[4]) >= parseFloat(d[1]) ? '#26a69a' : '#ef5350',
+          }));
+          
+          candleSeriesRef.current!.setData(candles);
+          volumeSeriesRef.current!.setData(volumes);
+        } catch (e) {
+          const message = (e as Error).message;
+          setError(message);
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      }
+      
+      loadDirectly();
+
+      // WebSocketで更新を取得（直接モード）
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`);
+      ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
+        const k = msg.k;
+        const candle: CandlestickData = {
+          time: (k.t / 1000) as UTCTimestamp,
+          open: parseFloat(k.o),
+          high: parseFloat(k.h),
+          low: parseFloat(k.l),
+          close: parseFloat(k.c),
+        };
+        candleSeriesRef.current?.update(candle);
+        
+        const volume: HistogramData = {
+          time: (k.t / 1000) as UTCTimestamp,
+          value: parseFloat(k.v),
+          color: parseFloat(k.c) >= parseFloat(k.o) ? '#26a69a' : '#ef5350',
+        };
+        volumeSeriesRef.current?.update(volume);
+      };
+
+      return () => {
+        controller.abort();
+        ws?.close();
+      };
     }
-  }, [symbol, interval])
+  }, [symbol, interval, useApi]);
+
+  // ローディング中の表示
+  if (loading && useApi) {
+    return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
+  }
+
+  // エラー表示
+  if (error && useApi) {
+    return (
+      <div data-testid="error" className="text-center text-sm text-red-500">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
-      <div className="mb-2 flex space-x-2 text-sm">
-        <select
-          value={symbol}
-          onChange={(e) => setSymbol(e.target.value)}
-          className="border rounded px-2 py-1"
-        >
-          <option value="BTCUSDT">BTC/USDT</option>
-          <option value="ETHUSDT">ETH/USDT</option>
-          <option value="BNBUSDT">BNB/USDT</option>
-        </select>
-        <select
-          value={interval}
-          onChange={(e) => setInterval(e.target.value)}
-          className="border rounded px-2 py-1"
-        >
-          <option value="1m">1m</option>
-          <option value="5m">5m</option>
-          <option value="15m">15m</option>
-          <option value="1h">1h</option>
-          <option value="4h">4h</option>
-          <option value="1d">1d</option>
-        </select>
-      </div>
-      <div ref={containerRef} className="w-full" style={{ height }} />
+      {!useApi && (
+        <div className="mb-2 flex space-x-2 text-sm">
+          <select
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
+            className="border rounded px-2 py-1"
+          >
+            <option value="BTCUSDT">BTC/USDT</option>
+            <option value="ETHUSDT">ETH/USDT</option>
+            <option value="BNBUSDT">BNB/USDT</option>
+          </select>
+          <select
+            value={interval}
+            onChange={(e) => setInterval(e.target.value)}
+            className="border rounded px-2 py-1"
+          >
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+            <option value="1d">1d</option>
+          </select>
+        </div>
+      )}
+      <div ref={containerRef} className="w-full" style={{ height }} data-testid="chart-container" />
     </div>
   )
 }

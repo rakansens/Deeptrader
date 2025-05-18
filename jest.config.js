@@ -7,9 +7,10 @@ const createJestConfig = nextJest({
 });
 
 // Jestのカスタム設定
-const customJestConfig = {
+module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     // エイリアスの設定
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -20,7 +21,7 @@ const customJestConfig = {
   ],
   transform: {
     // ts-jestを使用してTypeScriptファイルをトランスパイル
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json', useESM: true }],
   },
   moduleFileExtensions: [
     'ts',
@@ -31,7 +32,4 @@ const customJestConfig = {
     'node'
   ],
   coverageDirectory: '<rootDir>/coverage',
-};
-
-// createJestConfigを使用して、Next.jsの設定を反映したJest設定を生成
-module.exports = createJestConfig(customJestConfig); 
+}; 
