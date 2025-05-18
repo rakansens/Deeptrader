@@ -3,13 +3,9 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { PenLine, Trash2 } from "lucide-react";
+import type { Conversation } from "@/types/chat";
 
-export interface Conversation {
-  id: string;
-  title: string;
-}
-
-export interface ConversationSidebarProps {
+interface ConversationSidebarProps {
   conversations: Conversation[];
   selectedId?: string;
   onSelect: (id: string) => void;

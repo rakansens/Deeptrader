@@ -3,9 +3,10 @@
 import { cn } from "@/lib/utils";
 import TypingIndicator from "./typing-indicator";
 import type { ReactNode } from "react";
+import type { ChatRole } from "@/types/chat";
 
 export interface MessageBubbleProps {
-  role: "user" | "assistant";
+  role: ChatRole;
   children: ReactNode;
   className?: string;
   /** アシスタントが入力中であることを示す */

@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
-import type { Conversation } from "@/components/chat/conversation-sidebar";
-
-export interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import type { Conversation, Message } from "@/types/chat";
 
 export interface UseChat {
   messages: Message[];
