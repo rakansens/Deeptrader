@@ -90,10 +90,15 @@ const config: Config = {
             height: '0',
           },
         },
+        'typing-bounce': {
+          '0%, 80%, 100%': { transform: 'scale(0)' },
+          '40%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'typing-bounce': 'typing-bounce 1s infinite',
       },
     },
   },

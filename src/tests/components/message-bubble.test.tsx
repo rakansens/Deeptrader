@@ -7,13 +7,12 @@ describe('MessageBubble', () => {
     expect(screen.getByText('あなた')).toBeInTheDocument()
   })
 
-  it('applies typing animation', () => {
+  it('shows typing indicator', () => {
     render(
       <MessageBubble role="assistant" typing>
         typing
       </MessageBubble>
     )
-    const content = screen.getByText('typing')
-    expect(content.className).toMatch(/animate-pulse/)
+    expect(screen.getByTestId('typing-indicator')).toBeInTheDocument()
   })
 })

@@ -39,9 +39,9 @@ describe('Chat', () => {
       const textarea = screen.getByPlaceholderText('メッセージを入力...')
       await user.type(textarea, 'loading')
       await user.keyboard('{Enter}')
-      expect(screen.getByText('考え中...')).toBeInTheDocument()
+      expect(screen.getByTestId('typing-indicator')).toBeInTheDocument()
       resolveFetch!({ ok: true, json: async () => ({ reply: 'done' }) } as Response)
-      await waitFor(() => expect(screen.queryByText('考え中...')).not.toBeInTheDocument())
+      await waitFor(() => expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument())
     })
 
     it('displays error message when API fails', async () => {

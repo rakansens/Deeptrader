@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUpIcon, LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
@@ -95,10 +95,7 @@ export default function Chat() {
           )}
           {loading && (
             <MessageBubble role="assistant" typing>
-              <div className="flex items-center">
-                <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
-                <span className="text-sm">考え中...</span>
-              </div>
+              <span className="text-sm">考え中...</span>
             </MessageBubble>
           )}
           {error && !loading && (

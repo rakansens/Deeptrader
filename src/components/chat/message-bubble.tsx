@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import TypingIndicator from "./typing-indicator";
 import type { ReactNode } from "react";
 
 export interface MessageBubbleProps {
@@ -30,10 +31,15 @@ export function MessageBubble({
       <p className="text-sm font-medium">
         {role === "user" ? "あなた" : "DeepTrader AI"}
       </p>
-      <div
-        className={cn("text-sm whitespace-pre-wrap", typing && "animate-pulse")}
-      >
-        {children}
+      <div className="text-sm whitespace-pre-wrap">
+        {typing ? (
+          <div className="flex items-center gap-2">
+            <TypingIndicator />
+            {children}
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );
