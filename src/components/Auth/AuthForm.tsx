@@ -44,8 +44,12 @@ export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
         if (error) throw error;
         setMessage("確認メールを送信しました。メールを確認してください。");
       }
-    } catch (error: any) {
-      setError(error.message || "認証エラーが発生しました。");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("認証エラーが発生しました。");
+      }
     } finally {
       setIsLoading(false);
     }
