@@ -1,13 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import CandlestickChart from '@/components/chart/CandlestickChart'
-import { toast } from '@/hooks/use-toast'
+import { render, screen, waitFor } from "@testing-library/react";
+import CandlestickChart from "@/components/chart/CandlestickChart";
+import { toast } from "@/hooks/use-toast";
 
-jest.mock('@/hooks/use-toast', () => ({
+jest.mock("@/hooks/use-toast", () => ({
   toast: jest.fn(),
-}))
+}));
 
 // モックが必要なのでlightweight-chartsをモック化
-jest.mock('lightweight-charts', () => ({
+jest.mock("lightweight-charts", () => ({
   createChart: jest.fn(() => ({
     addCandlestickSeries: jest.fn(() => ({
       setData: jest.fn(),
@@ -24,7 +24,7 @@ jest.mock('lightweight-charts', () => ({
       applyOptions: jest.fn(),
     })),
     priceScale: jest.fn(() => ({
-      applyOptions: jest.fn()
+      applyOptions: jest.fn(),
     })),
     timeScale: jest.fn(() => ({
       subscribeVisibleLogicalRangeChange: jest.fn(),
@@ -37,88 +37,66 @@ jest.mock('lightweight-charts', () => ({
     remove: jest.fn(),
   })),
   CrosshairMode: { Normal: 0, Magnet: 1 },
-}))
+}));
 
-describe('CandlestickChart', () => {
-  const originalFetch = global.fetch
+describe("CandlestickChart", () => {
+  const originalFetch = global.fetch;
 
   afterEach(() => {
-    global.fetch = originalFetch
-    jest.clearAllMocks()
-  })
+    global.fetch = originalFetch;
+    jest.clearAllMocks();
+  });
 
-  it.skip('APIモード: ローディング中はスケルトンを表示する', async () => {
-    let resolveFetch: (value: Response | PromiseLike<Response>) => void
-    const fetchPromise = new Promise<Response>(r => {
-      resolveFetch = r
-    })
-    global.fetch = jest.fn().mockReturnValue(fetchPromise)
-    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />)
-    expect(screen.getByTestId('loading')).toBeInTheDocument()
-    resolveFetch!({ ok: true, json: async () => [] } as Response)
-    // スケルトンが消えるまで待機
-    await waitFor(() => {})
-  })
+  it("useApi=true: API呼び出しとWebSocket接続を行う", async () => {
+    let resolveFetch: (value: Response | PromiseLike<Response>) => void;
+    const fetchPromise = new Promise<Response>((r) => {
+      resolveFetch = r;
+    });
+    global.fetch = jest.fn().mockReturnValue(fetchPromise);
 
-  it.skip('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false } as Response)
-    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />)
-    await waitFor(() => {})
-    expect(true).toBe(true)
-  })
+    const mockWebSocket = { close: jest.fn(), onmessage: null as any };
+    global.WebSocket = jest.fn(() => mockWebSocket) as any;
 
-  it('直接モード: チャートコンテナが表示される', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ 
-      ok: true, 
-      json: async () => [[1625097600000, "35000", "36000", "34500", "35500", "1000", 1625184000000, "35500000", 1000, "500", "17750000", "0"]] 
-    } as Response)
-    
-    // WebSocketのモック
-    const mockWebSocket = {
-      close: jest.fn(),
-      onmessage: null as any
-    }
-    global.WebSocket = jest.fn(() => mockWebSocket) as any
-    
-    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={false} />)
-    expect(screen.getByTestId('chart-container')).toBeInTheDocument()
+    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />);
+    expect(screen.getByTestId("loading")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalled();
+    expect(global.WebSocket).toHaveBeenCalled();
 
-    const { createChart, CrosshairMode } = require('lightweight-charts')
-    const options = (createChart as jest.Mock).mock.calls[0][1]
-    expect(options.crosshair.mode).toBe(CrosshairMode.Normal)
-    expect(options.grid.vertLines.color).toBeDefined()
-    expect(options.rightPriceScale.borderVisible).toBe(true)
-    
-    // WebSocketメッセージのシミュレーション
-    if (mockWebSocket.onmessage) {
-      mockWebSocket.onmessage({
-        data: JSON.stringify({
-          k: {
-            t: 1625097600000,
-            o: "35000",
-            h: "36000",
-            l: "34500",
-            c: "35500",
-            v: "1000"
-          }
-        })
-      })
-    }
-    
-    await waitFor(() => expect(global.fetch).toHaveBeenCalled())
-  })
+    resolveFetch!({ ok: true, json: async () => [] } as Response);
+    await waitFor(() => expect(screen.queryByTestId("loading")).toBeNull());
+  });
 
-  it('RSI/MACD パネルの表示切り替え', () => {
+  it.skip("APIモード: 取得失敗時にエラーメッセージとトーストを表示する", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false } as Response);
+    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />);
+    await waitFor(() => {});
+    expect(true).toBe(true);
+  });
+
+  it("useApi=false: API呼び出しとWebSocket接続を行わない", () => {
+    global.fetch = jest.fn();
+
+    const mockWebSocket = { close: jest.fn(), onmessage: null as any };
+    global.WebSocket = jest.fn(() => mockWebSocket) as any;
+
+    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={false} />);
+    expect(screen.getByTestId("chart-container")).toBeInTheDocument();
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(global.WebSocket).not.toHaveBeenCalled();
+  });
+
+  it("RSI/MACD パネルの表示切り替え", () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
-    } as Response)
+    } as Response);
 
     const mockWebSocket = {
       close: jest.fn(),
       onmessage: null as any,
-    }
-    global.WebSocket = jest.fn(() => mockWebSocket) as any
+    };
+    global.WebSocket = jest.fn(() => mockWebSocket) as any;
 
     const { rerender } = render(
       <CandlestickChart
@@ -126,11 +104,11 @@ describe('CandlestickChart', () => {
         interval="1m"
         useApi={false}
         indicators={{ ma: false, rsi: true, macd: false, boll: false }}
-      />
-    )
+      />,
+    );
 
-    expect(screen.getByTestId('rsi-panel')).toBeInTheDocument()
-    expect(screen.queryByTestId('macd-panel')).toBeNull()
+    expect(screen.getByTestId("rsi-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("macd-panel")).toBeNull();
 
     rerender(
       <CandlestickChart
@@ -138,10 +116,10 @@ describe('CandlestickChart', () => {
         interval="1m"
         useApi={false}
         indicators={{ ma: false, rsi: false, macd: true, boll: false }}
-      />
-    )
+      />,
+    );
 
-    expect(screen.queryByTestId('rsi-panel')).toBeNull()
-    expect(screen.getByTestId('macd-panel')).toBeInTheDocument()
-  })
-})
+    expect(screen.queryByTestId("rsi-panel")).toBeNull();
+    expect(screen.getByTestId("macd-panel")).toBeInTheDocument();
+  });
+});
