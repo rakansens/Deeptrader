@@ -20,6 +20,8 @@ export interface UseChat {
   selectedId: string;
   selectConversation: (id: string) => void;
   newConversation: () => void;
+  renameConversation: (id: string, title: string) => void;
+  removeConversation: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   sendMessage: () => Promise<void>;
@@ -39,6 +41,8 @@ export function useChat(): UseChat {
     selectedId,
     selectConversation,
     newConversation: createConversation,
+    renameConversation,
+    removeConversation,
   } = useConversations();
 
   const { sidebarOpen, toggleSidebar } = useSidebar(true);
@@ -108,6 +112,8 @@ export function useChat(): UseChat {
     selectedId,
     selectConversation,
     newConversation,
+    renameConversation,
+    removeConversation,
     sidebarOpen,
     toggleSidebar,
     sendMessage,

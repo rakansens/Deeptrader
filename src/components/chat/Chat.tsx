@@ -18,6 +18,8 @@ export default function Chat() {
     selectedId,
     selectConversation,
     newConversation,
+    renameConversation,
+    removeConversation,
     sidebarOpen,
     toggleSidebar,
     sendMessage,
@@ -30,6 +32,8 @@ export default function Chat() {
           conversations={conversations}
           selectedId={selectedId}
           onSelect={selectConversation}
+          onRename={renameConversation}
+          onRemove={removeConversation}
           className="hidden md:block"
           footer={
             <Button variant="outline" className="w-full" onClick={newConversation}>

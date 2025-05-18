@@ -8,6 +8,8 @@ export interface UseConversations {
   selectedId: string;
   selectConversation: (id: string) => void;
   newConversation: () => string;
+  renameConversation: (id: string, title: string) => void;
+  removeConversation: (id: string) => void;
 }
 
 /**
@@ -31,7 +33,28 @@ export function useConversations(): UseConversations {
     return id;
   };
 
-  return { conversations, selectedId, selectConversation, newConversation };
+  const renameConversation = (id: string, title: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title } : c))
+    );
+  };
+
+  const removeConversation = (id: string) => {
+    setConversations((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      setSelectedId((s) => (s === id ? updated[0]?.id ?? "" : s));
+      return updated;
+    });
+  };
+
+  return {
+    conversations,
+    selectedId,
+    selectConversation,
+    newConversation,
+    renameConversation,
+    removeConversation,
+  };
 }
 
 export default useConversations;
