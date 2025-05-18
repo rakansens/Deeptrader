@@ -57,11 +57,12 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] w-full">
-                  <CandlestickChart 
-                    height={400} 
+                  <CandlestickChart
+                    height={400}
                     indicators={indicators}
                     interval={timeframe}
                     symbol={symbol}
+                    onIndicatorsChange={setIndicators}
                   />
                 </div>
               </CardContent>
