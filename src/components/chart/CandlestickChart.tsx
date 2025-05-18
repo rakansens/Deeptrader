@@ -1,6 +1,15 @@
 'use client'
 
-import { createChart, IChartApi, LineData, CandlestickData, HistogramData, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
+import {
+  createChart,
+  IChartApi,
+  LineData,
+  CandlestickData,
+  HistogramData,
+  ISeriesApi,
+  UTCTimestamp,
+  CrosshairMode
+} from 'lightweight-charts'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTheme } from 'next-themes'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,6 +55,23 @@ export default function CandlestickChart({
   onIndicatorsChange
 }: CandlestickChartProps) {
   const { theme = 'light' } = useTheme()
+  
+  // テーマに応じた色を取得する関数
+  const getThemeColors = useCallback(() => {
+    const isDark = theme === 'dark'
+    return {
+      background: isDark ? '#1e1e1e' : '#ffffff',
+      text: isDark ? '#d1d5db' : '#111827',
+      grid: isDark ? '#2f3338' : '#e0e0e0',
+      crosshair: isDark ? '#d1d5db' : '#111827',
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      volume: '#4b5563'
+    }
+  }, [theme])
+  
+  // テーマカラーをメモ化
+  const themeColors = getThemeColors()
   const containerRef = useRef<HTMLDivElement>(null)  // メインチャートとシリーズの参照
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -95,40 +121,62 @@ export default function CandlestickChart({
   useEffect(() => {
     if (!containerRef.current) return
 
+    const colors = getThemeColors()
+
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height,
       layout: {
-        background: { color: theme === 'dark' ? '#1e1e1e' : '#ffffff' },
-        textColor: theme === 'dark' ? '#d1d5db' : '#111827',
+        background: { color: colors.background },
+        textColor: colors.text,
       },
+      // グリッド線の色をテーマに合わせる
       grid: {
-        vertLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
-        horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
       },
-      crosshair: { mode: 0 },
-      rightPriceScale: { 
-        borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0',
-        // メイン価格チャートの表示領域を確保
+      // クロスヘア設定: 常に表示しラインの色を調整
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { 
+          color: colors.crosshair,
+          labelVisible: true,
+          labelBackgroundColor: colors.background
+        },
+        horzLine: { 
+          color: colors.crosshair,
+          labelVisible: true,
+          labelBackgroundColor: colors.background
+        }
+      },
+      // 価格スケール: 枠線を表示して価格ラインのスペースを確保
+      rightPriceScale: {
+        borderColor: colors.grid,
+        borderVisible: true,
         scaleMargins: {
           top: 0.1, // 上部に少し余白を持たせる
-          bottom: 0.2, // 下部に20%の余白を確保し、インジケーターのスペースを作る
+          bottom: 0.2, // 下部に20%の余薄を確保し、インジケーターのスペースを作る
         },
       },
-      timeScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0', timeVisible: true },
+      timeScale: { 
+        borderColor: colors.grid, 
+        timeVisible: true 
+      },
     })
 
     chartRef.current = chart
     candleSeriesRef.current = chart.addCandlestickSeries({
-      upColor: '#26a69a',
-      downColor: '#ef5350',
-      wickUpColor: '#26a69a',
-      wickDownColor: '#ef5350',
+      upColor: colors.upColor,
+      downColor: colors.downColor,
+      wickUpColor: colors.upColor,
+      wickDownColor: colors.downColor,
+      borderVisible: false,
     })
+    
     volumeSeriesRef.current = chart.addHistogramSeries({
       priceFormat: { type: 'volume' },
       priceScaleId: 'vol',
-      color: '#4b5563',
+      color: colors.volume,
     })
 
     // データがあれば複数のローソク足データを再設定する
@@ -257,19 +305,60 @@ export default function CandlestickChart({
   // テーマ変更時のスタイル更新
   useEffect(() => {
     if (!chartRef.current) return
+    
+    const colors = getThemeColors()
+    
+    // チャートのスタイルを更新
     chartRef.current.applyOptions({
       layout: {
-        background: { color: theme === 'dark' ? '#1e1e1e' : '#ffffff' },
-        textColor: theme === 'dark' ? '#d1d5db' : '#111827',
+        background: { color: colors.background },
+        textColor: colors.text,
       },
       grid: {
-        vertLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
-        horzLines: { color: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
       },
-      rightPriceScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
-      timeScale: { borderColor: theme === 'dark' ? '#2f3338' : '#e0e0e0' },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { 
+          color: colors.crosshair,
+          labelVisible: true,
+          labelBackgroundColor: colors.background
+        },
+        horzLine: { 
+          color: colors.crosshair,
+          labelVisible: true,
+          labelBackgroundColor: colors.background
+        }
+      },
+      rightPriceScale: { 
+        borderColor: colors.grid,
+        borderVisible: true
+      },
+      timeScale: { 
+        borderColor: colors.grid,
+        timeVisible: true
+      },
     })
-  }, [theme])
+    
+    // ローソク足の色も更新
+    if (candleSeriesRef.current) {
+      candleSeriesRef.current.applyOptions({
+        upColor: colors.upColor,
+        downColor: colors.downColor,
+        wickUpColor: colors.upColor,
+        wickDownColor: colors.downColor,
+        borderVisible: false,
+      })
+    }
+    
+    // ボリュームの色も更新
+    if (volumeSeriesRef.current) {
+      volumeSeriesRef.current.applyOptions({
+        color: colors.volume
+      })
+    }
+  }, [theme, getThemeColors])
 
   // インジケーター表示切り替え
   useEffect(() => {

@@ -41,9 +41,9 @@ export default function ChartToolbar({
   onIndicatorsChange,
 }: ChartToolbarProps) {
   return (
-    <div
+    <div 
       data-testid="chart-toolbar"
-      className="flex flex-wrap items-center gap-4 p-4"
+      className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between bg-background border-b"
     >
       <div className="flex gap-4 items-center">
         {onSymbolChange && (

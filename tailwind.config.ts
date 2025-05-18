@@ -1,5 +1,12 @@
 import type { Config } from 'tailwindcss';
 
+/**
+ * TradingView風チャート用カラー変数
+ * --tv-bg: チャート背景色
+ * --tv-grid: グリッドラインの色
+ * --tv-crosshair: クロスヘアラインの色
+ */
+
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -59,6 +66,11 @@ const config: Config = {
           '3': 'hsl(var(--chart-3))',
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
+        },
+        tv: {
+          background: 'rgb(var(--tv-bg))',
+          grid: 'rgb(var(--tv-grid))',
+          crosshair: 'rgb(var(--tv-crosshair))',
         },
       },
       keyframes: {

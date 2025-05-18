@@ -34,6 +34,7 @@ jest.mock('lightweight-charts', () => ({
     removeSeries: jest.fn(),
     remove: jest.fn(),
   })),
+  CrosshairMode: { Normal: 0, Magnet: 1 },
 }))
 
 describe('CandlestickChart', () => {
@@ -79,6 +80,12 @@ describe('CandlestickChart', () => {
     
     render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={false} />)
     expect(screen.getByTestId('chart-container')).toBeInTheDocument()
+
+    const { createChart, CrosshairMode } = require('lightweight-charts')
+    const options = (createChart as jest.Mock).mock.calls[0][1]
+    expect(options.crosshair.mode).toBe(CrosshairMode.Normal)
+    expect(options.grid.vertLines.color).toBeDefined()
+    expect(options.rightPriceScale.borderVisible).toBe(true)
     
     // WebSocketメッセージのシミュレーション
     if (mockWebSocket.onmessage) {
