@@ -16,7 +16,7 @@ describe('ChartToolbar', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: '5m' }))
+    await user.click(screen.getByRole('radio', { name: 'Timeframe 5m' }))
     expect(onTf).toHaveBeenCalledWith('5m')
 
     await user.click(screen.getByLabelText('MA'))

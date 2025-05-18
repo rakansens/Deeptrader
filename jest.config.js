@@ -1,13 +1,15 @@
 // jest.config.js
-const nextJest = require('next/jest');
-
-const createJestConfig = nextJest({
-  // next.config.jsとテスト環境用の.envファイルが配置されたディレクトリをセット
-  dir: './',
-});
-
-// Jestのカスタム設定
+/**
+ * Jest設定
+ * Next.js依存を避け、ts-jestを利用してトランスパイルする
+ */
 const customJestConfig = {
+  preset: 'ts-jest',
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.jest.json',
+    },
+  },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
@@ -33,5 +35,4 @@ const customJestConfig = {
   coverageDirectory: '<rootDir>/coverage',
 };
 
-// createJestConfigを使用して、Next.jsの設定を反映したJest設定を生成
-module.exports = createJestConfig(customJestConfig); 
+module.exports = customJestConfig;
