@@ -3,71 +3,12 @@
 import { createChart, UTCTimestamp, IChartApi, ISeriesApi } from 'lightweight-charts';
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  computeSMA,
+  computeRSI,
+  computeMACD,
+} from '@/lib/indicators';
 
-/**
- * Compute simple moving average.
- */
-function computeSMA(data: number[], period: number): number | null {
-  if (data.length < period) return null;
-  const slice = data.slice(-period);
-  const sum = slice.reduce((a, b) => a + b, 0);
-  return sum / period;
-}
-
-/**
- * Compute RSI indicator.
- */
-function computeRSI(data: number[], period: number): number | null {
-  if (data.length < period + 1) return null;
-  let gains = 0;
-  let losses = 0;
-  for (let i = data.length - period; i < data.length; i++) {
-    const diff = data[i] - data[i - 1];
-    if (diff >= 0) gains += diff; else losses -= diff;
-  }
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
-  if (avgLoss === 0) return 100;
-  const rs = avgGain / avgLoss;
-  return 100 - 100 / (1 + rs);
-}
-
-/**
- * 指数移動平均を計算する
- */
-function computeEMA(data: number[], period: number): number | null {
-  if (data.length < period) return null;
-  const k = 2 / (period + 1);
-  let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < data.length; i++) {
-    ema = data[i] * k + ema * (1 - k);
-  }
-  return ema;
-}
-
-/**
- * MACDを計算する
- */
-function computeMACD(
-  data: number[],
-  short = 12,
-  long = 26,
-  signalPeriod = 9
-): { macd: number; signal: number; histogram: number } | null {
-  if (data.length < long + signalPeriod) return null;
-  const macdSeries: number[] = [];
-  for (let i = long; i <= data.length; i++) {
-    const slice = data.slice(0, i);
-    const shortEma = computeEMA(slice, short);
-    const longEma = computeEMA(slice, long);
-    if (shortEma === null || longEma === null) continue;
-    macdSeries.push(shortEma - longEma);
-  }
-  const macd = macdSeries[macdSeries.length - 1];
-  const signal = computeEMA(macdSeries, signalPeriod);
-  if (signal === null) return null;
-  return { macd, signal, histogram: macd - signal };
-}
 
 export default function PriceChart() {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -1,68 +1,25 @@
 'use client'
 
-import { createChart, IChartApi, LineData, CandlestickData, HistogramData, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
+import {
+  createChart,
+  IChartApi,
+  LineData,
+  CandlestickData,
+  HistogramData,
+  ISeriesApi,
+  UTCTimestamp,
+} from 'lightweight-charts'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/hooks/use-toast'
+import {
+  computeSMA,
+  computeRSI,
+  computeMACD,
+  computeBollinger,
+} from '@/lib/indicators'
 
-/** SMAの計算 */
-function computeSMA(data: number[], period: number): number | null {
-  if (data.length < period) return null
-  const slice = data.slice(-period)
-  const sum = slice.reduce((a, b) => a + b, 0)
-  return sum / period
-}
-
-/** EMAの計算 */
-function computeEMA(data: number[], period: number): number | null {
-  if (data.length < period) return null
-  const k = 2 / (period + 1)
-  let ema = data[data.length - period]
-  for (let i = data.length - period + 1; i < data.length; i++) {
-    ema = data[i] * k + ema * (1 - k)
-  }
-  return ema
-}
-
-/** RSIの計算 */
-function computeRSI(data: number[], period: number): number | null {
-  if (data.length < period + 1) return null
-  let gains = 0
-  let losses = 0
-  for (let i = data.length - period; i < data.length; i++) {
-    const diff = data[i] - data[i - 1]
-    if (diff >= 0) gains += diff
-    else losses -= diff
-  }
-  const avgGain = gains / period
-  const avgLoss = losses / period
-  if (avgLoss === 0) return 100
-  const rs = avgGain / avgLoss
-  return 100 - 100 / (1 + rs)
-}
-
-/** MACDの計算 */
-function computeMACD(prices: number[], macdHist: number[]): { macd: number; signal: number } | null {
-  const fast = computeEMA(prices, 12)
-  const slow = computeEMA(prices, 26)
-  if (fast === null || slow === null) return null
-  const macdLine = fast - slow
-  macdHist.push(macdLine)
-  const signal = computeEMA(macdHist, 9)
-  if (signal === null) return null
-  return { macd: macdLine, signal }
-}
-
-/** ボリンジャーバンドの計算 */
-function computeBollinger(data: number[], period = 20): { upper: number; lower: number } | null {
-  if (data.length < period) return null
-  const slice = data.slice(-period)
-  const mean = slice.reduce((a, b) => a + b, 0) / period
-  const variance = slice.reduce((sum, v) => sum + (v - mean) ** 2, 0) / period
-  const sd = Math.sqrt(variance)
-  return { upper: mean + 2 * sd, lower: mean - 2 * sd }
-}
 
 interface IndicatorOptions {
   ma: boolean
@@ -115,7 +72,6 @@ export default function CandlestickChart({
   const histogramSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
   const closePricesRef = useRef<number[]>([])
-  const macdHistoryRef = useRef<number[]>([])
   const maDataRef = useRef<LineData[]>([])
   const rsiDataRef = useRef<LineData[]>([])
   const macdLineDataRef = useRef<LineData[]>([])
@@ -444,7 +400,7 @@ export default function CandlestickChart({
           }
 
           // MACDの計算
-          const macd = computeMACD(closePricesRef.current, macdHistoryRef.current)
+          const macd = computeMACD(closePricesRef.current)
           if (macd) {
             macdLineDataRef.current.push({ time: candle.time, value: macd.macd })
             signalLineDataRef.current.push({ time: candle.time, value: macd.signal })
@@ -517,7 +473,7 @@ export default function CandlestickChart({
         rsiSeriesRef.current.update({ time: candle.time, value: rsi })
       }
 
-      const macd = computeMACD(closePricesRef.current, macdHistoryRef.current)
+      const macd = computeMACD(closePricesRef.current)
       if (macd && macdSeriesRef.current && signalSeriesRef.current) {
         macdSeriesRef.current.update({ time: candle.time, value: macd.macd })
         signalSeriesRef.current.update({ time: candle.time, value: macd.signal })
@@ -535,7 +491,6 @@ export default function CandlestickChart({
       ws?.close()
       // クリーンアップ時にデータもリセット
       closePricesRef.current = []
-      macdHistoryRef.current = []
       maDataRef.current = []
       rsiDataRef.current = []
       macdLineDataRef.current = []
