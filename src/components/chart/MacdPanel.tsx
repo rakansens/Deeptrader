@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useCallback } from 'react'
-import { createChart, IChartApi, ISeriesApi, LineData, HistogramData, UTCTimestamp, CrosshairMode } from 'lightweight-charts'
+import { createChart, IChartApi, ISeriesApi, LineData, HistogramData, UTCTimestamp, CrosshairMode, VisibleLogicalRange } from 'lightweight-charts'
 import IndicatorPanel from './IndicatorPanel'
 import useChartTheme from '@/hooks/use-chart-theme'
 import { preprocessLineData } from '@/lib/chart-utils'
@@ -119,7 +119,7 @@ export default function MacdPanel({ macd, signal, chart, height, onClose }: Macd
     }
 
     if (chart) {
-      const sync = (range: any) => {
+      const sync = (range: VisibleLogicalRange | null) => {
         if (chartRef.current && range !== null) {
           chartRef.current.timeScale().setVisibleLogicalRange(range)
         }
