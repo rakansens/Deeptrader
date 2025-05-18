@@ -72,6 +72,7 @@ export default function ChartToolbar({
         <div className="flex items-center gap-2">
           <Switch
             id="rsi-toggle"
+            data-testid="switch-rsi"
             checked={indicators.rsi}
             onCheckedChange={(v) => onIndicatorsChange({ ...indicators, rsi: v })}
           />
@@ -80,6 +81,7 @@ export default function ChartToolbar({
         <div className="flex items-center gap-2">
           <Switch
             id="macd-toggle"
+            data-testid="switch-macd"
             checked={!!indicators.macd}
             onCheckedChange={(v) => onIndicatorsChange({ ...indicators, macd: v })}
           />
