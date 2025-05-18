@@ -1,92 +1,27 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUpIcon, LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
-import { useConversations } from "@/hooks/use-conversations";
-import { useSidebar } from "@/hooks/use-sidebar";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import { useChat } from "@/hooks/use-chat";
 
 export default function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const {
+    messages,
+    input,
+    setInput,
+    loading,
+    error,
     conversations,
     selectedId,
     selectConversation,
     newConversation,
-  } = useConversations();
-
-  const { sidebarOpen, toggleSidebar } = useSidebar(true);
-  /** 新しい会話を開始する */
-  const handleNewConversation = () => {
-    newConversation();
-    setMessages([]);
-  };
-
-  const sendMessage = async () => {
-    const text = input.trim();
-    if (!text) return;
-    setInput("");
-    setError(null);
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
-
-      if (!res.ok) {
-        // レスポンスがJSONでない場合にエラーをキャッチ
-        let errorMessage = "";
-        try {
-          const data = await res.json();
-          errorMessage = data.error || `APIエラー: ${res.status}`;
-        } catch (e) {
-          errorMessage = `APIエラー: ${res.status}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await res.json();
-      if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.reply },
-        ]);
-      } else {
-        throw new Error("APIからの応答が無効です");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "メッセージ送信中にエラーが発生しました";
-      setError(errorMessage);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: `すみません、エラーが発生しました: ${errorMessage}`,
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    sidebarOpen,
+    toggleSidebar,
+    sendMessage,
+  } = useChat();
 
   return (
     <div className="flex h-full relative">
@@ -97,7 +32,7 @@ export default function Chat() {
           onSelect={selectConversation}
           className="hidden md:block"
           footer={
-            <Button variant="outline" className="w-full" onClick={handleNewConversation}>
+            <Button variant="outline" className="w-full" onClick={newConversation}>
               新しいチャット
             </Button>
           }
