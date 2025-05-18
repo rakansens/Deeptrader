@@ -150,6 +150,7 @@ const result = await tradingAgent.generate("BTCの現在のレジスタンスレ
 1. **メモリスレッドの管理**:
    - ユーザーごとに`resourceId`を割り当て
    - 分析セッションごとに新しい`threadId`を使用
+   - `threadId`にはSupabaseの`conversations.id`を利用すると会話履歴を再利用できます
 
 2. **エラー処理**:
    - ツール実行失敗時のフォールバック戦略を実装

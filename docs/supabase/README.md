@@ -34,5 +34,8 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 - `conversations`: ユーザーごとの会話セッション
 - `messages`: 各会話のメッセージ履歴
 
+`conversations.id` はアプリ内でスレッドIDとして利用できます。メッセージ取得時に
+このIDを指定することで、過去の会話を再生できます。
+
 テーブル作成後、Row Level Security (RLS) ポリシーを設定して適切にアクセス制御を行ってください。
 

@@ -107,6 +107,66 @@ export type Database = {
           metadata?: Json | null;
         };
       };
+
+      profiles: {
+        Row: {
+          id: string;
+          username: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          username?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          username?: string | null;
+          created_at?: string | null;
+        };
+      };
+
+      conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+      };
+
+      messages: {
+        Row: {
+          id: number;
+          conversation_id: string;
+          sender: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          conversation_id: string;
+          sender: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          conversation_id?: string;
+          sender?: string;
+          content?: string;
+          created_at?: string;
+        };
+      };
     };
     
     Views: {

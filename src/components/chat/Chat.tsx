@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowUpIcon, LoaderCircle } from 'lucide-react';
@@ -11,17 +11,83 @@ interface Message {
 }
 
 export default function Chat() {
+  const [conversations, setConversations] = useState<{ id: string }[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 会話リストの取得
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await fetch('/api/conversations');
+        if (!res.ok) return;
+        const data = await res.json();
+        setConversations(data);
+        if (data.length > 0 && !selectedConversation) {
+          setSelectedConversation(data[0].id);
+        }
+      } catch (e) {
+        console.error('Failed to load conversations');
+      }
+    };
+    fetchConversations();
+  }, []);
+
+  // 会話変更時にメッセージ取得
+  useEffect(() => {
+    if (!selectedConversation) return;
+    const fetchMessages = async () => {
+      try {
+        const res = await fetch(`/api/messages?conversationId=${selectedConversation}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setMessages(
+          data.map((m: any) => ({ role: m.sender as 'user' | 'assistant', content: m.content }))
+        );
+      } catch (e) {
+        console.error('Failed to load messages');
+      }
+    };
+    fetchMessages();
+  }, [selectedConversation]);
+
+  const createConversation = async () => {
+    const res = await fetch('/api/conversations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: 'test_user' })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setConversations((prev) => [...prev, data]);
+      setSelectedConversation(data.id);
+      setMessages([]);
+    }
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
+    if (!selectedConversation) {
+      await createConversation();
+    }
     setInput('');
     setError(null);
     setMessages((prev) => [...prev, { role: 'user', content: text }]);
+    if (selectedConversation) {
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: selectedConversation,
+          sender: 'user',
+          content: text,
+        }),
+      }).catch(() => {});
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/chat', {
@@ -45,6 +111,17 @@ export default function Chat() {
       const data = await res.json();
       if (data.reply) {
         setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }]);
+        if (selectedConversation) {
+          fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              conversation_id: selectedConversation,
+              sender: 'assistant',
+              content: data.reply,
+            }),
+          }).catch(() => {});
+        }
       } else {
         throw new Error('APIからの応答が無効です');
       }
@@ -63,6 +140,20 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-2">
+        <Button onClick={createConversation} size="sm">新しい会話</Button>
+        <select
+          className="border rounded px-2 py-1 text-sm"
+          value={selectedConversation ?? ''}
+          onChange={(e) => setSelectedConversation(e.target.value)}
+        >
+          {conversations.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.id.slice(0, 8)}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">

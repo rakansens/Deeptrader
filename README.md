@@ -64,6 +64,12 @@ npm run dev
 - [開発ガイドライン](./docs/development/README.md)
 - [Supabase セットアップ](./docs/supabase/README.md)
 
+## 会話スレッドの利用
+
+チャットは `conversations` テーブルでスレッドごとに管理されます。各メッセージは
+`messages` テーブルに保存され、会話IDを `threadId` として指定することで履歴を取得
+できます。
+
 ## ライセンス
 
 Copyright © 2023 DeepTrader Team. All rights reserved. 
