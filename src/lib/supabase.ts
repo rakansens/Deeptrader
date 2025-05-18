@@ -1,8 +1,8 @@
 // src/lib/supabase.ts
 // Supabaseクライアントの初期化
 
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "@/types/supabase";
 
 // 環境変数からSupabase URLとAnon Keyを取得
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -15,7 +15,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export const createServiceRoleClient = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY が設定されていません');
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY が設定されていません");
   }
   return createClient<Database>(supabaseUrl, serviceRoleKey);
-}; 
+};

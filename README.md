@@ -67,4 +67,4 @@ pnpm dev
 
 ## ライセンス
 
-Copyright © 2023 DeepTrader Team. All rights reserved. 
+Copyright © 2023 DeepTrader Team. All rights reserved.

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { BarChart3, Home, MessageSquare, Settings } from "lucide-react"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { BarChart3, Home, MessageSquare, Settings } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Button } from "@/components/ui/button";
 
 export function Navbar() {
   return (
@@ -40,5 +40,5 @@ export function Navbar() {
         </div>
       </div>
     </header>
-  )
-} 
+  );
+}

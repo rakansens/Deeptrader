@@ -16,9 +16,9 @@ const memory = new Memory({
     lastMessages: 40,
     semanticRecall: {
       topK: 5,
-      messageRange: 2
-    }
-  }
+      messageRange: 2,
+    },
+  },
 }) as unknown as MastraMemory;
 
 /**
@@ -48,17 +48,17 @@ export const researchAgent = new Agent({
   - 複雑なデータやトレンドを理解しやすく説明する
   
   注意: あなたの分析は教育目的のみであり、投資アドバイスではありません。`,
-  
+
   // OpenAI GPT-4 モデルを使用
   model: openai("gpt-4o"),
-  
+
   // ツール設定
   tools: {
     newsAnalysisTool,
     onChainDataTool,
-    marketSentimentTool
+    marketSentimentTool,
   },
-  
+
   // メモリ設定
-  memory: memory
-}); 
+  memory: memory,
+});

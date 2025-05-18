@@ -1,10 +1,10 @@
 // src/middleware.ts
 // Supabase認証ミドルウェア
 
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import type { Database } from '@/types/supabase';
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import type { Database } from "@/types/supabase";
 
 /**
  * 認証状態を確認するミドルウェア
@@ -14,37 +14,45 @@ import type { Database } from '@/types/supabase';
 export async function middleware(request: NextRequest) {
   try {
     const response = NextResponse.next();
-    
+
     // 環境変数チェック - Supabase接続情報がない場合は処理をスキップ
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.warn('Supabase環境変数が設定されていません。認証機能は動作しません。');
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) {
+      console.warn(
+        "Supabase環境変数が設定されていません。認証機能は動作しません。",
+      );
       return response;
     }
-    
-    const supabase = createMiddlewareClient<Database>({ req: request, res: response });
-    
+
+    const supabase = createMiddlewareClient<Database>({
+      req: request,
+      res: response,
+    });
+
     // セッションの更新
     await supabase.auth.getSession();
-    
+
     // 保護されたルートの確認
     // /dashboard以下のルートにアクセスするにはログインが必要
     const { pathname } = request.nextUrl;
-    if (pathname.startsWith('/dashboard')) {
+    if (pathname.startsWith("/dashboard")) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      
+
       // セッションがない場合はログインページにリダイレクト
       if (!session) {
-        const redirectUrl = new URL('/login', request.url);
-        redirectUrl.searchParams.set('redirectTo', pathname);
+        const redirectUrl = new URL("/login", request.url);
+        redirectUrl.searchParams.set("redirectTo", pathname);
         return NextResponse.redirect(redirectUrl);
       }
     }
-    
+
     return response;
   } catch (error) {
-    console.error('ミドルウェアエラー:', error);
+    console.error("ミドルウェアエラー:", error);
     return NextResponse.next();
   }
 }
@@ -53,9 +61,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // 認証が必要なルート
-    '/dashboard/:path*',
+    "/dashboard/:path*",
     // 認証関連
-    '/login',
-    '/register',
+    "/login",
+    "/register",
   ],
-}; 
+};

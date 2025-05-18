@@ -35,7 +35,7 @@ export type Database = {
           avatar_url?: string | null;
         };
       };
-      
+
       trading_strategies: {
         Row: {
           id: string;
@@ -75,11 +75,11 @@ export type Database = {
           user_id: string;
           strategy_id: string | null;
           symbol: string;
-          type: 'buy' | 'sell';
+          type: "buy" | "sell";
           quantity: number;
           price: number;
           timestamp: string;
-          status: 'pending' | 'completed' | 'cancelled' | 'failed';
+          status: "pending" | "completed" | "cancelled" | "failed";
           metadata: Json | null;
         };
         Insert: {
@@ -87,11 +87,11 @@ export type Database = {
           user_id: string;
           strategy_id?: string | null;
           symbol: string;
-          type: 'buy' | 'sell';
+          type: "buy" | "sell";
           quantity: number;
           price: number;
           timestamp?: string;
-          status?: 'pending' | 'completed' | 'cancelled' | 'failed';
+          status?: "pending" | "completed" | "cancelled" | "failed";
           metadata?: Json | null;
         };
         Update: {
@@ -99,24 +99,24 @@ export type Database = {
           user_id?: string;
           strategy_id?: string | null;
           symbol?: string;
-          type?: 'buy' | 'sell';
+          type?: "buy" | "sell";
           quantity?: number;
           price?: number;
           timestamp?: string;
-          status?: 'pending' | 'completed' | 'cancelled' | 'failed';
+          status?: "pending" | "completed" | "cancelled" | "failed";
           metadata?: Json | null;
         };
       };
     };
-    
+
     Views: {
       [_ in never]: never;
     };
-    
+
     Functions: {
       [_ in never]: never;
     };
-    
+
     Enums: {
       [_ in never]: never;
     };
@@ -124,4 +124,10 @@ export type Database = {
 };
 
 // JSON型の定義
-export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]; 
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];

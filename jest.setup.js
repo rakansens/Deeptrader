@@ -1,14 +1,14 @@
 // jest.setup.js
-require('@testing-library/jest-dom');
+require("@testing-library/jest-dom");
 
 // グローバルなモックの設定
-jest.mock('next/router', () => ({
+jest.mock("next/router", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
     prefetch: jest.fn(),
     back: jest.fn(),
-    pathname: '/',
+    pathname: "/",
     query: {},
   }),
 }));
@@ -16,5 +16,5 @@ jest.mock('next/router', () => ({
 // 環境変数のモック
 process.env = {
   ...process.env,
-  NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
-}; 
+  NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+};

@@ -14,13 +14,13 @@ import { researchAgent } from "./agents/researchAgent";
  */
 export const mastra = new Mastra({
   // 登録するエージェント
-  agents: { 
+  agents: {
     tradingAgent,
-    researchAgent 
+    researchAgent,
   },
   // ロガー設定
-  logger: createLogger({ 
-    name: "DeepTrader", 
-    level: "debug" 
-  })
-}); 
+  logger: createLogger({
+    name: "DeepTrader",
+    level: "debug",
+  }),
+});
