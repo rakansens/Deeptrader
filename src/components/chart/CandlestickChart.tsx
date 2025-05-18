@@ -226,59 +226,7 @@ export default function CandlestickChart({
       })
     }
     
-    // RSIは独自の表示領域に表示
-    if (indicators.rsi) {
-      rsiSeriesRef.current = chart.addLineSeries({ 
-        color: '#3b82f6', 
-        lineWidth: 1, 
-        priceLineVisible: false,
-        priceScaleId: 'rsi',
-        // RSIは0-100の範囲に固定
-        autoscaleInfoProvider: () => ({
-          priceRange: {
-            minValue: 0,
-            maxValue: 100,
-          },
-        }),
-      })
-      
-      // RSIの表示領域設定 - 高さを小さくしてローソク足を圧迫しないようにする
-      chart.priceScale('rsi').applyOptions({
-        scaleMargins: {
-          // メインチャートの下部に小さく配置
-          top: 0.8, // 上部に80%のスペースを確保し、下部に小さく表示
-          bottom: 0.02, // 下部の余白を少なく
-        },
-        visible: true,
-        autoScale: true, // 自動スケールを有効に
-      });
-    }
-    
-    // MACDは下部の独自領域に表示
-    if (indicators.macd) {
-      macdSeriesRef.current = chart.addLineSeries({ 
-        color: '#10b981', 
-        lineWidth: 1, 
-        priceLineVisible: false,
-        priceScaleId: 'macd',
-      })
-      signalSeriesRef.current = chart.addLineSeries({ 
-        color: '#ef4444', 
-        lineWidth: 1, 
-        priceLineVisible: false,
-        priceScaleId: 'macd',
-      })
-      
-      // MACDの表示領域設定 - RSIの下に小さく表示
-      chart.priceScale('macd').applyOptions({
-        scaleMargins: {
-          top: 0.85, // 上部に85%のスペースを確保
-          bottom: 0.02, // 下部の余白を少なく
-        },
-        visible: true,
-        autoScale: true, // 自動スケールを有効に
-      });
-    }
+    // RSIとMACDは専用パネルで表示するためメインチャートには追加しない
 
     // ボリュームのスケール設定 - より小さく表示
     chart.priceScale('vol').applyOptions({
@@ -385,27 +333,22 @@ export default function CandlestickChart({
     }
 
     ensureSeries(indicators.ma, maSeriesRef, { color: '#f59e0b', lineWidth: 2, priceLineVisible: false }, maDataRef.current)
-    ensureSeries(indicators.rsi, rsiSeriesRef, { color: '#3b82f6', lineWidth: 1, priceLineVisible: false }, rsiDataRef.current)
-    if (indicators.macd) {
-      ensureSeries(true, macdSeriesRef, { color: '#10b981', lineWidth: 1, priceLineVisible: false }, macdLineDataRef.current)
-      ensureSeries(true, signalSeriesRef, { color: '#ef4444', lineWidth: 1, priceLineVisible: false }, signalLineDataRef.current)
-    } else {
-      if (macdSeriesRef.current && chart) { 
-        try {
-          chart.removeSeries(macdSeriesRef.current)
-        } catch (e) {
-          console.error('Error removing MACD series:', e)
-        }
-        macdSeriesRef.current = null 
+    // RSI と MACD は専用パネルで表示するためメインチャートでは系列を作成しない
+    if (macdSeriesRef.current) {
+      try {
+        chart.removeSeries(macdSeriesRef.current)
+      } catch (e) {
+        console.error('Error removing MACD series:', e)
       }
-      if (signalSeriesRef.current && chart) { 
-        try {
-          chart.removeSeries(signalSeriesRef.current)
-        } catch (e) {
-          console.error('Error removing signal series:', e)
-        }
-        signalSeriesRef.current = null 
+      macdSeriesRef.current = null
+    }
+    if (signalSeriesRef.current) {
+      try {
+        chart.removeSeries(signalSeriesRef.current)
+      } catch (e) {
+        console.error('Error removing signal series:', e)
       }
+      signalSeriesRef.current = null
     }
     if (indicators.boll) {
       ensureSeries(true, bollUpperSeriesRef, { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, bollUpperDataRef.current)
