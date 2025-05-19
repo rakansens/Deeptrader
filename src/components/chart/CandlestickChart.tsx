@@ -35,6 +35,8 @@ interface CandlestickChartProps {
   onIndicatorsChange?: (value: IndicatorOptions) => void;
   /** 描画キャンバスを有効にするか */
   drawingEnabled?: boolean;
+  /** 描画色 */
+  drawingColor?: string;
 }
 
 /**
@@ -49,6 +51,7 @@ export default function CandlestickChart({
   indicators = { ma: false, rsi: false, macd: false, boll: false },
   onIndicatorsChange,
   drawingEnabled = false,
+  drawingColor = "#ef4444",
 }: CandlestickChartProps) {
   const colors = useChartTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -240,7 +243,7 @@ export default function CandlestickChart({
             ref={drawingRef}
             enabled={drawingEnabled}
             className="absolute inset-0 z-10"
-            color="#ef4444"
+            color={drawingColor}
             strokeWidth={2}
           />
         </div>

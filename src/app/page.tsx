@@ -14,11 +14,21 @@ const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickCha
   ssr: false,
 });
 
+// 描画色のオプション
+const DRAWING_COLORS = [
+  { value: '#ef4444', label: '赤', class: 'bg-red-500' },
+  { value: '#3b82f6', label: '青', class: 'bg-blue-500' },
+  { value: '#22c55e', label: '緑', class: 'bg-green-500' },
+  { value: '#f59e0b', label: '橙', class: 'bg-amber-500' },
+  { value: '#a855f7', label: '紫', class: 'bg-purple-500' },
+];
+
 export default function Home() {
   const [timeframe, setTimeframe] = useState('1h');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   const [drawingEnabled, setDrawingEnabled] = useState(false);
+  const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -69,11 +79,27 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   {drawingEnabled && (
-                    <div className="mb-4 bg-muted/50 border p-3 rounded-md flex items-center">
-                      <Pencil className="h-4 w-4 mr-2" />
-                      <p className="text-sm">
-                        描画モードが有効です。チャート上でクリック＆ドラッグして線を描画できます。
-                      </p>
+                    <div className="mb-4 bg-muted/50 border p-3 rounded-md">
+                      <div className="flex items-center mb-2">
+                        <Pencil className="h-4 w-4 mr-2" />
+                        <p className="text-sm">
+                          描画モードが有効です。チャート上でクリック＆ドラッグして線を描画できます。
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs text-muted-foreground">色:</span>
+                        {DRAWING_COLORS.map((c) => (
+                          <button
+                            key={c.value}
+                            title={c.label}
+                            onClick={() => setDrawingColor(c.value)}
+                            className={`w-6 h-6 rounded-full ${c.class} border border-border transition-all ${
+                              drawingColor === c.value ? 'ring-2 ring-offset-1 ring-primary' : 'opacity-70 hover:opacity-100'
+                            }`}
+                            aria-label={`色を${c.label}に変更`}
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
                   <div className="w-full relative">
@@ -84,6 +110,7 @@ export default function Home() {
                       symbol={symbol}
                       onIndicatorsChange={setIndicators}
                       drawingEnabled={drawingEnabled}
+                      drawingColor={drawingColor}
                     />
                   </div>
                 </CardContent>
