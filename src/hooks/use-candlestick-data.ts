@@ -5,6 +5,7 @@ import {
   LineData,
   UTCTimestamp
 } from 'lightweight-charts'
+import type { BinanceKline } from "@/types/binance"
 import {
   computeSMA,
   computeRSI,
@@ -113,7 +114,7 @@ export function useCandlestickData(
       
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`)
       
-      const raw = (await res.json()) as any[]
+      const raw = (await res.json()) as BinanceKline[]
       
       // コンポーネントがアンマウントされていたら処理を中止
       if (!isMountedRef.current) return;
@@ -129,20 +130,21 @@ export function useCandlestickData(
       const bUp: LineData[] = []
       const bLow: LineData[] = []
 
-      raw.forEach((d) => {
+      raw.forEach((d: BinanceKline) => {
+        const [openTime, open, high, low, close, vol] = d;
         const candle: CandlestickData = {
-          time: (d[0] / 1000) as UTCTimestamp,
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4])
+          time: (openTime / 1000) as UTCTimestamp,
+          open: parseFloat(open),
+          high: parseFloat(high),
+          low: parseFloat(low),
+          close: parseFloat(close)
         }
         c.push(candle)
 
         const volume: HistogramData = {
-          time: (d[0] / 1000) as UTCTimestamp,
-          value: parseFloat(d[5]),
-          color: parseFloat(d[4]) >= parseFloat(d[1]) ? '#26a69a' : '#ef5350'
+          time: (openTime / 1000) as UTCTimestamp,
+          value: parseFloat(vol),
+          color: parseFloat(close) >= parseFloat(open) ? '#26a69a' : '#ef5350'
         }
         v.push(volume)
 
