@@ -17,13 +17,10 @@ import useLineSeries from '@/hooks/use-line-series'
 import RsiPanel from './RsiPanel'
 import MacdPanel from './MacdPanel'
 import DrawingCanvas, { DrawingCanvasHandle } from './drawing-canvas'
-
-interface IndicatorOptions {
-  ma: boolean;
-  rsi: boolean;
-  macd?: boolean;
-  boll?: boolean;
-}
+import type {
+  IndicatorOptions,
+  IndicatorsChangeHandler,
+} from './types'
 
 interface CandlestickChartProps {
   className?: string;
@@ -32,7 +29,7 @@ interface CandlestickChartProps {
   interval?: string;
   useApi?: boolean;
   indicators?: IndicatorOptions;
-  onIndicatorsChange?: (value: IndicatorOptions) => void;
+  onIndicatorsChange?: IndicatorsChangeHandler;
   /** 描画キャンバスを有効にするか */
   drawingEnabled?: boolean;
   /** 描画色 */

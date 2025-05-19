@@ -10,19 +10,18 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { TrendingUp, Activity, BarChart3, Waves, Pencil } from 'lucide-react'
+import type {
+  IndicatorOptions,
+  IndicatorsChangeHandler,
+} from './types'
 
 interface ChartToolbarProps {
   timeframe: string
   onTimeframeChange: (timeframe: string) => void
   symbol?: string
   onSymbolChange?: (symbol: string) => void
-  indicators: {
-    ma: boolean
-    rsi: boolean
-    macd?: boolean
-    boll?: boolean
-  }
-  onIndicatorsChange: (value: { ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }) => void
+  indicators: IndicatorOptions
+  onIndicatorsChange: IndicatorsChangeHandler
   drawingEnabled?: boolean
   onDrawingEnabledChange?: (enabled: boolean) => void
 }

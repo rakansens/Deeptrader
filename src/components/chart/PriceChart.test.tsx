@@ -14,7 +14,24 @@ jest.mock('lightweight-charts', () => ({
     applyOptions: jest.fn(),
     resize: jest.fn(),
     remove: jest.fn(),
+    isReady: jest.fn(() => true),
   }),
+}))
+
+const mockChart = {
+  addLineSeries: jest.fn(() => {
+    const obj = { update: jest.fn(), setData: jest.fn() }
+    lineSeriesMocks.push(obj)
+    return obj
+  }),
+  applyOptions: jest.fn(),
+  resize: jest.fn(),
+  remove: jest.fn(),
+  isReady: () => true,
+}
+
+jest.mock('@/hooks/use-chart', () => ({
+  useChart: () => mockChart,
 }))
 
 class MockWebSocket {
