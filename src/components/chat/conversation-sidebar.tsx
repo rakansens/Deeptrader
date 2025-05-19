@@ -3,6 +3,17 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { PenLine, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import type { Conversation } from "@/types/chat";
 
 interface ConversationSidebarProps {
@@ -55,14 +66,31 @@ export function ConversationSidebar({
               </button>
             )}
             {onRemove && (
-              <button
-                type="button"
-                aria-label="delete"
-                className="ml-1 p-1 opacity-0 group-hover:opacity-100"
-                onClick={() => onRemove(c.id)}
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="delete"
+                    className="ml-1 p-1 opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>この会話を削除しますか？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      この操作は取り消せません。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onRemove(c.id)}>
+                      削除
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </li>
         ))}

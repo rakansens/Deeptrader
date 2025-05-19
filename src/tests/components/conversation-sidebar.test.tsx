@@ -42,6 +42,8 @@ describe('ConversationSidebar', () => {
       />
     )
     await user.click(screen.getAllByLabelText('delete')[1])
+    await screen.findByRole('alertdialog')
+    await user.click(screen.getByRole('button', { name: '削除' }))
     expect(onRemove).toHaveBeenCalledWith('2')
   })
 })
