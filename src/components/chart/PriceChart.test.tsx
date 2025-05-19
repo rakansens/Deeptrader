@@ -19,12 +19,18 @@ jest.mock('lightweight-charts', () => ({
 
 class MockWebSocket {
   static instances: MockWebSocket[] = []
+  static OPEN = 1
+  readyState = MockWebSocket.OPEN
   onopen?: () => void
   onclose?: () => void
   onerror?: (e: any) => void
   onmessage?: (e: { data: string }) => void
+  sent: string[] = []
   constructor(url: string) {
     MockWebSocket.instances.push(this)
+  }
+  send(data: string) {
+    this.sent.push(data)
   }
   close() {}
 }

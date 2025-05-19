@@ -51,6 +51,9 @@ type BinanceWebSocketMessage = {
   id?: number  // リクエストID
 }
 
+const PING_INTERVAL = 3 * 60 * 1000 // 3分ごとにPING
+const PONG_TIMEOUT = 10 * 1000 // 10秒以内にPONGが必要
+
 /**
  * ローソク足データを取得しローカルストレージへ保存するフック
  * @param symbol - 取得する通貨ペア
@@ -93,6 +96,7 @@ export function useCandlestickData(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pingIdRef = useRef<number>(0)
   const reconnectCountRef = useRef(0)
   const isMountedRef = useRef<boolean>(true)
   const lastPingRef = useRef<number>(0)
@@ -275,24 +279,25 @@ export function useCandlestickData(
         };
         ws.send(JSON.stringify(subscribeMsg));
         
-        // pingメッセージを30秒間隔で送信するインターバルを設定
+        // Pingを定期送信して接続を維持
         lastPingRef.current = Date.now();
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             lastPingRef.current = Date.now();
-            console.log('Sending ping...');
-            ws.send(JSON.stringify({ method: 'ping' }));
-            
-            // 20秒以内にpongが返ってこない場合は再接続
+            pingIdRef.current += 1;
+            ws.send(
+              JSON.stringify({ method: 'PING', id: pingIdRef.current })
+            );
+
+            // PONGが返らなければ再接続
             pongTimeoutRef.current = setTimeout(() => {
-              console.log('Pong timeout, reconnecting...');
               if (wsRef.current === ws) {
                 cleanupWebSocket();
                 tryReconnect();
               }
-            }, 20000);
+            }, PONG_TIMEOUT);
           }
-        }, 30000);
+        }, PING_INTERVAL);
       };
       
       // メッセージ受信イベント
@@ -303,14 +308,13 @@ export function useCandlestickData(
         try {
           const data = JSON.parse(ev.data) as BinanceWebSocketMessage;
           
-          // pongレスポンスの処理
-          if (data.result === null && data.id) {
-            console.log('Received pong');
-            if (pongTimeoutRef.current) {
-              clearTimeout(pongTimeoutRef.current);
-              pongTimeoutRef.current = null;
+          // PONGレスポンスの処理
+          if (data.result === null && typeof data.id === 'number') {
+            if (data.id === pingIdRef.current && pongTimeoutRef.current) {
+              clearTimeout(pongTimeoutRef.current)
+              pongTimeoutRef.current = null
             }
-            return;
+            return
           }
           
           // キャンドルスティックデータ
