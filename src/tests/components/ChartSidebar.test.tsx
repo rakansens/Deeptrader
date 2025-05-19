@@ -35,6 +35,14 @@ describe('ChartSidebar', () => {
     expect(onChange).toHaveBeenCalledWith('horizontal-line');
   });
 
+  it('selects eraser tool', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<ChartSidebar mode={null} onModeChange={onChange} />);
+    await user.click(screen.getByTitle('消しゴム'));
+    expect(onChange).toHaveBeenCalledWith('eraser');
+  });
+
   it('calls onClear when clear button clicked', async () => {
     const user = userEvent.setup();
     const onClear = jest.fn();

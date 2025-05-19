@@ -3,6 +3,7 @@
 import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
 import useChartTheme from "@/hooks/use-chart-theme";
 import useCandlestickData from "@/hooks/use-candlestick-data";
 import useCandlestickSeries from "@/hooks/use-candlestick-series";
@@ -53,6 +54,7 @@ export default function CandlestickChart({
   const bollLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const drawingRef = useRef<DrawingCanvasHandle>(null);
   const [mode, setMode] = useState<DrawingMode | null>(null);
+  const [eraserSize, setEraserSize] = useState<number>(30);
 
   // 描画をクリアするハンドラー
   const handleClearDrawing = () => {
@@ -150,14 +152,30 @@ export default function CandlestickChart({
             onClear={handleClearDrawing}
             className="absolute top-2 left-2 z-20"
           />
-          <DrawingCanvas
-            ref={drawingRef}
-            enabled={isDrawingEnabled}
-            className="absolute inset-0 z-10"
-            color={drawingColor}
-            strokeWidth={2}
-            mode={mode}
-          />
+          {mode === 'eraser' && (
+            <div className="absolute top-2 right-2 bg-background/90 p-3 rounded-md border border-input z-30 flex flex-col gap-2" style={{ width: '180px' }}>
+              <div className="text-xs font-medium text-muted-foreground mb-1">消しゴムサイズ</div>
+              <Slider
+                value={[eraserSize]}
+                min={10}
+                max={100}
+                step={5}
+                onValueChange={(values) => setEraserSize(values[0])}
+              />
+              <div className="text-xs text-right text-muted-foreground mt-1">{eraserSize}px</div>
+            </div>
+          )}
+          <div className="absolute inset-0 z-10 overflow-hidden">
+            <DrawingCanvas
+              ref={drawingRef}
+              enabled={isDrawingEnabled}
+              className="w-full h-full"
+              color={drawingColor}
+              strokeWidth={2}
+              mode={mode}
+              eraserSize={eraserSize}
+            />
+          </div>
         </div>
         {indicators.rsi && (
           <RsiPanel

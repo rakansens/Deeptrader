@@ -10,6 +10,7 @@ import {
   Square,
   ArrowUpRight,
   Trash2,
+  Eraser,
 } from 'lucide-react';
 
 // null は描画モードが非アクティブな状態を表す
@@ -20,6 +21,7 @@ export type DrawingMode =
   | 'horizontal-line'
   | 'box'
   | 'arrow'
+  | 'eraser'
   | null;
 
 interface ChartSidebarProps {
@@ -138,6 +140,19 @@ export default function ChartSidebar({
         title="矢印マーカー"
       >
         <ArrowUpRight className="h-4 w-4" />
+      </button>
+
+      <button
+        className={`w-full p-2 rounded-md flex items-center justify-center ${
+          isActive('eraser')
+            ? 'bg-red-500 text-white'
+            : 'bg-red-100 text-red-500 hover:bg-red-200'
+        }`}
+        onClick={() => handleToolClick('eraser')}
+        aria-label="消しゴム"
+        title="消しゴム"
+      >
+        <Eraser className="h-4 w-4" />
       </button>
 
       {onClear && (

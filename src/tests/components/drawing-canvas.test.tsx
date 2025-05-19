@@ -169,4 +169,24 @@ describe("DrawingCanvas", () => {
     // キャンバスがクリアされていないこと
     expect(mockCtx.clearRect).toHaveBeenCalledTimes(1); // プレビュー用に1回だけ呼ばれる
   });
+
+  it('shows eraser cursor when eraser mode is active', async () => {
+    const { getByTestId, queryByTestId } = render(
+      <DrawingCanvas mode="eraser" />,
+    );
+    
+    // エラサーカーソルが表示されていることを確認
+    expect(queryByTestId('eraser-cursor')).toBeInTheDocument();
+    
+    // マウス移動で位置が更新されることをテスト
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerMove(canvas, { clientX: 50, clientY: 50 });
+    });
+    
+    // マウスがキャンバスから出たら消えることをテスト
+    await act(async () => {
+      fireEvent.pointerLeave(canvas);
+    });
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from "react";
 import { logger } from "@/lib/logger";
 
 /**
@@ -17,6 +17,7 @@ export type DrawingMode =
   | 'horizontal-line'
   | 'box'
   | 'arrow'
+  | 'eraser'
   | null;
 
 export interface DrawingCanvasProps {
@@ -28,6 +29,8 @@ export interface DrawingCanvasProps {
   strokeWidth?: number;
   /** 描画モード */
   mode?: DrawingMode;
+  /** 消しゴムサイズ */
+  eraserSize?: number;
   className?: string;
 }
 
@@ -37,16 +40,20 @@ function DrawingCanvas(
     color = "#ef4444",
     strokeWidth = 2,
     mode = 'freehand',
+    eraserSize = 30,
     className,
   }: DrawingCanvasProps,
   ref: React.Ref<DrawingCanvasHandle>,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const drawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const startPoint = useRef<{ x: number; y: number } | null>(null);
   // 描画内容を保存するための変数
   const savedCanvasState = useRef<ImageData | null>(null);
+  // 消しゴムの現在位置を追跡するための状態
+  const [eraserPosition, setEraserPosition] = useState<{ x: number; y: number } | null>(null);
 
   // モードがnullの場合、'freehand'として扱う
   const actualMode = mode === null ? 'freehand' : mode;
@@ -88,6 +95,21 @@ function DrawingCanvas(
     }
   }, [enabled]);
 
+  // モードが変更されたら消しゴム位置をリセット
+  useEffect(() => {
+    if (mode === 'eraser') {
+      // 初期位置をキャンバスの中央に設定
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const width = canvas.width / 2;
+        const height = canvas.height / 2;
+        setEraserPosition({ x: width, y: height });
+      }
+    } else {
+      setEraserPosition(null);
+    }
+  }, [mode]);
+
   const getContext = () => canvasRef.current?.getContext("2d");
 
   // プレビュー描画をクリアする関数（保存した状態に復元）
@@ -103,6 +125,27 @@ function DrawingCanvas(
       // 初回時のフォールバック
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+  };
+
+  // 消しゴム用の関数
+  const erase = (x: number, y: number) => {
+    const ctx = getContext();
+    const canvas = canvasRef.current;
+    if (!ctx || !canvas || !lastPoint.current) return;
+    
+    // 消しゴムサイズの半径
+    const radius = eraserSize / 2;
+    
+    // globalCompositeOperationを使って消去
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.clearRect(x - radius, y - radius, eraserSize, eraserSize);
+    ctx.restore();
+    
+    // 現在の状態を保存
+    savedCanvasState.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -121,9 +164,14 @@ function DrawingCanvas(
       savedCanvasState.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
     }
     
-    if (actualMode === 'freehand') {
+    if (actualMode === 'freehand' || actualMode === 'eraser') {
       drawing.current = true;
       lastPoint.current = point;
+      
+      // 消しゴムの場合、ポイントダウン時点で消去
+      if (actualMode === 'eraser') {
+        erase(point.x, point.y);
+      }
     } else {
       startPoint.current = point;
     }
@@ -256,6 +304,8 @@ function DrawingCanvas(
         return 'cursor-default'; // 選択モード
       case 'freehand':
         return 'cursor-pointer'; // フリーハンド (Tailwindにcursor-pencilがないため)
+      case 'eraser':
+        return 'cursor-not-allowed'; // 消しゴム
       default:
         return 'cursor-crosshair'; // その他の描画ツール
     }
@@ -270,6 +320,17 @@ function DrawingCanvas(
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    // 消しゴムモードの場合、常に位置を更新
+    if (mode === 'eraser') {
+      logger.debug(`消しゴム位置更新: x=${x}, y=${y}, rect=${JSON.stringify({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+      })}`);
+      setEraserPosition({ x, y });
+    }
+    
     if (actualMode === 'freehand' && drawing.current) {
       // フリーハンド描画処理（従来通り）
       const ctx = getContext();
@@ -282,6 +343,10 @@ function DrawingCanvas(
       ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
       ctx.lineTo(x, y);
       ctx.stroke();
+      lastPoint.current = { x, y };
+    } else if (actualMode === 'eraser' && drawing.current) {
+      // 消しゴム処理
+      erase(x, y);
       lastPoint.current = { x, y };
     } else if (startPoint.current) {
       // 各モードのリアルタイムプレビュー
@@ -306,10 +371,10 @@ function DrawingCanvas(
     
     logger.debug('描画終了');
     
-    if (actualMode === 'freehand') {
+    if (actualMode === 'freehand' || actualMode === 'eraser') {
       drawing.current = false;
       lastPoint.current = null;
-      // フリーハンド描画終了時に現在の状態を保存
+      // 描画終了時に現在の状態を保存
       const canvas = canvasRef.current;
       const ctx = getContext();
       if (canvas && ctx) {
@@ -350,22 +415,146 @@ function DrawingCanvas(
     }
   };
 
+  // 消しゴムモードの場合、消しゴムのプレビューを表示するためのスタイル
+  const getEraserCursorStyle = () => {
+    if (mode === 'eraser') {
+      return {
+        cursor: 'none', // 標準カーソルを非表示
+      };
+    }
+    return {};
+  };
+
+  // キャンバスのマウスエンター/リーブイベントハンドラ
+  const handlePointerEnter = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (mode === 'eraser') {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      logger.debug(`ポインタ入場: x=${x}, y=${y}`);
+      setEraserPosition({ x, y });
+    }
+  };
+
+  const handlePointerLeave = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    endDrawing(e);
+    if (mode === 'eraser') {
+      logger.debug('ポインタ退場: 消しゴム非表示');
+      setEraserPosition(null);
+    }
+  };
+
+  // グローバルマウス移動イベントを追加してキャンバス外でも動作するようにする
+  useEffect(() => {
+    if (mode === 'eraser' && canvasRef.current) {
+      const handleGlobalMouseMove = (e: MouseEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        // キャンバス上の相対位置を計算
+        if (
+          e.clientX >= rect.left && 
+          e.clientX <= rect.right && 
+          e.clientY >= rect.top && 
+          e.clientY <= rect.bottom
+        ) {
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          logger.debug(`グローバルマウス移動: x=${x}, y=${y}`);
+          setEraserPosition({ x, y });
+        }
+      };
+
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      return () => {
+        window.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
+    }
+  }, [mode]);
+
+  // 親コンテナのマウス移動イベントハンドラ
+  const handleContainerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (mode === 'eraser') {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        logger.debug(`コンテナマウス移動: x=${x}, y=${y}`);
+        setEraserPosition({ x, y });
+      }
+    }
+  };
+
   return (
-    <canvas
-      ref={canvasRef}
-      className={`${className} ${getCursorStyle()}`}
-      style={{
-        zIndex: 10, 
-        touchAction: 'none',
-        pointerEvents: mode === null ? 'none' : 'auto', // 選択モード時はイベントを透過
-        border: mode !== null && enabled ? '1px dashed rgba(239, 68, 68, 0.3)' : 'none',
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={endDrawing}
-      onPointerLeave={endDrawing}
-      data-testid="drawing-canvas"
-    />
+    <div 
+      ref={containerRef} 
+      className="relative w-full h-full"
+      onMouseMove={handleContainerMouseMove}
+    >
+      {mode === 'eraser' && eraserPosition && (
+        <div
+          className="absolute pointer-events-none rounded-full z-50"
+          style={{
+            width: eraserSize,
+            height: eraserSize,
+            transform: 'translate(-50%, -50%)',
+            left: `${eraserPosition.x}px`,
+            top: `${eraserPosition.y}px`,
+            opacity: drawing.current ? 0.8 : 0.6,
+            boxShadow: '0 0 4px rgba(0, 0, 0, 0.5)',
+            border: '3px dashed rgba(239, 68, 68, 0.8)',
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+          }}
+          data-testid="eraser-cursor"
+        >
+          {/* 中心点を示す十字線 */}
+          <div className="absolute" style={{
+            left: '50%',
+            top: '50%',
+            width: '10px',
+            height: '10px',
+            transform: 'translate(-50%, -50%)',
+          }}>
+            <div style={{
+              position: 'absolute',
+              width: '100%',
+              height: '2px',
+              backgroundColor: 'rgba(255, 0, 0, 0.8)',
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}></div>
+            <div style={{
+              position: 'absolute',
+              width: '2px',
+              height: '100%',
+              backgroundColor: 'rgba(255, 0, 0, 0.8)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+            }}></div>
+          </div>
+        </div>
+      )}
+      <canvas
+        ref={canvasRef}
+        className={`${className} ${getCursorStyle()}`}
+        style={{
+          zIndex: 10,
+          width: '100%',
+          height: '100%',
+          touchAction: 'none',
+          pointerEvents: mode === null ? 'none' : 'auto', // 選択モード時はイベントを透過
+          border: mode !== null && enabled ? '1px dashed rgba(239, 68, 68, 0.3)' : 'none',
+          ...getEraserCursorStyle(),
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrawing}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+        data-testid="drawing-canvas"
+      />
+    </div>
   );
 }
 
