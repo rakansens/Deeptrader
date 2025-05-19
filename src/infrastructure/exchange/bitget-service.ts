@@ -1,9 +1,10 @@
 import type { Json, OrderSide, OrderType } from "@/types";
+import { BITGET_API_KEY, BITGET_BASE_URL } from '@/lib/env';
 
 /**
  * Bitget APIの基本URL
  */
-const BASE_URL = process.env.BITGET_BASE_URL ?? "https://api.bitget.com";
+const BASE_URL = BITGET_BASE_URL;
 
 /**
  * ティッカー情報
@@ -65,7 +66,7 @@ export async function placeOrder(req: OrderRequest): Promise<void> {
   const url = `${BASE_URL}/api/v2/spot/trade/place-order`;
   const headers = {
     "Content-Type": "application/json",
-    "X-BG-API-KEY": process.env.BITGET_API_KEY ?? "",
+    "X-BG-API-KEY": BITGET_API_KEY,
   };
 
   const body = JSON.stringify({

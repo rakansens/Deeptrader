@@ -1,9 +1,10 @@
 import type { BinanceKline } from '@/types/binance';
+import { BINANCE_BASE_URL } from '@/lib/env';
 
 /**
  * Binance APIの基本URL
  */
-const BASE_URL = process.env.BINANCE_BASE_URL ?? 'https://api.binance.com';
+const BASE_URL = BINANCE_BASE_URL;
 
 /**
  * ローソク足データを取得する

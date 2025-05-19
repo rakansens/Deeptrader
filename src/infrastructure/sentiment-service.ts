@@ -1,5 +1,6 @@
 // src/infrastructure/sentiment-service.ts
 import { logger } from '@/lib/logger';
+import { SENTIMENT_API_KEY, SENTIMENT_API_URL } from '@/lib/env';
 
 export interface SentimentMetrics {
   /** 数値化されたセンチメントスコア (0-100) */
@@ -10,8 +11,8 @@ export interface SentimentMetrics {
   timestamp: string;
 }
 
-const BASE_URL = process.env.SENTIMENT_API_URL ?? 'https://api.alternative.me/fng/';
-const API_KEY = process.env.SENTIMENT_API_KEY ?? '';
+const BASE_URL = SENTIMENT_API_URL;
+const API_KEY = SENTIMENT_API_KEY;
 
 /**
  * Fear & Greed Index APIからセンチメント指標を取得する

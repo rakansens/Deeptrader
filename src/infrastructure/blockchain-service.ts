@@ -5,9 +5,13 @@ export interface AddressInfo {
   nonce: number;
 }
 
-const BASE_URL =
-  process.env.BLOCKCHAIR_BASE_URL ?? 'https://api.blockchair.com/ethereum';
-const API_KEY = process.env.BLOCKCHAIR_API_KEY ?? '';
+import {
+  BLOCKCHAIR_API_KEY,
+  BLOCKCHAIR_BASE_URL,
+} from '@/lib/env';
+
+const BASE_URL = BLOCKCHAIR_BASE_URL;
+const API_KEY = BLOCKCHAIR_API_KEY;
 
 /**
  * Blockchair APIからアドレス情報を取得
