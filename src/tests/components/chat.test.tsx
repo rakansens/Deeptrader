@@ -7,6 +7,11 @@ global.ReadableStream = ReadableStream as any
 global.TextDecoder = TextDecoder
 import userEvent from '@testing-library/user-event'
 import Chat from '@/components/chat/Chat'
+import { useToast } from '@/hooks/use-toast'
+
+jest.mock('@/hooks/use-toast')
+const toastMock = jest.fn()
+;(useToast as jest.Mock).mockReturnValue({ toast: toastMock, dismiss: jest.fn(), toasts: [] })
 
 describe('Chat', () => {
   const originalFetch = global.fetch
@@ -149,5 +154,46 @@ describe('Chat', () => {
       const sidebar = screen.getByRole('complementary')
       expect(sidebar.className).toMatch(/transition-transform/)
     })
+  })
+
+  it('scrolls to bottom when message list updates', async () => {
+    const user = userEvent.setup()
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ reply: 'hi' })
+    } as Response)
+
+    const { container } = render(<Chat />)
+    const list = container.querySelector('div.space-y-4') as HTMLDivElement
+    let top = 0
+    Object.defineProperty(list, 'scrollHeight', { get: () => 100, configurable: true })
+    Object.defineProperty(list, 'scrollTop', {
+      get: () => top,
+      set: v => { top = v as number },
+      configurable: true,
+    })
+
+    const textarea = screen.getByPlaceholderText('メッセージを入力...')
+    await user.type(textarea, 'hello')
+    await user.keyboard('{Enter}')
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+    await waitFor(() => expect(top).toBe(100))
+  })
+
+  it('shows toast when error occurs', async () => {
+    const user = userEvent.setup()
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'fail' })
+    } as Response)
+
+    render(<Chat />)
+    const textarea = screen.getByPlaceholderText('メッセージを入力...')
+    await user.type(textarea, 'err')
+    await user.keyboard('{Enter}')
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalled())
+    expect(screen.getByLabelText('送信')).toBeInTheDocument()
   })
 })

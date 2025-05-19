@@ -16,4 +16,18 @@ describe('useConversations', () => {
     })
     expect(result.current.conversations.length).toBe(1)
   })
+
+  it('persists conversations to localStorage', () => {
+    localStorage.setItem('conversations', JSON.stringify([{ id: 'a', title: 'old' }]))
+    localStorage.setItem('selectedConversation', 'a')
+
+    const { result } = renderHook(() => useConversations())
+    expect(result.current.selectedId).toBe('a')
+    expect(result.current.conversations[0].title).toBe('old')
+
+    act(() => {
+      result.current.renameConversation('a', 'new')
+    })
+    expect(JSON.parse(localStorage.getItem('conversations') || '[]')[0].title).toBe('new')
+  })
 })

@@ -2,6 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import TypingIndicator from "./typing-indicator";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import type { ReactNode } from "react";
 import type { ChatRole } from "@/types/chat";
 
@@ -11,6 +16,10 @@ export interface MessageBubbleProps {
   className?: string;
   /** アシスタントが入力中であることを示す */
   typing?: boolean;
+  /** UNIXタイムスタンプ */
+  timestamp?: number;
+  /** アバター画像URLまたはアイコン要素 */
+  avatar?: string | ReactNode;
 }
 
 export function MessageBubble({
@@ -18,6 +27,8 @@ export function MessageBubble({
   children,
   className,
   typing = false,
+  timestamp,
+  avatar,
 }: MessageBubbleProps) {
   return (
     <div
@@ -29,9 +40,26 @@ export function MessageBubble({
         className,
       )}
     >
-      <p className="text-sm font-medium">
-        {role === "user" ? "あなた" : "DeepTrader AI"}
-      </p>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {avatar ? (
+          typeof avatar === "string" ? (
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={avatar} />
+              <AvatarFallback>{role === "user" ? "U" : "AI"}</AvatarFallback>
+            </Avatar>
+          ) : (
+            avatar
+          )
+        ) : null}
+        <span className="font-medium">
+          {role === "user" ? "あなた" : "DeepTrader AI"}
+        </span>
+        {timestamp !== undefined && (
+          <span className="ml-auto">
+            {new Date(timestamp).toLocaleString()}
+          </span>
+        )}
+      </div>
       <div className="text-sm whitespace-pre-wrap">
         {typing ? (
           <div className="flex items-center gap-2">

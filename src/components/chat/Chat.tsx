@@ -7,6 +7,8 @@ import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect, useRef } from "react";
 
 export default function Chat() {
   const {
@@ -25,6 +27,22 @@ export default function Chat() {
     toggleSidebar,
     sendMessage,
   } = useChat();
+  const { toast } = useToast();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // 新しいメッセージや読み込み状態の変化でスクロールを最下部に移動
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  // エラーが発生した場合にトースト表示
+  useEffect(() => {
+    if (error) {
+      toast({ title: "エラー", description: error });
+    }
+  }, [error, toast]);
 
   return (
     <div className="flex h-full relative">
@@ -71,7 +89,7 @@ export default function Chat() {
             {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-4">質問や指示を入力してください</p>
@@ -97,7 +115,12 @@ export default function Chat() {
             </div>
           ) : (
             messages.map((m, idx) => (
-              <MessageBubble key={idx} role={m.role}>
+              <MessageBubble
+                key={idx}
+                role={m.role}
+                timestamp={m.timestamp}
+                avatar={m.role === "user" ? "U" : "AI"}
+              >
                 {m.content}
               </MessageBubble>
             ))
@@ -130,6 +153,7 @@ export default function Chat() {
             onClick={sendMessage}
             disabled={loading || !input.trim()}
             size="icon"
+            aria-label="送信"
             className="absolute right-2 bottom-2"
           >
             <ArrowUpIcon className="h-4 w-4" />

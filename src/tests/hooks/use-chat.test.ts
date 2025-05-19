@@ -39,7 +39,10 @@ describe('useChat', () => {
       await result.current.sendMessage()
     })
 
-    expect(result.current.messages[0]).toEqual({ role: 'user', content: 'ping' })
-    expect(result.current.messages[1]).toEqual({ role: 'assistant', content: 'pong' })
+    expect(result.current.messages[0].role).toBe('user')
+    expect(result.current.messages[0].content).toBe('ping')
+    expect(typeof result.current.messages[0].timestamp).toBe('number')
+    expect(result.current.messages[1].role).toBe('assistant')
+    expect(result.current.messages[1].content).toBe('pong')
   })
 })

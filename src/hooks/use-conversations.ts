@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Conversation } from "@/types/chat";
 
 export interface UseConversations {
@@ -20,6 +20,34 @@ export function useConversations(): UseConversations {
     { id: "current", title: "現在の会話" },
   ]);
   const [selectedId, setSelectedId] = useState("current");
+
+  // 初期化時にlocalStorageからデータを読み込む
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("conversations");
+      const sel = localStorage.getItem("selectedConversation");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Conversation[];
+        if (parsed.length) {
+          setConversations(parsed);
+        }
+      }
+      if (sel) {
+        setSelectedId(sel);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  // 状態変更時にlocalStorageへ保存
+  useEffect(() => {
+    localStorage.setItem("conversations", JSON.stringify(conversations));
+  }, [conversations]);
+
+  useEffect(() => {
+    localStorage.setItem("selectedConversation", selectedId);
+  }, [selectedId]);
 
   const selectConversation = (id: string) => {
     setSelectedId(id);

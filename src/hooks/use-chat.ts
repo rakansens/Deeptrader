@@ -40,6 +40,7 @@ export function useChat(): UseChat {
   const messages: Message[] = aiMessages.map((m) => ({
     role: m.role as Message["role"],
     content: m.content,
+    timestamp: Date.now(),
   }));
 
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +73,10 @@ export function useChat(): UseChat {
     
     setError(null);
     try {
-      await append({ role: "user", content: text });
+      await append({ 
+        role: "user", 
+        content: text,
+      });
       setInput(""); // 非同期処理の完了後に入力をクリア
     } catch (err) {
       const message =

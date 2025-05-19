@@ -8,4 +8,6 @@ export type ChatRole = "user" | "assistant";
 export interface Message {
   role: ChatRole;
   content: string;
+  /** UNIXタイムスタンプ（ミリ秒） */
+  timestamp: number;
 }
