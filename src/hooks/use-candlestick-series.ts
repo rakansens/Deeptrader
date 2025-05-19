@@ -26,7 +26,7 @@ export function useCandlestickSeries({
   volumeRef,
   candles,
   volumes,
-  colors
+  colors,
 }: UseCandlestickSeriesParams) {
   // シリーズの生成と破棄
   useEffect(() => {
@@ -70,7 +70,7 @@ export function useCandlestickSeries({
         volumeRef.current = null
       }
     }
-  }, [chart])
+  }, [chart, candleRef, volumeRef, colors.upColor, colors.downColor, colors.volume])
 
   // テーマ変更時のオプション更新
   useEffect(() => {
@@ -79,10 +79,10 @@ export function useCandlestickSeries({
       downColor: colors.downColor,
       wickUpColor: colors.upColor,
       wickDownColor: colors.downColor,
-      borderVisible: false
+      borderVisible: false,
     })
     volumeRef.current?.applyOptions({ color: colors.volume })
-  }, [colors])
+  }, [candleRef, volumeRef, colors.upColor, colors.downColor, colors.volume])
 
   // データ更新
   useEffect(() => {
@@ -96,7 +96,7 @@ export function useCandlestickSeries({
         processTimeSeriesData<HistogramData>(volumes, toNumericTime)
       )
     }
-  }, [candles, volumes])
+  }, [candleRef, volumeRef, candles, volumes])
 }
 
 export default useCandlestickSeries
