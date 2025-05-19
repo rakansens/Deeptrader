@@ -79,6 +79,69 @@ function DrawingCanvas(
 
   const getContext = () => canvasRef.current?.getContext("2d");
 
+  // プレビュー描画をクリアする関数
+  const clearPreview = () => {
+    const canvas = canvasRef.current;
+    const ctx = getContext();
+    if (!canvas || !ctx || !startPoint.current) return;
+    
+    // 全体をクリアせず、プレビュー部分だけを復元するともっと効率的だが
+    // 単純化のため、現在はキャンバス全体をクリアしています
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  // トレンドラインをプレビュー描画する関数
+  const drawTrendlinePreview = (endX: number, endY: number) => {
+    const ctx = getContext();
+    if (!ctx || !startPoint.current) return;
+    
+    clearPreview();
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineCap = 'round';
+    
+    ctx.beginPath();
+    ctx.moveTo(startPoint.current.x, startPoint.current.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  };
+
+  // フィボナッチリトレースメントをプレビュー描画する関数
+  const drawFibonacciPreview = (endX: number, endY: number) => {
+    const ctx = getContext();
+    if (!ctx || !startPoint.current) return;
+    
+    clearPreview();
+    
+    const left = Math.min(startPoint.current.x, endX);
+    const right = Math.max(startPoint.current.x, endX);
+    const top = Math.min(startPoint.current.y, endY);
+    const bottom = Math.max(startPoint.current.y, endY);
+    const diff = bottom - top;
+    const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineCap = 'round';
+    
+    // 垂直ラインの描画を削除
+    
+    // フィボナッチレベルを描画（水平線のみ）
+    levels.forEach((lv) => {
+      const y = bottom - diff * lv;
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+      
+      // レベル値をラベル表示
+      ctx.fillStyle = color;
+      ctx.font = '10px Arial';
+      ctx.fillText(`${lv * 100}%`, right + 5, y);
+    });
+  };
+
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!enabled) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -92,21 +155,32 @@ function DrawingCanvas(
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current || !enabled) return;
-    const ctx = getContext();
-    const canvas = canvasRef.current;
-    if (!ctx || !canvas || !lastPoint.current) return;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
-    const rect = canvas.getBoundingClientRect();
+    if (!enabled) return;
+    const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    lastPoint.current = { x, y };
+    
+    if (actualMode === 'freehand' && drawing.current) {
+      // フリーハンド描画処理（従来通り）
+      const ctx = getContext();
+      const canvas = canvasRef.current;
+      if (!ctx || !canvas || !lastPoint.current) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      lastPoint.current = { x, y };
+    } else if (startPoint.current) {
+      // トレンドラインとフィボナッチのリアルタイムプレビュー
+      if (actualMode === 'trendline') {
+        drawTrendlinePreview(x, y);
+      } else if (actualMode === 'fibonacci') {
+        drawFibonacciPreview(x, y);
+      }
+    }
   };
 
   const endDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -126,29 +200,15 @@ function DrawingCanvas(
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
       };
-      ctx.strokeStyle = color;
-      ctx.lineWidth = strokeWidth;
-      ctx.lineCap = 'round';
+      
+      // プレビューと同じ描画をここで行う（最終確定）
+      // プレビューをクリアせずそのまま残すことも可能
       if (actualMode === 'trendline') {
-        ctx.beginPath();
-        ctx.moveTo(startPoint.current.x, startPoint.current.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
+        drawTrendlinePreview(end.x, end.y);
       } else if (actualMode === 'fibonacci') {
-        const left = Math.min(startPoint.current.x, end.x);
-        const right = Math.max(startPoint.current.x, end.x);
-        const top = Math.min(startPoint.current.y, end.y);
-        const bottom = Math.max(startPoint.current.y, end.y);
-        const diff = bottom - top;
-        const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
-        levels.forEach((lv) => {
-          const y = bottom - diff * lv;
-          ctx.beginPath();
-          ctx.moveTo(left, y);
-          ctx.lineTo(right, y);
-          ctx.stroke();
-        });
+        drawFibonacciPreview(end.x, end.y);
       }
+      
       startPoint.current = null;
     }
   };

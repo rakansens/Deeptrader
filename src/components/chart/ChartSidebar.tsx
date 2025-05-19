@@ -1,7 +1,7 @@
 'use client';
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Pencil, TrendingUp, Percent, MousePointer } from 'lucide-react';
+import { Pencil, TrendingUp, BarChart3, MousePointer } from 'lucide-react';
 
 // null は描画モードが非アクティブな状態を表す
 export type DrawingMode = 'freehand' | 'trendline' | 'fibonacci' | null;
@@ -80,7 +80,7 @@ export default function ChartSidebar({
         aria-label="フィボナッチリトレースメント"
         title="フィボナッチリトレースメント"
       >
-        <Percent className="h-4 w-4" />
+        <BarChart3 className="h-4 w-4" />
       </button>
     </div>
   );
