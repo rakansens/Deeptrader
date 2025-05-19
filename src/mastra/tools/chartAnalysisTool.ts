@@ -7,6 +7,7 @@ import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeMACD, computeBollinger } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
 import type { BinanceKline } from '@/types/binance';
+import type { IndicatorResult } from '@/types';
 
 /** 価格配列からダブルトップを検出 */
 function detectDoubleTop(prices: number[]): boolean {
@@ -64,7 +65,7 @@ export const chartAnalysisTool = createTool({
     }
 
     const closes = klines.map((k) => parseFloat(k[4]));
-    const results: any[] = [];
+    const results: IndicatorResult[] = [];
     for (const ind of indicators) {
       const name = ind.toUpperCase();
       if (name === 'SMA') {
