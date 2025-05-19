@@ -1,0 +1,34 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Node & pnpm セットアップ ---
+      - name: Use Node 20 + pnpm 8
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.1
+          run_install: false
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install --no-optional --reporter=append-only
+
+      # ----------★ ここを追加 ----------
+      - name: Type check
+        run: pnpm typecheck
+      # ---------------------------------
+
+      - name: Run tests
+        run: pnpm test --coverage 
