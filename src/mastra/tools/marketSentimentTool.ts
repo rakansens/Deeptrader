@@ -2,6 +2,7 @@
 // 市場センチメント分析ツール
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { fetchSentiment } from '@/infrastructure/sentiment-service';
 
 /**
  * SNSなどから市場センチメントを評価するダミーツール
@@ -13,10 +14,21 @@ export const marketSentimentTool = createTool({
     symbol: z.string().describe('例: BTCUSDT')
   }),
   execute: async ({ context }) => {
+    const metrics = await fetchSentiment(context.symbol);
+
+    let sentiment: 'bullish' | 'bearish' | 'neutral';
+    if (metrics.score >= 60) {
+      sentiment = 'bullish';
+    } else if (metrics.score <= 40) {
+      sentiment = 'bearish';
+    } else {
+      sentiment = 'neutral';
+    }
+
     return {
       symbol: context.symbol,
-      sentiment: 'neutral',
-      message: 'センチメント分析は未実装です'
+      score: metrics.score,
+      sentiment
     };
   }
 });
