@@ -1,10 +1,17 @@
 'use client'
-import { createChart, CandlestickData, HistogramData, IChartApi, ISeriesApi, CrosshairMode } from 'lightweight-charts'
+import {
+  createChart,
+  CandlestickData,
+  HistogramData,
+  IChartApi,
+  ISeriesApi,
+  CrosshairMode,
+} from 'lightweight-charts'
 import { useEffect, useRef } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import useChartTheme from '@/hooks/use-chart-theme'
 import useCandlestickData from '@/hooks/use-candlestick-data'
-import { processTimeSeriesData } from '@/lib/chart-utils'
+import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 import useLineSeries from '@/hooks/use-line-series'
 import RsiPanel from './RsiPanel'
 import MacdPanel from './MacdPanel'
@@ -50,8 +57,8 @@ export default function CandlestickChart({
   const { candles = [], volumes = [], ma = [], rsi = [], macd = [], signal = [], bollUpper = [], bollLower = [], loading, error } = useCandlestickData(initialSymbol, initialInterval)
 
   useLineSeries({ chart: chartRef.current, ref: maRef, enabled: indicators.ma, options: { color: '#f59e0b', lineWidth: 2, priceLineVisible: false }, data: ma })
-  useLineSeries({ chart: chartRef.current, ref: bollUpperRef, enabled: indicators.boll, options: { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, data: bollUpper })
-  useLineSeries({ chart: chartRef.current, ref: bollLowerRef, enabled: indicators.boll, options: { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, data: bollLower })
+  useLineSeries({ chart: chartRef.current, ref: bollUpperRef, enabled: !!indicators.boll, options: { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, data: bollUpper })
+  useLineSeries({ chart: chartRef.current, ref: bollLowerRef, enabled: !!indicators.boll, options: { color: '#a855f7', lineWidth: 1, priceLineVisible: false }, data: bollLower })
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -119,17 +126,11 @@ export default function CandlestickChart({
   }, [colors])
 
   useEffect(() => {
-    const toNum = (t: unknown): number => {
-      if (typeof t === 'number') return t
-      if (typeof t === 'string') return Math.floor(new Date(t).getTime() / 1000)
-      if (typeof t === 'object' && t !== null && 'valueOf' in t) return (t as any).valueOf()
-      return 0
-    }
     if (candleRef.current && candles.length > 0) {
-      candleRef.current.setData(processTimeSeriesData<CandlestickData>(candles, toNum))
+      candleRef.current.setData(processTimeSeriesData<CandlestickData>(candles, toNumericTime))
     }
     if (volumeRef.current && volumes.length > 0) {
-      volumeRef.current.setData(processTimeSeriesData<HistogramData>(volumes, toNum))
+      volumeRef.current.setData(processTimeSeriesData<HistogramData>(volumes, toNumericTime))
     }
   }, [candles, volumes])
 
@@ -142,10 +143,10 @@ export default function CandlestickChart({
     <div className={className}>
       <div className="flex flex-col space-y-4">
         <div ref={containerRef} className="w-full rounded-md overflow-hidden border border-border" style={{ height }} data-testid="chart-container" />
-        {indicators.rsi && (
+        {indicators.rsi && chartRef.current && (
           <RsiPanel data={rsi} chart={chartRef.current} height={subHeight} onClose={() => onIndicatorsChange?.({ ...indicators, rsi: false })} />
         )}
-        {indicators.macd && (
+        {indicators.macd && chartRef.current && (
           <MacdPanel macd={macd} signal={signal} chart={chartRef.current} height={subHeight} onClose={() => onIndicatorsChange?.({ ...indicators, macd: false })} />
         )}
       </div>

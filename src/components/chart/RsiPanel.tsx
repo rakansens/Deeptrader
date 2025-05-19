@@ -1,9 +1,9 @@
 'use client'
 import { useRef, useCallback } from 'react'
-import { createChart, IChartApi, ISeriesApi, LineData, UTCTimestamp, CrosshairMode } from 'lightweight-charts'
+import { IChartApi, ISeriesApi, LineData, UTCTimestamp } from 'lightweight-charts'
 import IndicatorPanel from './IndicatorPanel'
-import useChartTheme from '@/hooks/use-chart-theme'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { useIndicatorChart } from '@/hooks/use-chart'
+import { preprocessLineData, toNumericTime } from '@/lib/chart-utils'
 
 interface RsiPanelProps {
   data: LineData[]
@@ -16,40 +16,15 @@ interface RsiPanelProps {
  * RSIパネルコンポーネント
  */
 export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps) {
-  const colors = useChartTheme()
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const createIndicatorChart = useIndicatorChart({ height, mainChart: chart })
 
   const initChart = useCallback((el: HTMLDivElement) => {
-    const rsiChart = createChart(el, {
-      width: el.clientWidth,
-      height,
-      layout: {
-        background: { color: colors.background },
-        textColor: colors.text,
-        fontFamily: 'Inter, sans-serif'
-      },
-      grid: {
-        vertLines: { color: colors.grid },
-        horzLines: { color: colors.grid }
-      },
-      rightPriceScale: {
-        borderColor: colors.grid,
-        scaleMargins: { top: 0.1, bottom: 0.1 }
-      },
-      timeScale: {
-        borderColor: colors.grid,
-        timeVisible: true,
-        secondsVisible: false
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: { labelVisible: true },
-        horzLine: { labelVisible: true }
-      }
-    })
-
+    const { chart: rsiChart, cleanup } = createIndicatorChart(el)
     chartRef.current = rsiChart
+    
+    // RSI特有の設定
     seriesRef.current = rsiChart.addLineSeries({
       color: '#2962FF',
       lineWidth: 2,
@@ -73,8 +48,8 @@ export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps
       lastValueVisible: false
     })
 
-    const timeFrom = Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 30
-    const timeTo = Math.floor(Date.now() / 1000) + 60 * 60 * 24
+    const timeFrom = toNumericTime(Date.now()) - 60 * 60 * 24 * 30
+    const timeTo = toNumericTime(Date.now()) + 60 * 60 * 24
     overSoldLine.setData([
       { time: timeFrom as UTCTimestamp, value: 30 },
       { time: timeTo as UTCTimestamp, value: 30 }
@@ -88,31 +63,16 @@ export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps
       if (data && data.length > 0) {
         seriesRef.current.setData(preprocessLineData(data))
       } else {
-        seriesRef.current.setData([{ time: Math.floor(Date.now() / 1000) as UTCTimestamp, value: 50 }])
-      }
-    }
-
-    if (chart) {
-      const sync = (range: any) => {
-        if (chartRef.current && range !== null) {
-          chartRef.current.timeScale().setVisibleLogicalRange(range)
-        }
-      }
-      chart.timeScale().subscribeVisibleLogicalRangeChange(sync)
-      return () => {
-        chart.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
-        rsiChart.remove()
-        chartRef.current = null
-        seriesRef.current = null
+        seriesRef.current.setData([{ time: toNumericTime(Date.now()) as UTCTimestamp, value: 50 }])
       }
     }
 
     return () => {
-      rsiChart.remove()
+      cleanup()
       chartRef.current = null
       seriesRef.current = null
     }
-  }, [colors, height, data, chart])
+  }, [createIndicatorChart, data])
 
   return (
     <IndicatorPanel title="RSI" height={height} onClose={onClose} initChart={initChart} />
