@@ -9,7 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { TrendingUp, Activity, BarChart3, Waves } from 'lucide-react'
+import { TrendingUp, Activity, BarChart3, Waves, Pencil } from 'lucide-react'
 
 interface ChartToolbarProps {
   timeframe: string
@@ -23,6 +23,8 @@ interface ChartToolbarProps {
     boll?: boolean
   }
   onIndicatorsChange: (value: { ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }) => void
+  drawingEnabled?: boolean
+  onDrawingEnabledChange?: (enabled: boolean) => void
 }
 
 const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d']
@@ -39,6 +41,8 @@ export default function ChartToolbar({
   onSymbolChange,
   indicators,
   onIndicatorsChange,
+  drawingEnabled = false,
+  onDrawingEnabledChange,
 }: ChartToolbarProps) {
   return (
     <div 
@@ -124,6 +128,20 @@ export default function ChartToolbar({
             BOLL
           </Label>
         </div>
+        {onDrawingEnabledChange && (
+          <div className="flex items-center gap-2">
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            <Switch
+              id="drawing-toggle"
+              data-testid="switch-drawing"
+              checked={drawingEnabled}
+              onCheckedChange={onDrawingEnabledChange}
+            />
+            <Label htmlFor="drawing-toggle" className="text-xs sm:text-sm">
+              描画
+            </Label>
+          </div>
+        )}
         <ThemeToggle />
       </div>
     </div>
