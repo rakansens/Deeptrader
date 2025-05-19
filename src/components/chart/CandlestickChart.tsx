@@ -1,7 +1,7 @@
 "use client";
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import useChartTheme from "@/hooks/use-chart-theme";
@@ -11,10 +11,15 @@ import useIndicatorSeries from "@/hooks/use-indicator-series";
 import useChartInstance from "@/hooks/use-chart-instance";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
-import DrawingCanvas, { DrawingCanvasHandle, DrawingMode } from "./drawing-canvas";
+import DrawingCanvas from "./drawing-canvas";
+import type {
+  DrawingCanvasHandle,
+  DrawingMode,
+  IndicatorOptions,
+  IndicatorsChangeHandler,
+} from "@/types/chart";
 import ChartSidebar from "./ChartSidebar";
 import { logger } from "@/lib/logger";
-import type { IndicatorOptions, IndicatorsChangeHandler } from "./types";
 import {
   SYMBOLS,
   TIMEFRAMES,
@@ -130,6 +135,17 @@ export default function CandlestickChart({
     setMode(newMode);
   };
 
+  // インジケーターのトグル処理を最適化
+  const handleToggleIndicator = useCallback((key: keyof typeof indicators, value: boolean) => {
+    if (onIndicatorsChange) {
+      // パネルの追加/削除時にチャートのリサイズをデバウンスするため
+      // requestAnimationFrameを使用して次のフレームで更新
+      requestAnimationFrame(() => {
+        onIndicatorsChange?.({ ...indicators, [key]: value });
+      });
+    }
+  }, [indicators, onIndicatorsChange]);
+
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
   if (error && useApi)
@@ -187,7 +203,7 @@ export default function CandlestickChart({
             data={rsi}
             chart={chartRef.current}
             height={subHeight}
-            onClose={() => onIndicatorsChange?.({ ...indicators, rsi: false })}
+            onClose={() => handleToggleIndicator('rsi', false)}
           />
         )}
         {indicators.macd && (
@@ -196,7 +212,7 @@ export default function CandlestickChart({
             signal={signal}
             chart={chartRef.current}
             height={subHeight}
-            onClose={() => onIndicatorsChange?.({ ...indicators, macd: false })}
+            onClose={() => handleToggleIndicator('macd', false)}
           />
         )}
       </div>

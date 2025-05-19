@@ -2,24 +2,11 @@
 
 import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from "react";
 import { logger } from "@/lib/logger";
+import type { DrawingCanvasHandle, DrawingMode } from "@/types/chart";
 
 /**
  * チャート上に手描きできるキャンバスコンポーネント
  */
-export interface DrawingCanvasHandle {
-  clear: () => void;
-}
-
-export type DrawingMode =
-  | 'freehand'
-  | 'trendline'
-  | 'fibonacci'
-  | 'horizontal-line'
-  | 'box'
-  | 'arrow'
-  | 'eraser'
-  | null;
-
 export interface DrawingCanvasProps {
   /** 描画を有効にするか */
   enabled?: boolean;

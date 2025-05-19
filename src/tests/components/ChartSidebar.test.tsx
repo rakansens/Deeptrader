@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ChartSidebar, { DrawingMode } from '@/components/chart/ChartSidebar';
+import ChartSidebar from '@/components/chart/ChartSidebar';
+import type { DrawingMode } from '@/types/chart';
 
 describe('ChartSidebar', () => {
   it('calls onModeChange when tool selected', async () => {

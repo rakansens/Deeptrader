@@ -13,7 +13,7 @@ import { TrendingUp, Activity, BarChart3, Waves } from 'lucide-react'
 import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
-} from './types'
+} from '@/types/chart'
 import {
   TIMEFRAMES,
   SYMBOLS,
@@ -48,7 +48,7 @@ export default function ChartToolbar({
         {onSymbolChange && (
           <select
             value={symbol}
-            onChange={(e) => onSymbolChange(e.target.value)}
+            onChange={(e) => onSymbolChange(e.target.value as SymbolValue)}
             className="border rounded px-2 py-1 text-sm bg-background"
           >
             {SYMBOLS.map((s) => (
@@ -59,7 +59,7 @@ export default function ChartToolbar({
         <ToggleGroup
           type="single"
           value={timeframe}
-          onValueChange={(v) => v && onTimeframeChange(v)}
+          onValueChange={(v) => v && onTimeframeChange(v as Timeframe)}
         >
           {TIMEFRAMES.map((tf) => (
             <ToggleGroupItem key={tf} value={tf} aria-label={`Timeframe ${tf}`}>

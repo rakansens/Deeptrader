@@ -12,17 +12,7 @@ import {
   Trash2,
   Eraser,
 } from 'lucide-react';
-
-// null は描画モードが非アクティブな状態を表す
-export type DrawingMode =
-  | 'freehand'
-  | 'trendline'
-  | 'fibonacci'
-  | 'horizontal-line'
-  | 'box'
-  | 'arrow'
-  | 'eraser'
-  | null;
+import type { DrawingMode } from '@/types/chart';
 
 interface ChartSidebarProps {
   mode: DrawingMode;

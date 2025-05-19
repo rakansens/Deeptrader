@@ -1,8 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
-import DrawingCanvas, {
-  DrawingCanvasHandle,
-} from "@/components/chart/drawing-canvas";
+import DrawingCanvas from "@/components/chart/drawing-canvas";
+import type { DrawingCanvasHandle } from "@/types/chart";
 import { act } from "react-dom/test-utils";
 
 const mockCtx = {
