@@ -2,6 +2,7 @@
 // MCPサーバーの定義
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // 仮想的なMCPサーバークラス（実際の実装では@mastra/mcpからインポート）
 class MCPServer {
@@ -45,7 +46,7 @@ const chartAnalysisServerTool = createTool({
     } = context;
 
     // 実際の実装では外部APIを呼び出してチャート分析を行います
-    console.log(`チャート分析実行: ${symbol}, ${timeframe}`);
+    logger.debug(`チャート分析実行: ${symbol}, ${timeframe}`);
 
     return {
       symbol,
@@ -89,7 +90,7 @@ const marketDataServerTool = createTool({
     const { symbol, exchange = "BitGet", dataType } = context;
 
     // 実際の実装では取引所APIを呼び出して市場データを取得します
-    console.log(`市場データ取得: ${symbol}, ${exchange}, ${dataType}`);
+    logger.debug(`市場データ取得: ${symbol}, ${exchange}, ${dataType}`);
 
     return {
       symbol,

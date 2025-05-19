@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useImperativeHandle, forwardRef } from "react";
+import { logger } from "@/lib/logger";
 
 /**
  * チャート上に手描きできるキャンバスコンポーネント
@@ -59,7 +60,7 @@ function DrawingCanvas(
       if (parent) {
         canvas.width = parent.offsetWidth;
         canvas.height = parent.offsetHeight;
-        console.log(`Canvas resized: ${canvas.width}x${canvas.height}, Enabled: ${enabled}`);
+        logger.debug(`Canvas resized: ${canvas.width}x${canvas.height}, Enabled: ${enabled}`);
       }
     };
     resize();
@@ -71,9 +72,9 @@ function DrawingCanvas(
 
   useEffect(() => {
     if (enabled) {
-      console.log('描画モードが有効になりました');
+      logger.debug('描画モードが有効になりました');
     } else {
-      console.log('描画モードが無効になりました');
+      logger.debug('描画モードが無効になりました');
     }
   }, [enabled]);
 
@@ -88,6 +89,22 @@ function DrawingCanvas(
     // 全体をクリアせず、プレビュー部分だけを復元するともっと効率的だが
     // 単純化のため、現在はキャンバス全体をクリアしています
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!enabled) return;
+    // 選択モード（null）の場合は描画せずに返る
+    if (mode === null) return;
+    
+    logger.debug('描画開始');
+    const rect = e.currentTarget.getBoundingClientRect();
+    const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    if (actualMode === 'freehand') {
+      drawing.current = true;
+      lastPoint.current = point;
+    } else {
+      startPoint.current = point;
+    }
   };
 
   // トレンドラインをプレビュー描画する関数
@@ -157,21 +174,6 @@ function DrawingCanvas(
     }
   };
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!enabled) return;
-    // 選択モード（null）の場合は描画せずに返る
-    if (mode === null) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    if (actualMode === 'freehand') {
-      drawing.current = true;
-      lastPoint.current = point;
-    } else {
-      startPoint.current = point;
-    }
-  };
-
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!enabled) return;
     // 選択モード（null）の場合は描画せずに返る
@@ -208,6 +210,8 @@ function DrawingCanvas(
     if (!enabled) return;
     // 選択モード（null）の場合は描画せずに返る
     if (mode === null) return;
+    
+    logger.debug('描画終了');
     
     if (actualMode === 'freehand') {
       drawing.current = false;

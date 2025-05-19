@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { logger } from '@/lib/logger'
 import {
   CandlestickData,
   HistogramData,
@@ -85,7 +86,7 @@ export function useCandlestickData(
     
     try {
       const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`
-      console.log(`Fetching initial data from: ${url}`);
+      logger.debug(`Fetching initial data from: ${url}`)
       const res = await fetch(url, { signal: controller.signal })
       
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`)
@@ -95,7 +96,7 @@ export function useCandlestickData(
       // コンポーネントがアンマウントされていたら処理を中止
       if (!isMountedRef.current) return;
       
-      console.log(`Received ${raw.length} candles from API`);
+      logger.debug(`Received ${raw.length} candles from API`)
       
       const c: CandlestickData[] = []
       const v: HistogramData[] = []
@@ -166,8 +167,8 @@ export function useCandlestickData(
       
       // AbortErrorはユーザーに表示しない（通常の動作）
       if (e instanceof DOMException && e.name === 'AbortError') {
-        console.log('Fetch aborted');
-        return;
+        logger.debug('Fetch aborted')
+        return
       }
       
       console.error('Initial data fetch error:', e)
@@ -233,8 +234,8 @@ export function useCandlestickData(
       const currentSocketId = socketIdRef.current;
       
       // WebSocket接続URL
-      const wsUrl = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`;
-      console.log(`Connecting to WebSocket: ${wsUrl}`);
+      const wsUrl = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`
+      logger.debug(`Connecting to WebSocket: ${wsUrl}`)
       
       wsRef.current = new WebSocket(wsUrl);
       const ws = wsRef.current;
@@ -244,7 +245,7 @@ export function useCandlestickData(
         // 他のソケットで既に置き換えられていないか確認
         if (!isMountedRef.current || socketIdRef.current !== currentSocketId) return;
         
-        console.log('WebSocket connected');
+        logger.debug('WebSocket connected')
         setConnected(true);
         setError(null);
         reconnectCountRef.current = 0;
@@ -463,7 +464,7 @@ export function useCandlestickData(
       // 接続終了イベント
       ws.onclose = (e) => {
         if (!isMountedRef.current || socketIdRef.current !== currentSocketId) return;
-        console.log(`WebSocket closed: ${e.code} ${e.reason}`);
+        logger.debug(`WebSocket closed: ${e.code} ${e.reason}`);
         setConnected(false);
         
         // 明示的に閉じられていない場合は再接続
@@ -493,7 +494,7 @@ export function useCandlestickData(
       
       // 指数バックオフで待機時間を増やす
       const delay = Math.min(1000 * Math.pow(1.5, reconnectCountRef.current), 30000);
-      console.log(`Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current}/${maxAttempts})`);
+      logger.debug(`Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current}/${maxAttempts})`);
       
       reconnectTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
@@ -501,13 +502,13 @@ export function useCandlestickData(
         }
       }, delay);
     } else {
-      console.log('Maximum reconnection attempts reached');
+      logger.debug('Maximum reconnection attempts reached');
       setError('WebSocket connection failed after multiple attempts. Please refresh the page.');
     }
   };
 
   useEffect(() => {
-    console.log(`Setting up candlestick data for ${symbol} with ${interval} interval`);
+    logger.debug(`Setting up candlestick data for ${symbol} with ${interval} interval`);
     isMountedRef.current = true;
     reconnectCountRef.current = 0;
     
@@ -548,7 +549,7 @@ export function useCandlestickData(
 
     // クリーンアップ関数
     return () => {
-      console.log(`Cleaning up candlestick data for ${symbol}`);
+      logger.debug(`Cleaning up candlestick data for ${symbol}`);
       isMountedRef.current = false;
       
       // タイマーとWebSocketをクリーンアップ

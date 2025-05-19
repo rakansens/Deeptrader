@@ -2,6 +2,7 @@
 // チャート分析ツールの実装
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 /**
  * チャート分析ツール
@@ -31,7 +32,7 @@ export const chartAnalysisTool = createTool({
 
   // ツールの実行関数
   execute: async ({ context }) => {
-    console.log("チャート分析ツール実行:", context);
+    logger.debug("チャート分析ツール実行:", context);
 
     const {
       symbol,

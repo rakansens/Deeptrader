@@ -16,6 +16,7 @@ import RsiPanel from './RsiPanel'
 import MacdPanel from './MacdPanel'
 import DrawingCanvas, { DrawingCanvasHandle, DrawingMode } from './drawing-canvas'
 import ChartSidebar from './ChartSidebar'
+import { logger } from '@/lib/logger'
 import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
@@ -190,8 +191,15 @@ export default function CandlestickChart({
   }, [colors]);
 
   useEffect(() => {
-    console.log('描画モード変更:', mode);
+    logger.debug('描画モード変更:', mode);
   }, [mode]);
+
+  useEffect(() => {
+    logger.debug('描画有効状態変更:', drawingEnabled);
+    if (!drawingEnabled && drawingRef.current) {
+      drawingRef.current.clear();
+    }
+  }, [drawingEnabled]);
 
   // 型安全なモード変更ハンドラー
   const handleModeChange = (newMode: DrawingMode) => {
