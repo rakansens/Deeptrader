@@ -2,9 +2,11 @@
 // オンチェーンデータツール
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { getAddressInfo } from '@/infrastructure/blockchain-service';
 
 /**
- * オンチェーンデータ取得ツールのダミー実装
+ * オンチェーンデータ取得ツール
+ * 指定したアドレスの残高やトランザクション数を取得する
  */
 export const onChainDataTool = createTool({
   id: 'on-chain-data-tool',
@@ -13,9 +15,7 @@ export const onChainDataTool = createTool({
     address: z.string().describe('ウォレットアドレス')
   }),
   execute: async ({ context }) => {
-    return {
-      address: context.address,
-      message: 'オンチェーンデータ取得は未実装です'
-    };
+    const info = await getAddressInfo(context.address);
+    return info;
   }
 });

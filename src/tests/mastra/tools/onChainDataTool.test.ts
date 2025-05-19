@@ -3,14 +3,25 @@ jest.mock('@mastra/core/tools', () => ({
 }), { virtual: true });
 
 import { onChainDataTool } from '@/mastra/tools/onChainDataTool';
+import { getAddressInfo } from '@/infrastructure/blockchain-service';
+
+jest.mock('@/infrastructure/blockchain-service');
 
 describe('onChainDataTool', () => {
   it('validates input schema', () => {
     expect(() => onChainDataTool.inputSchema.parse({ address: '0xabc' })).not.toThrow();
   });
 
-  it('returns placeholder response', async () => {
+  it('fetches address info', async () => {
+    const mockInfo = {
+      address: '0xabc',
+      balance: '1000',
+      txCount: 5,
+      nonce: 2
+    };
+    (getAddressInfo as jest.Mock).mockResolvedValue(mockInfo);
     const result = await onChainDataTool.execute({ context: { address: '0xabc' } });
-    expect(result).toEqual({ address: '0xabc', message: 'オンチェーンデータ取得は未実装です' });
+    expect(getAddressInfo).toHaveBeenCalledWith('0xabc');
+    expect(result).toEqual(mockInfo);
   });
 });
