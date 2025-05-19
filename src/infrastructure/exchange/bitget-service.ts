@@ -1,9 +1,10 @@
-import type { Json } from '@/types/supabase';
+import type { Json } from "@/types/supabase";
+import type { OrderSide, OrderType } from "@/types/order";
 
 /**
  * Bitget APIの基本URL
  */
-const BASE_URL = process.env.BITGET_BASE_URL ?? 'https://api.bitget.com';
+const BASE_URL = process.env.BITGET_BASE_URL ?? "https://api.bitget.com";
 
 /**
  * ティッカー情報
@@ -36,20 +37,20 @@ export async function getTicker(symbol: string): Promise<Ticker> {
 
   return {
     symbol: t.symbol ?? symbol,
-    high24h: t.high24h ?? '',
-    low24h: t.low24h ?? '',
-    last: t.close ?? t.last ?? '',
-    bidPrice: t.bestBid ?? t.bid ?? '',
-    askPrice: t.bestAsk ?? t.ask ?? '',
-    volume24h: t.baseVolume ?? t.volume24h ?? '',
+    high24h: t.high24h ?? "",
+    low24h: t.low24h ?? "",
+    last: t.close ?? t.last ?? "",
+    bidPrice: t.bestBid ?? t.bid ?? "",
+    askPrice: t.bestAsk ?? t.ask ?? "",
+    volume24h: t.baseVolume ?? t.volume24h ?? "",
     timestamp: t.ts ?? data.ts ?? new Date().toISOString(),
   };
 }
 
 export interface OrderRequest {
   symbol: string;
-  side: 'buy' | 'sell';
-  type: 'limit' | 'market';
+  side: OrderSide;
+  type: OrderType;
   quantity: number;
   price?: number;
   clientOrderId?: string;
@@ -64,22 +65,22 @@ export interface OrderRequest {
 export async function placeOrder(req: OrderRequest): Promise<void> {
   const url = `${BASE_URL}/api/v2/spot/trade/place-order`;
   const headers = {
-    'Content-Type': 'application/json',
-    'X-BG-API-KEY': process.env.BITGET_API_KEY ?? '',
+    "Content-Type": "application/json",
+    "X-BG-API-KEY": process.env.BITGET_API_KEY ?? "",
   };
 
   const body = JSON.stringify({
     symbol: req.symbol,
     side: req.side,
     orderType: req.type,
-    force: 'gtc',
+    force: "gtc",
     price: req.price,
     quantity: req.quantity,
     clientOrderId: req.clientOrderId,
     extraParams: req.extraParams,
   });
 
-  const res = await fetch(url, { method: 'POST', headers, body });
+  const res = await fetch(url, { method: "POST", headers, body });
   if (!res.ok) {
     throw new Error(`Order failed: ${res.status} ${res.statusText}`);
   }

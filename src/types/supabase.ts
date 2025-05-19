@@ -6,6 +6,8 @@
  * スキーマから自動生成する場合は、以下のコマンドを使用:
  * npx supabase gen types typescript --project-id <プロジェクトID> --schema public > src/types/supabase.ts
  */
+import type { OrderSide } from "./order";
+
 export type Database = {
   public: {
     Tables: {
@@ -75,7 +77,7 @@ export type Database = {
           user_id: string;
           strategy_id: string | null;
           symbol: string;
-          type: "buy" | "sell";
+          type: OrderSide;
           quantity: number;
           price: number;
           timestamp: string;
@@ -87,7 +89,7 @@ export type Database = {
           user_id: string;
           strategy_id?: string | null;
           symbol: string;
-          type: "buy" | "sell";
+          type: OrderSide;
           quantity: number;
           price: number;
           timestamp?: string;
@@ -99,7 +101,7 @@ export type Database = {
           user_id?: string;
           strategy_id?: string | null;
           symbol?: string;
-          type?: "buy" | "sell";
+          type?: OrderSide;
           quantity?: number;
           price?: number;
           timestamp?: string;
