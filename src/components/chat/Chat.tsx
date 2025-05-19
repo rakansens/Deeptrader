@@ -23,6 +23,7 @@ import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
+import { useVoiceInput } from "@/hooks/use-voice-input";
 import { useSettings } from "@/hooks/use-settings";
 import {
   Tooltip,
@@ -51,19 +52,37 @@ export default function Chat() {
   } = useChat();
   const { toast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
   const spokenRef = useRef<string | null>(null);
-  const [isListening, setIsListening] = useState(false);
-
   const isSendingRef = useRef(false);
+  
+  // 音声入力フックを使用
+  const { isListening, startListening, stopListening, toggleListening } = useVoiceInput({
+    onResult: (text) => {
+      setInput(text);
+    },
+    lang: "ja-JP"
+  });
 
-  const stopRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.stop();
-      recognitionRef.current.abort?.();
-      recognitionRef.current = null;
-    }
+  // メッセージ送信の共通ロジック
+  const handleSendMessage = () => {
+    stopListening(); // 音声入力を停止
+    
+    if (!input.trim()) return;
+    
+    const text = input;  // 現在の入力を保存
+    
+    // 入力欄をクリア（同期的に実行）
+    flushSync(() => {
+      setInput("");
+    });
+    
+    // メッセージを送信（非同期処理を次のイベントループに遅延させる）
+    isSendingRef.current = true;
+    setTimeout(() => {
+      sendMessage(text).finally(() => {
+        isSendingRef.current = false;
+      });
+    }, 0);
   };
 
   const {
@@ -71,42 +90,6 @@ export default function Chat() {
     speechSynthesisEnabled,
     refreshSettings,
   } = useSettings();
-
-  const startVoiceInput = () => {
-    if (!voiceInputEnabled) return;
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-    
-    if (isListening && recognitionRef.current) {
-      stopRecognition();
-      setIsListening(false);
-      return;
-    }
-    
-    const rec: any = new SpeechRecognition();
-    recognitionRef.current = rec;
-    rec.lang = "ja-JP";
-    rec.interimResults = false;
-    rec.onresult = (e: any) => {
-      // 無効化済みインスタンスや送信中は無視
-      if (rec !== recognitionRef.current || isSendingRef.current) return;
-
-      const text = Array.from(e.results)
-        .map((r: any) => r[0].transcript)
-        .join("");
-      setInput(text);
-      setIsListening(false);
-    };
-    rec.onend = () => {
-      setIsListening(false);
-    };
-    rec.onerror = () => {
-      setIsListening(false);
-    };
-    rec.start();
-    setIsListening(true);
-  };
 
   const exportConversation = (format: 'json' | 'txt') => {
     const data =
@@ -215,20 +198,9 @@ export default function Chat() {
     }
   }, [error, toast]);
 
-  // デバッグ情報をコンソールに出力
+  // 音声入力設定の変更を監視
   useEffect(() => {
-    console.log("音声入力設定 (Chat.tsx):", voiceInputEnabled);
-    console.log("LocalStorage voiceInputEnabled:", localStorage.getItem("voiceInputEnabled"));
-    
-    // 設定が有効かどうかを毎回チェック
-    const checkStorage = () => {
-      const stored = localStorage.getItem("voiceInputEnabled");
-      console.log("LocalStorage 定期チェック:", stored);
-    };
-    
-    // 定期的にチェック
-    const interval = setInterval(checkStorage, 2000);
-    return () => clearInterval(interval);
+    // 設定変更の監視は必要に応じて実装
   }, [voiceInputEnabled]);
 
   // 設定変更を監視して定期的に最新の設定を読み込む
@@ -377,22 +349,7 @@ export default function Chat() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                stopRecognition();
-
-                if (!input.trim()) return;
-                
-                const text = input;  // 現在の入力を保存
-                
-                // 入力欄をクリア（同期的に実行）
-                flushSync(() => {
-                  setInput("");
-                });
-                
-                // メッセージを送信
-                isSendingRef.current = true;
-                sendMessage(text).finally(() => {
-                  isSendingRef.current = false;
-                });
+                handleSendMessage();
               }
             }}
           />
@@ -403,7 +360,7 @@ export default function Chat() {
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
-                    onClick={startVoiceInput}
+                    onClick={toggleListening}
                     variant={isListening ? "default" : "outline"}
                     size="icon"
                     aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
@@ -431,24 +388,7 @@ export default function Chat() {
           )}
           
           <Button
-            onClick={() => {
-              stopRecognition();
-              
-              if (!input.trim()) return;
-              
-              const text = input;  // 現在の入力を保存
-              
-              // 入力欄をクリア（同期的に実行）
-              flushSync(() => {
-                setInput("");
-              });
-              
-              // メッセージを送信
-              isSendingRef.current = true;
-              sendMessage(text).finally(() => {
-                isSendingRef.current = false;
-              });
-            }}
+            onClick={handleSendMessage}
             disabled={loading || !input.trim()}
             size="icon"
             aria-label="送信"

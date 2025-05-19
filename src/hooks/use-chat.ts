@@ -114,29 +114,22 @@ export function useChat(): UseChat {
   }, [messages, selectedId]);
 
   const sendMessage = async (textParam?: string) => {
-    console.log("🔄 sendMessage開始:", { textParam, input });
     const text = (textParam ?? input).trim();
-    console.log("🔄 使用テキスト:", text);
     if (!text) return;
     
     setError(null);
     try {
       // Chat.tsx側で既に入力欄をクリアしているので、ここでは何もしない
-      console.log("🔄 処理開始");
-      
       await append({
         role: "user",
         content: text,
       } as any);
-      
-      console.log("🔄 append完了後");
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
           : "メッセージ送信中にエラーが発生しました";
       setError(message);
-      console.log("🔄 エラー発生:", message);
     }
   };
 
