@@ -15,6 +15,12 @@ import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Chat() {
   const {
@@ -92,43 +98,51 @@ export default function Chat() {
         />
       </div>
       <div className="flex-1 flex flex-col h-full p-4 relative">
-        <div className="absolute right-2 top-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                会話をエクスポート
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => exportConversation('json')}>
-                JSONでダウンロード
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => exportConversation('txt')}>
-                テキストでダウンロード
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
+              onClick={toggleSidebar}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          <div>
+            <DropdownMenu>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>会話をエクスポート</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => exportConversation('json')}>
+                  JSONでダウンロード
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => exportConversation('txt')}>
+                  テキストでダウンロード
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
-          onClick={toggleSidebar}
-          className="absolute -left-6 top-2 hidden md:flex"
-        >
-          {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </Button>
-        <div className="mb-2 flex justify-end md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
-            onClick={toggleSidebar}
-          >
-            {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </Button>
-        </div>
-        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2">
+        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-4">質問や指示を入力してください</p>
