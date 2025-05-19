@@ -1,27 +1,20 @@
-'use client'
+"use client";
 
-import {
-  createChart,
-  IChartApi,
-  ISeriesApi,
-  CrosshairMode,
-} from 'lightweight-charts'
-import { useEffect, useRef, useState } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
-import useChartTheme from '@/hooks/use-chart-theme'
-import useCandlestickData from '@/hooks/use-candlestick-data'
-import useCandlestickSeries from '@/hooks/use-candlestick-series'
-import useLineSeries from '@/hooks/use-line-series'
-import RsiPanel from './RsiPanel'
-import MacdPanel from './MacdPanel'
-import DrawingCanvas, { DrawingCanvasHandle, DrawingMode } from './drawing-canvas'
-import ChartSidebar from './ChartSidebar'
-import { logger } from '@/lib/logger'
-import type {
-  IndicatorOptions,
-  IndicatorsChangeHandler,
-} from './types'
-import { SYMBOLS, TIMEFRAMES } from '@/constants/chart'
+import { IChartApi, ISeriesApi } from "lightweight-charts";
+import { useEffect, useRef, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import useChartTheme from "@/hooks/use-chart-theme";
+import useCandlestickData from "@/hooks/use-candlestick-data";
+import useCandlestickSeries from "@/hooks/use-candlestick-series";
+import useIndicatorSeries from "@/hooks/use-indicator-series";
+import useChartInstance from "@/hooks/use-chart-instance";
+import RsiPanel from "./RsiPanel";
+import MacdPanel from "./MacdPanel";
+import DrawingCanvas, { DrawingCanvasHandle, DrawingMode } from "./drawing-canvas";
+import ChartSidebar from "./ChartSidebar";
+import { logger } from "@/lib/logger";
+import type { IndicatorOptions, IndicatorsChangeHandler } from "./types";
+import { SYMBOLS, TIMEFRAMES } from "@/constants/chart";
 
 interface CandlestickChartProps {
   className?: string;
@@ -53,7 +46,6 @@ export default function CandlestickChart({
 }: CandlestickChartProps) {
   const colors = useChartTheme();
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const maRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -78,26 +70,21 @@ export default function CandlestickChart({
     error,
   } = useCandlestickData(initialSymbol, initialInterval);
 
-  useLineSeries({
-    chart: chartRef.current,
-    ref: maRef,
-    enabled: indicators.ma,
-    options: { color: '#f59e0b', lineWidth: 2, priceLineVisible: false },
-    data: ma,
+  const chartRef = useChartInstance({
+    container: containerRef.current,
+    height,
   });
-  useLineSeries({
+
+  useIndicatorSeries({
     chart: chartRef.current,
-    ref: bollUpperRef,
-    enabled: !!indicators.boll,
-    options: { color: '#a855f7', lineWidth: 1, priceLineVisible: false },
-    data: bollUpper,
-  });
-  useLineSeries({
-    chart: chartRef.current,
-    ref: bollLowerRef,
-    enabled: !!indicators.boll,
-    options: { color: '#a855f7', lineWidth: 1, priceLineVisible: false },
-    data: bollLower,
+    maRef,
+    bollUpperRef,
+    bollLowerRef,
+    ma,
+    bollUpper,
+    bollLower,
+    enabledMa: indicators.ma,
+    enabledBoll: !!indicators.boll,
   });
 
   useCandlestickSeries({
@@ -112,83 +99,6 @@ export default function CandlestickChart({
       volume: colors.volume,
     },
   });
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const chart = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth,
-      height,
-      layout: {
-        background: { color: colors.background },
-        textColor: colors.text,
-      },
-      grid: {
-        vertLines: { color: colors.grid },
-        horzLines: { color: colors.grid },
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: {
-          color: colors.crosshair,
-          labelVisible: true,
-          labelBackgroundColor: colors.background,
-        },
-        horzLine: {
-          color: colors.crosshair,
-          labelVisible: true,
-          labelBackgroundColor: colors.background,
-        },
-      },
-      rightPriceScale: {
-        borderColor: colors.grid,
-        borderVisible: true,
-        scaleMargins: { top: 0.1, bottom: 0.2 },
-      },
-      timeScale: { borderColor: colors.grid, timeVisible: true },
-    });
-    chartRef.current = chart;
-    const handleResize = () => {
-      if (containerRef.current && chartRef.current) {
-        chartRef.current.resize(containerRef.current.clientWidth, height);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-      chartRef.current = null;
-    };
-  }, [colors, height]);
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    chartRef.current.applyOptions({
-      layout: {
-        background: { color: colors.background },
-        textColor: colors.text,
-      },
-      grid: {
-        vertLines: { color: colors.grid },
-        horzLines: { color: colors.grid },
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: {
-          color: colors.crosshair,
-          labelVisible: true,
-          labelBackgroundColor: colors.background,
-        },
-        horzLine: {
-          color: colors.crosshair,
-          labelVisible: true,
-          labelBackgroundColor: colors.background,
-        },
-      },
-      rightPriceScale: { borderColor: colors.grid },
-      timeScale: { borderColor: colors.grid },
-    });
-    // シリーズのテーマはフック内で適用
-  }, [colors]);
 
   useEffect(() => {
     logger.debug('描画モード変更:', mode);
