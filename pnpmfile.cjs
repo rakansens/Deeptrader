@@ -2,6 +2,7 @@
 module.exports = {
     hooks: {
       readPackage(pkg) {
+        console.log('HOOK ACTIVE', pkg.name);
         // ① 普通の dependencies から除去／ダミー化
         if (pkg.dependencies && pkg.dependencies['onnxruntime-node']) {
           pkg.dependencies['onnxruntime-node'] = '0.0.0-ignored';

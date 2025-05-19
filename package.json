@@ -91,7 +91,10 @@
     "typescript": "5.2.2"
   },
   "packageManager": "pnpm@8.15.1",
-  "overrides": {
-    "onnxruntime-node": "0.0.0-ignored"
+  "pnpm": {
+    "overrides": {
+      "onnxruntime-node": "npm:empty-module@0.0.2",
+      "fastembed>onnxruntime-node": "npm:empty-module@0.0.2"
+    }
   }
 }
