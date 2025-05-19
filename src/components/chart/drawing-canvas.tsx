@@ -10,7 +10,14 @@ export interface DrawingCanvasHandle {
   clear: () => void;
 }
 
-export type DrawingMode = 'freehand' | 'trendline' | 'fibonacci' | null;
+export type DrawingMode =
+  | 'freehand'
+  | 'trendline'
+  | 'fibonacci'
+  | 'horizontal-line'
+  | 'box'
+  | 'arrow'
+  | null;
 
 export interface DrawingCanvasProps {
   /** 描画を有効にするか */
@@ -159,6 +166,71 @@ function DrawingCanvas(
     });
   };
 
+  // 水平線のプレビューを描画する関数
+  const drawHorizontalLinePreview = (y: number) => {
+    const ctx = getContext();
+    const canvas = canvasRef.current;
+    if (!ctx || !canvas) return;
+
+    clearPreview();
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  };
+
+  // ボックス描画のプレビュー
+  const drawBoxPreview = (endX: number, endY: number) => {
+    const ctx = getContext();
+    if (!ctx || !startPoint.current) return;
+
+    clearPreview();
+
+    const left = Math.min(startPoint.current.x, endX);
+    const top = Math.min(startPoint.current.y, endY);
+    const width = Math.abs(endX - startPoint.current.x);
+    const height = Math.abs(endY - startPoint.current.y);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.beginPath();
+    ctx.rect(left, top, width, height);
+    ctx.stroke();
+  };
+
+  // 矢印マーカーのプレビュー
+  const drawArrowPreview = (endX: number, endY: number) => {
+    const ctx = getContext();
+    if (!ctx || !startPoint.current) return;
+
+    clearPreview();
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(startPoint.current.x, startPoint.current.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // 矢印の先端を描画
+    const angle = Math.atan2(endY - startPoint.current.y, endX - startPoint.current.x);
+    const len = 10;
+    const theta = Math.PI / 6;
+
+    ctx.beginPath();
+    ctx.moveTo(endX, endY);
+    ctx.lineTo(endX - len * Math.cos(angle - theta), endY - len * Math.sin(angle - theta));
+    ctx.lineTo(endX - len * Math.cos(angle + theta), endY - len * Math.sin(angle + theta));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+
   // カーソルスタイルを決定
   const getCursorStyle = () => {
     if (!enabled) return '';
@@ -170,7 +242,7 @@ function DrawingCanvas(
       case 'freehand':
         return 'cursor-pointer'; // フリーハンド (Tailwindにcursor-pencilがないため)
       default:
-        return 'cursor-crosshair'; // トレンドラインとフィボナッチ
+        return 'cursor-crosshair'; // その他の描画ツール
     }
   };
 
@@ -197,11 +269,17 @@ function DrawingCanvas(
       ctx.stroke();
       lastPoint.current = { x, y };
     } else if (startPoint.current) {
-      // トレンドラインとフィボナッチのリアルタイムプレビュー
+      // 各モードのリアルタイムプレビュー
       if (actualMode === 'trendline') {
         drawTrendlinePreview(x, y);
       } else if (actualMode === 'fibonacci') {
         drawFibonacciPreview(x, y);
+      } else if (actualMode === 'horizontal-line') {
+        drawHorizontalLinePreview(y);
+      } else if (actualMode === 'box') {
+        drawBoxPreview(x, y);
+      } else if (actualMode === 'arrow') {
+        drawArrowPreview(x, y);
       }
     }
   };
@@ -235,6 +313,12 @@ function DrawingCanvas(
         drawTrendlinePreview(end.x, end.y);
       } else if (actualMode === 'fibonacci') {
         drawFibonacciPreview(end.x, end.y);
+      } else if (actualMode === 'horizontal-line') {
+        drawHorizontalLinePreview(end.y);
+      } else if (actualMode === 'box') {
+        drawBoxPreview(end.x, end.y);
+      } else if (actualMode === 'arrow') {
+        drawArrowPreview(end.x, end.y);
       }
       
       startPoint.current = null;

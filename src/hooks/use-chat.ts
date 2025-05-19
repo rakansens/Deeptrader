@@ -122,11 +122,12 @@ export function useChat(): UseChat {
     
     setError(null);
     try {
+      // 非同期処理の前に入力をクリア
+      setInput("");
       await append({ 
         role: "user", 
         content: text,
       });
-      setInput(""); // 非同期処理の完了後に入力をクリア
     } catch (err) {
       const message =
         err instanceof Error

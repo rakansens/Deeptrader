@@ -11,6 +11,10 @@ const mockCtx = {
   lineTo: jest.fn(),
   stroke: jest.fn(),
   clearRect: jest.fn(),
+  rect: jest.fn(),
+  closePath: jest.fn(),
+  fill: jest.fn(),
+  fillText: jest.fn(),
 };
 
 beforeAll(() => {
@@ -70,6 +74,44 @@ describe("DrawingCanvas", () => {
     });
     // 7 levels should be drawn
     expect(mockCtx.stroke).toHaveBeenCalledTimes(7);
+  });
+
+  it("draws horizontal line", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode="horizontal-line" />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 20 });
+      fireEvent.pointerUp(canvas, { clientX: 0, clientY: 20 });
+    });
+    expect(mockCtx.moveTo).toHaveBeenCalledWith(0, 20);
+    expect(mockCtx.lineTo).toHaveBeenCalled();
+  });
+
+  it("draws box", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode="box" />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerUp(canvas, { clientX: 10, clientY: 10 });
+    });
+    expect(mockCtx.rect).toHaveBeenCalledWith(0, 0, 10, 10);
+  });
+
+  it("draws arrow", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode="arrow" />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerUp(canvas, { clientX: 10, clientY: 10 });
+    });
+    expect(mockCtx.lineTo).toHaveBeenCalledWith(10, 10);
+    expect(mockCtx.fill).toHaveBeenCalled();
   });
 
   it("treats null mode as freehand", async () => {

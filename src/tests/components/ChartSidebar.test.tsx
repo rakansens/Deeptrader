@@ -27,6 +27,14 @@ describe('ChartSidebar', () => {
     expect(onChange).toHaveBeenCalledWith('fibonacci');
   });
 
+  it('selects horizontal line tool', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<ChartSidebar mode={null} onModeChange={onChange} />);
+    await user.click(screen.getByTitle('水平線'));
+    expect(onChange).toHaveBeenCalledWith('horizontal-line');
+  });
+
   it('shows selection tool as active when mode is null', () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
     const selectionTool = screen.getByTitle('選択ツール');

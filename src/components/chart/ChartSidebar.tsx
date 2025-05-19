@@ -1,10 +1,25 @@
 'use client';
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Pencil, TrendingUp, BarChart3, MousePointer } from 'lucide-react';
+import {
+  Pencil,
+  TrendingUp,
+  BarChart3,
+  MousePointer,
+  Minus,
+  Square,
+  ArrowUpRight,
+} from 'lucide-react';
 
 // null は描画モードが非アクティブな状態を表す
-export type DrawingMode = 'freehand' | 'trendline' | 'fibonacci' | null;
+export type DrawingMode =
+  | 'freehand'
+  | 'trendline'
+  | 'fibonacci'
+  | 'horizontal-line'
+  | 'box'
+  | 'arrow'
+  | null;
 
 interface ChartSidebarProps {
   mode: DrawingMode;
@@ -81,6 +96,45 @@ export default function ChartSidebar({
         title="フィボナッチリトレースメント"
       >
         <BarChart3 className="h-4 w-4" />
+      </button>
+
+      <button
+        className={`w-full p-2 rounded-md flex items-center justify-center ${
+          isActive('horizontal-line')
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+        }`}
+        onClick={() => handleToolClick('horizontal-line')}
+        aria-label="水平線"
+        title="水平線"
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+
+      <button
+        className={`w-full p-2 rounded-md flex items-center justify-center ${
+          isActive('box')
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+        }`}
+        onClick={() => handleToolClick('box')}
+        aria-label="ボックス描画"
+        title="ボックス描画"
+      >
+        <Square className="h-4 w-4" />
+      </button>
+
+      <button
+        className={`w-full p-2 rounded-md flex items-center justify-center ${
+          isActive('arrow')
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+        }`}
+        onClick={() => handleToolClick('arrow')}
+        aria-label="矢印マーカー"
+        title="矢印マーカー"
+      >
+        <ArrowUpRight className="h-4 w-4" />
       </button>
     </div>
   );
