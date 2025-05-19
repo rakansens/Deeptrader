@@ -2,7 +2,7 @@
 // Supabaseクライアントの初期化
 
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/supabase";
+import { Database } from "@/types";
 
 // 環境変数からSupabase URLとAnon Keyを取得
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useChat as useAIChat } from "ai/react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
-import type { Conversation, Message } from "@/types/chat";
+import type { Conversation, Message } from "@/types";
 
 export interface UseChat {
   messages: Message[];

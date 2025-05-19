@@ -3,7 +3,7 @@
 import { UTCTimestamp, ISeriesApi, IChartApi } from 'lightweight-charts';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import useBinanceSocket from '@/hooks/use-binance-socket';
-import type { BinanceTradeMessage } from '@/types/binance';
+import type { BinanceTradeMessage } from '@/types';
 import { useChart } from '@/hooks/use-chart';
 import {
   computeSMA,

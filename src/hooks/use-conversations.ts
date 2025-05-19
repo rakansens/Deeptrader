@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Conversation } from "@/types/chat";
+import type { Conversation } from "@/types";
 
 export interface UseConversations {
   conversations: Conversation[];

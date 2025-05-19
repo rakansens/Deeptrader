@@ -9,7 +9,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import type { ReactNode } from "react";
-import type { ChatRole } from "@/types/chat";
+import type { ChatRole } from "@/types";
 
 export interface MessageBubbleProps {
   role: ChatRole;

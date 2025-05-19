@@ -5,7 +5,7 @@ import {
   LineData,
   UTCTimestamp,
 } from "lightweight-charts";
-import type { BinanceKline, BinanceKlineMessage } from "@/types/binance";
+import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import useBinanceSocket from "./use-binance-socket";
 import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
 import type { Timeframe, SymbolValue } from "@/constants/chart";

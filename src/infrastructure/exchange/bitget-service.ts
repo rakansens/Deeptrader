@@ -1,5 +1,4 @@
-import type { Json } from "@/types/supabase";
-import type { OrderSide, OrderType } from "@/types/order";
+import type { Json, OrderSide, OrderType } from "@/types";
 
 /**
  * Bitget APIの基本URL
