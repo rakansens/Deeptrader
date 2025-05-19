@@ -3,12 +3,14 @@
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format";
 import TypingIndicator from "./typing-indicator";
-import { Copy } from "lucide-react";
+import { Copy, VolumeX, Volume2 } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { useSettings } from "@/hooks/use-settings";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
 
@@ -32,6 +34,9 @@ export function MessageBubble({
   timestamp,
   avatar,
 }: MessageBubbleProps) {
+  const { speechSynthesisEnabled } = useSettings();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  
   const handleCopy = () => {
     if (typeof children !== "string" || typing) return;
     try {
@@ -40,6 +45,47 @@ export function MessageBubble({
       // ignore clipboard errors
     }
   };
+  
+  const speakMessage = () => {
+    if (typeof children !== "string" || typing) return;
+    
+    try {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        return;
+      }
+      
+      const utter = new SpeechSynthesisUtterance(children as string);
+      utter.lang = "ja-JP";
+      
+      // イベントハンドラー
+      utter.onstart = () => setIsSpeaking(true);
+      utter.onend = () => setIsSpeaking(false);
+      utter.onerror = () => setIsSpeaking(false);
+      
+      // 日本語の音声を優先的に選択
+      const voices = window.speechSynthesis.getVoices();
+      const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
+      if (jaVoice) {
+        utter.voice = jaVoice;
+      }
+      
+      window.speechSynthesis.speak(utter);
+    } catch (error) {
+      console.error("メッセージ読み上げエラー:", error);
+    }
+  };
+  
+  // 読み上げ中にページを離れたときに停止する
+  useEffect(() => {
+    return () => {
+      if (isSpeaking) {
+        window.speechSynthesis?.cancel();
+      }
+    };
+  }, [isSpeaking]);
+  
   return (
     <div
       className={cn(
@@ -67,16 +113,31 @@ export function MessageBubble({
         {timestamp !== undefined && (
           <span className="ml-auto">{formatDateTime(timestamp)}</span>
         )}
-        {typeof children === "string" && !typing && (
-          <button
-            type="button"
-            aria-label="コピー"
-            onClick={handleCopy}
-            className="p-1 hover:text-foreground"
-          >
-            <Copy className="h-3 w-3" />
-          </button>
-        )}
+        
+        <div className="flex items-center gap-1">
+          {role === "assistant" && speechSynthesisEnabled && typeof children === "string" && !typing && (
+            <button
+              type="button"
+              aria-label={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
+              onClick={speakMessage}
+              className="p-1 hover:text-foreground"
+              title={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
+            >
+              {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+            </button>
+          )}
+          
+          {typeof children === "string" && !typing && (
+            <button
+              type="button"
+              aria-label="コピー"
+              onClick={handleCopy}
+              className="p-1 hover:text-foreground"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="text-sm whitespace-pre-wrap">
         {typing ? (

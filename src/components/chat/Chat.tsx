@@ -56,6 +56,7 @@ export default function Chat() {
   const {
     voiceInputEnabled,
     speechSynthesisEnabled,
+    refreshSettings,
   } = useSettings();
 
   const startVoiceInput = () => {
@@ -194,9 +195,32 @@ export default function Chat() {
 
   // デバッグ情報をコンソールに出力
   useEffect(() => {
-    console.log("音声入力設定:", voiceInputEnabled);
+    console.log("音声入力設定 (Chat.tsx):", voiceInputEnabled);
     console.log("LocalStorage voiceInputEnabled:", localStorage.getItem("voiceInputEnabled"));
+    
+    // 設定が有効かどうかを毎回チェック
+    const checkStorage = () => {
+      const stored = localStorage.getItem("voiceInputEnabled");
+      console.log("LocalStorage 定期チェック:", stored);
+    };
+    
+    // 定期的にチェック
+    const interval = setInterval(checkStorage, 2000);
+    return () => clearInterval(interval);
   }, [voiceInputEnabled]);
+
+  // 設定変更を監視して定期的に最新の設定を読み込む
+  useEffect(() => {
+    // 3秒ごとに設定を更新（より頻繁に確認）
+    const interval = setInterval(() => {
+      refreshSettings();
+    }, 3000);
+    
+    // コンポーネントのマウント時にも一度読み込む
+    refreshSettings();
+    
+    return () => clearInterval(interval);
+  }, [refreshSettings]);
 
   return (
     <div className="flex h-full relative">

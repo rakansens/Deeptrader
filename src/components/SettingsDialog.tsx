@@ -30,14 +30,29 @@ export function SettingsDialog() {
   const [localVoiceEnabled, setLocalVoiceEnabled] = useState(voiceInputEnabled);
   const [localSpeechEnabled, setLocalSpeechEnabled] = useState(speechSynthesisEnabled);
   
-  // 設定を適用
+  // 設定を適用（保存）
   const applySettings = () => {
+    console.log("設定を保存します:", { 音声入力: localVoiceEnabled, 読み上げ: localSpeechEnabled });
+    
+    // localStorageに直接書き込む
+    localStorage.setItem("voiceInputEnabled", String(localVoiceEnabled));
+    localStorage.setItem("speechSynthesisEnabled", String(localSpeechEnabled));
+    
+    // useSettingsフックの状態も更新
     setVoiceInputEnabled(localVoiceEnabled);
     setSpeechSynthesisEnabled(localSpeechEnabled);
+    
+    // 設定の保存を確認
+    const storedVoice = localStorage.getItem("voiceInputEnabled");
+    const storedSpeech = localStorage.getItem("speechSynthesisEnabled");
+    console.log("保存後の確認:", { 音声入力: storedVoice, 読み上げ: storedSpeech });
+    
     toast({
       title: "設定を保存しました",
-      description: "設定が正常に保存されました。",
+      description: "設定が反映されました",
     });
+    
+    // ダイアログを閉じる
     setOpen(false);
   };
   
@@ -50,8 +65,27 @@ export function SettingsDialog() {
   // DialogがOpenになったら最新の値に更新
   useEffect(() => {
     if (open) {
-      setLocalVoiceEnabled(voiceInputEnabled);
-      setLocalSpeechEnabled(speechSynthesisEnabled);
+      // LocalStorageから直接読み込む（信頼性向上のため）
+      const storedVoice = localStorage.getItem("voiceInputEnabled");
+      const storedSpeech = localStorage.getItem("speechSynthesisEnabled");
+      
+      console.log("ダイアログオープン時の値:", { 
+        hooksの値: { 音声入力: voiceInputEnabled, 読み上げ: speechSynthesisEnabled },
+        localStorage値: { 音声入力: storedVoice, 読み上げ: storedSpeech }
+      });
+      
+      // LocalStorageの値を優先
+      if (storedVoice !== null) {
+        setLocalVoiceEnabled(storedVoice === "true");
+      } else {
+        setLocalVoiceEnabled(voiceInputEnabled);
+      }
+      
+      if (storedSpeech !== null) {
+        setLocalSpeechEnabled(storedSpeech === "true");
+      } else {
+        setLocalSpeechEnabled(speechSynthesisEnabled);
+      }
     }
   }, [open, voiceInputEnabled, speechSynthesisEnabled]);
 

@@ -1,75 +1,87 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export interface UseSettings {
   voiceInputEnabled: boolean;
   setVoiceInputEnabled: (v: boolean) => void;
   speechSynthesisEnabled: boolean;
   setSpeechSynthesisEnabled: (v: boolean) => void;
+  refreshSettings: () => void; // 設定を再読み込みするための関数を追加
 }
 
 /**
  * 音声入力と読み上げ設定を管理するフック
  */
 export function useSettings(): UseSettings {
-  const [voiceInputEnabled, setVoiceInputEnabledState] = useState(false);
-  const [speechSynthesisEnabled, setSpeechSynthesisEnabledState] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const [voiceInputEnabled, setVoiceInputEnabledState] = useState<boolean>(false);
+  const [speechSynthesisEnabled, setSpeechSynthesisEnabledState] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState<boolean>(false);
 
-  // 設定変更ハンドラ - localStorageに直接保存し、状態も更新
-  const setVoiceInputEnabled = (value: boolean) => {
-    console.log("音声入力設定を変更:", value);
+  // LocalStorageから設定を読み込む
+  const loadSettings = useCallback(() => {
     try {
-      localStorage.setItem("voiceInputEnabled", String(value));
-      setVoiceInputEnabledState(value);
-    } catch (e) {
-      console.error("設定の保存に失敗:", e);
-    }
-  };
-
-  const setSpeechSynthesisEnabled = (value: boolean) => {
-    console.log("読み上げ設定を変更:", value);
-    try {
-      localStorage.setItem("speechSynthesisEnabled", String(value));
-      setSpeechSynthesisEnabledState(value);
-    } catch (e) {
-      console.error("設定の保存に失敗:", e);
-    }
-  };
-
-  // 初期状態をlocalStorageから読み込む
-  useEffect(() => {
-    try {
-      const v = localStorage.getItem("voiceInputEnabled");
-      const s = localStorage.getItem("speechSynthesisEnabled");
+      const voiceValue = localStorage.getItem("voiceInputEnabled");
+      const speechValue = localStorage.getItem("speechSynthesisEnabled");
       
-      console.log("localStorageから読み込み - 音声入力:", v);
-      console.log("localStorageから読み込み - 読み上げ:", s);
+      // 明示的に変換して型安全性を確保
+      if (voiceValue !== null) {
+        const parsedVoice = voiceValue === "true";
+        setVoiceInputEnabledState(parsedVoice);
+      }
       
-      if (v !== null) setVoiceInputEnabledState(v === "true");
-      if (s !== null) setSpeechSynthesisEnabledState(s === "true");
+      if (speechValue !== null) {
+        const parsedSpeech = speechValue === "true";
+        setSpeechSynthesisEnabledState(parsedSpeech);
+      }
       
-      setInitialized(true);
-    } catch (e) {
-      console.error("設定の読み込みに失敗:", e);
-      setInitialized(true);
+    } catch (error) {
+      console.error("[useSettings] 設定読み込みエラー:", error);
     }
   }, []);
 
-  // デバッグ用: 状態が変更されたときにログ出力
+  // 設定を再読み込みする関数（外部から呼び出し可能）
+  const refreshSettings = useCallback(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  // 初期化時に一度だけ実行
   useEffect(() => {
-    if (initialized) {
-      console.log("設定状態変更 - 音声入力:", voiceInputEnabled);
-      console.log("設定状態変更 - 読み上げ:", speechSynthesisEnabled);
+    if (!initialized) {
+      loadSettings();
+      setInitialized(true);
     }
-  }, [voiceInputEnabled, speechSynthesisEnabled, initialized]);
+  }, [initialized, loadSettings]);
+
+  // 設定変更ハンドラ - localStorageに直接保存し、状態も更新
+  const setVoiceInputEnabled = useCallback((value: boolean) => {
+    try {
+      // まずlocalStorageに保存
+      localStorage.setItem("voiceInputEnabled", String(value));
+      // 次に状態を更新
+      setVoiceInputEnabledState(value);
+    } catch (error) {
+      console.error("[useSettings] 音声入力設定の保存に失敗:", error);
+    }
+  }, []);
+
+  const setSpeechSynthesisEnabled = useCallback((value: boolean) => {
+    try {
+      // まずlocalStorageに保存
+      localStorage.setItem("speechSynthesisEnabled", String(value));
+      // 次に状態を更新
+      setSpeechSynthesisEnabledState(value);
+    } catch (error) {
+      console.error("[useSettings] 読み上げ設定の保存に失敗:", error);
+    }
+  }, []);
 
   return {
     voiceInputEnabled,
     setVoiceInputEnabled,
     speechSynthesisEnabled,
     setSpeechSynthesisEnabled,
+    refreshSettings,
   };
 }
 
