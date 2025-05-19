@@ -90,5 +90,8 @@
     "ts-jest": "^29.1.2",
     "typescript": "5.2.2"
   },
-  "packageManager": "pnpm@8.15.1"
+  "packageManager": "pnpm@8.15.1",
+  "overrides": {
+    "onnxruntime-node": "0.0.0-ignored"
+  }
 }
