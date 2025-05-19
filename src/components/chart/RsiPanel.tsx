@@ -24,6 +24,7 @@ export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps
     height,
     colors,
     onSyncRange: range => {
+      if (!range) return
       if (chart) {
         try {
           chart.timeScale().setVisibleLogicalRange(range)

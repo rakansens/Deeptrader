@@ -11,7 +11,7 @@ jest.mock('@/infrastructure/exchange/bitget-service');
 describe('tradingExecutionTool', () => {
   it('validates input schema', () => {
     expect(() =>
-      tradingExecutionTool.inputSchema.parse({
+      tradingExecutionTool.inputSchema!.parse({
         symbol: SYMBOLS[0].value,
         side: 'buy',
         type: 'limit',
@@ -30,7 +30,7 @@ describe('tradingExecutionTool', () => {
       quantity: 1,
       price: 100
     };
-    const result = await tradingExecutionTool.execute({ context });
+    const result = await tradingExecutionTool.execute({ context } as any);
     expect(placeOrder).toHaveBeenCalledWith(context);
     expect(result).toEqual({ success: true });
   });

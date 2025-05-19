@@ -17,7 +17,7 @@ describe("candlestick-utils", () => {
 
   describe("upsertSeries", () => {
     it("updates existing entry", () => {
-      const arr: LineData[] = [{ time: 1 as UTCTimestamp, value: 1 }];
+      const arr: LineData<UTCTimestamp>[] = [{ time: 1 as UTCTimestamp, value: 1 }];
       const result = upsertSeries(
         arr,
         { time: 1 as UTCTimestamp, value: 2 },
@@ -27,7 +27,7 @@ describe("candlestick-utils", () => {
     });
 
     it("adds new entry and trims", () => {
-      const arr: LineData[] = [
+      const arr: LineData<UTCTimestamp>[] = [
         { time: 1 as UTCTimestamp, value: 1 },
         { time: 2 as UTCTimestamp, value: 2 },
         { time: 3 as UTCTimestamp, value: 3 },

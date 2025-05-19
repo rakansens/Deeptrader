@@ -38,15 +38,21 @@ export function useChat(): UseChat {
 
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
-      const stored = localStorage.getItem(`messages_${selectedId}`);
+      const stored = localStorage.getItem(`messages_${selectedId}`)
       if (stored) {
-        return JSON.parse(stored) as Message[];
+        const parsed = JSON.parse(stored) as Partial<Message>[]
+        return parsed.map((m) => ({
+          id: m.id ?? crypto.randomUUID(),
+          role: m.role as Message['role'],
+          content: m.content ?? '',
+          timestamp: m.timestamp ?? Date.now(),
+        }))
       }
     } catch {
       // ignore parse errors
     }
-    return [];
-  });
+    return []
+  })
 
   const {
     messages: aiMessages,
@@ -59,7 +65,7 @@ export function useChat(): UseChat {
   } = useAIChat({
     api: "/api/chat",
     id: selectedId,
-    initialMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+    initialMessages: messages.map((m) => ({ role: m.role, content: m.content })) as any,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -86,13 +92,19 @@ export function useChat(): UseChat {
   // 選択中の会話が変わったら保存済みメッセージを読み込む
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(`messages_${selectedId}`);
-      const parsed = stored ? (JSON.parse(stored) as Message[]) : [];
-      setMessages(parsed);
-      setAiMessages(parsed.map((m) => ({ role: m.role, content: m.content })));
+      const stored = localStorage.getItem(`messages_${selectedId}`)
+      const parsed = stored ? (JSON.parse(stored) as Partial<Message>[]) : []
+      const msgs = parsed.map((m) => ({
+        id: m.id ?? crypto.randomUUID(),
+        role: m.role as Message['role'],
+        content: m.content ?? '',
+        timestamp: m.timestamp ?? Date.now(),
+      }))
+      setMessages(msgs)
+      setAiMessages(msgs.map((m) => ({ role: m.role, content: m.content })) as any)
     } catch {
-      setMessages([]);
-      setAiMessages([]);
+      setMessages([])
+      setAiMessages([])
     }
   }, [selectedId, setAiMessages]);
 
@@ -100,11 +112,12 @@ export function useChat(): UseChat {
   useEffect(() => {
     setMessages((prev) =>
       aiMessages.map((m, i) => ({
-        role: m.role as Message["role"],
+        id: prev[i]?.id ?? (m as any).id ?? crypto.randomUUID(),
+        role: m.role as Message['role'],
         content: m.content,
         timestamp: prev[i]?.timestamp ?? Date.now(),
       }))
-    );
+    )
   }, [aiMessages]);
 
   // メッセージをlocalStorageへ保存
@@ -124,10 +137,10 @@ export function useChat(): UseChat {
     try {
       // 非同期処理の前に入力をクリア
       setInput("");
-      await append({ 
-        role: "user", 
+      await append({
+        role: "user",
         content: text,
-      });
+      } as any);
     } catch (err) {
       const message =
         err instanceof Error

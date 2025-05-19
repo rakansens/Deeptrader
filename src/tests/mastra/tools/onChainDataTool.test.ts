@@ -9,7 +9,7 @@ jest.mock('@/infrastructure/blockchain-service');
 
 describe('onChainDataTool', () => {
   it('validates input schema', () => {
-    expect(() => onChainDataTool.inputSchema.parse({ address: '0xabc' })).not.toThrow();
+    expect(() => onChainDataTool.inputSchema!.parse({ address: '0xabc' })).not.toThrow();
   });
 
   it('fetches address info', async () => {
@@ -20,7 +20,7 @@ describe('onChainDataTool', () => {
       nonce: 2
     };
     (getAddressInfo as jest.Mock).mockResolvedValue(mockInfo);
-    const result = await onChainDataTool.execute({ context: { address: '0xabc' } });
+    const result = await onChainDataTool.execute({ context: { address: '0xabc' } } as any);
     expect(getAddressInfo).toHaveBeenCalledWith('0xabc');
     expect(result).toEqual(mockInfo);
   });

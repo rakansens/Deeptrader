@@ -12,7 +12,7 @@ import type { ChartTheme } from './use-chart-theme'
 export interface UseIndicatorChartParams {
   height: number
   colors: ChartTheme
-  onSyncRange?: (range: LogicalRange) => void
+  onSyncRange?: (range: LogicalRange | null) => void
 }
 
 export interface IndicatorChartResult {

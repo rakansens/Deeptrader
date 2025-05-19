@@ -1,10 +1,10 @@
 'use client';
 
-import { UTCTimestamp, ISeriesApi, IChartApi } from 'lightweight-charts';
+import { UTCTimestamp, ISeriesApi } from 'lightweight-charts';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import useBinanceSocket from '@/hooks/use-binance-socket';
-import type { BinanceTradeMessage } from '@/types';
-import { useChart } from '@/hooks/use-chart';
+import type { BinanceTradeMessage } from '@/types/binance';
+import useChartInstance from '@/hooks/use-chart-instance';
 import {
   computeSMA,
   computeRSI,
@@ -24,18 +24,16 @@ export default function PriceChart() {
   const [priceChange, setPriceChange] = useState<number>(0);
   const [initTime] = useState(Date.now());
 
-  // 共通のチャート設定を使用
-  const chart = useChart({
+  // チャートインスタンス
+  const chartRef = useChartInstance({
     container: containerRef.current,
-    height: 380,
-    timeVisible: true,
-    secondsVisible: true
-  }) as IChartApi & { isReady: () => boolean };
+    height: 380
+  });
 
   // チャート初期化後にシリーズを追加
   useEffect(() => {
-    // チャートが初期化されていない場合は何もしない
-    if (!chart.isReady()) return;
+    const chart = chartRef.current;
+    if (!chart) return;
     
     // 既に初期化済みの場合は何もしない
     if (priceSeriesRef.current) return;
@@ -76,7 +74,7 @@ export default function PriceChart() {
       rsiSeriesRef.current = null;
       macdSeriesRef.current = null;
     };
-  }, [chart]);
+  }, [chartRef]);
 
   // WebSocket接続とデータ処理
   const { status: connectionStatus } = useBinanceSocket<BinanceTradeMessage>({

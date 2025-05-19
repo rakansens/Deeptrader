@@ -27,6 +27,7 @@ export default function MacdPanel({ macd, signal, chart, height, onClose }: Macd
     height,
     colors,
     onSyncRange: range => {
+      if (!range) return
       if (chart) {
         try {
           chart.timeScale().setVisibleLogicalRange(range)

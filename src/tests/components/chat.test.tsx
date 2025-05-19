@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { TextEncoder, TextDecoder } from 'util'
 import { ReadableStream } from 'stream/web'
 
-global.TextEncoder = TextEncoder
+global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder
 global.ReadableStream = ReadableStream as any
-global.TextDecoder = TextDecoder
+global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder
 import userEvent from '@testing-library/user-event'
 import Chat from '@/components/chat/Chat'
 import { useToast } from '@/hooks/use-toast'

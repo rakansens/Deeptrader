@@ -1,7 +1,7 @@
 jest.mock('@mastra/core/agent', () => ({
   Agent: class {
-    name: string;
-    instructions: string;
+    name!: string;
+    instructions!: string;
     tools: any;
     memory: any;
     constructor(config: any) {

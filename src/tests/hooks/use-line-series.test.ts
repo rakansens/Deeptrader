@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { useLineSeries } from '@/hooks/use-line-series'
 import { preprocessLineData } from '@/lib/chart-utils'
-import type { IChartApi, ISeriesApi, LineData } from 'lightweight-charts'
+import type { IChartApi, ISeriesApi, LineData, UTCTimestamp } from 'lightweight-charts'
 
 jest.mock('@/lib/chart-utils', () => ({
   preprocessLineData: jest.fn((d: LineData[]) => d)
@@ -17,7 +17,7 @@ describe('useLineSeries', () => {
     const ref = { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>
 
     const { rerender } = renderHook(({ enabled }) =>
-      useLineSeries({ chart, ref, enabled, options: {}, data: [{ time: 1, value: 2 }] })
+      useLineSeries({ chart, ref, enabled, options: {}, data: [{ time: 1 as UTCTimestamp, value: 2 }] })
     , { initialProps: { enabled: true } })
 
     expect(addLineSeries).toHaveBeenCalled()

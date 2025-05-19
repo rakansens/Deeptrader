@@ -11,7 +11,7 @@ jest.mock('@/infrastructure/exchange/bitget-service');
 describe('marketDataTool', () => {
   it('validates input schema', () => {
     expect(() =>
-      marketDataTool.inputSchema.parse({ symbol: SYMBOLS[0].value })
+      marketDataTool.inputSchema!.parse({ symbol: SYMBOLS[0].value })
     ).not.toThrow();
   });
 
@@ -27,7 +27,7 @@ describe('marketDataTool', () => {
       timestamp: ''
     };
     (getTicker as jest.Mock).mockResolvedValue(mockTicker);
-    const result = await marketDataTool.execute({ context: { symbol: SYMBOLS[0].value } });
+    const result = await marketDataTool.execute({ context: { symbol: SYMBOLS[0].value } } as any);
     expect(getTicker).toHaveBeenCalledWith(SYMBOLS[0].value);
     expect(result).toEqual(mockTicker);
   });

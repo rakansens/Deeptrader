@@ -28,7 +28,7 @@ describe('chartAnalysisTool', () => {
 
   it('validates input schema', () => {
     expect(() =>
-      chartAnalysisTool.inputSchema.parse({
+      chartAnalysisTool.inputSchema!.parse({
         symbol: SYMBOLS[0].value,
         timeframe: TIMEFRAMES[3]
       })
@@ -37,7 +37,7 @@ describe('chartAnalysisTool', () => {
 
   it('computes indicators from fetched data', async () => {
     (fetchKlines as jest.Mock).mockResolvedValue(sample);
-    const result = await chartAnalysisTool.execute({
+    const result = (await chartAnalysisTool.execute({
       context: {
         symbol: SYMBOLS[0].value,
         timeframe: TIMEFRAMES[3],
@@ -45,7 +45,7 @@ describe('chartAnalysisTool', () => {
         patternDetection: false,
         period: 40
       }
-    });
+    } as any)) as any;
     const closes = sample.map((k) => parseFloat(k[4]));
     const expectedMacd = computeMACD(closes)!;
     const expectedBoll = computeBollinger(closes)!;
@@ -68,7 +68,7 @@ describe('chartAnalysisTool', () => {
     await expect(
       chartAnalysisTool.execute({
         context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[3] }
-      })
+      } as any)
     ).rejects.toThrow('ローソク足データの取得に失敗しました');
   });
 });
