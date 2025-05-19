@@ -9,6 +9,8 @@ import {
   Minus,
   Square,
   ArrowUpRight,
+  Save,
+  Download,
 } from 'lucide-react';
 
 // null は描画モードが非アクティブな状態を表す
@@ -24,6 +26,8 @@ export type DrawingMode =
 interface ChartSidebarProps {
   mode: DrawingMode;
   onModeChange: (mode: DrawingMode) => void;
+  onSaveDrawing?: () => void;
+  onLoadDrawing?: () => void;
   className?: string;
 }
 
@@ -34,6 +38,8 @@ interface ChartSidebarProps {
 export default function ChartSidebar({
   mode,
   onModeChange,
+  onSaveDrawing,
+  onLoadDrawing,
   className,
 }: ChartSidebarProps) {
   // ツールをクリックした時のハンドラー
@@ -136,6 +142,28 @@ export default function ChartSidebar({
       >
         <ArrowUpRight className="h-4 w-4" />
       </button>
+
+      {onSaveDrawing && (
+        <button
+          className="w-full p-2 rounded-md flex items-center justify-center bg-muted text-muted-foreground hover:bg-muted/80"
+          onClick={onSaveDrawing}
+          aria-label="保存"
+          title="保存"
+        >
+          <Save className="h-4 w-4" />
+        </button>
+      )}
+
+      {onLoadDrawing && (
+        <button
+          className="w-full p-2 rounded-md flex items-center justify-center bg-muted text-muted-foreground hover:bg-muted/80"
+          onClick={onLoadDrawing}
+          aria-label="読込"
+          title="読込"
+        >
+          <Download className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }

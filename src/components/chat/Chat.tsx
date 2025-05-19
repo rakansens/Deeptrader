@@ -117,9 +117,10 @@ export default function Chat() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
+                        aria-label="会話をエクスポート"
                         className="text-muted-foreground hover:text-foreground"
                       >
                         <Download className="h-4 w-4" />

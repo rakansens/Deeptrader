@@ -8,6 +8,10 @@ import { logger } from "@/lib/logger";
  */
 export interface DrawingCanvasHandle {
   clear: () => void;
+  /** キャンバス内容を保存する */
+  save: () => void;
+  /** 保存された内容を読み込む */
+  load: () => void;
 }
 
 export type DrawingMode =
@@ -57,6 +61,26 @@ function DrawingCanvas(
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     },
+    save() {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const data = canvas.toDataURL();
+      try {
+        localStorage.setItem('drawing_canvas_data', data);
+      } catch (e) {
+        logger.error('保存に失敗しました', e as Error);
+      }
+    },
+    load() {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) return;
+      const data = localStorage.getItem('drawing_canvas_data');
+      if (!data) return;
+      const img = new Image();
+      img.src = data;
+      ctx.drawImage(img, 0, 0);
+    },
   }));
 
   useEffect(() => {
@@ -84,6 +108,17 @@ function DrawingCanvas(
       logger.debug('描画モードが無効になりました');
     }
   }, [enabled]);
+
+  // 保存された内容を読み込む
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    const data = localStorage.getItem('drawing_canvas_data');
+    if (!canvas || !ctx || !data) return;
+    const img = new Image();
+    img.src = data;
+    ctx.drawImage(img, 0, 0);
+  }, []);
 
   const getContext = () => canvasRef.current?.getContext("2d");
 

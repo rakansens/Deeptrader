@@ -15,6 +15,7 @@ const mockCtx = {
   closePath: jest.fn(),
   fill: jest.fn(),
   fillText: jest.fn(),
+  drawImage: jest.fn(),
 };
 
 beforeAll(() => {
@@ -168,5 +169,23 @@ describe("DrawingCanvas", () => {
     
     // キャンバスがクリアされていないこと
     expect(mockCtx.clearRect).toHaveBeenCalledTimes(1); // プレビュー用に1回だけ呼ばれる
+  });
+
+  it("saves canvas to localStorage", () => {
+    const ref = React.createRef<DrawingCanvasHandle>();
+    render(<DrawingCanvas ref={ref} />);
+    const canvas = document.querySelector('[data-testid="drawing-canvas"]') as HTMLCanvasElement;
+    jest.spyOn(canvas, 'toDataURL').mockReturnValue('data:image/png;base64,test');
+    act(() => {
+      ref.current?.save();
+    });
+    expect(localStorage.getItem('drawing_canvas_data')).toBe('data:image/png;base64,test');
+  });
+
+  it("loads canvas from localStorage", () => {
+    localStorage.setItem('drawing_canvas_data', 'data:image/png;base64,test');
+    const ref = React.createRef<DrawingCanvasHandle>();
+    render(<DrawingCanvas ref={ref} />);
+    expect(mockCtx.drawImage).toHaveBeenCalled();
   });
 });
