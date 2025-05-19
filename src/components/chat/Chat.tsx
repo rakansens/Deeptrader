@@ -102,7 +102,7 @@ export default function Chat() {
               </MessageBubble>
             ))
           )}
-          {loading && (
+          {loading && messages[messages.length - 1]?.role !== "assistant" && (
             <MessageBubble role="assistant" typing>
               <span className="text-sm">考え中...</span>
             </MessageBubble>

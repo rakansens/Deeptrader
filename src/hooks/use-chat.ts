@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useChat as useAIChat } from "ai/react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
 import type { Conversation, Message } from "@/types/chat";
@@ -26,10 +27,28 @@ export interface UseChat {
  * チャットの状態と操作を管理するカスタムフック
  */
 export function useChat(): UseChat {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {
+    messages: aiMessages,
+    input,
+    setInput,
+    append,
+    setMessages: setAiMessages,
+    isLoading,
+    error: aiError,
+  } = useAIChat({ api: "/api/chat" });
+
+  const messages: Message[] = aiMessages.map((m) => ({
+    role: m.role as Message["role"],
+    content: m.content,
+  }));
+
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (aiError) {
+      setError(aiError.message);
+    }
+  }, [aiError]);
 
   const {
     conversations,
@@ -44,56 +63,23 @@ export function useChat(): UseChat {
 
   const newConversation = () => {
     createConversation();
-    setMessages([]);
+    setAiMessages([]);
   };
 
   const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
-    setInput("");
+    
     setError(null);
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setLoading(true);
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
-
-      if (!res.ok) {
-        let errorMessage = "";
-        try {
-          const data = await res.json();
-          errorMessage = data.error || `APIエラー: ${res.status}`;
-        } catch (e) {
-          errorMessage = `APIエラー: ${res.status}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await res.json();
-      if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.reply },
-        ]);
-      } else {
-        throw new Error("APIからの応答が無効です");
-      }
+      await append({ role: "user", content: text });
+      setInput(""); // 非同期処理の完了後に入力をクリア
     } catch (err) {
-      console.error("Error sending message:", err);
-      const errorMessage =
+      const message =
         err instanceof Error
           ? err.message
           : "メッセージ送信中にエラーが発生しました";
-      setError(errorMessage);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `すみません、エラーが発生しました: ${errorMessage}` },
-      ]);
-    } finally {
-      setLoading(false);
+      setError(message);
     }
   };
 
@@ -101,7 +87,7 @@ export function useChat(): UseChat {
     messages,
     input,
     setInput,
-    loading,
+    loading: isLoading,
     error,
     conversations,
     selectedId,

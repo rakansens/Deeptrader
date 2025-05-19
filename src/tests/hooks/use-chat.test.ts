@@ -1,4 +1,10 @@
 import { renderHook, act } from '@testing-library/react'
+import { TextEncoder, TextDecoder } from 'util'
+import { ReadableStream } from 'stream/web'
+
+global.TextEncoder = TextEncoder
+global.ReadableStream = ReadableStream as any
+global.TextDecoder = TextDecoder
 import { useChat } from '@/hooks/use-chat'
 
 describe('useChat', () => {
@@ -10,9 +16,17 @@ describe('useChat', () => {
   })
 
   it('sends message and stores reply', async () => {
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('pong'))
+        controller.close()
+      }
+    })
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ reply: 'pong' })
+      body: stream,
+      headers: new Headers()
     }) as unknown as typeof fetch
 
     const { result } = renderHook(() => useChat())

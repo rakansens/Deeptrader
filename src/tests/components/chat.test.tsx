@@ -1,4 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import { TextEncoder, TextDecoder } from 'util'
+import { ReadableStream } from 'stream/web'
+
+global.TextEncoder = TextEncoder
+global.ReadableStream = ReadableStream as any
+global.TextDecoder = TextDecoder
 import userEvent from '@testing-library/user-event'
 import Chat from '@/components/chat/Chat'
 
@@ -13,10 +19,18 @@ describe('Chat', () => {
   describe('メッセージ送信機能', () => {
     it('submits message and displays assistant reply', async () => {
       const user = userEvent.setup()
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode('hi there'))
+          controller.close()
+        }
+      })
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ reply: 'hi there' })
-      } as Response)
+        body: stream,
+        headers: new Headers()
+      }) as unknown as typeof fetch
 
       render(<Chat />)
       const textarea = screen.getByPlaceholderText('メッセージを入力...')
@@ -31,8 +45,9 @@ describe('Chat', () => {
 
     it('shows loading indicator while waiting for response', async () => {
       const user = userEvent.setup()
-      let resolveFetch: (value: Response) => void
-      const fetchPromise = new Promise<Response>(r => { resolveFetch = r })
+      const encoder = new TextEncoder()
+      let resolveFetch: (value: any) => void
+      const fetchPromise = new Promise<any>(r => { resolveFetch = r })
       global.fetch = jest.fn().mockReturnValue(fetchPromise)
 
       render(<Chat />)
@@ -40,7 +55,19 @@ describe('Chat', () => {
       await user.type(textarea, 'loading')
       await user.keyboard('{Enter}')
       expect(screen.getByTestId('typing-indicator')).toBeInTheDocument()
-      resolveFetch!({ ok: true, json: async () => ({ reply: 'done' }) } as Response)
+      const stream = new ReadableStream({
+        start(controller) {
+          setTimeout(() => {
+            controller.enqueue(encoder.encode('done'))
+            controller.close()
+          }, 50)
+        }
+      })
+      resolveFetch!({
+        ok: true,
+        body: stream,
+        headers: new Headers()
+      })
       await waitFor(() => expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument())
     })
 
@@ -49,8 +76,9 @@ describe('Chat', () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 500,
-        json: async () => ({ error: 'fail' })
-      } as Response)
+        text: async () => 'fail',
+        headers: new Headers()
+      }) as unknown as typeof fetch
 
       render(<Chat />)
       const textarea = screen.getByPlaceholderText('メッセージを入力...')
@@ -58,7 +86,6 @@ describe('Chat', () => {
       await user.keyboard('{Enter}')
 
       await waitFor(() => expect(screen.getByText('fail')).toBeInTheDocument())
-      expect(screen.getByText('すみません、エラーが発生しました: fail')).toBeInTheDocument()
     })
   })
 
@@ -69,7 +96,18 @@ describe('Chat', () => {
     })
 
     it('creates new conversation and clears messages', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ reply: 'hi' }) } as Response)
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode('hi'))
+          controller.close()
+        }
+      })
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        body: stream,
+        headers: new Headers()
+      }) as unknown as typeof fetch
 
       const user = userEvent.setup()
       render(<Chat />)
