@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import TypingIndicator from "./typing-indicator";
+import { Copy } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -30,6 +31,14 @@ export function MessageBubble({
   timestamp,
   avatar,
 }: MessageBubbleProps) {
+  const handleCopy = () => {
+    if (typeof children !== "string" || typing) return;
+    try {
+      void navigator.clipboard.writeText(children);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
   return (
     <div
       className={cn(
@@ -58,6 +67,16 @@ export function MessageBubble({
           <span className="ml-auto">
             {new Date(timestamp).toLocaleString()}
           </span>
+        )}
+        {typeof children === "string" && !typing && (
+          <button
+            type="button"
+            aria-label="コピー"
+            onClick={handleCopy}
+            className="p-1 hover:text-foreground"
+          >
+            <Copy className="h-3 w-3" />
+          </button>
         )}
       </div>
       <div className="text-sm whitespace-pre-wrap">

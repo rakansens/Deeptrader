@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import MessageBubble from '@/components/chat/message-bubble'
 
 describe('MessageBubble', () => {
@@ -24,5 +25,17 @@ describe('MessageBubble', () => {
     )
     expect(screen.getByText('DeepTrader AI')).toBeInTheDocument()
     expect(screen.getByText(new Date(0).toLocaleString())).toBeInTheDocument()
+  })
+
+  it('copies message text to clipboard', async () => {
+    const user = userEvent.setup()
+    const writeText = jest.fn()
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+    render(<MessageBubble role="assistant">copy me</MessageBubble>)
+    await user.click(screen.getByLabelText('コピー'))
+    expect(writeText).toHaveBeenCalledWith('copy me')
   })
 })

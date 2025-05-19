@@ -197,4 +197,9 @@ describe('Chat', () => {
     await waitFor(() => expect(toastMock).toHaveBeenCalled())
     expect(screen.getByLabelText('送信')).toBeInTheDocument()
   })
+
+  it('renders export conversation button', () => {
+    render(<Chat />)
+    expect(screen.getByRole('button', { name: '会話をエクスポート' })).toBeInTheDocument()
+  })
 })

@@ -2,7 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUpIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpIcon, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
@@ -29,6 +35,22 @@ export default function Chat() {
   } = useChat();
   const { toast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
+
+  const exportConversation = (format: 'json' | 'txt') => {
+    const data =
+      format === 'json'
+        ? JSON.stringify(messages, null, 2)
+        : messages.map((m) => `${m.role}: ${m.content}`).join('\n');
+    const blob = new Blob([data], {
+      type: format === 'json' ? 'application/json' : 'text/plain',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation_${selectedId}.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // 新しいメッセージや読み込み状態の変化でスクロールを最下部に移動
   useEffect(() => {
@@ -70,6 +92,23 @@ export default function Chat() {
         />
       </div>
       <div className="flex-1 flex flex-col h-full p-4 relative">
+        <div className="absolute right-2 top-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                会話をエクスポート
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => exportConversation('json')}>
+                JSONでダウンロード
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportConversation('txt')}>
+                テキストでダウンロード
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <Button
           variant="ghost"
           size="icon"
