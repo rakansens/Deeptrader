@@ -7,8 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Chat from '@/components/chat/Chat';
 import ChartToolbar from '@/components/chart/ChartToolbar';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Pencil } from 'lucide-react';
 import { TIMEFRAMES, SYMBOLS } from '@/constants/chart';
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
@@ -25,11 +23,14 @@ const DRAWING_COLORS = [
 ];
 
 export default function Home() {
-  const [timeframe, setTimeframe] = useState(TIMEFRAMES[3]);
-  const [symbol, setSymbol] = useState(SYMBOLS[0].value);
+  const [timeframe, setTimeframe] = useState<string>(TIMEFRAMES[3]);
+  const [symbol, setSymbol] = useState<string>(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
-  const [drawingEnabled, setDrawingEnabled] = useState(false);
   const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);
+
+  // 型安全なハンドラー関数を定義
+  const handleTimeframeChange = (tf: string) => setTimeframe(tf);
+  const handleSymbolChange = (sym: string) => setSymbol(sym);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -69,40 +70,28 @@ export default function Home() {
                   </CardDescription>
                   <ChartToolbar
                     timeframe={timeframe}
-                    onTimeframeChange={setTimeframe}
+                    onTimeframeChange={handleTimeframeChange}
                     symbol={symbol}
-                    onSymbolChange={setSymbol}
+                    onSymbolChange={handleSymbolChange}
                     indicators={indicators}
                     onIndicatorsChange={setIndicators}
-                    drawingEnabled={drawingEnabled}
-                    onDrawingEnabledChange={setDrawingEnabled}
                   />
                 </CardHeader>
                 <CardContent>
-                  {drawingEnabled && (
-                    <div className="mb-4 bg-muted/50 border p-3 rounded-md">
-                      <div className="flex items-center mb-2">
-                        <Pencil className="h-4 w-4 mr-2" />
-                        <p className="text-sm">
-                          描画モードが有効です。チャート上でクリック＆ドラッグして線を描画できます。
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-muted-foreground">色:</span>
-                        {DRAWING_COLORS.map((c) => (
-                          <button
-                            key={c.value}
-                            title={c.label}
-                            onClick={() => setDrawingColor(c.value)}
-                            className={`w-6 h-6 rounded-full ${c.class} border border-border transition-all ${
-                              drawingColor === c.value ? 'ring-2 ring-offset-1 ring-primary' : 'opacity-70 hover:opacity-100'
-                            }`}
-                            aria-label={`色を${c.label}に変更`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs text-muted-foreground">描画色:</span>
+                    {DRAWING_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        title={c.label}
+                        onClick={() => setDrawingColor(c.value)}
+                        className={`w-6 h-6 rounded-full ${c.class} border border-border transition-all ${
+                          drawingColor === c.value ? 'ring-2 ring-offset-1 ring-primary' : 'opacity-70 hover:opacity-100'
+                        }`}
+                        aria-label={`色を${c.label}に変更`}
+                      />
+                    ))}
+                  </div>
                   <div className="w-full relative">
                     <CandlestickChart
                       height={600}
@@ -110,7 +99,6 @@ export default function Home() {
                       interval={timeframe}
                       symbol={symbol}
                       onIndicatorsChange={setIndicators}
-                      drawingEnabled={drawingEnabled}
                       drawingColor={drawingColor}
                     />
                   </div>

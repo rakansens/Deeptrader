@@ -9,6 +9,8 @@ export interface DrawingCanvasHandle {
   clear: () => void;
 }
 
+export type DrawingMode = 'freehand' | 'trendline' | 'fibonacci' | null;
+
 export interface DrawingCanvasProps {
   /** 描画を有効にするか */
   enabled?: boolean;
@@ -16,6 +18,8 @@ export interface DrawingCanvasProps {
   color?: string;
   /** 線の太さ */
   strokeWidth?: number;
+  /** 描画モード */
+  mode?: DrawingMode;
   className?: string;
 }
 
@@ -24,6 +28,7 @@ function DrawingCanvas(
     enabled = true,
     color = "#ef4444",
     strokeWidth = 2,
+    mode = 'freehand',
     className,
   }: DrawingCanvasProps,
   ref: React.Ref<DrawingCanvasHandle>,
@@ -31,6 +36,10 @@ function DrawingCanvas(
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
+  const startPoint = useRef<{ x: number; y: number } | null>(null);
+
+  // モードがnullの場合、'freehand'として扱う
+  const actualMode = mode === null ? 'freehand' : mode;
 
   useImperativeHandle(ref, () => ({
     clear() {
@@ -72,10 +81,14 @@ function DrawingCanvas(
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!enabled) return;
-    console.log('描画開始');
-    drawing.current = true;
     const rect = e.currentTarget.getBoundingClientRect();
-    lastPoint.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    if (actualMode === 'freehand') {
+      drawing.current = true;
+      lastPoint.current = point;
+    } else {
+      startPoint.current = point;
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -96,12 +109,48 @@ function DrawingCanvas(
     lastPoint.current = { x, y };
   };
 
-  const endDrawing = () => {
-    if (drawing.current && enabled) {
-      console.log('描画終了');
+  const endDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!enabled) return;
+    if (actualMode === 'freehand') {
+      drawing.current = false;
+      lastPoint.current = null;
+    } else if (startPoint.current) {
+      const ctx = getContext();
+      const canvas = canvasRef.current;
+      if (!ctx || !canvas) {
+        startPoint.current = null;
+        return;
+      }
+      const rect = canvas.getBoundingClientRect();
+      const end = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      ctx.strokeStyle = color;
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = 'round';
+      if (actualMode === 'trendline') {
+        ctx.beginPath();
+        ctx.moveTo(startPoint.current.x, startPoint.current.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+      } else if (actualMode === 'fibonacci') {
+        const left = Math.min(startPoint.current.x, end.x);
+        const right = Math.max(startPoint.current.x, end.x);
+        const top = Math.min(startPoint.current.y, end.y);
+        const bottom = Math.max(startPoint.current.y, end.y);
+        const diff = bottom - top;
+        const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+        levels.forEach((lv) => {
+          const y = bottom - diff * lv;
+          ctx.beginPath();
+          ctx.moveTo(left, y);
+          ctx.lineTo(right, y);
+          ctx.stroke();
+        });
+      }
+      startPoint.current = null;
     }
-    drawing.current = false;
-    lastPoint.current = null;
   };
 
   return (

@@ -6,7 +6,7 @@ import {
   ISeriesApi,
   CrosshairMode,
 } from 'lightweight-charts'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import useChartTheme from '@/hooks/use-chart-theme'
 import useCandlestickData from '@/hooks/use-candlestick-data'
@@ -14,7 +14,8 @@ import useCandlestickSeries from '@/hooks/use-candlestick-series'
 import useLineSeries from '@/hooks/use-line-series'
 import RsiPanel from './RsiPanel'
 import MacdPanel from './MacdPanel'
-import DrawingCanvas, { DrawingCanvasHandle } from './drawing-canvas'
+import DrawingCanvas, { DrawingCanvasHandle, DrawingMode } from './drawing-canvas'
+import ChartSidebar from './ChartSidebar'
 import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
@@ -58,6 +59,9 @@ export default function CandlestickChart({
   const bollUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
   const bollLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const drawingRef = useRef<DrawingCanvasHandle>(null);
+  const [mode, setMode] = useState<DrawingMode | null>(null);
+
+  const isDrawingEnabled = mode !== null;
 
   const {
     candles = [],
@@ -184,14 +188,17 @@ export default function CandlestickChart({
     // シリーズのテーマはフック内で適用
   }, [colors]);
 
-  // 描画機能が有効/無効に切り替わったときに描画履歴をクリア
   useEffect(() => {
-    console.log('描画モード変更:', drawingEnabled);
-    if (!drawingEnabled && drawingRef.current) {
+    console.log('描画モード変更:', mode);
+    if (mode === null && drawingRef.current) {
       drawingRef.current.clear();
     }
-  }, [drawingEnabled]);
+  }, [mode]);
 
+  // 型安全なモード変更ハンドラー
+  const handleModeChange = (newMode: DrawingMode) => {
+    setMode(newMode);
+  };
 
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
@@ -214,12 +221,18 @@ export default function CandlestickChart({
             style={{ height }}
             data-testid="chart-container"
           />
+          <ChartSidebar
+            mode={mode}
+            onModeChange={handleModeChange}
+            className="absolute top-2 left-2 z-20"
+          />
           <DrawingCanvas
             ref={drawingRef}
-            enabled={drawingEnabled}
+            enabled={isDrawingEnabled}
             className="absolute inset-0 z-10"
             color={drawingColor}
             strokeWidth={2}
+            mode={mode}
           />
         </div>
         {indicators.rsi && (

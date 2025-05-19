@@ -45,6 +45,61 @@ describe("DrawingCanvas", () => {
     expect(mockCtx.stroke).toHaveBeenCalled();
   });
 
+  it("draws trendline on click", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode="trendline" />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerUp(canvas, { clientX: 10, clientY: 10 });
+    });
+    expect(mockCtx.beginPath).toHaveBeenCalled();
+    expect(mockCtx.moveTo).toHaveBeenCalledWith(0, 0);
+    expect(mockCtx.lineTo).toHaveBeenCalledWith(10, 10);
+  });
+
+  it("draws fibonacci retracement", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode="fibonacci" />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerUp(canvas, { clientX: 0, clientY: 100 });
+    });
+    // 7 levels should be drawn
+    expect(mockCtx.stroke).toHaveBeenCalledTimes(7);
+  });
+
+  it("treats null mode as freehand", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode={null} enabled={true} />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerMove(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.pointerUp(canvas);
+    });
+    expect(mockCtx.beginPath).toHaveBeenCalled();
+    expect(mockCtx.stroke).toHaveBeenCalled();
+  });
+
+  it("does not draw when enabled is false", async () => {
+    const { getByTestId } = render(
+      <DrawingCanvas mode="freehand" enabled={false} />,
+    );
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerMove(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.pointerUp(canvas);
+    });
+    expect(mockCtx.beginPath).not.toHaveBeenCalled();
+    expect(mockCtx.stroke).not.toHaveBeenCalled();
+  });
+
   it("clears canvas via handle", () => {
     const ref = React.createRef<DrawingCanvasHandle>();
     render(<DrawingCanvas ref={ref} />);
