@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
-interface UseBinanceSocketOptions {
+interface UseBinanceSocketOptions<T> {
   url: string
   reconnectInterval?: number
   pingInterval?: number
@@ -12,7 +12,7 @@ interface UseBinanceSocketOptions {
   onOpen?: () => void
   onClose?: () => void
   onError?: (e: Event) => void
-  onMessage?: (data: any) => void
+  onMessage?: (data: T) => void
 }
 
 const DEFAULT_PING_INTERVAL = 3 * 60 * 1000
@@ -23,7 +23,7 @@ const PONG_TIMEOUT = 10 * 1000
  * @param options - 接続オプション
  * @returns 接続ステータス
  */
-export function useBinanceSocket(options: UseBinanceSocketOptions) {
+export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T>) {
   const {
     url,
     reconnectInterval = 3000,

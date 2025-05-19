@@ -5,7 +5,7 @@ import {
   LineData,
   UTCTimestamp
 } from 'lightweight-charts'
-import type { BinanceKline } from "@/types/binance"
+import type { BinanceKline, BinanceKlineMessage } from "@/types/binance"
 import {
   computeSMA,
   computeRSI,
@@ -27,30 +27,6 @@ export interface UseCandlestickDataResult {
   connected: boolean
 }
 
-// Binanceのウェブソケットメッセージタイプ
-type BinanceWebSocketMessage = {
-  e?: string // イベントタイプ
-  k?: {      // キャンドルスティックデータ
-    t: number // 開始時間
-    T: number // 終了時間
-    s: string // シンボル
-    i: string // インターバル
-    f: number // 最初の取引ID
-    L: number // 最後の取引ID
-    o: string // オープン価格
-    c: string // クローズ価格
-    h: string // 高値
-    l: string // 安値
-    v: string // ベース資産取引量
-    n: number // 取引数
-    x: boolean // このキャンドルは取引完了か
-    q: string // 見積資産取引量
-    V: string // テーカーベース資産取引量
-    Q: string // テーカー見積資産取引量
-  }
-  result?: any // APIレスポンス結果
-  id?: number  // リクエストID
-}
 
 const PING_INTERVAL = 3 * 60 * 1000 // 3分ごとにPING
 const PONG_TIMEOUT = 10 * 1000 // 10秒以内にPONGが必要
@@ -308,7 +284,7 @@ export function useCandlestickData(
         if (!isMountedRef.current || socketIdRef.current !== currentSocketId) return;
         
         try {
-          const data = JSON.parse(ev.data) as BinanceWebSocketMessage;
+          const data = JSON.parse(ev.data) as BinanceKlineMessage;
           
           // PONGレスポンスの処理
           if (data.result === null && typeof data.id === 'number') {

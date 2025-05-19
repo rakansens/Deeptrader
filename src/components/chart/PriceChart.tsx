@@ -3,6 +3,7 @@
 import { UTCTimestamp, ISeriesApi, IChartApi } from 'lightweight-charts';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import useBinanceSocket from '@/hooks/use-binance-socket';
+import type { BinanceTradeMessage } from '@/types/binance';
 import { useChart } from '@/hooks/use-chart';
 import {
   computeSMA,
@@ -78,9 +79,9 @@ export default function PriceChart() {
   }, [chart]);
 
   // WebSocket接続とデータ処理
-  const { status: connectionStatus } = useBinanceSocket({
+  const { status: connectionStatus } = useBinanceSocket<BinanceTradeMessage>({
     url: 'wss://stream.binance.com:9443/ws/btcusdt@trade',
-    onMessage: useCallback((msg: any) => {
+    onMessage: useCallback((msg: BinanceTradeMessage) => {
       const price = parseFloat(msg.p);
       const time = toNumericTime(msg.T) as UTCTimestamp;
 

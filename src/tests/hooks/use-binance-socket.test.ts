@@ -25,7 +25,7 @@ describe('useBinanceSocket', () => {
   it('opens websocket and handles messages', () => {
     const onMessage = jest.fn()
     const { unmount } = renderHook(() =>
-      useBinanceSocket({ url: 'wss://test', onMessage })
+      useBinanceSocket<{ foo: string }>({ url: 'wss://test', onMessage })
     )
     const ws = MockWebSocket.instances[0]
     ws.onopen?.()
