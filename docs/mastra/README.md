@@ -100,8 +100,9 @@ DeepTraderでMastraが使用する主要ツール：
 
 1. **チャート分析ツール**:
 
-   - テクニカルインディケーターの計算と表示
-   - チャートパターンの認識
+   - Binanceの`/api/v3/klines`からOHLCデータを取得
+   - `computeSMA`、`computeRSI`、`computeMACD`、`computeBollinger`で指標を計算
+   - 簡易的なダブルトップ/ダブルボトム検出
    - サポート/レジスタンスレベルの特定
 
 2. **マーケットデータツール**:
@@ -155,6 +156,10 @@ const result = await tradingAgent.generate(
   },
 );
 ```
+
+### Binanceサービス
+
+`src/infrastructure/exchange/binance-service.ts`に`fetchKlines()`を実装しました。Binanceの`/api/v3/klines`からローソク足データを取得し、チャート分析ツールで利用します。
 
 ## ベストプラクティス
 

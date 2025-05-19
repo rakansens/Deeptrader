@@ -9,7 +9,7 @@ import {
   Minus,
   Square,
   ArrowUpRight,
-  Eraser,
+  Trash2,
 } from 'lucide-react';
 
 // null は描画モードが非アクティブな状態を表す
@@ -147,7 +147,7 @@ export default function ChartSidebar({
           aria-label="全て消去"
           title="全て消去"
         >
-          <Eraser className="h-4 w-4" />
+          <Trash2 className="h-4 w-4" />
         </button>
       )}
     </div>
