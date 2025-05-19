@@ -35,34 +35,6 @@ describe('ChartSidebar', () => {
     expect(onChange).toHaveBeenCalledWith('horizontal-line');
   });
 
-  it('calls save handler', async () => {
-    const user = userEvent.setup();
-    const onSave = jest.fn();
-    render(
-      <ChartSidebar
-        mode={null}
-        onModeChange={() => {}}
-        onSaveDrawing={onSave}
-      />
-    );
-    await user.click(screen.getByTitle('保存'));
-    expect(onSave).toHaveBeenCalled();
-  });
-
-  it('calls load handler', async () => {
-    const user = userEvent.setup();
-    const onLoad = jest.fn();
-    render(
-      <ChartSidebar
-        mode={null}
-        onModeChange={() => {}}
-        onLoadDrawing={onLoad}
-      />
-    );
-    await user.click(screen.getByTitle('読込'));
-    expect(onLoad).toHaveBeenCalled();
-  });
-
   it('shows selection tool as active when mode is null', () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
     const selectionTool = screen.getByTitle('選択ツール');

@@ -8,10 +8,6 @@ import { logger } from "@/lib/logger";
  */
 export interface DrawingCanvasHandle {
   clear: () => void;
-  /** キャンバス内容を保存する */
-  save: () => void;
-  /** 保存された内容を読み込む */
-  load: () => void;
 }
 
 export type DrawingMode =
@@ -49,6 +45,8 @@ function DrawingCanvas(
   const drawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const startPoint = useRef<{ x: number; y: number } | null>(null);
+  // 描画内容を保存するための変数
+  const savedCanvasState = useRef<ImageData | null>(null);
 
   // モードがnullの場合、'freehand'として扱う
   const actualMode = mode === null ? 'freehand' : mode;
@@ -59,27 +57,8 @@ function DrawingCanvas(
       const ctx = canvas?.getContext("2d");
       if (canvas && ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        savedCanvasState.current = null;
       }
-    },
-    save() {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const data = canvas.toDataURL();
-      try {
-        localStorage.setItem('drawing_canvas_data', data);
-      } catch (e) {
-        logger.error('保存に失敗しました', e as Error);
-      }
-    },
-    load() {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext('2d');
-      if (!canvas || !ctx) return;
-      const data = localStorage.getItem('drawing_canvas_data');
-      if (!data) return;
-      const img = new Image();
-      img.src = data;
-      ctx.drawImage(img, 0, 0);
     },
   }));
 
@@ -109,28 +88,21 @@ function DrawingCanvas(
     }
   }, [enabled]);
 
-  // 保存された内容を読み込む
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    const data = localStorage.getItem('drawing_canvas_data');
-    if (!canvas || !ctx || !data) return;
-    const img = new Image();
-    img.src = data;
-    ctx.drawImage(img, 0, 0);
-  }, []);
-
   const getContext = () => canvasRef.current?.getContext("2d");
 
-  // プレビュー描画をクリアする関数
+  // プレビュー描画をクリアする関数（保存した状態に復元）
   const clearPreview = () => {
     const canvas = canvasRef.current;
     const ctx = getContext();
     if (!canvas || !ctx || !startPoint.current) return;
     
-    // 全体をクリアせず、プレビュー部分だけを復元するともっと効率的だが
-    // 単純化のため、現在はキャンバス全体をクリアしています
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (savedCanvasState.current) {
+      // 保存した状態を復元
+      ctx.putImageData(savedCanvasState.current, 0, 0);
+    } else {
+      // 初回時のフォールバック
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -141,6 +113,14 @@ function DrawingCanvas(
     logger.debug('描画開始');
     const rect = e.currentTarget.getBoundingClientRect();
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    
+    // キャンバスの現在状態を保存
+    const canvas = canvasRef.current;
+    const ctx = getContext();
+    if (canvas && ctx) {
+      savedCanvasState.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+    
     if (actualMode === 'freehand') {
       drawing.current = true;
       lastPoint.current = point;
@@ -329,6 +309,12 @@ function DrawingCanvas(
     if (actualMode === 'freehand') {
       drawing.current = false;
       lastPoint.current = null;
+      // フリーハンド描画終了時に現在の状態を保存
+      const canvas = canvasRef.current;
+      const ctx = getContext();
+      if (canvas && ctx) {
+        savedCanvasState.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      }
     } else if (startPoint.current) {
       const ctx = getContext();
       const canvas = canvasRef.current;
@@ -357,6 +343,10 @@ function DrawingCanvas(
       }
       
       startPoint.current = null;
+      // 描画終了時に現在の状態を保存
+      if (canvas && ctx) {
+        savedCanvasState.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      }
     }
   };
 
