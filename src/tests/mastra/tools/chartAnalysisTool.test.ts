@@ -8,11 +8,13 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test'
 
 import { chartAnalysisTool } from '@/mastra/tools/chartAnalysisTool';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
-import { computeSMA, computeRSI, computeMACD, computeBollinger } from '@/lib/indicators';
+import { computeSMA, computeRSI, computeBollinger, MacdCalculator } from '@/lib/indicators';
 import type { BinanceKline } from '@/types/binance';
 import { SYMBOLS, TIMEFRAMES } from '@/constants/chart';
 
-jest.mock('@/infrastructure/exchange/binance-service');
+jest.mock('@/infrastructure/exchange/binance-service', () => ({
+  fetchKlines: jest.fn(),
+}));
 
 describe('chartAnalysisTool', () => {
   const sample: BinanceKline[] = Array.from({ length: 40 }, (_, i) => [
@@ -51,16 +53,24 @@ describe('chartAnalysisTool', () => {
       }
     } as any)) as any;
     const closes = sample.map((k) => parseFloat(k[4]));
-    const expectedMacd = computeMACD(closes)!;
+    
+    // MACD計算用のカリキュレータ
+    const macdCalc = new MacdCalculator();
+    let expectedMacd: { macd: number; signal: number; histogram: number } | null = null;
+    for (const p of closes) {
+      const r = macdCalc.update(p);
+      if (r) expectedMacd = r;
+    }
+    
     const expectedBoll = computeBollinger(closes)!;
     expect(result.indicators).toEqual([
       { name: 'SMA', value: computeSMA(closes, 14)! },
       { name: 'RSI', value: computeRSI(closes, 14)! },
       {
         name: 'MACD',
-        macd: expectedMacd.macd,
-        signal: expectedMacd.signal,
-        histogram: expectedMacd.histogram
+        macd: expectedMacd!.macd,
+        signal: expectedMacd!.signal,
+        histogram: expectedMacd!.histogram
       },
       { name: 'Bollinger', upper: expectedBoll.upper, lower: expectedBoll.lower }
     ]);

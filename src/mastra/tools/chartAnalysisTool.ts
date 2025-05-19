@@ -4,7 +4,7 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
-import { computeSMA, computeRSI, computeMACD, computeBollinger } from '@/lib/indicators';
+import { computeSMA, computeRSI, computeBollinger, MacdCalculator } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
 import type { BinanceKline } from '@/types/binance';
 import type { IndicatorResult } from '@/types';
@@ -75,9 +75,14 @@ export const chartAnalysisTool = createTool({
         const value = computeRSI(closes, 14);
         if (value !== null) results.push({ name: 'RSI', value });
       } else if (name === 'MACD') {
-        const macd = computeMACD(closes);
-        if (macd) {
-          results.push({ name: 'MACD', macd: macd.macd, signal: macd.signal, histogram: macd.histogram });
+        const calc = new MacdCalculator();
+        let macdRes: { macd: number; signal: number; histogram: number } | null = null;
+        for (const p of closes) {
+          const r = calc.update(p);
+          if (r) macdRes = r;
+        }
+        if (macdRes) {
+          results.push({ name: 'MACD', macd: macdRes.macd, signal: macdRes.signal, histogram: macdRes.histogram });
         }
       } else if (name === 'BOLLINGER' || name === 'BOLLINGERBANDS' || name === 'BOLLINGER_BANDS') {
         const band = computeBollinger(closes);

@@ -5,6 +5,8 @@ import {
   computeMACD,
   computeBollinger,
   RsiCalculator,
+  EmaCalculator,
+  MacdCalculator,
 } from '@/lib/indicators';
 
 describe('indicators utilities', () => {
@@ -26,6 +28,20 @@ describe('indicators utilities', () => {
     it('calculates exponential moving average', () => {
       const result = computeEMA([1, 2, 3, 4, 5], 3);
       expect(result).toBeCloseTo(4);
+    });
+  });
+
+  describe('EmaCalculator', () => {
+    it('matches computeEMA for sample data', () => {
+      const data = [1, 2, 3, 4, 5, 6];
+      const calc = new EmaCalculator(3);
+      let ema: number | null = null;
+      for (const p of data) {
+        const r = calc.update(p);
+        if (r !== null) ema = r;
+      }
+      const expected = computeEMA(data, 3)!;
+      expect(ema).toBeCloseTo(expected);
     });
   });
 
@@ -73,6 +89,23 @@ describe('indicators utilities', () => {
       expect(macd!.macd).toBeCloseTo(0);
       expect(macd!.signal).toBeCloseTo(0);
       expect(macd!.histogram).toBeCloseTo(0);
+    });
+  });
+
+  describe('MacdCalculator', () => {
+    it('matches computeMACD for sample data', () => {
+      const data = Array.from({ length: 60 }, (_, i) => i + 1);
+      const calc = new MacdCalculator();
+      let res: { macd: number; signal: number; histogram: number } | null = null;
+      for (const p of data) {
+        const r = calc.update(p);
+        if (r) res = r;
+      }
+      const expected = computeMACD(data)!;
+      expect(res).not.toBeNull();
+      expect(res!.macd).toBeCloseTo(expected.macd);
+      expect(res!.signal).toBeCloseTo(expected.signal);
+      expect(res!.histogram).toBeCloseTo(expected.histogram);
     });
   });
 

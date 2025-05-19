@@ -99,6 +99,39 @@ export class RsiCalculator {
 }
 
 /**
+ * 逐次更新可能な EMA 計算クラス
+ */
+export class EmaCalculator {
+  private readonly period: number;
+  private readonly k: number;
+  private ema: number | null = null;
+  private buffer: number[] = [];
+
+  constructor(period: number) {
+    this.period = period;
+    this.k = 2 / (period + 1);
+  }
+
+  /**
+   * 新しい価格を追加して EMA を更新する
+   * @param price - 最新の価格
+   * @returns 現在の EMA 値、まだ計算できない場合は null
+   */
+  update(price: number): number | null {
+    if (this.ema === null) {
+      this.buffer.push(price);
+      if (this.buffer.length === this.period) {
+        const sum = this.buffer.reduce((a, b) => a + b, 0);
+        this.ema = sum / this.period;
+      }
+    } else {
+      this.ema = price * this.k + this.ema * (1 - this.k);
+    }
+    return this.ema;
+  }
+}
+
+/**
  * MACD を計算する
  * @param data - 価格データの配列
  * @param shortPeriod - 短期 EMA の期間 (デフォルト: 12)
@@ -125,6 +158,41 @@ export function computeMACD(
   const signal = computeEMA(macdSeries, signalPeriod);
   if (signal === null) return null;
   return { macd, signal, histogram: macd - signal };
+}
+
+/**
+ * MACD を逐次計算するクラス
+ */
+export class MacdCalculator {
+  private readonly shortEma: EmaCalculator;
+  private readonly longEma: EmaCalculator;
+  private readonly signalEma: EmaCalculator;
+  private macd: number | null = null;
+
+  constructor(shortPeriod = 12, longPeriod = 26, signalPeriod = 9) {
+    this.shortEma = new EmaCalculator(shortPeriod);
+    this.longEma = new EmaCalculator(longPeriod);
+    this.signalEma = new EmaCalculator(signalPeriod);
+  }
+
+  /**
+   * 新しい価格を追加して MACD を計算する
+   * @param price - 最新の価格
+   * @returns MACD 値、まだ計算できない場合は null
+   */
+  update(price: number): {
+    macd: number;
+    signal: number;
+    histogram: number;
+  } | null {
+    const short = this.shortEma.update(price);
+    const long = this.longEma.update(price);
+    if (short === null || long === null) return null;
+    this.macd = short - long;
+    const signal = this.signalEma.update(this.macd);
+    if (signal === null) return null;
+    return { macd: this.macd, signal, histogram: this.macd - signal };
+  }
 }
 
 /**
