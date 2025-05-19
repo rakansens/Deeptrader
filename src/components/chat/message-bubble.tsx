@@ -65,13 +65,26 @@ export function MessageBubble({
       utter.onerror = () => setIsSpeaking(false);
       
       // 日本語の音声を優先的に選択
-      const voices = window.speechSynthesis.getVoices();
-      const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
-      if (jaVoice) {
-        utter.voice = jaVoice;
+      // Chrome特有の問題対応: 音声リストが初回はemptyの場合がある
+      if (window.speechSynthesis.getVoices().length === 0) {
+        // Chrome向けの対応
+        window.speechSynthesis.onvoiceschanged = function() {
+          const voices = window.speechSynthesis.getVoices();
+          const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
+          if (jaVoice) {
+            utter.voice = jaVoice;
+          }
+          window.speechSynthesis.speak(utter);
+        };
+      } else {
+        // 通常の処理
+        const voices = window.speechSynthesis.getVoices();
+        const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
+        if (jaVoice) {
+          utter.voice = jaVoice;
+        }
+        window.speechSynthesis.speak(utter);
       }
-      
-      window.speechSynthesis.speak(utter);
     } catch (error) {
       console.error("メッセージ読み上げエラー:", error);
     }

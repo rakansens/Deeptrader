@@ -127,7 +127,7 @@ export function SettingsDialog() {
               <div>
                 <Label htmlFor="speech-synthesis" className="font-medium">メッセージ読み上げ</Label>
                 <p className="text-xs text-muted-foreground">
-                  AIからの返答を音声で読み上げます
+                  AIからの返答を音声で読み上げるボタンを表示します
                 </p>
               </div>
               <Switch
@@ -138,7 +138,7 @@ export function SettingsDialog() {
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               {localSpeechEnabled 
-                ? "✅ 読み上げは有効です。AIの返答を自動的に読み上げます。" 
+                ? "✅ 読み上げは有効です。メッセージの横にあるスピーカーアイコンをクリックすると読み上げます。" 
                 : "❌ 読み上げは無効です。"}
             </div>
           </div>

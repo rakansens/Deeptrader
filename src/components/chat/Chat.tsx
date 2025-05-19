@@ -115,8 +115,13 @@ export default function Chat() {
     }
   }, [messages, loading]);
 
-  // アシスタントのメッセージを読み上げ
+  // アシスタントのメッセージを読み上げ - 自動読み上げを無効化
   useEffect(() => {
+    // この関数では何もしないように変更
+    // 読み上げはメッセージバブルの個別ボタンから行うため
+    
+    // 以下の処理を無効化
+    /*
     if (!speechSynthesisEnabled || loading) return;
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant" || spokenRef.current === last.id) {
@@ -184,7 +189,8 @@ export default function Chat() {
     } catch (error) {
       console.error("音声読み上げ実行エラー:", error);
     }
-  }, [messages, loading, speechSynthesisEnabled]);
+    */
+  }, [messages, loading, speechSynthesisEnabled]); // 依存配列はそのまま残す
 
   // エラーが発生した場合にトースト表示
   useEffect(() => {
