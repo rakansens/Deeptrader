@@ -77,7 +77,7 @@ export default function Chat() {
       <div
         className={cn(
           'relative overflow-hidden transition-all duration-300',
-          sidebarOpen ? 'w-56' : 'w-0'
+          sidebarOpen ? 'w-full md:w-56' : 'w-0'
         )}
       >
         <ConversationSidebar
@@ -87,7 +87,7 @@ export default function Chat() {
           onRename={renameConversation}
           onRemove={removeConversation}
           className={cn(
-            'absolute inset-0 w-56 md:relative md:block border-r bg-background flex flex-col transition-transform duration-300',
+            'absolute inset-0 w-full md:w-56 md:relative md:block border-r bg-background flex flex-col transition-transform duration-300',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
           footer={
