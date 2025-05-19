@@ -19,6 +19,8 @@ export interface DrawingCanvasProps {
   /** 消しゴムサイズ */
   eraserSize?: number;
   className?: string;
+  /** ホイールイベントハンドラー */
+  onWheel?: (event: React.WheelEvent<HTMLCanvasElement>) => void;
 }
 
 function DrawingCanvas(
@@ -29,6 +31,7 @@ function DrawingCanvas(
     mode = 'freehand',
     eraserSize = 30,
     className,
+    onWheel,
   }: DrawingCanvasProps,
   ref: React.Ref<DrawingCanvasHandle>,
 ) {
@@ -538,7 +541,8 @@ function DrawingCanvas(
         onPointerMove={handlePointerMove}
         onPointerUp={endDrawing}
         onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
+      onPointerLeave={handlePointerLeave}
+        onWheel={onWheel}
         data-testid="drawing-canvas"
       />
     </div>

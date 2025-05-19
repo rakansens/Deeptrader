@@ -66,6 +66,35 @@ export default function CandlestickChart({
   const [mode, setMode] = useState<DrawingMode | null>(null);
   const [eraserSize, setEraserSize] = useState<number>(30);
 
+  /*
+   * 選択モード以外でもマウスホイールでチャートのズームを行えるように、
+   * wheel イベントをチャート本体へ転送するユーティリティ。
+   *
+   * 1. 描画モード中  : オーバーレイ(div)がイベントを取得するため転送が必要
+   * 2. 選択モード(null): オーバーレイ自体を pointer-events:none にするので転送不要
+   */
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    // オリジナルイベントを無効化し軽量チャートへ新しいイベントを送る
+    e.preventDefault();
+
+    const cloned = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      deltaX: e.deltaX,
+      deltaY: e.deltaY,
+      deltaMode: e.deltaMode,
+      clientX: e.clientX,
+      clientY: e.clientY,
+      ctrlKey: e.ctrlKey,
+      shiftKey: e.shiftKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey,
+    });
+
+    containerRef.current.dispatchEvent(cloned);
+  };
+
   // 描画をクリアするハンドラー
   const handleClearDrawing = () => {
     if (drawingRef.current) {
@@ -186,7 +215,10 @@ export default function CandlestickChart({
               <div className="text-xs text-right text-muted-foreground mt-1">{eraserSize}px</div>
             </div>
           )}
-          <div className="absolute inset-0 z-10 overflow-hidden">
+          <div
+            className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? 'pointer-events-none' : ''}`}
+            onWheel={handleWheel}
+          >
             <DrawingCanvas
               ref={drawingRef}
               enabled={isDrawingEnabled}
