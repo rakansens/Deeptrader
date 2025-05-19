@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import useBinanceSocket from '@/hooks/use-binance-socket'
+import type { BinanceTrade } from '@/types/binance'
 
 class MockWebSocket {
   static instances: MockWebSocket[] = []
@@ -19,12 +20,12 @@ describe('useBinanceSocket', () => {
   it('opens websocket and handles messages', () => {
     const onMessage = jest.fn()
     const { unmount } = renderHook(() =>
-      useBinanceSocket({ url: 'wss://test', onMessage })
+      useBinanceSocket<BinanceTrade>({ url: 'wss://test', onMessage })
     )
     const ws = MockWebSocket.instances[0]
     ws.onopen?.()
-    ws.onmessage?.({ data: JSON.stringify({ foo: 'bar' }) })
-    expect(onMessage).toHaveBeenCalledWith({ foo: 'bar' })
+    ws.onmessage?.({ data: JSON.stringify({ p: '1', T: 123 }) })
+    expect(onMessage).toHaveBeenCalledWith({ p: '1', T: 123 })
     unmount()
   })
 

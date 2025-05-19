@@ -24,4 +24,17 @@ describe('RsiPanel', () => {
     render(<RsiPanel data={[]} chart={null} height={100} />)
     expect(screen.getByTestId('rsi-panel')).toBeInTheDocument()
   })
+
+  it('subscribes to logical range changes', () => {
+    const subscribe = jest.fn()
+    const unsubscribe = jest.fn()
+    const chart = {
+      timeScale: () => ({
+        subscribeVisibleLogicalRangeChange: subscribe,
+        unsubscribeVisibleLogicalRangeChange: unsubscribe
+      })
+    } as any
+    render(<RsiPanel data={[]} chart={chart} height={100} />)
+    expect(subscribe).toHaveBeenCalled()
+  })
 })

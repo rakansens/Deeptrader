@@ -25,4 +25,17 @@ describe('MacdPanel', () => {
     render(<MacdPanel macd={[]} signal={[]} chart={null} height={100} />)
     expect(screen.getByTestId('macd-panel')).toBeInTheDocument()
   })
+
+  it('subscribes to logical range changes', () => {
+    const subscribe = jest.fn()
+    const unsubscribe = jest.fn()
+    const chart = {
+      timeScale: () => ({
+        subscribeVisibleLogicalRangeChange: subscribe,
+        unsubscribeVisibleLogicalRangeChange: unsubscribe
+      })
+    } as any
+    render(<MacdPanel macd={[]} signal={[]} chart={chart} height={100} />)
+    expect(subscribe).toHaveBeenCalled()
+  })
 })

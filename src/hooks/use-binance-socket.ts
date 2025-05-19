@@ -4,14 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
-interface UseBinanceSocketOptions {
+export interface UseBinanceSocketOptions<T = unknown> {
   url: string;
   reconnectInterval?: number;
   enabled?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
   onError?: (e: Event) => void;
-  onMessage?: (data: any) => void;
+  onMessage?: (data: T) => void;
 }
 
 /**
@@ -19,7 +19,7 @@ interface UseBinanceSocketOptions {
  * @param options - 接続オプション
  * @returns 接続ステータス
  */
-export function useBinanceSocket(options: UseBinanceSocketOptions) {
+export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T>) {
   const {
     url,
     reconnectInterval = 3000,
