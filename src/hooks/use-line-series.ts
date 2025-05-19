@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { IChartApi, ISeriesApi, LineData } from 'lightweight-charts'
 import { preprocessLineData } from '@/lib/chart-utils'
+import { logger } from '@/lib/logger'
 
 interface UseLineSeriesParams {
   chart: IChartApi | null
@@ -35,7 +36,7 @@ export function useLineSeries({
       try {
         chart.removeSeries(ref.current)
       } catch (e) {
-        console.error('Error removing series:', e)
+        logger.error('Error removing series:', e)
       }
       ref.current = null
     }

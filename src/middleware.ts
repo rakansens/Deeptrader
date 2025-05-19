@@ -5,6 +5,7 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { Database } from "@/types";
+import { logger } from "@/lib/logger";
 
 /**
  * 認証状態を確認するミドルウェア
@@ -20,7 +21,7 @@ export async function middleware(request: NextRequest) {
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
       !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     ) {
-      console.warn(
+      logger.warn(
         "Supabase環境変数が設定されていません。認証機能は動作しません。",
       );
       return response;
@@ -52,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("ミドルウェアエラー:", error);
+    logger.error("ミドルウェアエラー:", error);
     return NextResponse.next();
   }
 }

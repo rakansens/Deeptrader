@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logger } from "@/lib/logger";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
@@ -96,7 +97,7 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
         }
         onMessage?.(data)
       } catch (e) {
-        console.error("Failed to parse websocket message", e)
+        logger.error("Failed to parse websocket message", e)
       }
     }
 

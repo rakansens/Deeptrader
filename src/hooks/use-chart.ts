@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { createChart, IChartApi, CrosshairMode } from 'lightweight-charts';
 import useChartTheme from './use-chart-theme';
 
@@ -66,7 +67,7 @@ export function useIndicatorChart({ height, mainChart }: UseIndicatorChartProps)
                 }
               } catch (e) {
                 // エラーを無視（すでに破棄されたオブジェクトへのアクセスを防ぐ）
-                console.warn('チャート同期エラー:', e);
+                logger.warn('チャート同期エラー:', e);
               }
             });
             
@@ -76,14 +77,14 @@ export function useIndicatorChart({ height, mainChart }: UseIndicatorChartProps)
                 // lightweight-chartsのAPIではサブスクライブ解除は自動的に行われる
                 // チャートの削除時に全てのリスナーは解除される
               } catch (e) {
-                console.warn('サブスクリプション解除エラー:', e);
+                logger.warn('サブスクリプション解除エラー:', e);
               }
             });
           } catch (e) {
-            console.warn('サブスクリプションエラー:', e);
+            logger.warn('サブスクリプションエラー:', e);
           }
         } catch (e) {
-          console.warn('チャート同期初期化エラー:', e);
+          logger.warn('チャート同期初期化エラー:', e);
         }
       }
 
@@ -92,7 +93,7 @@ export function useIndicatorChart({ height, mainChart }: UseIndicatorChartProps)
           chart.resize(container.clientWidth, height);
         } catch (e) {
           // リサイズエラーを無視（すでに破棄されたチャートへのアクセスを防ぐ）
-          console.warn('チャートリサイズエラー:', e);
+          logger.warn('チャートリサイズエラー:', e);
         }
       };
 
@@ -108,14 +109,14 @@ export function useIndicatorChart({ height, mainChart }: UseIndicatorChartProps)
             try {
               removeListener();
             } catch (e) {
-              console.warn('リスナー解除エラー:', e);
+              logger.warn('リスナー解除エラー:', e);
             }
           });
           
           try {
             chart.remove();
           } catch (e) {
-            console.warn('チャート破棄エラー:', e);
+            logger.warn('チャート破棄エラー:', e);
           }
         }
       };
