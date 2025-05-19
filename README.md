@@ -1,7 +1,5 @@
 # DeepTrader
 
-![DeepTrader Logo](./public/logo.png)
-
 ## 概要
 
 DeepTraderは自然言語を活用した次世代の暗号資産トレーディングアシスタントです。AI技術を駆使して、トレーダーの意思決定をサポートし、市場分析から注文執行までをシームレスに支援します。

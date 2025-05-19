@@ -8,10 +8,18 @@ global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder
 import userEvent from '@testing-library/user-event'
 import Chat from '@/components/chat/Chat'
 import { useToast } from '@/hooks/use-toast'
+import { useSettings } from '@/hooks/use-settings'
 
 jest.mock('@/hooks/use-toast')
+jest.mock('@/hooks/use-settings')
 const toastMock = jest.fn()
 ;(useToast as jest.Mock).mockReturnValue({ toast: toastMock, dismiss: jest.fn(), toasts: [] })
+;(useSettings as jest.Mock).mockReturnValue({
+  voiceInputEnabled: false,
+  setVoiceInputEnabled: jest.fn(),
+  speechSynthesisEnabled: false,
+  setSpeechSynthesisEnabled: jest.fn(),
+})
 
 describe('Chat', () => {
   const originalFetch = global.fetch
@@ -201,5 +209,16 @@ describe('Chat', () => {
   it('renders export conversation button', () => {
     render(<Chat />)
     expect(screen.getByRole('button', { name: '会話をエクスポート' })).toBeInTheDocument()
+  })
+
+  it('associates textarea with label', () => {
+    render(<Chat />)
+    expect(screen.getByLabelText('メッセージ入力')).toBeInTheDocument()
+  })
+
+  it('message list has aria-live polite', () => {
+    const { container } = render(<Chat />)
+    const list = container.querySelector('div.space-y-4') as HTMLDivElement
+    expect(list.getAttribute('aria-live')).toBe('polite')
   })
 })

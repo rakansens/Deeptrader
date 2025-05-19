@@ -2,7 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUpIcon, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import {
+  ArrowUpIcon,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Mic,
+  MicOff,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +21,15 @@ import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSettings } from "@/hooks/use-settings";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import SettingsDialog from "@/components/SettingsDialog";
 
 export default function Chat() {
   const {
@@ -41,6 +50,46 @@ export default function Chat() {
   } = useChat();
   const { toast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const spokenRef = useRef<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const {
+    voiceInputEnabled,
+    speechSynthesisEnabled,
+  } = useSettings();
+
+  const startVoiceInput = () => {
+    if (!voiceInputEnabled) return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+    
+    const rec: any = new SpeechRecognition();
+    recognitionRef.current = rec;
+    rec.lang = "ja-JP";
+    rec.interimResults = false;
+    rec.onresult = (e: any) => {
+      const text = Array.from(e.results)
+        .map((r: any) => r[0].transcript)
+        .join("");
+      setInput(text);
+      setIsListening(false);
+    };
+    rec.onend = () => {
+      setIsListening(false);
+    };
+    rec.onerror = () => {
+      setIsListening(false);
+    };
+    rec.start();
+    setIsListening(true);
+  };
 
   const exportConversation = (format: 'json' | 'txt') => {
     const data =
@@ -65,12 +114,89 @@ export default function Chat() {
     }
   }, [messages, loading]);
 
+  // アシスタントのメッセージを読み上げ
+  useEffect(() => {
+    if (!speechSynthesisEnabled || loading) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant" || spokenRef.current === last.id) {
+      return;
+    }
+    
+    console.log("音声読み上げを開始:", last.content);
+    
+    try {
+      // Speech Synthesis APIのサポート確認
+      if (!window.speechSynthesis) {
+        console.error("お使いのブラウザはSpeech Synthesis APIをサポートしていません");
+        return;
+      }
+      
+      // 既存の音声を停止
+      window.speechSynthesis.cancel();
+      
+      const utter = new SpeechSynthesisUtterance(last.content);
+      
+      // 日本語設定
+      utter.lang = "ja-JP";
+      utter.rate = 1.0; // 速度 (0.1-10)
+      utter.pitch = 1.0; // 音程 (0-2)
+      utter.volume = 1.0; // 音量 (0-1)
+      
+      // イベントハンドラー
+      utter.onstart = () => console.log("音声読み上げ開始");
+      utter.onend = () => console.log("音声読み上げ終了");
+      utter.onerror = (e) => console.error("音声読み上げエラー:", e);
+      
+      // 利用可能な音声を取得 (初回のみ)
+      if (window.speechSynthesis.getVoices().length === 0) {
+        console.log("音声リストを読み込み中...");
+        // Chromeの場合、非同期で音声リストを取得するため、
+        // voiceschangedイベントを利用
+        window.speechSynthesis.onvoiceschanged = () => {
+          const voices = window.speechSynthesis.getVoices();
+          console.log("利用可能な音声:", voices.map(v => `${v.name} (${v.lang})`));
+          
+          // 日本語の音声を優先的に選択
+          const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
+          if (jaVoice) {
+            console.log("日本語音声を選択:", jaVoice.name);
+            utter.voice = jaVoice;
+          }
+          
+          spokenRef.current = last.id;
+          window.speechSynthesis.speak(utter);
+        };
+      } else {
+        // 音声リストが既に利用可能な場合
+        const voices = window.speechSynthesis.getVoices();
+        
+        // 日本語の音声を優先的に選択
+        const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
+        if (jaVoice) {
+          console.log("日本語音声を選択:", jaVoice.name);
+          utter.voice = jaVoice;
+        }
+        
+        spokenRef.current = last.id;
+        window.speechSynthesis.speak(utter);
+      }
+    } catch (error) {
+      console.error("音声読み上げ実行エラー:", error);
+    }
+  }, [messages, loading, speechSynthesisEnabled]);
+
   // エラーが発生した場合にトースト表示
   useEffect(() => {
     if (error) {
       toast({ title: "エラー", description: error });
     }
   }, [error, toast]);
+
+  // デバッグ情報をコンソールに出力
+  useEffect(() => {
+    console.log("音声入力設定:", voiceInputEnabled);
+    console.log("LocalStorage voiceInputEnabled:", localStorage.getItem("voiceInputEnabled"));
+  }, [voiceInputEnabled]);
 
   return (
     <div className="flex h-full relative">
@@ -111,7 +237,9 @@ export default function Chat() {
             </Button>
           </div>
 
-          <div>
+          <div className="flex items-center space-x-1">
+            <SettingsDialog />
+            
             <DropdownMenu>
               <TooltipProvider>
                 <Tooltip>
@@ -195,7 +323,11 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="メッセージを入力..."
-            className="min-h-[80px] resize-none pr-12 focus-visible:ring-primary"
+            className={cn(
+              "min-h-[80px] resize-none pr-12",
+              "focus-visible:ring-primary",
+              voiceInputEnabled ? "pl-12" : "pl-4" // 音声入力ボタンの有無でパディングを調整
+            )}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -203,6 +335,40 @@ export default function Chat() {
               }
             }}
           />
+          
+          {voiceInputEnabled && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    onClick={startVoiceInput}
+                    variant={isListening ? "default" : "outline"}
+                    size="icon"
+                    aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
+                    className={cn(
+                      "absolute left-2 bottom-2",
+                      isListening && "bg-red-500 hover:bg-red-600 text-white"
+                    )}
+                  >
+                    {isListening ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isListening 
+                      ? "音声入力中（クリックで停止）" 
+                      : "音声入力を開始"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
           <Button
             onClick={sendMessage}
             disabled={loading || !input.trim()}
