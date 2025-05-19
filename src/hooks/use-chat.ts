@@ -20,7 +20,7 @@ export interface UseChat {
   removeConversation: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
-  sendMessage: () => Promise<void>;
+  sendMessage: (text?: string) => Promise<void>;
 }
 
 /**
@@ -113,24 +113,35 @@ export function useChat(): UseChat {
     }
   }, [messages, selectedId]);
 
-  const sendMessage = async () => {
-    const text = input.trim();
+  const sendMessage = async (textParam?: string) => {
+    console.log("🔄 sendMessage開始:", { textParam, input });
+    const text = (textParam ?? input).trim();
+    console.log("🔄 使用テキスト:", text);
     if (!text) return;
     
     setError(null);
     try {
       // 非同期処理の前に入力をクリア
+      console.log("🔄 setInput('')前のinput:", input);
+      // Chat.tsx側で既にクリアしているが、念のため再度クリア
       setInput("");
+      console.log("🔄 setInput('')後の処理開始");
+      
       await append({
         role: "user",
         content: text,
       } as any);
+      
+      // 念のため、append後にも再度クリア
+      setInput("");
+      console.log("🔄 append完了後");
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
           : "メッセージ送信中にエラーが発生しました";
       setError(message);
+      console.log("🔄 エラー発生:", message);
     }
   };
 

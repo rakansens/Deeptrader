@@ -57,6 +57,29 @@ describe('Chat', () => {
       expect(screen.getByText('DeepTrader AI')).toBeInTheDocument()
     })
 
+    it('clears input immediately after sending', async () => {
+      const user = userEvent.setup()
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode('pong'))
+          controller.close()
+        }
+      })
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        body: stream,
+        headers: new Headers()
+      }) as unknown as typeof fetch
+
+      render(<Chat />)
+      const textarea = screen.getByPlaceholderText('メッセージを入力...')
+      await user.type(textarea, 'ping')
+      await user.keyboard('{Enter}')
+      expect(textarea).toHaveValue('')
+      await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+    })
+
     it('shows loading indicator while waiting for response', async () => {
       const user = userEvent.setup()
       const encoder = new TextEncoder()

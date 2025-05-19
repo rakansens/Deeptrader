@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { flushSync } from "react-dom";
 import {
   ArrowUpIcon,
   ChevronLeft,
@@ -53,6 +54,18 @@ export default function Chat() {
   const recognitionRef = useRef<any>(null);
   const spokenRef = useRef<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+
+  const isSendingRef = useRef(false);
+
+  const stopRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.stop();
+      recognitionRef.current.abort?.();
+      recognitionRef.current = null;
+    }
+  };
+
   const {
     voiceInputEnabled,
     speechSynthesisEnabled,
@@ -66,7 +79,7 @@ export default function Chat() {
     if (!SpeechRecognition) return;
     
     if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
+      stopRecognition();
       setIsListening(false);
       return;
     }
@@ -76,6 +89,9 @@ export default function Chat() {
     rec.lang = "ja-JP";
     rec.interimResults = false;
     rec.onresult = (e: any) => {
+      // 無効化済みインスタンスや送信中は無視
+      if (rec !== recognitionRef.current || isSendingRef.current) return;
+
       const text = Array.from(e.results)
         .map((r: any) => r[0].transcript)
         .join("");
@@ -361,7 +377,17 @@ export default function Chat() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                stopRecognition();
+
+                const text = input;                 // 退避
+
+                /* state を同期的に空にして UI を即クリア */
+                flushSync(() => setInput(""));
+
+                isSendingRef.current = true;
+                sendMessage(text).finally(() => {
+                  isSendingRef.current = false;
+                });
               }
             }}
           />
@@ -400,7 +426,19 @@ export default function Chat() {
           )}
           
           <Button
-            onClick={sendMessage}
+            onClick={() => {
+              stopRecognition();
+              
+              const text = input;
+              
+              /* state を同期的に空にして UI を即クリア */
+              flushSync(() => setInput(""));
+              
+              isSendingRef.current = true;
+              sendMessage(text).finally(() => {
+                isSendingRef.current = false;
+              });
+            }}
             disabled={loading || !input.trim()}
             size="icon"
             aria-label="送信"
