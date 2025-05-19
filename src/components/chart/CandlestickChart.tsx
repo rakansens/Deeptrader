@@ -26,6 +26,8 @@ import {
   type SymbolValue,
   type Timeframe,
 } from "@/constants/chart";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
 
 interface CandlestickChartProps {
   className?: string;
@@ -65,6 +67,7 @@ export default function CandlestickChart({
   const drawingRef = useRef<DrawingCanvasHandle>(null);
   const [mode, setMode] = useState<DrawingMode | null>(null);
   const [eraserSize, setEraserSize] = useState<number>(30);
+  const [showSidebar, setShowSidebar] = useState<boolean>(false);
 
   /*
    * 選択モード以外でもマウスホイールでチャートのズームを行えるように、
@@ -176,6 +179,10 @@ export default function CandlestickChart({
     }
   }, [indicators, onIndicatorsChange]);
 
+  const toggleSidebar = () => {
+    setShowSidebar(!showSidebar);
+  };
+
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
   if (error && useApi)
@@ -197,12 +204,40 @@ export default function CandlestickChart({
             style={{ height }}
             data-testid="chart-container"
           />
-          <ChartSidebar
-            mode={mode}
-            onModeChange={handleModeChange}
-            onClear={handleClearDrawing}
-            className="absolute top-2 left-2 z-20"
-          />
+          
+          {/* サイドバー表示/非表示トグルボタン - サイドバー非表示時のみ表示 */}
+          {!showSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute top-2 left-2 z-30 w-8 h-8 p-1.5"
+              onClick={toggleSidebar}
+              title="サイドバーを表示"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {/* サイドバーを条件付きでレンダリング - トグルボタンと同じ位置に配置 */}
+          {showSidebar && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute top-2 left-2 z-30 w-8 h-8 p-1.5"
+                onClick={toggleSidebar}
+                title="サイドバーを非表示"
+              >
+                <EyeOff className="h-4 w-4" />
+              </Button>
+              <ChartSidebar
+                mode={mode}
+                onModeChange={handleModeChange}
+                onClear={handleClearDrawing}
+                className="absolute top-12 left-2 z-20" // ボタンの下に配置
+              />
+            </>
+          )}
           {mode === 'eraser' && (
             <div className="absolute top-2 right-2 bg-background/90 p-3 rounded-md border border-input z-30 flex flex-col gap-2" style={{ width: '180px' }}>
               <div className="text-xs font-medium text-muted-foreground mb-1">消しゴムサイズ</div>
