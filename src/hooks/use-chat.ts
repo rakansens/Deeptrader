@@ -121,19 +121,14 @@ export function useChat(): UseChat {
     
     setError(null);
     try {
-      // 非同期処理の前に入力をクリア
-      console.log("🔄 setInput('')前のinput:", input);
-      // Chat.tsx側で既にクリアしているが、念のため再度クリア
-      setInput("");
-      console.log("🔄 setInput('')後の処理開始");
+      // Chat.tsx側で既に入力欄をクリアしているので、ここでは何もしない
+      console.log("🔄 処理開始");
       
       await append({
         role: "user",
         content: text,
       } as any);
       
-      // 念のため、append後にも再度クリア
-      setInput("");
       console.log("🔄 append完了後");
     } catch (err) {
       const message =

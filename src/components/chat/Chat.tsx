@@ -379,11 +379,16 @@ export default function Chat() {
                 e.preventDefault();
                 stopRecognition();
 
-                const text = input;                 // 退避
-
-                /* state を同期的に空にして UI を即クリア */
-                flushSync(() => setInput(""));
-
+                if (!input.trim()) return;
+                
+                const text = input;  // 現在の入力を保存
+                
+                // 入力欄をクリア（同期的に実行）
+                flushSync(() => {
+                  setInput("");
+                });
+                
+                // メッセージを送信
                 isSendingRef.current = true;
                 sendMessage(text).finally(() => {
                   isSendingRef.current = false;
@@ -429,11 +434,16 @@ export default function Chat() {
             onClick={() => {
               stopRecognition();
               
-              const text = input;
+              if (!input.trim()) return;
               
-              /* state を同期的に空にして UI を即クリア */
-              flushSync(() => setInput(""));
+              const text = input;  // 現在の入力を保存
               
+              // 入力欄をクリア（同期的に実行）
+              flushSync(() => {
+                setInput("");
+              });
+              
+              // メッセージを送信
               isSendingRef.current = true;
               sendMessage(text).finally(() => {
                 isSendingRef.current = false;
