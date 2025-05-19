@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ChartToolbar from './ChartToolbar'
+import { TIMEFRAMES } from '@/constants/chart'
 
 describe('ChartToolbar', () => {
   it('handles interactions', async () => {
@@ -16,8 +17,10 @@ describe('ChartToolbar', () => {
       />
     )
 
-    await user.click(screen.getByRole('radio', { name: 'Timeframe 5m' }))
-    expect(onTf).toHaveBeenCalledWith('5m')
+    await user.click(
+      screen.getByRole('radio', { name: `Timeframe ${TIMEFRAMES[1]}` })
+    )
+    expect(onTf).toHaveBeenCalledWith(TIMEFRAMES[1])
 
     await user.click(screen.getByLabelText('MA'))
     expect(onInd).toHaveBeenLastCalledWith({ ma: true, rsi: false, macd: false, boll: false })

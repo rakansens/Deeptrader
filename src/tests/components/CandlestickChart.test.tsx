@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import CandlestickChart from '@/components/chart/CandlestickChart'
 import { toast } from '@/hooks/use-toast'
+import { SYMBOLS, TIMEFRAMES } from '@/constants/chart'
 
 jest.mock('@/hooks/use-toast', () => ({
   toast: jest.fn(),
@@ -53,7 +54,9 @@ describe('CandlestickChart', () => {
       resolveFetch = r
     })
     global.fetch = jest.fn().mockReturnValue(fetchPromise)
-    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />)
+    render(
+      <CandlestickChart symbol={SYMBOLS[0].value} interval={TIMEFRAMES[0]} useApi={true} />
+    )
     expect(screen.getByTestId('loading')).toBeInTheDocument()
     resolveFetch!({ ok: true, json: async () => [] } as Response)
     // スケルトンが消えるまで待機
@@ -62,7 +65,9 @@ describe('CandlestickChart', () => {
 
   it.skip('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false } as Response)
-    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={true} />)
+    render(
+      <CandlestickChart symbol={SYMBOLS[0].value} interval={TIMEFRAMES[0]} useApi={true} />
+    )
     await waitFor(() => {})
     expect(true).toBe(true)
   })
@@ -80,7 +85,9 @@ describe('CandlestickChart', () => {
     }
     global.WebSocket = jest.fn(() => mockWebSocket) as any
     
-    render(<CandlestickChart symbol="BTCUSDT" interval="1m" useApi={false} />)
+    render(
+      <CandlestickChart symbol={SYMBOLS[0].value} interval={TIMEFRAMES[0]} useApi={false} />
+    )
     expect(screen.getByTestId('chart-container')).toBeInTheDocument()
 
     const { createChart, CrosshairMode } = require('lightweight-charts')
@@ -122,8 +129,8 @@ describe('CandlestickChart', () => {
 
     const { rerender } = render(
       <CandlestickChart
-        symbol="BTCUSDT"
-        interval="1m"
+        symbol={SYMBOLS[0].value}
+        interval={TIMEFRAMES[0]}
         useApi={false}
         indicators={{ ma: false, rsi: true, macd: false, boll: false }}
       />
@@ -134,8 +141,8 @@ describe('CandlestickChart', () => {
 
     rerender(
       <CandlestickChart
-        symbol="BTCUSDT"
-        interval="1m"
+        symbol={SYMBOLS[0].value}
+        interval={TIMEFRAMES[0]}
         useApi={false}
         indicators={{ ma: false, rsi: false, macd: true, boll: false }}
       />

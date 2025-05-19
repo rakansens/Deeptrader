@@ -4,17 +4,20 @@ jest.mock('@mastra/core/tools', () => ({
 
 import { marketDataTool } from '@/mastra/tools/marketDataTool';
 import { getTicker } from '@/infrastructure/exchange/bitget-service';
+import { SYMBOLS } from '@/constants/chart';
 
 jest.mock('@/infrastructure/exchange/bitget-service');
 
 describe('marketDataTool', () => {
   it('validates input schema', () => {
-    expect(() => marketDataTool.inputSchema.parse({ symbol: 'BTCUSDT' })).not.toThrow();
+    expect(() =>
+      marketDataTool.inputSchema.parse({ symbol: SYMBOLS[0].value })
+    ).not.toThrow();
   });
 
   it('executes and returns ticker', async () => {
     const mockTicker = {
-      symbol: 'BTCUSDT',
+      symbol: SYMBOLS[0].value,
       high24h: '1',
       low24h: '0',
       last: '0',
@@ -24,8 +27,8 @@ describe('marketDataTool', () => {
       timestamp: ''
     };
     (getTicker as jest.Mock).mockResolvedValue(mockTicker);
-    const result = await marketDataTool.execute({ context: { symbol: 'BTCUSDT' } });
-    expect(getTicker).toHaveBeenCalledWith('BTCUSDT');
+    const result = await marketDataTool.execute({ context: { symbol: SYMBOLS[0].value } });
+    expect(getTicker).toHaveBeenCalledWith(SYMBOLS[0].value);
     expect(result).toEqual(mockTicker);
   });
 });

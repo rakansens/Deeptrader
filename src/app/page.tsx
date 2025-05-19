@@ -9,6 +9,7 @@ import ChartToolbar from '@/components/chart/ChartToolbar';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Pencil } from 'lucide-react';
+import { TIMEFRAMES, SYMBOLS } from '@/constants/chart';
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,
@@ -24,8 +25,8 @@ const DRAWING_COLORS = [
 ];
 
 export default function Home() {
-  const [timeframe, setTimeframe] = useState('1h');
-  const [symbol, setSymbol] = useState('BTCUSDT');
+  const [timeframe, setTimeframe] = useState(TIMEFRAMES[3]);
+  const [symbol, setSymbol] = useState(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   const [drawingEnabled, setDrawingEnabled] = useState(false);
   const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);

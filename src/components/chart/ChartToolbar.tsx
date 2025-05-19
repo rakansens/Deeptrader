@@ -14,6 +14,7 @@ import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
 } from './types'
+import { TIMEFRAMES, SYMBOLS } from '@/constants/chart'
 
 interface ChartToolbarProps {
   timeframe: string
@@ -26,17 +27,11 @@ interface ChartToolbarProps {
   onDrawingEnabledChange?: (enabled: boolean) => void
 }
 
-const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d']
-const SYMBOLS = [
-  { value: 'BTCUSDT', label: 'BTC/USDT' },
-  { value: 'ETHUSDT', label: 'ETH/USDT' },
-  { value: 'BNBUSDT', label: 'BNB/USDT' }
-]
 
 export default function ChartToolbar({
   timeframe,
   onTimeframeChange,
-  symbol = 'BTCUSDT',
+  symbol = SYMBOLS[0].value,
   onSymbolChange,
   indicators,
   onIndicatorsChange,

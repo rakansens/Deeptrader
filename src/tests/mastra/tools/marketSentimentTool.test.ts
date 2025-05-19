@@ -3,14 +3,17 @@ jest.mock('@mastra/core/tools', () => ({
 }), { virtual: true });
 
 import { marketSentimentTool } from '@/mastra/tools/marketSentimentTool';
+import { SYMBOLS } from '@/constants/chart';
 
 describe('marketSentimentTool', () => {
   it('validates input schema', () => {
-    expect(() => marketSentimentTool.inputSchema.parse({ symbol: 'BTCUSDT' })).not.toThrow();
+    expect(() =>
+      marketSentimentTool.inputSchema.parse({ symbol: SYMBOLS[0].value })
+    ).not.toThrow();
   });
 
   it('returns placeholder sentiment', async () => {
-    const result = await marketSentimentTool.execute({ context: { symbol: 'BTCUSDT' } });
-    expect(result).toEqual({ symbol: 'BTCUSDT', sentiment: 'neutral', message: 'センチメント分析は未実装です' });
+    const result = await marketSentimentTool.execute({ context: { symbol: SYMBOLS[0].value } });
+    expect(result).toEqual({ symbol: SYMBOLS[0].value, sentiment: 'neutral', message: 'センチメント分析は未実装です' });
   });
 });

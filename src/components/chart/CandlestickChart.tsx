@@ -21,6 +21,7 @@ import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
 } from './types'
+import { SYMBOLS, TIMEFRAMES } from '@/constants/chart'
 
 interface CandlestickChartProps {
   className?: string;
@@ -42,8 +43,8 @@ interface CandlestickChartProps {
 export default function CandlestickChart({
   className,
   height = 400,
-  symbol: initialSymbol = "BTCUSDT",
-  interval: initialInterval = "1m",
+  symbol: initialSymbol = SYMBOLS[0].value,
+  interval: initialInterval = TIMEFRAMES[0],
   useApi = false,
   indicators = { ma: false, rsi: false, macd: false, boll: false },
   onIndicatorsChange,
