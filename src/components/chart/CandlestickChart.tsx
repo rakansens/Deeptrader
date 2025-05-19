@@ -61,7 +61,8 @@ export default function CandlestickChart({
   const drawingRef = useRef<DrawingCanvasHandle>(null);
   const [mode, setMode] = useState<DrawingMode | null>(null);
 
-  const isDrawingEnabled = mode !== null;
+  // 描画キャンバスは常に有効にして内容を保持する
+  const isDrawingEnabled = true;
 
   const {
     candles = [],
@@ -190,9 +191,6 @@ export default function CandlestickChart({
 
   useEffect(() => {
     console.log('描画モード変更:', mode);
-    if (mode === null && drawingRef.current) {
-      drawingRef.current.clear();
-    }
   }, [mode]);
 
   // 型安全なモード変更ハンドラー

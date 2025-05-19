@@ -142,8 +142,26 @@ function DrawingCanvas(
     });
   };
 
+  // カーソルスタイルを決定
+  const getCursorStyle = () => {
+    if (!enabled) return '';
+    
+    // モードに基づいてカーソルスタイルを返す
+    switch (mode) {
+      case null:
+        return 'cursor-default'; // 選択モード
+      case 'freehand':
+        return 'cursor-pointer'; // フリーハンド (Tailwindにcursor-pencilがないため)
+      default:
+        return 'cursor-crosshair'; // トレンドラインとフィボナッチ
+    }
+  };
+
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!enabled) return;
+    // 選択モード（null）の場合は描画せずに返る
+    if (mode === null) return;
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     if (actualMode === 'freehand') {
@@ -156,6 +174,9 @@ function DrawingCanvas(
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!enabled) return;
+    // 選択モード（null）の場合は描画せずに返る
+    if (mode === null) return;
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -185,6 +206,9 @@ function DrawingCanvas(
 
   const endDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!enabled) return;
+    // 選択モード（null）の場合は描画せずに返る
+    if (mode === null) return;
+    
     if (actualMode === 'freehand') {
       drawing.current = false;
       lastPoint.current = null;
@@ -216,12 +240,12 @@ function DrawingCanvas(
   return (
     <canvas
       ref={canvasRef}
-      className={`${className} ${enabled ? 'cursor-crosshair' : ''}`}
+      className={`${className} ${getCursorStyle()}`}
       style={{
         zIndex: 10, 
         touchAction: 'none',
-        pointerEvents: enabled ? 'auto' : 'none',
-        border: enabled ? '1px dashed rgba(239, 68, 68, 0.3)' : 'none',
+        pointerEvents: mode === null ? 'none' : 'auto', // 選択モード時はイベントを透過
+        border: mode !== null && enabled ? '1px dashed rgba(239, 68, 68, 0.3)' : 'none',
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

@@ -82,8 +82,9 @@ describe("DrawingCanvas", () => {
       fireEvent.pointerMove(canvas, { clientX: 10, clientY: 10 });
       fireEvent.pointerUp(canvas);
     });
-    expect(mockCtx.beginPath).toHaveBeenCalled();
-    expect(mockCtx.stroke).toHaveBeenCalled();
+    // 選択モード時はイベントが処理されないので、コールされないはず
+    expect(mockCtx.beginPath).not.toHaveBeenCalled();
+    expect(mockCtx.stroke).not.toHaveBeenCalled();
   });
 
   it("does not draw when enabled is false", async () => {
@@ -107,5 +108,23 @@ describe("DrawingCanvas", () => {
       ref.current?.clear();
     });
     expect(mockCtx.clearRect).toHaveBeenCalled();
+  });
+
+  it("preserves drawing content when switching modes", () => {
+    const ref = React.createRef<DrawingCanvasHandle>();
+    const { rerender } = render(<DrawingCanvas mode="trendline" ref={ref} />);
+    
+    // トレンドラインモードで描画
+    act(() => {
+      const canvas = document.querySelector('[data-testid="drawing-canvas"]') as HTMLCanvasElement;
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerUp(canvas, { clientX: 100, clientY: 100 });
+    });
+    
+    // 選択モードに切り替え
+    rerender(<DrawingCanvas mode={null} ref={ref} />);
+    
+    // キャンバスがクリアされていないこと
+    expect(mockCtx.clearRect).toHaveBeenCalledTimes(1); // プレビュー用に1回だけ呼ばれる
   });
 });
