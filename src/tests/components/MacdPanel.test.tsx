@@ -5,10 +5,18 @@ jest.mock('lightweight-charts', () => ({
   createChart: () => ({
     addLineSeries: () => ({ setData: jest.fn() }),
     addHistogramSeries: () => ({ setData: jest.fn() }),
-    timeScale: () => ({ setVisibleLogicalRange: jest.fn() }),
+    timeScale: () => ({
+      setVisibleLogicalRange: jest.fn(),
+      subscribeVisibleLogicalRangeChange: jest.fn(),
+      unsubscribeVisibleLogicalRangeChange: jest.fn()
+    }),
     remove: jest.fn()
   }),
   CrosshairMode: { Normal: 0 }
+}))
+
+jest.mock('next-themes', () => ({
+  useTheme: () => ({ theme: 'light' })
 }))
 
 jest.mock('@/components/chart/IndicatorPanel', () => ({

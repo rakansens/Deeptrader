@@ -2,7 +2,8 @@
 import { useRef, useCallback } from 'react'
 import { IChartApi, ISeriesApi, LineData, HistogramData, UTCTimestamp } from 'lightweight-charts'
 import IndicatorPanel from './IndicatorPanel'
-import { useIndicatorChart } from '@/hooks/use-chart'
+import { useIndicatorChart } from '@/hooks/use-indicator-chart'
+import useChartTheme from '@/hooks/use-chart-theme'
 import { preprocessLineData, toNumericTime } from '@/lib/chart-utils'
 
 interface MacdPanelProps {
@@ -21,19 +22,32 @@ export default function MacdPanel({ macd, signal, chart, height, onClose }: Macd
   const macdRef = useRef<ISeriesApi<'Line'> | null>(null)
   const signalRef = useRef<ISeriesApi<'Line'> | null>(null)
   const histRef = useRef<ISeriesApi<'Histogram'> | null>(null)
-  const createIndicatorChart = useIndicatorChart({ height, mainChart: chart })
+  const colors = useChartTheme()
+  const createIndicatorChart = useIndicatorChart({
+    height,
+    colors,
+    onSyncRange: range => {
+      if (chart) {
+        try {
+          chart.timeScale().setVisibleLogicalRange(range)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  })
 
   const initChart = useCallback((el: HTMLDivElement) => {
-    const { chart: macdChart, cleanup } = createIndicatorChart(el)
-    chartRef.current = macdChart
-
-    macdRef.current = macdChart.addLineSeries({
+    const { chart: macdChart, series, cleanup } = createIndicatorChart(el, {
       color: '#2962FF',
       lineWidth: 2,
       title: 'MACD',
       priceLineVisible: false,
       lastValueVisible: true
     })
+    chartRef.current = macdChart
+
+    macdRef.current = series
     signalRef.current = macdChart.addLineSeries({
       color: '#FF6D00',
       lineWidth: 2,

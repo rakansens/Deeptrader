@@ -2,7 +2,8 @@
 import { useRef, useCallback } from 'react'
 import { IChartApi, ISeriesApi, LineData, UTCTimestamp } from 'lightweight-charts'
 import IndicatorPanel from './IndicatorPanel'
-import { useIndicatorChart } from '@/hooks/use-chart'
+import { useIndicatorChart } from '@/hooks/use-indicator-chart'
+import useChartTheme from '@/hooks/use-chart-theme'
 import { preprocessLineData, toNumericTime } from '@/lib/chart-utils'
 
 interface RsiPanelProps {
@@ -18,20 +19,33 @@ interface RsiPanelProps {
 export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps) {
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Line'> | null>(null)
-  const createIndicatorChart = useIndicatorChart({ height, mainChart: chart })
+  const colors = useChartTheme()
+  const createIndicatorChart = useIndicatorChart({
+    height,
+    colors,
+    onSyncRange: range => {
+      if (chart) {
+        try {
+          chart.timeScale().setVisibleLogicalRange(range)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  })
 
   const initChart = useCallback((el: HTMLDivElement) => {
-    const { chart: rsiChart, cleanup } = createIndicatorChart(el)
-    chartRef.current = rsiChart
-    
-    // RSI特有の設定
-    seriesRef.current = rsiChart.addLineSeries({
+    const { chart: rsiChart, series, cleanup } = createIndicatorChart(el, {
       color: '#2962FF',
       lineWidth: 2,
       title: 'RSI',
       priceLineVisible: false,
       lastValueVisible: true
     })
+    chartRef.current = rsiChart
+
+    // RSI特有の設定
+    seriesRef.current = series
 
     const overSoldLine = rsiChart.addLineSeries({
       color: 'rgba(239, 83, 80, 0.5)',
