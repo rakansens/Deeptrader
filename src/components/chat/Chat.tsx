@@ -6,6 +6,7 @@ import { ArrowUpIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
+import { cn } from "@/lib/utils";
 
 export default function Chat() {
   const {
@@ -27,21 +28,29 @@ export default function Chat() {
 
   return (
     <div className="flex h-full relative">
-      {sidebarOpen && (
+      <div
+        className={cn(
+          'relative overflow-hidden transition-all duration-300',
+          sidebarOpen ? 'w-56' : 'w-0'
+        )}
+      >
         <ConversationSidebar
           conversations={conversations}
           selectedId={selectedId}
           onSelect={selectConversation}
           onRename={renameConversation}
           onRemove={removeConversation}
-          className="hidden md:block"
+          className={cn(
+            'absolute inset-0 w-56 md:relative md:block border-r bg-background flex flex-col transition-transform duration-300',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
           footer={
             <Button variant="outline" className="w-full" onClick={newConversation}>
               新しいチャット
             </Button>
           }
         />
-      )}
+      </div>
       <div className="flex-1 flex flex-col h-full p-4 relative">
         <Button
           variant="ghost"

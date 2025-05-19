@@ -92,17 +92,24 @@ describe('Chat', () => {
       const user = userEvent.setup()
       render(<Chat />)
 
-      expect(screen.getByRole('button', { name: '新しいチャット' })).toBeInTheDocument()
+      const sidebar = screen.getByRole('complementary')
+      expect(sidebar.className).toMatch(/translate-x-0/)
 
       const hideBtn = screen.getAllByLabelText('スレッドを非表示')[0]
       await user.click(hideBtn)
 
-      expect(screen.queryByRole('button', { name: '新しいチャット' })).not.toBeInTheDocument()
+      expect(sidebar.className).toMatch(/-translate-x-full/)
 
       const showBtn = screen.getAllByLabelText('スレッドを表示')[0]
       await user.click(showBtn)
 
-      expect(screen.getByRole('button', { name: '新しいチャット' })).toBeInTheDocument()
+      expect(sidebar.className).toMatch(/translate-x-0/)
+    })
+
+    it('applies animation classes', () => {
+      render(<Chat />)
+      const sidebar = screen.getByRole('complementary')
+      expect(sidebar.className).toMatch(/transition-transform/)
     })
   })
 })
