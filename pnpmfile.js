@@ -1,17 +1,13 @@
-/**
- * pnpmfile.cjs
- * Strip onnxruntime-node from every spot in the dependency graph so its
- * postinstall (and 80 MB download) never runs in CI.
- */
+// 🔸 pnpmfile.js  ← ルートに新規作成
 module.exports = {
     hooks: {
       readPackage(pkg) {
-        // ❶ Stub out onnxruntime-node in normal dependencies
+        // ① 普通の dependencies から除去／ダミー化
         if (pkg.dependencies && pkg.dependencies['onnxruntime-node']) {
           pkg.dependencies['onnxruntime-node'] = '0.0.0-ignored';
         }
   
-        // ❷ …and in optionalDependencies
+        // ② optionalDependencies も同様に
         if (
           pkg.optionalDependencies &&
           pkg.optionalDependencies['onnxruntime-node']
@@ -19,7 +15,7 @@ module.exports = {
           pkg.optionalDependencies['onnxruntime-node'] = '0.0.0-ignored';
         }
   
-        // ❸ Extra safety: fastembed should never re-add it
+        // ③ fastembed が再度追加しようとしてもブロック
         if (pkg.name === 'fastembed') {
           pkg.dependencies = pkg.dependencies || {};
           pkg.dependencies['onnxruntime-node'] = '0.0.0-ignored';
