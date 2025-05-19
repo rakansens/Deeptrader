@@ -2,6 +2,10 @@ jest.mock('@mastra/core/tools', () => ({
   createTool: (opts: any) => opts
 }), { virtual: true });
 
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost'
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test'
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test'
+
 import { chartAnalysisTool } from '@/mastra/tools/chartAnalysisTool';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeMACD, computeBollinger } from '@/lib/indicators';

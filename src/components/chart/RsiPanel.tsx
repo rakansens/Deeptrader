@@ -23,16 +23,7 @@ export default function RsiPanel({ data, chart, height, onClose }: RsiPanelProps
   const createIndicatorChart = useIndicatorChart({
     height,
     colors,
-    onSyncRange: range => {
-      if (!range) return
-      if (chart) {
-        try {
-          chart.timeScale().setVisibleLogicalRange(range)
-        } catch {
-          /* ignore */
-        }
-      }
-    }
+    mainChart: chart,
   })
 
   const initChart = useCallback((el: HTMLDivElement) => {

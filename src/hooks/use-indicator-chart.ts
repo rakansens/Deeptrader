@@ -12,7 +12,8 @@ import type { ChartTheme } from './use-chart-theme'
 export interface UseIndicatorChartParams {
   height: number
   colors: ChartTheme
-  onSyncRange?: (range: LogicalRange | null) => void
+  /** メインチャートインスタンス */
+  mainChart: IChartApi | null
 }
 
 export interface IndicatorChartResult {
@@ -27,7 +28,7 @@ export interface IndicatorChartResult {
 export function useIndicatorChart({
   height,
   colors,
-  onSyncRange
+  mainChart
 }: UseIndicatorChartParams) {
   return useCallback(
     (
@@ -69,13 +70,32 @@ export function useIndicatorChart({
 
       const listeners: Array<() => void> = []
 
-      if (onSyncRange) {
+      if (mainChart) {
         try {
-          const scale = chart.timeScale()
-          scale.subscribeVisibleLogicalRangeChange(onSyncRange)
+          const mainScale = mainChart.timeScale()
+          const subScale = chart.timeScale()
+
+          // 初期表示範囲を同期
+          try {
+            const initial = mainScale.getVisibleLogicalRange()
+            if (initial) subScale.setVisibleLogicalRange(initial)
+          } catch {
+            /* ignore */
+          }
+
+          const sync = (range: LogicalRange | null) => {
+            if (!range) return
+            try {
+              subScale.setVisibleLogicalRange(range)
+            } catch {
+              /* ignore */
+            }
+          }
+
+          mainScale.subscribeVisibleLogicalRangeChange(sync)
           listeners.push(() => {
             try {
-              scale.unsubscribeVisibleLogicalRangeChange(onSyncRange)
+              mainScale.unsubscribeVisibleLogicalRangeChange(sync)
             } catch {
               /* ignore */
             }
@@ -114,7 +134,7 @@ export function useIndicatorChart({
         }
       }
     },
-    [colors, height, onSyncRange]
+    [colors, height, mainChart]
   )
 }
 

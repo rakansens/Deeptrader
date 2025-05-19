@@ -26,16 +26,7 @@ export default function MacdPanel({ macd, signal, chart, height, onClose }: Macd
   const createIndicatorChart = useIndicatorChart({
     height,
     colors,
-    onSyncRange: range => {
-      if (!range) return
-      if (chart) {
-        try {
-          chart.timeScale().setVisibleLogicalRange(range)
-        } catch {
-          /* ignore */
-        }
-      }
-    }
+    mainChart: chart,
   })
 
   const initChart = useCallback((el: HTMLDivElement) => {
