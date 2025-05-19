@@ -9,6 +9,7 @@ import {
   Minus,
   Square,
   ArrowUpRight,
+  Eraser,
 } from 'lucide-react';
 
 // null は描画モードが非アクティブな状態を表す
@@ -24,6 +25,7 @@ export type DrawingMode =
 interface ChartSidebarProps {
   mode: DrawingMode;
   onModeChange: (mode: DrawingMode) => void;
+  onClear?: () => void;
   className?: string;
 }
 
@@ -34,6 +36,7 @@ interface ChartSidebarProps {
 export default function ChartSidebar({
   mode,
   onModeChange,
+  onClear,
   className,
 }: ChartSidebarProps) {
   // ツールをクリックした時のハンドラー
@@ -136,6 +139,17 @@ export default function ChartSidebar({
       >
         <ArrowUpRight className="h-4 w-4" />
       </button>
+
+      {onClear && (
+        <button
+          className="w-full p-2 mt-4 rounded-md flex items-center justify-center bg-muted text-muted-foreground hover:bg-red-100 hover:text-red-600"
+          onClick={onClear}
+          aria-label="全て消去"
+          title="全て消去"
+        >
+          <Eraser className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }

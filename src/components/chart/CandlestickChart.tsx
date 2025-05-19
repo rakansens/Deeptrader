@@ -54,12 +54,11 @@ export default function CandlestickChart({
   const drawingRef = useRef<DrawingCanvasHandle>(null);
   const [mode, setMode] = useState<DrawingMode | null>(null);
 
-  const handleSaveDrawing = () => {
-    drawingRef.current?.save();
-  };
-
-  const handleLoadDrawing = () => {
-    drawingRef.current?.load();
+  // 描画をクリアするハンドラー
+  const handleClearDrawing = () => {
+    if (drawingRef.current) {
+      drawingRef.current.clear();
+    }
   };
 
   // 描画キャンバスは常に有効にして内容を保持する
@@ -148,8 +147,7 @@ export default function CandlestickChart({
           <ChartSidebar
             mode={mode}
             onModeChange={handleModeChange}
-            onSaveDrawing={handleSaveDrawing}
-            onLoadDrawing={handleLoadDrawing}
+            onClear={handleClearDrawing}
             className="absolute top-2 left-2 z-20"
           />
           <DrawingCanvas

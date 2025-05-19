@@ -35,6 +35,25 @@ describe('ChartSidebar', () => {
     expect(onChange).toHaveBeenCalledWith('horizontal-line');
   });
 
+  it('calls onClear when clear button clicked', async () => {
+    const user = userEvent.setup();
+    const onClear = jest.fn();
+    render(
+      <ChartSidebar
+        mode={null}
+        onModeChange={() => {}}
+        onClear={onClear}
+      />
+    );
+    await user.click(screen.getByTitle('全て消去'));
+    expect(onClear).toHaveBeenCalled();
+  });
+
+  it('does not render clear button when onClear not provided', () => {
+    render(<ChartSidebar mode={null} onModeChange={() => {}} />);
+    expect(screen.queryByTitle('全て消去')).not.toBeInTheDocument();
+  });
+
   it('shows selection tool as active when mode is null', () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
     const selectionTool = screen.getByTitle('選択ツール');
