@@ -54,6 +54,51 @@ export function computeRSI(data: number[], period: number): number | null {
 }
 
 /**
+ * RSI を逐次計算するクラス
+ */
+export class RsiCalculator {
+  private avgGain = 0;
+  private avgLoss = 0;
+  private prevPrice: number | null = null;
+  private count = 0;
+
+  constructor(private readonly period: number) {}
+
+  /**
+   * 価格を更新して RSI を返す
+   * @param price - 現在価格
+   * @returns RSI 値または null
+   */
+  update(price: number): number | null {
+    if (this.prevPrice === null) {
+      this.prevPrice = price;
+      return null;
+    }
+
+    const diff = price - this.prevPrice;
+    const gain = diff > 0 ? diff : 0;
+    const loss = diff < 0 ? -diff : 0;
+    this.prevPrice = price;
+
+    if (this.count < this.period) {
+      this.avgGain += gain;
+      this.avgLoss += loss;
+      this.count += 1;
+      if (this.count < this.period) return null;
+      this.avgGain /= this.period;
+      this.avgLoss /= this.period;
+    } else {
+      this.avgGain = (this.avgGain * (this.period - 1) + gain) / this.period;
+      this.avgLoss = (this.avgLoss * (this.period - 1) + loss) / this.period;
+    }
+
+    if (this.avgLoss === 0) return 100;
+    const rs = this.avgGain / this.avgLoss;
+    return 100 - 100 / (1 + rs);
+  }
+}
+
+/**
  * MACD を計算する
  * @param data - 価格データの配列
  * @param shortPeriod - 短期 EMA の期間 (デフォルト: 12)

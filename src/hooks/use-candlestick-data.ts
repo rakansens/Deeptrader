@@ -8,6 +8,7 @@ import {
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import useBinanceSocket from "./use-binance-socket";
 import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
+import { RsiCalculator } from "@/lib/indicators";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
 
 export interface UseCandlestickDataResult {
@@ -61,6 +62,7 @@ export function useCandlestickData(
   const [error, setError] = useState<string | null>(null);
 
   const pricesRef = useRef<number[]>([]);
+  const rsiCalcRef = useRef<RsiCalculator>(new RsiCalculator(14));
 
   // 初期データ取得
   useEffect(() => {
@@ -69,6 +71,7 @@ export function useCandlestickData(
       setLoading(true);
       setError(null);
       pricesRef.current = [];
+      rsiCalcRef.current = new RsiCalculator(14);
       setMa([]);
       setRsi([]);
       setMacd([]);
@@ -110,7 +113,11 @@ export function useCandlestickData(
           };
           v.push(volume);
           pricesRef.current.push(candle.close);
-          const ind = calculateIndicators(pricesRef.current, time);
+          const ind = calculateIndicators(
+            pricesRef.current,
+            time,
+            rsiCalcRef.current,
+          );
           if (ind.ma) maArr.push(ind.ma as LineData<UTCTimestamp>);
           if (ind.rsi) rsiArr.push(ind.rsi as LineData<UTCTimestamp>);
           if (ind.macd) macdArr.push(ind.macd as LineData<UTCTimestamp>);
@@ -198,7 +205,11 @@ export function useCandlestickData(
       });
       pricesRef.current.push(candle.close);
       if (pricesRef.current.length > 1000) pricesRef.current.shift();
-      const ind = calculateIndicators(pricesRef.current, time);
+      const ind = calculateIndicators(
+        pricesRef.current,
+        time,
+        rsiCalcRef.current,
+      );
       if (ind.ma) {
         setMa((prev) => upsertSeries(prev, ind.ma as LineData<UTCTimestamp>, 500));
       }

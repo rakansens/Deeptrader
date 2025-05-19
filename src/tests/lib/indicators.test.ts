@@ -1,4 +1,11 @@
-import { computeSMA, computeEMA, computeRSI, computeMACD, computeBollinger } from '@/lib/indicators';
+import {
+  computeSMA,
+  computeEMA,
+  computeRSI,
+  computeMACD,
+  computeBollinger,
+  RsiCalculator,
+} from '@/lib/indicators';
 
 describe('indicators utilities', () => {
   describe('computeSMA', () => {
@@ -30,6 +37,27 @@ describe('indicators utilities', () => {
     it('returns 100 for continuously rising prices', () => {
       const data = [1, 2, 3, 4, 5, 6];
       expect(computeRSI(data, 5)).toBe(100);
+    });
+  });
+
+  describe('RsiCalculator', () => {
+    it('updates incrementally', () => {
+      const calc = new RsiCalculator(3);
+      expect(calc.update(1)).toBeNull();
+      expect(calc.update(2)).toBeNull();
+      expect(calc.update(3)).toBeNull();
+      const rsi = calc.update(4);
+      expect(rsi).toBe(100);
+    });
+
+    it('handles falling prices', () => {
+      const calc = new RsiCalculator(2);
+      expect(calc.update(3)).toBeNull();
+      expect(calc.update(2)).toBeNull();
+      const first = calc.update(1);
+      expect(first).toBe(0);
+      const second = calc.update(0);
+      expect(second).toBe(0);
     });
   });
 

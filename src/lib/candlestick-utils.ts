@@ -4,6 +4,7 @@ import {
   computeMACD,
   computeRSI,
   computeSMA,
+  RsiCalculator,
 } from "./indicators";
 
 export interface IndicatorSeries {
@@ -20,16 +21,20 @@ export interface IndicatorSeries {
  * 価格履歴からインジケーターを計算する
  * @param prices - 終値の配列
  * @param time - データ時刻
+ * @param rsiCalc - RSI計算機インスタンス（オプション）
  * @returns 計算結果
  */
 export function calculateIndicators(
   prices: number[],
   time: UTCTimestamp,
+  rsiCalc?: RsiCalculator,
 ): IndicatorSeries {
   const result: IndicatorSeries = {};
   const ma = computeSMA(prices, 14);
   if (ma !== null) result.ma = { time, value: ma };
-  const rsi = computeRSI(prices, 14);
+  const rsi = rsiCalc
+    ? rsiCalc.update(prices[prices.length - 1])
+    : computeRSI(prices, 14);
   if (rsi !== null) result.rsi = { time, value: rsi };
   const macd = computeMACD(prices);
   if (macd) {

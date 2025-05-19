@@ -1,11 +1,14 @@
 import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
+import { RsiCalculator } from "@/lib/indicators";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 
 describe("candlestick-utils", () => {
   describe("calculateIndicators", () => {
     it("returns indicator values when enough data", () => {
       const prices = Array.from({ length: 50 }, (_, i) => i + 1);
-      const res = calculateIndicators(prices, 1 as UTCTimestamp);
+      const rsiCalc = new RsiCalculator(14);
+      prices.forEach((p) => rsiCalc.update(p));
+      const res = calculateIndicators(prices, 1 as UTCTimestamp, rsiCalc);
       expect(res.ma).toBeDefined();
       expect(res.rsi).toBeDefined();
       expect(res.macd).toBeDefined();
