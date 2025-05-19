@@ -127,6 +127,20 @@ DeepTraderでMastraが使用する主要ツール：
    - オンチェーンデータの収集
    - 相関資産のトラッキング
 
+## オーケストラエージェント
+
+複数の専門エージェントを束ねる役割を持つエージェントです。ユーザーの入力内容を分析
+し、適切な担当エージェントへ委任して得られた結果を統合します。例として、トレーディ
+ング関連の質問は`tradingAgent`へ、情報収集が必要な場合は`researchAgent`へ振り分け、
+最終的な回答をまとめて返します。
+
+```typescript
+const result = await orchestratorAgent.stream('BTCの市場見通しを教えて');
+for await (const chunk of result.textStream) {
+  display(chunk);
+}
+```
+
 ## 使用例
 
 以下は、DeepTraderでのMastraエージェントの使用例です：

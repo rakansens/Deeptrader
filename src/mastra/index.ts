@@ -6,6 +6,7 @@ import { createLogger } from "@mastra/core/logger";
 // エージェントのインポート
 import { tradingAgent } from "./agents/tradingAgent";
 import { researchAgent } from "./agents/researchAgent";
+import { orchestratorAgent } from "./agents/orchestratorAgent";
 
 /**
  * Mastraインスタンスの作成
@@ -17,6 +18,7 @@ export const mastra = new Mastra({
   agents: {
     tradingAgent,
     researchAgent,
+    orchestratorAgent,
   },
   // ロガー設定
   logger: createLogger({
