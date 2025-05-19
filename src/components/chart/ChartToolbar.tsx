@@ -14,13 +14,18 @@ import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
 } from './types'
-import { TIMEFRAMES, SYMBOLS } from '@/constants/chart'
+import {
+  TIMEFRAMES,
+  SYMBOLS,
+  type Timeframe,
+  type SymbolValue,
+} from '@/constants/chart'
 
 interface ChartToolbarProps {
-  timeframe: string
-  onTimeframeChange: (timeframe: string) => void
-  symbol?: string
-  onSymbolChange?: (symbol: string) => void
+  timeframe: Timeframe
+  onTimeframeChange: (timeframe: Timeframe) => void
+  symbol?: SymbolValue
+  onSymbolChange?: (symbol: SymbolValue) => void
   indicators: IndicatorOptions
   onIndicatorsChange: IndicatorsChangeHandler
 }

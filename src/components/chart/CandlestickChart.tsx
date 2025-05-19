@@ -15,13 +15,18 @@ import DrawingCanvas, { DrawingCanvasHandle, DrawingMode } from "./drawing-canva
 import ChartSidebar from "./ChartSidebar";
 import { logger } from "@/lib/logger";
 import type { IndicatorOptions, IndicatorsChangeHandler } from "./types";
-import { SYMBOLS, TIMEFRAMES } from "@/constants/chart";
+import {
+  SYMBOLS,
+  TIMEFRAMES,
+  type SymbolValue,
+  type Timeframe,
+} from "@/constants/chart";
 
 interface CandlestickChartProps {
   className?: string;
   height?: number;
-  symbol?: string;
-  interval?: string;
+  symbol?: SymbolValue;
+  interval?: Timeframe;
   useApi?: boolean;
   indicators?: IndicatorOptions;
   onIndicatorsChange?: IndicatorsChangeHandler;

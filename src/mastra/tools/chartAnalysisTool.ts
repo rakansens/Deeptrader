@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeMACD, computeBollinger } from '@/lib/indicators';
+import { TIMEFRAMES } from '@/constants/chart';
 import type { BinanceKline } from '@/types/binance';
 
 /** 価格配列からダブルトップを検出 */
@@ -33,7 +34,9 @@ export const chartAnalysisTool = createTool({
 
   inputSchema: z.object({
     symbol: z.string().describe('分析する暗号資産のシンボル (例: BTCUSDT)'),
-    timeframe: z.string().describe('時間枠 (例: 1m, 5m, 15m, 1h, 4h, 1d)'),
+    timeframe: z.enum(TIMEFRAMES).describe(
+      '時間枠 (例: 1m, 5m, 15m, 1h, 4h, 1d)',
+    ),
     indicators: z
       .array(z.string())
       .optional()

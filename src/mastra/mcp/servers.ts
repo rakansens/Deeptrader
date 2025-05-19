@@ -3,6 +3,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { TIMEFRAMES } from "@/constants/chart";
 
 // 仮想的なMCPサーバークラス（実際の実装では@mastra/mcpからインポート）
 class MCPServer {
@@ -27,7 +28,9 @@ const chartAnalysisServerTool = createTool({
   description: "チャートパターンを分析し、テクニカル指標を計算します",
   inputSchema: z.object({
     symbol: z.string().describe("分析する暗号資産のシンボル (例: BTC/USDT)"),
-    timeframe: z.string().describe("時間枠 (例: 1m, 5m, 15m, 1h, 4h, 1d)"),
+    timeframe: z.enum(TIMEFRAMES).describe(
+      "時間枠 (例: 1m, 5m, 15m, 1h, 4h, 1d)",
+    ),
     indicators: z
       .array(z.string())
       .optional()

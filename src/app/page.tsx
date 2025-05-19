@@ -7,7 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Chat from '@/components/chat/Chat';
 import ChartToolbar from '@/components/chart/ChartToolbar';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { TIMEFRAMES, SYMBOLS } from '@/constants/chart';
+import {
+  TIMEFRAMES,
+  SYMBOLS,
+  type Timeframe,
+  type SymbolValue,
+} from '@/constants/chart';
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,
@@ -23,14 +28,14 @@ const DRAWING_COLORS = [
 ];
 
 export default function Home() {
-  const [timeframe, setTimeframe] = useState<string>(TIMEFRAMES[3]);
-  const [symbol, setSymbol] = useState<string>(SYMBOLS[0].value);
+  const [timeframe, setTimeframe] = useState<Timeframe>(TIMEFRAMES[3]);
+  const [symbol, setSymbol] = useState<SymbolValue>(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);
 
   // 型安全なハンドラー関数を定義
-  const handleTimeframeChange = (tf: string) => setTimeframe(tf);
-  const handleSymbolChange = (sym: string) => setSymbol(sym);
+  const handleTimeframeChange = (tf: Timeframe) => setTimeframe(tf);
+  const handleSymbolChange = (sym: SymbolValue) => setSymbol(sym);
 
   return (
     <div className="flex min-h-screen flex-col">

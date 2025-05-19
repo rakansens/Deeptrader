@@ -5,3 +5,7 @@ export const SYMBOLS = [
   { value: 'ETHUSDT', label: 'ETH/USDT' },
   { value: 'BNBUSDT', label: 'BNB/USDT' },
 ] as const;
+
+export type Timeframe = (typeof TIMEFRAMES)[number];
+
+export type SymbolValue = (typeof SYMBOLS)[number]['value'];

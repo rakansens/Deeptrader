@@ -8,6 +8,7 @@ import {
 import type { BinanceKline, BinanceKlineMessage } from "@/types/binance";
 import useBinanceSocket from "./use-binance-socket";
 import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
+import type { Timeframe, SymbolValue } from "@/constants/chart";
 
 export interface UseCandlestickDataResult {
   candles: CandlestickData<UTCTimestamp>[];
@@ -29,8 +30,8 @@ export interface UseCandlestickDataResult {
  * @param interval - 時間枠
  */
 export function useCandlestickData(
-  symbol: string,
-  interval: string,
+  symbol: SymbolValue,
+  interval: Timeframe,
 ): UseCandlestickDataResult {
   const [candles, setCandles] = useState<CandlestickData<UTCTimestamp>[]>(() => {
     try {
