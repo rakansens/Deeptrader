@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import RsiPanel from '@/components/chart/RsiPanel'
+import mockIndicatorPanel from '../utils/mockIndicatorPanel'
 
 jest.mock('lightweight-charts', () => ({
   createChart: () => ({
@@ -14,18 +16,10 @@ jest.mock('lightweight-charts', () => ({
   CrosshairMode: { Normal: 0 }
 }))
 
-jest.mock('next-themes', () => ({
-  useTheme: () => ({ theme: 'light' })
-}))
-
-jest.mock('@/components/chart/IndicatorPanel', () => ({
-  __esModule: true,
-  default: ({ initChart, title }: any) => {
-    const ref = { current: document.createElement('div') } as any
-    if (initChart) initChart(ref.current)
-    return <div data-testid={`${title.toLowerCase()}-panel`} />
-  }
-}))
+jest.mock('@/components/chart/IndicatorPanel', () => {
+  const factory = require('../utils/mockIndicatorPanel').default
+  return factory()
+})
 
 describe('RsiPanel', () => {
   it('renders panel element', () => {
