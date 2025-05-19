@@ -2,8 +2,6 @@
 
 import {
   createChart,
-  CandlestickData,
-  HistogramData,
   IChartApi,
   ISeriesApi,
   CrosshairMode,
@@ -12,7 +10,7 @@ import { useEffect, useRef } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import useChartTheme from '@/hooks/use-chart-theme'
 import useCandlestickData from '@/hooks/use-candlestick-data'
-import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
+import useCandlestickSeries from '@/hooks/use-candlestick-series'
 import useLineSeries from '@/hooks/use-line-series'
 import RsiPanel from './RsiPanel'
 import MacdPanel from './MacdPanel'
@@ -96,6 +94,19 @@ export default function CandlestickChart({
     data: bollLower,
   });
 
+  useCandlestickSeries({
+    chart: chartRef.current,
+    candleRef,
+    volumeRef,
+    candles,
+    volumes,
+    colors: {
+      upColor: colors.upColor,
+      downColor: colors.downColor,
+      volume: colors.volume,
+    },
+  });
+
   useEffect(() => {
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
@@ -130,21 +141,6 @@ export default function CandlestickChart({
       timeScale: { borderColor: colors.grid, timeVisible: true },
     });
     chartRef.current = chart;
-    candleRef.current = chart.addCandlestickSeries({
-      upColor: colors.upColor,
-      downColor: colors.downColor,
-      wickUpColor: colors.upColor,
-      wickDownColor: colors.downColor,
-      borderVisible: false,
-    });
-    volumeRef.current = chart.addHistogramSeries({
-      priceFormat: { type: "volume" },
-      priceScaleId: "vol",
-      color: colors.volume,
-    });
-    chart
-      .priceScale("vol")
-      .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
     const handleResize = () => {
       if (containerRef.current && chartRef.current) {
         chartRef.current.resize(containerRef.current.clientWidth, height);
@@ -185,14 +181,7 @@ export default function CandlestickChart({
       rightPriceScale: { borderColor: colors.grid },
       timeScale: { borderColor: colors.grid },
     });
-    candleRef.current?.applyOptions({
-      upColor: colors.upColor,
-      downColor: colors.downColor,
-      wickUpColor: colors.upColor,
-      wickDownColor: colors.downColor,
-      borderVisible: false,
-    });
-    volumeRef.current?.applyOptions({ color: colors.volume });
+    // シリーズのテーマはフック内で適用
   }, [colors]);
 
   // 描画機能が有効/無効に切り替わったときに描画履歴をクリア
@@ -203,18 +192,6 @@ export default function CandlestickChart({
     }
   }, [drawingEnabled]);
 
-  useEffect(() => {
-    if (candleRef.current && candles.length > 0) {
-      candleRef.current.setData(
-        processTimeSeriesData<CandlestickData>(candles, toNumericTime),
-      );
-    }
-    if (volumeRef.current && volumes.length > 0) {
-      volumeRef.current.setData(
-        processTimeSeriesData<HistogramData>(volumes, toNumericTime),
-      );
-    }
-  }, [candles, volumes]);
 
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
