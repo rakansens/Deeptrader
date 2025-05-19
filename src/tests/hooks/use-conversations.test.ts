@@ -30,4 +30,18 @@ describe('useConversations', () => {
     })
     expect(JSON.parse(localStorage.getItem('conversations') || '[]')[0].title).toBe('new')
   })
+
+  it('removes stored messages when deleting a conversation', () => {
+    localStorage.setItem('conversations', JSON.stringify([{ id: 'x', title: 't' }]))
+    localStorage.setItem('selectedConversation', 'x')
+    localStorage.setItem('messages_x', JSON.stringify([{ role: 'user', content: 'hi', timestamp: 0 }]))
+
+    const { result } = renderHook(() => useConversations())
+
+    act(() => {
+      result.current.removeConversation('x')
+    })
+
+    expect(localStorage.getItem('messages_x')).toBeNull()
+  })
 })

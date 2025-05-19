@@ -28,6 +28,27 @@ export interface UseChat {
  */
 export function useChat(): UseChat {
   const {
+    conversations,
+    selectedId,
+    selectConversation,
+    newConversation: createConversation,
+    renameConversation,
+    removeConversation,
+  } = useConversations();
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const stored = localStorage.getItem(`messages_${selectedId}`);
+      if (stored) {
+        return JSON.parse(stored) as Message[];
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return [];
+  });
+
+  const {
     messages: aiMessages,
     input,
     setInput,
@@ -35,13 +56,11 @@ export function useChat(): UseChat {
     setMessages: setAiMessages,
     isLoading,
     error: aiError,
-  } = useAIChat({ api: "/api/chat" });
-
-  const messages: Message[] = aiMessages.map((m) => ({
-    role: m.role as Message["role"],
-    content: m.content,
-    timestamp: Date.now(),
-  }));
+  } = useAIChat({
+    api: "/api/chat",
+    id: selectedId,
+    initialMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+  });
 
   const [error, setError] = useState<string | null>(null);
 
@@ -51,21 +70,51 @@ export function useChat(): UseChat {
     }
   }, [aiError]);
 
-  const {
-    conversations,
-    selectedId,
-    selectConversation,
-    newConversation: createConversation,
-    renameConversation,
-    removeConversation,
-  } = useConversations();
-
   const { sidebarOpen, toggleSidebar } = useSidebar(true);
 
   const newConversation = () => {
-    createConversation();
+    const id = createConversation();
     setAiMessages([]);
+    setMessages([]);
+    try {
+      localStorage.setItem(`messages_${id}`, JSON.stringify([]));
+    } catch {
+      // ignore write errors
+    }
   };
+
+  // 選択中の会話が変わったら保存済みメッセージを読み込む
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`messages_${selectedId}`);
+      const parsed = stored ? (JSON.parse(stored) as Message[]) : [];
+      setMessages(parsed);
+      setAiMessages(parsed.map((m) => ({ role: m.role, content: m.content })));
+    } catch {
+      setMessages([]);
+      setAiMessages([]);
+    }
+  }, [selectedId, setAiMessages]);
+
+  // aiMessagesの変更を自メッセージに反映
+  useEffect(() => {
+    setMessages((prev) =>
+      aiMessages.map((m, i) => ({
+        role: m.role as Message["role"],
+        content: m.content,
+        timestamp: prev[i]?.timestamp ?? Date.now(),
+      }))
+    );
+  }, [aiMessages]);
+
+  // メッセージをlocalStorageへ保存
+  useEffect(() => {
+    try {
+      localStorage.setItem(`messages_${selectedId}`, JSON.stringify(messages));
+    } catch {
+      // ignore write errors
+    }
+  }, [messages, selectedId]);
 
   const sendMessage = async () => {
     const text = input.trim();

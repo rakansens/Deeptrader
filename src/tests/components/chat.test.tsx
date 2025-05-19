@@ -19,6 +19,7 @@ describe('Chat', () => {
   afterEach(() => {
     global.fetch = originalFetch
     jest.clearAllMocks()
+    localStorage.clear()
   })
 
   describe('メッセージ送信機能', () => {

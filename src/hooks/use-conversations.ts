@@ -58,6 +58,12 @@ export function useConversations(): UseConversations {
     const conv = { id, title: `会話 ${conversations.length + 1}` };
     setConversations((prev) => [...prev, conv]);
     setSelectedId(id);
+    // 新しい会話用のメッセージ配列を初期化
+    try {
+      localStorage.setItem(`messages_${id}`, JSON.stringify([]));
+    } catch {
+      // ignore write errors
+    }
     return id;
   };
 
@@ -73,6 +79,12 @@ export function useConversations(): UseConversations {
       setSelectedId((s) => (s === id ? updated[0]?.id ?? "" : s));
       return updated;
     });
+    // 対応するメッセージをlocalStorageから削除
+    try {
+      localStorage.removeItem(`messages_${id}`);
+    } catch {
+      // ignore remove errors
+    }
   };
 
   return {
