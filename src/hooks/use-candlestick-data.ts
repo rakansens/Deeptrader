@@ -17,6 +17,7 @@ export interface UseCandlestickDataResult {
   rsi: LineData<UTCTimestamp>[];
   macd: LineData<UTCTimestamp>[];
   signal: LineData<UTCTimestamp>[];
+  histogram: LineData<UTCTimestamp>[];
   bollUpper: LineData<UTCTimestamp>[];
   bollLower: LineData<UTCTimestamp>[];
   loading: boolean;
@@ -53,6 +54,7 @@ export function useCandlestickData(
   const [rsi, setRsi] = useState<LineData<UTCTimestamp>[]>([]);
   const [macd, setMacd] = useState<LineData<UTCTimestamp>[]>([]);
   const [signal, setSignal] = useState<LineData<UTCTimestamp>[]>([]);
+  const [histogram, setHistogram] = useState<LineData<UTCTimestamp>[]>([]);
   const [bollUpper, setBollUpper] = useState<LineData<UTCTimestamp>[]>([]);
   const [bollLower, setBollLower] = useState<LineData<UTCTimestamp>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +73,7 @@ export function useCandlestickData(
       setRsi([]);
       setMacd([]);
       setSignal([]);
+      setHistogram([]);
       setBollUpper([]);
       setBollLower([]);
       try {
@@ -85,6 +88,7 @@ export function useCandlestickData(
         const rsiArr: LineData<UTCTimestamp>[] = [];
         const macdArr: LineData<UTCTimestamp>[] = [];
         const sigArr: LineData<UTCTimestamp>[] = [];
+        const histArr: LineData<UTCTimestamp>[] = [];
         const bUp: LineData<UTCTimestamp>[] = [];
         const bLow: LineData<UTCTimestamp>[] = [];
         raw.forEach((d) => {
@@ -111,6 +115,7 @@ export function useCandlestickData(
           if (ind.rsi) rsiArr.push(ind.rsi as LineData<UTCTimestamp>);
           if (ind.macd) macdArr.push(ind.macd as LineData<UTCTimestamp>);
           if (ind.signal) sigArr.push(ind.signal as LineData<UTCTimestamp>);
+          if (ind.histogram) histArr.push(ind.histogram as LineData<UTCTimestamp>);
           if (ind.bollUpper) bUp.push(ind.bollUpper as LineData<UTCTimestamp>);
           if (ind.bollLower) bLow.push(ind.bollLower as LineData<UTCTimestamp>);
         });
@@ -121,6 +126,7 @@ export function useCandlestickData(
           setRsi(rsiArr);
           setMacd(macdArr);
           setSignal(sigArr);
+          setHistogram(histArr);
           setBollUpper(bUp);
           setBollLower(bLow);
           try {
@@ -205,8 +211,11 @@ export function useCandlestickData(
       if (ind.signal) {
         setSignal((prev) => upsertSeries(prev, ind.signal as LineData<UTCTimestamp>, 500));
       }
+      if (ind.histogram) {
+        setHistogram((prev) => upsertSeries(prev, ind.histogram as LineData<UTCTimestamp>, 500));
+      }
       if (ind.bollUpper) {
-        setBollUpper((prev) => 
+        setBollUpper((prev) =>
           upsertSeries(prev, ind.bollUpper as LineData<UTCTimestamp>, 500)
         );
       }
@@ -232,6 +241,7 @@ export function useCandlestickData(
     rsi,
     macd,
     signal,
+    histogram,
     bollUpper,
     bollLower,
     loading,

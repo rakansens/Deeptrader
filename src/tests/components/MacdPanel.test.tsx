@@ -24,7 +24,7 @@ jest.mock('@/components/chart/IndicatorPanel', () => {
 
 describe('MacdPanel', () => {
   it('renders panel element', () => {
-    render(<MacdPanel macd={[]} signal={[]} chart={null} height={100} />)
+    render(<MacdPanel macd={[]} signal={[]} histogram={[]} chart={null} height={100} />)
     expect(screen.getByTestId('macd-panel')).toBeInTheDocument()
   })
 })

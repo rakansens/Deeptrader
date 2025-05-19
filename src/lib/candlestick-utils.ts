@@ -11,6 +11,7 @@ export interface IndicatorSeries {
   rsi?: LineData;
   macd?: LineData;
   signal?: LineData;
+  histogram?: LineData;
   bollUpper?: LineData;
   bollLower?: LineData;
 }
@@ -34,6 +35,7 @@ export function calculateIndicators(
   if (macd) {
     result.macd = { time, value: macd.macd };
     result.signal = { time, value: macd.signal };
+    result.histogram = { time, value: macd.histogram };
   }
   const boll = computeBollinger(prices);
   if (boll) {

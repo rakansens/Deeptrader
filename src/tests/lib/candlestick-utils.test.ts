@@ -10,6 +10,7 @@ describe("candlestick-utils", () => {
       expect(res.rsi).toBeDefined();
       expect(res.macd).toBeDefined();
       expect(res.signal).toBeDefined();
+      expect(res.histogram).toBeDefined();
       expect(res.bollUpper).toBeDefined();
       expect(res.bollLower).toBeDefined();
     });

@@ -10,11 +10,12 @@ import {
 import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/use-indicator-chart";
 import useChartTheme from "@/hooks/use-chart-theme";
-import { preprocessLineData, toNumericTime } from "@/lib/chart-utils";
+import { preprocessLineData, toNumericTime, processTimeSeriesData } from "@/lib/chart-utils";
 
 interface MacdPanelProps {
   macd: LineData[];
   signal: LineData[];
+  histogram: LineData[];
   chart: IChartApi | null;
   height: number;
   onClose?: () => void;
@@ -26,6 +27,7 @@ interface MacdPanelProps {
 export default function MacdPanel({
   macd,
   signal,
+  histogram,
   chart,
   height,
   onClose,
@@ -36,6 +38,7 @@ export default function MacdPanel({
   const histRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const colors = useChartTheme();
+
   const createIndicatorChart = useIndicatorChart({
     height,
     colors,
@@ -110,15 +113,26 @@ export default function MacdPanel({
   }, [signal]);
 
   useEffect(() => {
-    if (
-      !histRef.current ||
-      !macd ||
-      !signal ||
-      macd.length === 0 ||
-      signal.length === 0
-    )
+    if (!histRef.current) return;
+
+    if (histogram && histogram.length > 0) {
+      const histData: HistogramData[] = histogram.map((h) => ({
+        time: h.time,
+        value: h.value as number,
+        color: (h.value as number) >= 0 ? "#26a69a" : "#ef5350",
+      }));
+      histRef.current.setData(processTimeSeriesData(histData, toNumericTime));
       return;
-    const raw: HistogramData[] = macd
+    }
+
+    if (!macd || !signal || macd.length === 0 || signal.length === 0) {
+      histRef.current.setData([
+        { time: toNumericTime(Date.now()) as UTCTimestamp, value: 0, color: "#26a69a" },
+      ]);
+      return;
+    }
+
+    const diffHist: HistogramData[] = macd
       .map((m, idx) => {
         if (idx < signal.length) {
           const diff = (m.value as number) - (signal[idx].value as number);
@@ -132,25 +146,8 @@ export default function MacdPanel({
       })
       .filter(Boolean) as HistogramData[];
 
-    const timeMap = new Map<number, HistogramData>();
-    raw.forEach((item) => {
-      const key = toNumericTime(item.time);
-      if (!timeMap.has(key)) timeMap.set(key, item);
-    });
-    const unique = Array.from(timeMap.values()).sort(
-      (a, b) => toNumericTime(a.time) - toNumericTime(b.time),
-    );
-    const final: HistogramData[] = [];
-    let prev: number | null = null;
-    unique.forEach((it) => {
-      const cur = toNumericTime(it.time);
-      if (cur !== prev) {
-        final.push(it);
-        prev = cur;
-      }
-    });
-    histRef.current.setData(final);
-  }, [macd, signal]);
+    histRef.current.setData(processTimeSeriesData(diffHist, toNumericTime));
+  }, [histogram, macd, signal]);
 
   return (
     <IndicatorPanel

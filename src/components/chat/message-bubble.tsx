@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
 import TypingIndicator from "./typing-indicator";
 import { Copy } from "lucide-react";
 import {
@@ -64,9 +65,7 @@ export function MessageBubble({
           {role === "user" ? "あなた" : "DeepTrader AI"}
         </span>
         {timestamp !== undefined && (
-          <span className="ml-auto">
-            {new Date(timestamp).toLocaleString()}
-          </span>
+          <span className="ml-auto">{formatDateTime(timestamp)}</span>
         )}
         {typeof children === "string" && !typing && (
           <button

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MessageBubble from '@/components/chat/message-bubble'
+import { formatDateTime } from '@/lib/format'
 
 describe('MessageBubble', () => {
   it('displays user label', () => {
@@ -24,7 +25,7 @@ describe('MessageBubble', () => {
       </MessageBubble>
     )
     expect(screen.getByText('DeepTrader AI')).toBeInTheDocument()
-    expect(screen.getByText(new Date(0).toLocaleString())).toBeInTheDocument()
+    expect(screen.getByText(formatDateTime(0))).toBeInTheDocument()
   })
 
   it('copies message text to clipboard', async () => {

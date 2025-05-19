@@ -62,12 +62,16 @@ describe('useChat', () => {
   })
 
   it('loads messages from localStorage', async () => {
-    localStorage.setItem('messages_current', JSON.stringify([{ role: 'user', content: 'saved', timestamp: 1 }]))
+    localStorage.setItem(
+      'messages_current',
+      JSON.stringify([{ role: 'user', content: 'saved', timestamp: 1 }])
+    )
 
     const { result } = renderHook(() => useChat())
-    await act(async () => {})
+    
     await waitFor(() => expect(result.current.messages.length).toBe(1), { timeout: 3000 })
     expect(result.current.messages[0].content).toBe('saved')
+    expect(Array.isArray(result.current.messages)).toBe(true)
   })
 
   it('persists messages to localStorage', async () => {

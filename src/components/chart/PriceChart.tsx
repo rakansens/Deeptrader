@@ -11,6 +11,7 @@ import {
   computeMACD,
 } from '@/lib/indicators';
 import { toNumericTime } from '@/lib/chart-utils';
+import { formatNumber } from '@/lib/format';
 
 
 export default function PriceChart() {
@@ -131,8 +132,12 @@ export default function PriceChart() {
             </span>
           </div>
           {lastPrice && (
-            <div className={`text-2xl font-bold ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              ${lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div
+              className={`text-2xl font-bold ${
+                priceChange >= 0 ? 'text-green-500' : 'text-red-500'
+              }`}
+            >
+              ${formatNumber(lastPrice)}
             </div>
           )}
         </div>

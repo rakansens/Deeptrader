@@ -112,6 +112,7 @@ export default function CandlestickChart({
     rsi = [],
     macd = [],
     signal = [],
+    histogram = [],
     bollUpper = [],
     bollLower = [],
     loading,
@@ -242,6 +243,7 @@ export default function CandlestickChart({
           <MacdPanel
             macd={macd}
             signal={signal}
+            histogram={histogram}
             chart={chartRef.current}
             height={subHeight}
             onClose={() => handleToggleIndicator('macd', false)}
