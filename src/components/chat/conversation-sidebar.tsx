@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { PenLine, Trash2 } from "lucide-react";
 import {
@@ -14,6 +15,16 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Conversation } from "@/types/chat";
 
 interface ConversationSidebarProps {
@@ -35,8 +46,26 @@ export function ConversationSidebar({
   className,
   footer,
 }: ConversationSidebarProps) {
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [targetId, setTargetId] = useState<string | null>(null);
+
+  const startRename = (id: string, title: string) => {
+    setTargetId(id);
+    setRenameValue(title);
+    setRenameOpen(true);
+  };
+
+  const handleRename = () => {
+    if (targetId && renameValue.trim()) {
+      onRename?.(targetId, renameValue.trim());
+    }
+    setRenameOpen(false);
+    setTargetId(null);
+  };
   return (
-    <aside className={cn("w-56 border-r h-full flex flex-col", className)}>
+    <>
+      <aside className={cn("w-56 border-r h-full flex flex-col", className)}>
       <ul className="flex-1 overflow-y-auto p-2 space-y-2">
         {conversations.map((c) => (
           <li key={c.id} className="flex items-center group">
@@ -55,12 +84,7 @@ export function ConversationSidebar({
                 type="button"
                 aria-label="rename"
                 className="ml-1 p-1 opacity-0 group-hover:opacity-100"
-                onClick={() => {
-                  const title = window.prompt("新しい会話名", c.title);
-                  if (title && title.trim()) {
-                    onRename(c.id, title.trim());
-                  }
-                }}
+                onClick={() => startRename(c.id, c.title)}
               >
                 <PenLine className="w-3 h-3" />
               </button>
@@ -96,7 +120,28 @@ export function ConversationSidebar({
         ))}
       </ul>
       {footer && <div className="p-2 border-t">{footer}</div>}
-    </aside>
+      </aside>
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>会話名を変更</DialogTitle>
+            <DialogDescription>新しい会話名を入力してください。</DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="新しい会話名"
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleRename}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

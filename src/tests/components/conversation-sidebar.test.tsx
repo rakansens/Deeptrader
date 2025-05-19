@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ConversationSidebar from '@/components/chat/conversation-sidebar'
 
@@ -19,7 +19,6 @@ describe('ConversationSidebar', () => {
   it('renames conversation', async () => {
     const user = userEvent.setup()
     const onRename = jest.fn()
-    jest.spyOn(window, 'prompt').mockReturnValue('New')
     render(
       <ConversationSidebar
         conversations={conversations}
@@ -28,6 +27,10 @@ describe('ConversationSidebar', () => {
       />
     )
     await user.click(screen.getAllByLabelText('rename')[0])
+    const dialog = await screen.findByRole('dialog')
+    await user.clear(screen.getByPlaceholderText('新しい会話名'))
+    await user.type(screen.getByPlaceholderText('新しい会話名'), 'New')
+    await user.click(within(dialog).getByRole('button', { name: '保存' }))
     expect(onRename).toHaveBeenCalledWith('1', 'New')
   })
 
