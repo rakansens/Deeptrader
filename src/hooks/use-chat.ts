@@ -36,23 +36,7 @@ export function useChat(): UseChat {
     removeConversation,
   } = useConversations();
 
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const stored = localStorage.getItem(`messages_${selectedId}`)
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<Message>[]
-        return parsed.map((m) => ({
-          id: m.id ?? crypto.randomUUID(),
-          role: m.role as Message['role'],
-          content: m.content ?? '',
-          timestamp: m.timestamp ?? Date.now(),
-        }))
-      }
-    } catch {
-      // ignore parse errors
-    }
-    return []
-  })
+  const [messages, setMessages] = useState<Message[]>([])
 
   const {
     messages: aiMessages,

@@ -1,6 +1,20 @@
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { TextEncoder, TextDecoder } from 'util'
 import { ReadableStream } from 'stream/web'
+
+jest.mock('ai/react', () => {
+  return {
+    useChat: ({ initialMessages }: any) => {
+      const React = require('react')
+      const [messages, setMessages] = React.useState(initialMessages || [])
+      const [input, setInput] = React.useState('')
+      const append = async (msg: any) => {
+        setMessages((prev: any) => [...prev, msg, { role: 'assistant', content: 'pong' }])
+      }
+      return { messages, input, setInput, append, setMessages, isLoading: false, error: null }
+    }
+  }
+})
 
 global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder
 global.ReadableStream = ReadableStream as any
@@ -47,10 +61,12 @@ describe('useChat', () => {
     expect(result.current.messages[1].content).toBe('pong')
   })
 
-  it('loads messages from localStorage', () => {
+  it('loads messages from localStorage', async () => {
     localStorage.setItem('messages_current', JSON.stringify([{ role: 'user', content: 'saved', timestamp: 1 }]))
 
     const { result } = renderHook(() => useChat())
+    await act(async () => {})
+    await waitFor(() => expect(result.current.messages.length).toBe(1), { timeout: 3000 })
     expect(result.current.messages[0].content).toBe('saved')
   })
 

@@ -14,6 +14,8 @@ const mockCtx = {
   closePath: jest.fn(),
   fill: jest.fn(),
   fillText: jest.fn(),
+  getImageData: jest.fn(() => ({ data: [] })),
+  putImageData: jest.fn(),
 };
 
 beforeAll(() => {
@@ -165,8 +167,8 @@ describe("DrawingCanvas", () => {
     // 選択モードに切り替え
     rerender(<DrawingCanvas mode={null} ref={ref} />);
     
-    // キャンバスがクリアされていないこと
-    expect(mockCtx.clearRect).toHaveBeenCalledTimes(1); // プレビュー用に1回だけ呼ばれる
+    // 保存したキャンバス状態が復元されていること
+    expect(mockCtx.putImageData).toHaveBeenCalled();
   });
 
   it('shows eraser cursor when eraser mode is active', async () => {
