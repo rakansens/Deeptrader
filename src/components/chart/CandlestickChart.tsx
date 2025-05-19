@@ -9,6 +9,7 @@ import useCandlestickData from "@/hooks/use-candlestick-data";
 import useCandlestickSeries from "@/hooks/use-candlestick-series";
 import useIndicatorSeries from "@/hooks/use-indicator-series";
 import useChartInstance from "@/hooks/use-chart-instance";
+import useWindowSize from "@/hooks/use-window-size";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
 import DrawingCanvas from "./drawing-canvas";
@@ -68,6 +69,10 @@ export default function CandlestickChart({
   const [mode, setMode] = useState<DrawingMode | null>(null);
   const [eraserSize, setEraserSize] = useState<number>(30);
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
+  const { width } = useWindowSize();
+
+  // 画面幅に応じて高さを調整する
+  const chartHeight = width > 0 && width < 768 ? Math.floor(width * 0.6) : height;
 
   /*
    * 選択モード以外でもマウスホイールでチャートのズームを行えるように、
@@ -124,7 +129,7 @@ export default function CandlestickChart({
 
   const chartRef = useChartInstance({
     container: containerRef.current,
-    height,
+    height: chartHeight,
   });
 
   useIndicatorSeries({
@@ -192,7 +197,7 @@ export default function CandlestickChart({
       </div>
     );
 
-  const subHeight = height * 0.25;
+  const subHeight = chartHeight * 0.25;
 
   return (
     <div className={className}>
@@ -201,7 +206,7 @@ export default function CandlestickChart({
           <div
             ref={containerRef}
             className="w-full rounded-md overflow-hidden border border-border"
-            style={{ height }}
+            style={{ height: chartHeight }}
             data-testid="chart-container"
           />
           
