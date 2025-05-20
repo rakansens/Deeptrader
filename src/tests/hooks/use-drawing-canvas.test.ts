@@ -14,7 +14,7 @@ describe('useDrawingCanvas', () => {
     Object.defineProperty(canvas, 'width', { value: 100, writable: true })
     Object.defineProperty(canvas, 'height', { value: 100, writable: true })
     act(() => {
-      result.current.canvasRef.current = canvas
+      (result.current.canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = canvas
       result.current.handlePointerEnter({
         currentTarget: canvas,
         clientX: 10,
