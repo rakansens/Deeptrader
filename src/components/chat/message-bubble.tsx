@@ -109,8 +109,8 @@ export function MessageBubble({
         className={cn(
           "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium text-center",
           role === "user"
-            ? "bg-primary text-primary-foreground"
-            : "bg-secondary text-secondary-foreground"
+            ? "bg-secondary text-secondary-foreground"
+            : "bg-primary text-primary-foreground"
         )}
       >
         {avatar ? (
