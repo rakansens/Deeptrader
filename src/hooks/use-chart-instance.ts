@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createChart, CrosshairMode, IChartApi } from "lightweight-charts";
 import useChartTheme from "./use-chart-theme";
+import { logger } from "@/lib/logger";
 
 interface UseChartInstanceParams {
   container: HTMLDivElement | null;
@@ -9,6 +10,7 @@ interface UseChartInstanceParams {
 
 /**
  * チャートインスタンスの生成と更新を管理するフック
+ * Lightweight Charts v4.1.3+ の機能に対応
  */
 export function useChartInstance({
   container,
@@ -21,6 +23,8 @@ export function useChartInstance({
   useEffect(() => {
     if (!container) return;
 
+    // チャートの作成
+    logger.debug('Creating chart instance');
     const chart = createChart(container, {
       width: container.clientWidth,
       height,
@@ -52,7 +56,42 @@ export function useChartInstance({
       },
       timeScale: { borderColor: colors.grid, timeVisible: true },
     });
+    
+    // チャートインスタンスを保存
     chartRef.current = chart;
+    logger.debug('Chart instance created and saved to ref');
+
+    // takeScreenshotメソッドの存在確認
+    if ('takeScreenshot' in chart) {
+      logger.debug('Lightweight Charts takeScreenshot method available');
+    } else {
+      logger.warn('Lightweight Charts takeScreenshot method not found in chart object properties');
+      
+      // メソッドをモンキーパッチとして追加（可能な場合）
+      try {
+        if (typeof (chart as any).takeScreenshot !== 'function') {
+          // canvasを取得する簡易スクリーンショット機能を実装
+          (chart as any).takeScreenshot = async function() {
+            logger.debug('Using custom takeScreenshot implementation');
+            const container = (chart as any)._private__container;
+            if (container && container.querySelector('canvas')) {
+              const canvas = container.querySelector('canvas');
+              // 新しいキャンバスにコピーして返す
+              const newCanvas = document.createElement('canvas');
+              newCanvas.width = canvas.width;
+              newCanvas.height = canvas.height;
+              const ctx = newCanvas.getContext('2d');
+              ctx?.drawImage(canvas, 0, 0);
+              return newCanvas;
+            }
+            throw new Error('Canvas element not found in chart container');
+          };
+          logger.debug('Added custom takeScreenshot method to chart instance');
+        }
+      } catch (e) {
+        logger.error('Failed to add custom takeScreenshot method:', e);
+      }
+    }
 
     const handleResize = () => {
       if (chartRef.current) {
@@ -63,6 +102,7 @@ export function useChartInstance({
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      logger.debug('Removing chart instance');
       chart.remove();
       chartRef.current = null;
     };

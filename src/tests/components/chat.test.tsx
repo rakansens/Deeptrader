@@ -244,4 +244,34 @@ describe('Chat', () => {
     const list = container.querySelector('div.space-y-4') as HTMLDivElement
     expect(list.getAttribute('aria-live')).toBe('polite')
   })
+
+  it('shows screenshot button', () => {
+    render(<Chat />)
+    expect(screen.getByLabelText('スクリーンショット送信')).toBeInTheDocument()
+  })
+
+  it('renders image message', () => {
+    jest.spyOn(require('@/hooks/use-chat'), 'useChat').mockReturnValue({
+      messages: [
+        { id: '1', role: 'user', content: 'data:image/png;base64,x', type: 'image', timestamp: 0 }
+      ],
+      input: '',
+      setInput: jest.fn(),
+      loading: false,
+      error: null,
+      conversations: [],
+      selectedId: '1',
+      selectConversation: jest.fn(),
+      newConversation: jest.fn(),
+      renameConversation: jest.fn(),
+      removeConversation: jest.fn(),
+      sidebarOpen: false,
+      toggleSidebar: jest.fn(),
+      sendMessage: jest.fn(),
+      sendImageMessage: jest.fn(),
+    } as any)
+
+    render(<Chat />)
+    expect(screen.getByRole('img')).toBeInTheDocument()
+  })
 })

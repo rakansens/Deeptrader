@@ -24,6 +24,10 @@ export interface MessageBubbleProps {
   timestamp?: number;
   /** アバター画像URLまたはアイコン要素 */
   avatar?: string | ReactNode;
+  /** メッセージ種別 */
+  type?: 'text' | 'image';
+  /** 画像メッセージの説明 */
+  prompt?: string;
 }
 
 export function MessageBubble({
@@ -33,6 +37,8 @@ export function MessageBubble({
   typing = false,
   timestamp,
   avatar,
+  type = 'text',
+  prompt,
 }: MessageBubbleProps) {
   const { speechSynthesisEnabled } = useSettings();
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -128,7 +134,7 @@ export function MessageBubble({
         )}
         
         <div className="flex items-center gap-1">
-          {role === "assistant" && speechSynthesisEnabled && typeof children === "string" && !typing && (
+          {role === "assistant" && speechSynthesisEnabled && type === 'text' && typeof children === "string" && !typing && (
             <button
               type="button"
               aria-label={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
@@ -140,7 +146,7 @@ export function MessageBubble({
             </button>
           )}
           
-          {typeof children === "string" && !typing && (
+          {type === 'text' && typeof children === "string" && !typing && (
             <button
               type="button"
               aria-label="コピー"
@@ -157,6 +163,22 @@ export function MessageBubble({
           <div className="flex items-center gap-2">
             <TypingIndicator />
             {children}
+          </div>
+        ) : type === 'image' && typeof children === 'string' ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <img 
+                src={children} 
+                alt={prompt ?? 'チャート画像'} 
+                className="w-full max-h-[500px] object-contain rounded-md border border-border shadow-sm" 
+                onClick={() => window.open(children, '_blank')}
+                style={{ cursor: 'pointer' }}
+              />
+              <div className="absolute bottom-2 right-2 bg-background/80 text-xs px-2 py-1 rounded text-muted-foreground">
+                クリックで拡大
+              </div>
+            </div>
+            {prompt && <div className="text-sm bg-muted/30 p-2 rounded-md border-l-2 border-primary/50">{prompt}</div>}
           </div>
         ) : (
           children

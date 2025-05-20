@@ -10,6 +10,7 @@ import {
   Download,
   Mic,
   MicOff,
+  Camera,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
+import { captureChart } from "@/lib/captureChart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
@@ -49,6 +51,7 @@ export default function Chat() {
     sidebarOpen,
     toggleSidebar,
     sendMessage,
+    sendImageMessage,
   } = useChat();
   const { toast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
@@ -118,77 +121,6 @@ export default function Chat() {
   useEffect(() => {
     // この関数では何もしないように変更
     // 読み上げはメッセージバブルの個別ボタンから行うため
-    
-    // 以下の処理を無効化
-    /*
-    if (!speechSynthesisEnabled || loading) return;
-    const last = messages[messages.length - 1];
-    if (!last || last.role !== "assistant" || spokenRef.current === last.id) {
-      return;
-    }
-    
-    console.log("音声読み上げを開始:", last.content);
-    
-    try {
-      // Speech Synthesis APIのサポート確認
-      if (!window.speechSynthesis) {
-        console.error("お使いのブラウザはSpeech Synthesis APIをサポートしていません");
-        return;
-      }
-      
-      // 既存の音声を停止
-      window.speechSynthesis.cancel();
-      
-      const utter = new SpeechSynthesisUtterance(last.content);
-      
-      // 日本語設定
-      utter.lang = "ja-JP";
-      utter.rate = 1.0; // 速度 (0.1-10)
-      utter.pitch = 1.0; // 音程 (0-2)
-      utter.volume = 1.0; // 音量 (0-1)
-      
-      // イベントハンドラー
-      utter.onstart = () => console.log("音声読み上げ開始");
-      utter.onend = () => console.log("音声読み上げ終了");
-      utter.onerror = (e) => console.error("音声読み上げエラー:", e);
-      
-      // 利用可能な音声を取得 (初回のみ)
-      if (window.speechSynthesis.getVoices().length === 0) {
-        console.log("音声リストを読み込み中...");
-        // Chromeの場合、非同期で音声リストを取得するため、
-        // voiceschangedイベントを利用
-        window.speechSynthesis.onvoiceschanged = () => {
-          const voices = window.speechSynthesis.getVoices();
-          console.log("利用可能な音声:", voices.map(v => `${v.name} (${v.lang})`));
-          
-          // 日本語の音声を優先的に選択
-          const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
-          if (jaVoice) {
-            console.log("日本語音声を選択:", jaVoice.name);
-            utter.voice = jaVoice;
-          }
-          
-          spokenRef.current = last.id;
-          window.speechSynthesis.speak(utter);
-        };
-      } else {
-        // 音声リストが既に利用可能な場合
-        const voices = window.speechSynthesis.getVoices();
-        
-        // 日本語の音声を優先的に選択
-        const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
-        if (jaVoice) {
-          console.log("日本語音声を選択:", jaVoice.name);
-          utter.voice = jaVoice;
-        }
-        
-        spokenRef.current = last.id;
-        window.speechSynthesis.speak(utter);
-      }
-    } catch (error) {
-      console.error("音声読み上げ実行エラー:", error);
-    }
-    */
   }, [messages, loading, speechSynthesisEnabled]); // 依存配列はそのまま残す
 
   // エラーが発生した場合にトースト表示
@@ -289,7 +221,7 @@ export default function Chat() {
             </DropdownMenu>
           </div>
         </div>
-        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2">
+        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2" aria-live="polite">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-4">質問や指示を入力してください</p>
@@ -320,6 +252,8 @@ export default function Chat() {
                 role={m.role}
                 timestamp={m.timestamp}
                 avatar={m.role === "user" ? "U" : "AI"}
+                type={m.type}
+                prompt={m.prompt}
               >
                 {m.content}
               </MessageBubble>
@@ -341,6 +275,7 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="メッセージを入力..."
+            aria-label="メッセージ入力"
             className={cn(
               "min-h-[80px] resize-none pr-12",
               "focus-visible:ring-primary",
@@ -386,6 +321,81 @@ export default function Chat() {
               </Tooltip>
             </TooltipProvider>
           )}
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={async () => {
+                    try {
+                      // チャートキャプチャを実行
+                      toast({ 
+                        title: "チャートキャプチャ中", 
+                        description: "チャートの画像を取得しています..." 
+                      });
+                      
+                      const url = await captureChart();
+                      
+                      if (url) {
+                        // 画像データのプレビュー（デバッグ用）
+                        if (process.env.NODE_ENV !== 'production') {
+                          const debugImg = document.createElement('img');
+                          debugImg.src = url;
+                          debugImg.style.position = 'fixed';
+                          debugImg.style.top = '0';
+                          debugImg.style.right = '0';
+                          debugImg.style.width = '200px';
+                          debugImg.style.zIndex = '9999';
+                          debugImg.style.border = '2px solid red';
+                          debugImg.style.background = '#fff';
+                          debugImg.style.opacity = '0.9';
+                          debugImg.addEventListener('click', () => document.body.removeChild(debugImg));
+                          document.body.appendChild(debugImg);
+                          
+                          // 5秒後に自動で消える
+                          setTimeout(() => {
+                            if (document.body.contains(debugImg)) {
+                              document.body.removeChild(debugImg);
+                            }
+                          }, 5000);
+                        }
+                        
+                        // AIへ送信
+                        await sendImageMessage(url);
+                        
+                        toast({ 
+                          title: "スクリーンショット送信", 
+                          description: "チャートのスクリーンショットをAIに送信しました" 
+                        });
+                      } else {
+                        toast({ 
+                          title: "エラー", 
+                          description: "チャートのキャプチャに失敗しました", 
+                          variant: "destructive" 
+                        });
+                      }
+                    } catch (err) {
+                      console.error('スクリーンショット送信エラー:', err);
+                      toast({ 
+                        title: "エラー", 
+                        description: "スクリーンショットの送信に失敗しました", 
+                        variant: "destructive" 
+                      });
+                    }
+                  }}
+                  disabled={loading}
+                  size="icon"
+                  aria-label="チャートスクリーンショットを送信"
+                  className="absolute right-10 bottom-2"
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>チャートのスクリーンショットを送信</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           <Button
             onClick={handleSendMessage}

@@ -1,3 +1,8 @@
+/**
+ * ロギングユーティリティ
+ * 開発時にコンソールへのログ出力を制御する
+ */
+
 import { LogLevel } from "@mastra/core/logger";
 
 const levelOrder: Record<LogLevel, number> = {
@@ -15,18 +20,35 @@ function shouldLog(level: LogLevel) {
 }
 
 export const logger = {
+  /**
+   * デバッグログを出力
+   * 開発モードでのみ表示されます
+   */
   debug: (...args: unknown[]) => {
-    if (shouldLog("debug")) console.debug(...args);
+    if (shouldLog("debug")) console.debug('[DEBUG]', ...args);
   },
+
+  /**
+   * 情報ログを出力
+   */
   info: (...args: unknown[]) => {
-    if (shouldLog("info")) console.info(...args);
+    if (shouldLog("info")) console.info('[INFO]', ...args);
   },
+
+  /**
+   * 警告ログを出力
+   */
   warn: (...args: unknown[]) => {
-    if (shouldLog("warn")) console.warn(...args);
+    if (shouldLog("warn")) console.warn('[WARN]', ...args);
   },
+
+  /**
+   * エラーログを出力
+   */
   error: (...args: unknown[]) => {
-    if (shouldLog("error")) console.error(...args);
+    if (shouldLog("error")) console.error('[ERROR]', ...args);
   },
 };
+
 export type Logger = typeof logger;
 

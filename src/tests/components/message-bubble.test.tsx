@@ -39,4 +39,16 @@ describe('MessageBubble', () => {
     await user.click(screen.getByLabelText('コピー'))
     expect(writeText).toHaveBeenCalledWith('copy me')
   })
+
+  it('renders image when type is image', () => {
+    const data = 'data:image/png;base64,aaa'
+    render(
+      <MessageBubble role="user" type="image" prompt="prompt">
+        {data}
+      </MessageBubble>
+    )
+    const img = screen.getByRole('img')
+    expect(img).toHaveAttribute('src', data)
+    expect(screen.getByText('prompt')).toBeInTheDocument()
+  })
 })

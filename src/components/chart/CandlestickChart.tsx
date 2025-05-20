@@ -97,6 +97,21 @@ export default function CandlestickChart({
   // 描画キャンバスは常に有効にして内容を保持する
   const isDrawingEnabled = true;
 
+  // チャートインスタンスをグローバルに露出（スクリーンショット用）
+  // 意図的にTSエラーを抑制（window拡張の代替策）
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  if (typeof window !== 'undefined') {
+    // チャートインスタンスを保存するグローバル変数
+    (window as any).__chartInstance = null;
+    
+    // DOMからチャート要素を取得するヘルパー関数も追加
+    (window as any).__getChartElement = () => {
+      const container = document.querySelector('[data-testid="chart-container"]');
+      return container;
+    };
+  }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
   const {
     candles = [],
     volumes = [],
@@ -145,6 +160,35 @@ export default function CandlestickChart({
     logger.debug('描画モード変更:', mode);
   }, [mode]);
 
+  // チャートインスタンスをグローバルに保存（スクリーンショット用）
+  useEffect(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    // チャートインスタンスの変更を監視し、グローバル変数に保存
+    const checkAndSaveChart = () => {
+      if (typeof window !== 'undefined') {
+        if (chartRef.current) {
+          (window as any).__chartInstance = chartRef.current;
+          logger.debug('Chart instance saved for screenshots:', chartRef.current);
+        } else {
+          logger.warn('Chart instance is null, cannot save for screenshots');
+        }
+      }
+    };
+    
+    // 即時実行と300ms後の実行で確実に保存
+    checkAndSaveChart();
+    const timer = setTimeout(checkAndSaveChart, 300);
+    
+    return () => {
+      clearTimeout(timer);
+      if (typeof window !== 'undefined') {
+        (window as any).__chartInstance = null;
+        logger.debug('Chart instance cleared from global');
+      }
+    };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+  }, [chartRef.current]);
+
   useEffect(() => {
     logger.debug('描画有効状態変更:', drawingEnabled);
     if (!drawingEnabled && drawingRef.current) {
@@ -176,7 +220,7 @@ export default function CandlestickChart({
   const subHeight = chartHeight * 0.25;
 
   return (
-    <div className={className}>
+    <div className={className} id="chart-panel">
       <div className="flex flex-col space-y-4">
         <div className="relative w-full h-full">
           <div
