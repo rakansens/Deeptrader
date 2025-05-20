@@ -48,8 +48,30 @@ export function computeRSI(data: number[], period: number): number | null {
   }
   const avgGain = gains / period;
   const avgLoss = losses / period;
-  if (avgLoss === 0) return 100;
-  const rs = avgGain / avgLoss;
+
+  let rs;
+  if (avgLoss === 0) {
+    if (avgGain === 0) {
+      // Case: No price change over the period. RSI is conventionally 50.
+      // RS = 1 results in RSI = 50.
+      rs = 1;
+    } else {
+      // Case: Only gains, no losses. RSI is 100.
+      // RS = Infinity results in RSI = 100.
+      rs = Infinity;
+    }
+  } else if (avgGain === 0) {
+    // Case: Only losses, no gains. RSI is 0.
+    // RS = 0 results in RSI = 0.
+    rs = 0;
+  } else {
+    // Standard case: both averageGain and averageLoss are positive
+    rs = avgGain / avgLoss;
+  }
+
+  // The final RSI calculation should remain similar to:
+  // const rsi = 100 - (100 / (1 + rs));
+  // return rsi;
   return 100 - 100 / (1 + rs);
 }
 

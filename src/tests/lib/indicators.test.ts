@@ -46,10 +46,49 @@ describe('indicators utilities', () => {
       expect(computeRSI([1, 2, 3], 5)).toBeNull();
     });
 
-    it('returns 100 for continuously rising prices', () => {
-      const data = [1, 2, 3, 4, 5, 6];
+    it('returns 100 for continuously rising prices (Only Gains)', () => {
+      const data = [1, 2, 3, 4, 5, 6]; // All gains
       expect(computeRSI(data, 5)).toBe(100);
     });
+
+    it('returns 0 for continuously falling prices (Only Losses)', () => {
+      const data = [6, 5, 4, 3, 2, 1]; // All losses
+      expect(computeRSI(data, 5)).toBe(0);
+    });
+
+    it('returns 50 for no change in prices (No Gains, No Losses)', () => {
+      const data = [10, 10, 10, 10, 10, 10]; // No change
+      expect(computeRSI(data, 5)).toBe(50);
+    });
+
+    it('calculates RSI correctly for normal conditions', () => {
+      // Example from: https://school.stockcharts.com/doku.php?id=technical_indicators:relative_strength_index_rsi
+      // Day 1-15 prices (using Close prices for calculation)
+      // For a 14-period RSI
+      // Gains: 0.31, 0.56, 0.1, 0.15, 0.42, 0.01, 0.23 = sum 1.78 / 14 = 0.127 (AvgGain)
+      // Losses: 0.19, 0.51, 0.06, 0.09, 0.22, 0.11, 0.13 = sum 1.31 / 14 = 0.093 (AvgLoss)
+      // RS = 0.127 / 0.093 = 1.3655
+      // RSI = 100 - (100 / (1 + 1.3655)) = 100 - (100 / 2.3655) = 100 - 42.27 = 57.73
+      // Using a simpler dataset for clarity in test:
+      // Prices: 10, 11, 10, 9, 10, 11, 12 (7 data points, use period 6 for RSI)
+      // Changes: +1, -1, -1, +1, +1, +1
+      // Period: 6
+      // Gains: 1, 1, 1, 1 = 4
+      // Losses: 1, 1 = 2
+      // AvgGain = 4/6
+      // AvgLoss = 2/6
+      // RS = (4/6) / (2/6) = 2
+      // RSI = 100 - (100 / (1 + 2)) = 100 - (100/3) = 100 - 33.333... = 66.666...
+      const data = [10, 11, 10, 9, 10, 11, 12]; // Mixed gains and losses
+      const period = 6;
+      expect(computeRSI(data, period)).toBeCloseTo(66.66666666666667);
+    });
+
+    // The existing test for insufficient data:
+    // it('returns null when data is insufficient', () => {
+    //   expect(computeRSI([1, 2, 3], 5)).toBeNull();
+    // });
+    // This will be kept as is.
   });
 
   describe('RsiCalculator', () => {
