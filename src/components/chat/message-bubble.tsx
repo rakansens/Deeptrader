@@ -80,7 +80,7 @@ export function MessageBubble({
           </div>
         </div>
       );
-    }
+          }
     
     // テキストの場合
     if (typeof children === 'string') {
@@ -97,7 +97,7 @@ export function MessageBubble({
     // その他の場合はそのまま返す
     return children;
   };
-
+  
   return (
     <div
       className={cn(
@@ -123,9 +123,9 @@ export function MessageBubble({
             avatar
           )
         ) : (
-          <span className="font-medium">
-            {role === "user" ? "あなた" : "DeepTrader AI"}
-          </span>
+        <span className="font-medium">
+          {role === "user" ? "あなた" : "DeepTrader AI"}
+        </span>
         )}
       </div>
 
@@ -134,13 +134,16 @@ export function MessageBubble({
           "flex flex-col max-w-[90%] sm:max-w-[75%]",
           role === "user" ? "items-end" : "items-start"
         )}
-      >
+            >
         <div
           className={cn(
-            "px-4 py-2 rounded-lg h-fit",
-            role === "user"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground",
+            // 画像メッセージは背景・余白を除去してネイティブな見た目に
+            isImage ? "p-0" : "px-4 py-2",
+            !isImage &&
+              (role === "user"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground"),
+            "rounded-lg h-fit",
             typing && "animate-pulse"
           )}
         >
@@ -152,11 +155,11 @@ export function MessageBubble({
           >
             {renderContent()}
           </motion.div>
-        </div>
+      </div>
         
         <div className="text-xs text-muted-foreground mt-1">
           {formattedDate}
-        </div>
+          </div>
       </div>
     </div>
   );

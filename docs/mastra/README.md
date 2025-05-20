@@ -207,10 +207,10 @@ DeepTraderをローカル開発環境で実行するには：
 
 ```bash
 # Mastra依存関係のインストール
-npm install @mastra/core @mastra/memory @mastra/mcp @ai-sdk/openai zod
+pnpm install @mastra/core @mastra/memory @mastra/mcp @ai-sdk/openai zod
 
 # 開発サーバーの起動
-npm run dev
+pnpm run dev
 
 # または特定のエージェントのみのテスト
 mastra dev --agent tradingAgent
@@ -274,10 +274,10 @@ mastra dev --agent tradingAgent
 
 ```bash
 # Mastraパッケージのインストール
-npm install @mastra/core @mastra/client-js
+pnpm install @mastra/core @mastra/client-js
 
 # 必要に応じて追加パッケージをインストール
-npm install @mastra/memory @mastra/tools
+pnpm install @mastra/memory @mastra/tools
 ```
 
 ### 2. エージェント定義
@@ -303,6 +303,8 @@ export async function createTradingAgent() {
   return agent;
 }
 ```
+
+接続文字列に使用する `NEXT_PUBLIC_SUPABASE_URL` は、`.env.local` に設定した値と一致させてください。
 
 ### 3. ツール定義例
 
