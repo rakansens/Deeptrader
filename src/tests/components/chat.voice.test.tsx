@@ -23,6 +23,7 @@ describe('Chat voice features', () => {
       setVoiceInputEnabled: jest.fn(),
       speechSynthesisEnabled: true,
       setSpeechSynthesisEnabled: jest.fn(),
+      refreshSettings: jest.fn(),
     })
   })
 

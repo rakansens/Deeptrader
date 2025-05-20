@@ -10,6 +10,7 @@ import { z } from 'zod';
 // 既存エージェントのインポート
 import { tradingAgent } from './tradingAgent';
 import { researchAgent } from './researchAgent';
+import { uiControlAgent } from './uiControlAgent';
 
 // メモリ設定
 const memory = new Memory({
@@ -42,6 +43,16 @@ export const delegateResearchTool = createTool({
   execute: async ({ context }) => researchAgent.stream(context.message)
 });
 
+// UIコントロールエージェントへの委任ツール
+export const delegateUiControlTool = createTool({
+  id: 'delegate-ui-control-tool',
+  description: 'UIコントロールエージェントへ指示を渡します',
+  inputSchema: z.object({
+    message: z.string().describe('ユーザーからの問い合わせ')
+  }),
+  execute: async ({ context }) => uiControlAgent.stream(context.message)
+});
+
 /**
  * オーケストラエージェント
  * ユーザーの入力を解析し、適切な専門エージェントへ委任して結果を統合します
@@ -54,7 +65,8 @@ export const orchestratorAgent = new Agent({
   model: openai('gpt-4o'),
   tools: {
     delegateTradingTool,
-    delegateResearchTool
+    delegateResearchTool,
+    delegateUiControlTool
   },
   memory
 });

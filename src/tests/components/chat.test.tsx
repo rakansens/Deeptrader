@@ -19,6 +19,7 @@ const toastMock = jest.fn()
   setVoiceInputEnabled: jest.fn(),
   speechSynthesisEnabled: false,
   setSpeechSynthesisEnabled: jest.fn(),
+  refreshSettings: jest.fn(),
 })
 
 describe('Chat', () => {
