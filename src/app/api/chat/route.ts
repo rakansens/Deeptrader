@@ -1,32 +1,31 @@
 import { NextResponse } from 'next/server';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 import { logger } from '@/lib/logger';
+import type { Message, OpenAIChatMessage } from '@/types';
 
 export const runtime = 'edge';
 
 export async function POST(request: Request) {
   try {
-    const { messages } = await request.json();
+    const { messages }: { messages: Message[] } = await request.json();
     
     // リクエストログ（センシティブ情報は除外）
     logger.debug('Chat API request received with', messages.length, 'messages');
     
     // メッセージ形式の変換と最適化
-    const openAIMessages = messages.map((m: any) => {
-      // 画像メッセージの処理（データURLの場合）
-      if (m.type === 'image' || (typeof m.content === 'string' && m.content.startsWith('data:image/'))) {
+    const openAIMessages: OpenAIChatMessage[] = messages.map((m) => {
+      if (
+        m.type === 'image' ||
+        (typeof m.content === 'string' && m.content.startsWith('data:image/'))
+      ) {
         const prompt = m.prompt || 'このチャートを分析してください';
-        const imageUrl = typeof m.content === 'string' ? m.content : 
-                        (Array.isArray(m.content) ? 
-                          m.content.find((c: any) => c.type === 'image_url')?.image_url?.url : 
-                          null);
-        
-        // 画像URLが見つからない場合
+        const imageUrl = m.imageUrl ?? m.content;
+
         if (!imageUrl) {
           logger.error('Image URL not found in message:', m);
           return { role: m.role, content: prompt };
         }
-        
+
         logger.debug('Processing multimodal message with image');
         return {
           role: m.role,
@@ -36,15 +35,8 @@ export async function POST(request: Request) {
           ],
         };
       }
-      
-      // 通常のテキストメッセージ
-      if (Array.isArray(m.content)) {
-        // 既にマルチモーダル形式になっている場合はそのまま使用
-        return { role: m.role, content: m.content };
-      } else {
-        // 普通のテキストメッセージ
-        return { role: m.role, content: m.content };
-      }
+
+      return { role: m.role, content: m.content };
     });
     
     // API Key チェック

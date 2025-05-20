@@ -5,6 +5,15 @@ export interface Conversation {
 
 export type ChatRole = "user" | "assistant";
 
+export type OpenAIContent =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+export interface OpenAIChatMessage {
+  role: ChatRole | 'system';
+  content: string | OpenAIContent[];
+}
+
 export interface Message {
   id: string
   role: ChatRole;

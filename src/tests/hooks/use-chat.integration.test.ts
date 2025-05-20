@@ -12,17 +12,19 @@ jest.mock("@/infrastructure/supabase/db-service", () => ({
   addMessage: jest.fn().mockResolvedValue(undefined),
 }));
 
+import type { OpenAIChatMessage } from "@/types";
+
 jest.mock("ai/react", () => {
   return {
-    useChat: ({ initialMessages }: any) => {
-      const React = require("react");
-      const [messages, setMessages] = React.useState(initialMessages || []);
+    useChat: <T,>({ initialMessages }: { initialMessages?: T[] }) => {
+      const React = require("react") as typeof import("react");
+      const [messages, setMessages] = React.useState<T[]>(initialMessages || []);
       const [input, setInput] = React.useState("");
-      const append = async (msg: any) => {
-        setMessages((prev: any) => [
+      const append = async (msg: T) => {
+        setMessages((prev: T[]) => [
           ...prev,
           msg,
-          { role: "assistant", content: "pong" },
+          { role: "assistant", content: "pong" } as T,
         ]);
       };
       return {

@@ -1,10 +1,25 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useChat as useAIChat } from "ai/react";
+import {
+  useChat as useAIChatBase,
+  type UseChatHelpers,
+  type Message as AIMessage,
+} from "ai/react";
+
+type UseAIChatTyped<M> = Omit<UseChatHelpers, 'messages' | 'append' | 'setMessages'> & {
+  messages: M[];
+  append: (message: M, chatRequestOptions?: unknown) => Promise<string | null | undefined>;
+  setMessages: (messages: M[]) => void;
+};
+
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
-import type { Conversation, Message } from "@/types";
+
+function useAIChat<M>(options?: Parameters<typeof useAIChatBase>[0]): UseAIChatTyped<M> {
+  return useAIChatBase(options) as unknown as UseAIChatTyped<M>;
+}
+import type { Conversation, Message, OpenAIChatMessage, OpenAIContent } from "@/types";
 import { logger } from "@/lib/logger";
 import {
   addMessage,
@@ -54,15 +69,12 @@ export function useChat(): UseChat {
     setMessages: setAiMessages,
     isLoading,
     error: aiError,
-  } = useAIChat({
+  } = useAIChat<OpenAIChatMessage>({
     api: "/api/chat",
     id: selectedId,
-    initialMessages: messages.map((m) => ({
-      role: m.role,
-      content: (m.type === 'image' && m.imageUrl && m.prompt)
-                ? [ {type: 'text', text: m.prompt}, {type: 'image_url', image_url: { url: m.imageUrl }} ]
-                : m.content,
-    })) as any,
+    initialMessages: messages.map(
+      (m): OpenAIChatMessage => ({ role: m.role, content: m.content })
+    ) as unknown as AIMessage[],
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +115,9 @@ export function useChat(): UseChat {
         }));
         setMessages(msgs);
         setAiMessages(
-          msgs.map((m) => ({
-            role: m.role,
-            content: (m.type === 'image' && m.imageUrl && m.prompt)
-                      ? [ {type: 'text', text: m.prompt}, {type: 'image_url', image_url: { url: m.imageUrl }} ]
-                      : m.content,
-          })) as any,
+          msgs.map(
+            (m): OpenAIChatMessage => ({ role: m.role, content: m.content })
+          ) as unknown as OpenAIChatMessage[],
         );
         lastSynced.current = msgs.length;
       }
@@ -131,12 +140,9 @@ export function useChat(): UseChat {
           }));
           setMessages(msgs);
           setAiMessages(
-            msgs.map((m) => ({
-              role: m.role,
-              content: (m.type === 'image' && m.imageUrl && m.prompt)
-                        ? [ {type: 'text', text: m.prompt}, {type: 'image_url', image_url: { url: m.imageUrl }} ]
-                        : m.content,
-            })) as any,
+            msgs.map(
+              (m): OpenAIChatMessage => ({ role: m.role, content: m.content })
+            ) as unknown as OpenAIChatMessage[],
           );
           lastSynced.current = msgs.length;
         }
@@ -148,44 +154,61 @@ export function useChat(): UseChat {
 
   // Vercel AI SDKのaiMessagesの変更をローカルのmessagesに反映
   useEffect(() => {
-    if (!isLoading && aiMessages.length > messages.length) {
-      const newFormattedMessages = aiMessages.map((aiMsg, index) => {
-        const prevMsg = messages[index];
-        let content = aiMsg.content;
-        let type: Message['type'] = 'text';
-        let prompt: string | undefined = undefined;
-        let imageUrl: string | undefined = undefined;
+    setMessages((prev) =>
+      aiMessages.map((m, i) => {
+        type ExtMessage = OpenAIChatMessage & Partial<Omit<Message, 'id' | 'role' | 'content'>> & { id?: string };
+        const em = m as ExtMessage;
 
-        if (Array.isArray(aiMsg.content)) {
-          const textItem = aiMsg.content.find(item => item.type === 'text');
-          const imageItem = aiMsg.content.find(item => item.type === 'image_url');
-          content = textItem?.text || '';
+        let messageContentStr: string = "";
+        let messageType: Message['type'] = 'text';
+        let messagePrompt: string | undefined = undefined;
+        let messageImageUrl: string | undefined = undefined;
+
+        if (typeof em.content === 'string') {
+          messageContentStr = em.content;
+        } else if (Array.isArray(em.content)) { 
+          const textItem = em.content.find((item): item is Extract<OpenAIContent, {type: 'text'}> => item.type === 'text');
+          const imageItem = em.content.find((item): item is Extract<OpenAIContent, {type: 'image_url'}> => item.type === 'image_url');
+
+          messageContentStr = textItem?.text || "";
+
           if (imageItem) {
-            type = 'image';
-            imageUrl = imageItem.image_url.url;
-            prompt = content;
+            messageType = 'image';
+            messageImageUrl = imageItem.image_url.url;
+            messagePrompt = textItem?.text;
           }
-        } else if (typeof aiMsg.content === 'object' && aiMsg.content !== null) {
+          if (em.type === 'image') messageType = 'image';
+          if (em.prompt) messagePrompt = em.prompt;
+          if (em.imageUrl) messageImageUrl = em.imageUrl;
+
+        } else if (typeof em.content === 'object' && em.content !== null) {
           try {
-            content = JSON.stringify(aiMsg.content);
+            messageContentStr = JSON.stringify(em.content);
           } catch {
-            content = '[複雑なメッセージ形式]';
+            messageContentStr = '[複雑なメッセージ形式]';
           }
+        }
+        
+        const prevMsg = prev[i];
+        const id = (m as AIMessage).id ?? prevMsg?.id ?? crypto.randomUUID();
+
+        if (messageType === 'image' && prevMsg?.type === 'image' && prevMsg?.content.startsWith('data:image/')) {
+          messageContentStr = prevMsg.content;
         }
 
         return {
-          id: prevMsg?.id ?? (aiMsg as any).id ?? crypto.randomUUID(),
-          role: aiMsg.role as Message['role'],
-          content: content as string,
-          type: prevMsg?.type ?? type,
-          prompt: prevMsg?.prompt ?? prompt,
-          imageUrl: prevMsg?.imageUrl ?? imageUrl,
+          id: id,
+          role: m.role as Message['role'],
+          content: messageContentStr,
+          type: prevMsg?.type ?? messageType,
+          prompt: prevMsg?.prompt ?? messagePrompt,
+          imageUrl: prevMsg?.imageUrl ?? messageImageUrl,
           timestamp: prevMsg?.timestamp ?? Date.now(),
         };
-      });
-      setMessages(newFormattedMessages);
-    }
-  }, [aiMessages, isLoading, messages]);
+      })
+    );
+  }, [aiMessages]);
+
 
   // ローカルのmessagesをlocalStorageとSupabaseに保存
   useEffect(() => {
@@ -198,93 +221,114 @@ export function useChat(): UseChat {
     messages.forEach((m, idx) => {
       if (idx >= lastSynced.current) {
         addMessage(selectedId, m.role, m.content, m.type, m.prompt, m.imageUrl)
-          .then(() => {
-            if (idx === messages.length - 1) {
-              lastSynced.current = messages.length;
-            }
-          })
           .catch((err) => logger.error("DBへのメッセージ追加に失敗:", err));
       }
     });
+    lastSynced.current = messages.length;
   }, [messages, selectedId]);
 
   const sendMessage = async (textParam?: string, imageFile?: File) => {
-    const text = textParam ?? input;
-    if (!text.trim() && !imageFile) return;
+    const text = (textParam ?? input).trim();
+    if (!text && !imageFile) return;
 
+    setError(null);
     const userMessageId = crypto.randomUUID();
-    let messageContentForAppend: any = text;
+    
+    let contentForAppend: string | OpenAIContent[];
     let uiContent = text;
     let messageType: Message['type'] = 'text';
-    let imageUrlForDb: string | undefined;
+    let uiImageUrl: string | undefined;
+    let promptForDb = text;
 
     if (imageFile) {
       messageType = 'image';
-      const reader = new FileReader();
-      const dataUrlPromise = new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(imageFile);
-      const dataUrl = await dataUrlPromise;
-      imageUrlForDb = dataUrl;
-      uiContent = text || 'この画像を説明してください。';
-      messageContentForAppend = [
-        { type: 'text', text: uiContent },
-        { type: 'image_url', image_url: { url: dataUrl } },
-      ];
-    }
+      promptForDb = text || 'この画像を説明してください。';
+      uiContent = promptForDb;
 
-    const messageToAppend = {
-      id: userMessageId,
-      role: 'user' as const,
-      content: messageContentForAppend,
-    };
+      const ext = imageFile.name.split('.').pop() || 'png';
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('chat-images')
+        .upload(fileName, imageFile);
+
+      if (upErr) {
+        logger.error("画像アップロード失敗:", upErr);
+        setError("画像のアップロードに失敗しました。");
+        return;
+      }
+      
+      const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(fileName);
+      uiImageUrl = urlData.publicUrl;
+
+      contentForAppend = [
+        { type: 'text', text: promptForDb },
+        { type: 'image_url', image_url: { url: uiImageUrl } },
+      ];
+
+    } else {
+      contentForAppend = text;
+    }
 
     const uiMessage: Message = {
       id: userMessageId,
       role: 'user',
-      content: uiContent,
+      content: imageFile ? uiContent : text,
       type: messageType,
-      prompt: text || (imageFile ? 'この画像を説明してください。' : undefined),
-      imageUrl: imageUrlForDb,
+      prompt: imageFile ? promptForDb : undefined,
+      imageUrl: uiImageUrl,
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, uiMessage]);
     
     try {
-      await addMessage(selectedId, 'user', uiContent, messageType, uiMessage.prompt, imageUrlForDb);
-      lastSynced.current = messages.length + 1;
+      // IMPORTANT: lastSynced.current should be updated *after* successful DB operation
+      // or based on the length *before* setMessages if addMessage is for the new uiMessage
+      await addMessage(selectedId, 'user', uiMessage.content, messageType, uiMessage.prompt, uiMessage.imageUrl);
+      lastSynced.current = messages.length; 
     } catch (err) {
       logger.error("DBへのメッセージ保存に失敗:", err);
     }
 
-    await append(messageToAppend);
-
-    if (!imageFile) {
-      setInput("");
+    try {
+      await append({
+        role: 'user',
+        content: contentForAppend,
+      } as OpenAIChatMessage); 
+      
+      if (!imageFile) { 
+        setInput("");
+      }
+    } catch (err) {
+        const message =
+         err instanceof Error
+           ? err.message
+           : 'メッセージ送信中にエラーが発生しました';
+        setError(message);
+        logger.error("AIへのメッセージ送信失敗:", err);
     }
   };
 
   const sendImageMessage = async (dataUrl: string, promptText = 'このチャートを分析してください') => {
+    if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+      setError('無効な画像データです。');
+      logger.error('無効な画像データURL:', dataUrl);
+      return;
+    }
+    setError(null);
     const userMessageId = crypto.randomUUID();
 
-    const messageToAppend = {
-      id: userMessageId,
-      role: 'user' as const,
-      content: [
-        { type: 'text', text: promptText },
-        { type: 'image_url', image_url: { url: dataUrl } },
-      ],
-    };
+    const contentForAppend: OpenAIContent[] = [
+      { type: 'text', text: promptText },
+      { type: 'image_url', image_url: { url: dataUrl } },
+    ];
 
     const uiMessage: Message = {
       id: userMessageId,
       role: 'user',
-      content: promptText,
+      content: dataUrl, 
       type: 'image',
       prompt: promptText,
-      imageUrl: dataUrl,
+      imageUrl: dataUrl, 
       timestamp: Date.now(),
     };
 
@@ -292,12 +336,24 @@ export function useChat(): UseChat {
 
     try {
       await addMessage(selectedId, 'user', promptText, 'image', promptText, dataUrl);
-      lastSynced.current = messages.length + 1;
+      lastSynced.current = messages.length;
     } catch (err) {
       logger.error("DBへの画像メッセージ保存に失敗:", err);
     }
 
-    await append(messageToAppend);
+    try {
+      await append({
+        role: 'user',
+        content: contentForAppend,
+      } as OpenAIChatMessage);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : '画像メッセージ送信中にエラーが発生しました';
+      setError(message);
+      logger.error("AIへの画像メッセージ送信失敗:", err);
+    }
   };
 
   return {
