@@ -29,6 +29,7 @@ import { researchAgent } from '@/mastra/agents/researchAgent';
 import { newsAnalysisTool } from '@/mastra/tools/newsAnalysisTool';
 import { onChainDataTool } from '@/mastra/tools/onChainDataTool';
 import { marketSentimentTool } from '@/mastra/tools/marketSentimentTool';
+import { evaluationTool } from '@/mastra/tools/evaluationTool';
 
 describe('researchAgent', () => {
   it('is configured correctly', () => {
@@ -36,6 +37,7 @@ describe('researchAgent', () => {
     expect(researchAgent.tools.newsAnalysisTool).toBe(newsAnalysisTool);
     expect(researchAgent.tools.onChainDataTool).toBe(onChainDataTool);
     expect(researchAgent.tools.marketSentimentTool).toBe(marketSentimentTool);
+    expect(researchAgent.tools.evaluationTool).toBe(evaluationTool);
     expect(researchAgent.getMemory()).toBeDefined();
   });
 });

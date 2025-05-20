@@ -9,6 +9,7 @@ import type { MastraMemory } from "@mastra/core";
 import { newsAnalysisTool } from "../tools/newsAnalysisTool";
 import { onChainDataTool } from "../tools/onChainDataTool";
 import { marketSentimentTool } from "../tools/marketSentimentTool";
+import { evaluationTool } from "../tools/evaluationTool";
 
 // メモリ設定
 const memory = new Memory({
@@ -57,6 +58,7 @@ export const researchAgent = new Agent({
     newsAnalysisTool,
     onChainDataTool,
     marketSentimentTool,
+    evaluationTool,
   },
 
   // メモリ設定
