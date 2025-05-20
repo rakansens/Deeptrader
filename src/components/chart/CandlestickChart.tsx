@@ -228,11 +228,7 @@ export default function CandlestickChart({
             className="w-full rounded-md overflow-hidden border border-border"
             style={{ height: chartHeight }}
             data-testid="chart-container"
-            data-chart-type="candlestick"
-          >
-            {/* この要素内にチャートが描画される */}
-            {/* この中に自動的に生成される子要素にクラスを追加するためのカスタムスタイルを追加 */}
-          </div>
+          />
           
           <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
           {showSidebar && (

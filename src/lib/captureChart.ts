@@ -5,157 +5,252 @@ import { logger } from '@/lib/logger'
 // 型定義は専用ファイルに移動済み（src/types/lightweight-charts.d.ts）
 
 /**
- * チャート全体（時間軸・価格軸含む）の親要素を取得する
+ * チャート要素からキャンバスとその親要素を取得する
+ * 価格表示を含めたキャプチャのため
  */
-async function getChartParentElement(): Promise<HTMLElement | null> {
+async function getChartCanvasWithPriceScale(): Promise<HTMLElement | null> {
   try {
-    // チャートパネル全体を優先的に取得（最も広い範囲）
-    const chartPanel = document.getElementById('chart-panel');
-    if (chartPanel) {
-      logger.debug('Found chart panel element (best option for full capture)');
-      return chartPanel;
-    }
-    
-    // チャートコンテナを検索
-    const chartContainer = document.querySelector('[data-testid="chart-container"]')?.parentElement;
-    if (chartContainer) {
-      logger.debug('Found chart container parent element');
-      return chartContainer as HTMLElement;
-    }
-    
     // DOMからチャート要素を直接取得
     const getChartElement = (window as any).__getChartElement;
     if (typeof getChartElement === 'function') {
       const chartElement = getChartElement();
-      if (chartElement?.parentElement) {
-        logger.debug('Found chart element parent via helper function');
-        return chartElement.parentElement;
+      if (chartElement) {
+        logger.debug('Found chart container element');
+        // チャートのコンテナ要素全体を返す（価格スケールを含む）
+        return chartElement;
       }
     }
     
-    // 最終手段：チャートらしき要素を検索
-    const possibleContainers = document.querySelectorAll('.tv-lightweight-charts');
-    if (possibleContainers.length > 0) {
-      const container = possibleContainers[0].parentElement;
-      if (container) {
-        logger.debug('Found chart container via class search');
-        return container as HTMLElement;
-      }
+    // 直接DOM検索でチャートコンテナを見つける
+    const chartContainer = document.querySelector('[data-testid="chart-container"]');
+    if (chartContainer) {
+      logger.debug('Found chart container by direct DOM query');
+      return chartContainer as HTMLElement;
     }
     
-    logger.warn('No suitable chart parent element found');
+    // チャートパネル全体を対象にする
+    const chartPanel = document.getElementById('chart-panel');
+    if (chartPanel) {
+      logger.debug('Found chart panel element');
+      return chartPanel;
+    }
+    
     return null;
   } catch (e) {
-    logger.error('Error finding chart parent element:', e);
+    logger.error('Error finding chart element:', e);
     return null;
   }
 }
 
 /**
+ * チャートのcanvas要素を直接キャプチャする代替手段
+ */
+async function captureChartCanvas(): Promise<HTMLCanvasElement | null> {
+  try {
+    // チャート要素を取得
+    const chartElement = await getChartCanvasWithPriceScale();
+    if (!chartElement) return null;
+    
+    // canvas要素を見つける
+    const canvases = chartElement.querySelectorAll('canvas');
+    if (canvases.length > 0) {
+      logger.debug(`Found ${canvases.length} canvas elements in chart`);
+      
+      // メインキャンバス（通常は一番大きいもの）を選択
+      let mainCanvas = canvases[0];
+      let maxArea = mainCanvas.width * mainCanvas.height;
+      
+      for (let i = 1; i < canvases.length; i++) {
+        const canvas = canvases[i];
+        const area = canvas.width * canvas.height;
+        if (area > maxArea) {
+          maxArea = area;
+          mainCanvas = canvas;
+        }
+      }
+      
+      logger.debug('Selected main canvas for capture');
+      
+      // 新しいキャンバスにコピーして返す
+      const newCanvas = document.createElement('canvas');
+      newCanvas.width = mainCanvas.width;
+      newCanvas.height = mainCanvas.height;
+      const ctx = newCanvas.getContext('2d');
+      ctx?.drawImage(mainCanvas, 0, 0);
+      return newCanvas;
+    }
+    
+    logger.warn('No canvas elements found in chart');
+    return null;
+  } catch (e) {
+    logger.error('Error capturing chart canvas directly:', e);
+    return null;
+  }
+}
+
+/**
+ * キャプチャ対象としてチャートカード全体を取得する
+ * これによりヘッダーの時間足/銘柄/インジケーター切替も含めてキャプチャできる
+ */
+function getChartCardElement(): HTMLElement | null {
+  const chartPanel = document.getElementById('chart-panel');
+  if (!chartPanel) return null;
+  // Card > CardContent > CandlestickChart の階層想定
+  // chartPanel -> parentElement (CardContent) -> parentElement (div) -> closest Card
+  let el: HTMLElement | null = chartPanel;
+  for (let i = 0; i < 4 && el; i++) {
+    if (el.classList.contains('rounded-lg') && el.classList.contains('border')) {
+      return el;
+    }
+    el = el.parentElement as HTMLElement | null;
+  }
+  // クラス判定に失敗した場合は2階層上を返す
+  return chartPanel.parentElement?.parentElement as HTMLElement | null;
+}
+
+/**
  * チャートパネルをキャプチャしてPNGデータURLを返す
  * 
- * 1. チャートパネル全体をhtml2canvasでキャプチャ（価格・時間軸を含む）
- * 2. 失敗した場合はLightweight Chartsのネイティブ機能にフォールバック
- * 3. それも失敗した場合はキャンバス要素の直接キャプチャを試行
+ * 1. Lightweight Chartsのネイティブスクリーンショット機能を優先使用
+ * 2. canvas要素を直接キャプチャする代替手段を試行
+ * 3. 失敗した場合はhtml2canvasにフォールバック
  */
 export async function captureChart(): Promise<string | null> {
   try {
     logger.debug('Chart screenshot requested');
     
-    // チャート全体の親要素を取得（価格軸・時間軸を含む）
-    const chartParent = await getChartParentElement();
-    if (!chartParent) {
-      logger.error('Cannot find chart parent element');
-      return null;
-    }
-    
-    // 方法1: チャート全体をhtml2canvasで直接キャプチャ（最も確実）
-    logger.debug('Capturing full chart with html2canvas');
-    try {
-      // レンダリング完了のために少し待機
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const canvas = await html2canvas(chartParent, {
-        allowTaint: true,
-        useCORS: true,
-        scale: 2, // 高解像度
-        logging: true, // デバッグログを有効化
-        backgroundColor: null, // 透過背景
-        foreignObjectRendering: false,
-        ignoreElements: (element: Element) => {
-          // チャート以外の要素を無視（ツールバーやサイドバーなど）
-          return element.classList.contains('ignore-screenshot');
-        },
-        onclone: (documentClone: Document) => {
-          logger.debug('Processing cloned DOM for screenshot');
-          
-          // 複製されたDOM内でチャート親要素を検索
-          const panelClone = documentClone.getElementById(chartParent.id);
-          if (panelClone) {
-            // スタイル調整（非表示要素が見えるようにする）
-            const priceScales = panelClone.querySelectorAll('.price-scale');
-            priceScales.forEach(scale => {
-              (scale as HTMLElement).style.visibility = 'visible';
-              (scale as HTMLElement).style.display = 'block';
-            });
-            
-            // 時間軸の表示調整
-            const timeScales = panelClone.querySelectorAll('.time-scale');
-            timeScales.forEach(scale => {
-              (scale as HTMLElement).style.visibility = 'visible';
-              (scale as HTMLElement).style.display = 'block';
-            });
-            
-            // Canvas要素の確認
-            const canvases = panelClone.querySelectorAll('canvas');
-            logger.debug(`Found ${canvases.length} canvas elements in cloned DOM`);
-          }
-          
-          return documentClone;
-        }
-      });
-      
-      logger.debug('Full chart capture successful');
-      return canvas.toDataURL('image/png', 1.0);
-    } catch (error) {
-      logger.error('Full chart capture failed:', error);
-    }
-    
-    // 方法2: Lightweight Charts APIを使用
+    // チャートインスタンスの取得を試みる
     const chartInstance = (window as any).__chartInstance as IChartApi | null;
-    if (chartInstance && typeof chartInstance.takeScreenshot === 'function') {
-      logger.debug('Falling back to Lightweight Charts native API');
+    
+    // チャートインスタンスのデバッグ情報
+    if (chartInstance) {
+      logger.debug('Chart instance found:', !!chartInstance);
+    } else {
+      logger.warn('Chart instance not found, cannot use native screenshot');
+    }
+    
+    // 方法0: Card全体をhtml2canvasでキャプチャ (最優先)
+    logger.debug('Trying to capture card element via html2canvas');
+    const cardElement = getChartCardElement();
+    if (cardElement) {
       try {
-        const canvas = await chartInstance.takeScreenshot();
-        logger.debug('Chart screenshot successful via native API');
-        return canvas.toDataURL('image/png', 1.0);
+        await new Promise(r => setTimeout(r, 100));
+        const cardCanvas = await html2canvas(cardElement, {
+          allowTaint: true,
+          useCORS: true,
+          scale: 2,
+          logging: false,
+          backgroundColor: null,
+        });
+        logger.debug('Captured chart card successfully');
+        return cardCanvas.toDataURL('image/png', 1.0);
+      } catch (e) {
+        logger.error('Card capture via html2canvas failed:', e);
+      }
+    }
+    
+    // 方法1: Lightweight Charts のネイティブスクリーンショット機能を使用
+    if (chartInstance) {
+      logger.debug('Using Lightweight Charts native screenshot API');
+      
+      try {
+        // レンダリングの完了を保証するために少し待機
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // takeScreenshotメソッドが存在するか確認
+        if (typeof chartInstance.takeScreenshot === 'function') {
+          // チャートスクリーンショットをPNG画像としてエクスポート
+          const canvas = await chartInstance.takeScreenshot();
+          logger.debug('Chart screenshot successful via native API');
+          
+          // 高品質なPNG画像を生成（品質1.0、最高画質）
+          return canvas.toDataURL('image/png', 1.0);
+        } else {
+          logger.warn('takeScreenshot method not found on chart instance, falling back');
+        }
       } catch (error) {
         logger.error('Native chart screenshot failed:', error);
       }
     }
     
-    // 方法3: 最終手段 - チャートを含む要素全体を取得して再試行
-    logger.debug('Final attempt: capturing with modified html2canvas settings');
-    const fullPage = document.querySelector('[data-testid="chart-container"]')?.closest('.relative');
-    if (fullPage) {
-      const canvas = await html2canvas(fullPage as HTMLElement, {
-        allowTaint: true,
-        useCORS: true,
-        scale: 2,
-        logging: true,
-        backgroundColor: null,
-        ignoreElements: (element: Element) => {
-          // チャート以外の要素を除外
-          return element.classList.contains('ignore-screenshot');
-        }
-      });
+    // 方法2: canvas要素を直接キャプチャする代替手段
+    logger.debug('Trying to capture chart canvas directly');
+    try {
+      // チャート要素全体を取得（価格表示を含む）
+      const chartElement = await getChartCanvasWithPriceScale();
       
-      logger.debug('Chart capture successful via fallback method');
-      return canvas.toDataURL('image/png', 1.0);
+      if (chartElement) {
+        // まずcanvasの直接キャプチャを試みる
+        const canvas = await captureChartCanvas();
+        if (canvas) {
+          logger.debug('Chart canvas captured directly');
+          return canvas.toDataURL('image/png', 1.0);
+        }
+        
+        // canvas取得に失敗した場合、要素全体をhtml2canvasでキャプチャ
+        logger.debug('Falling back to html2canvas with chart element');
+        const fullCanvas = await html2canvas(chartElement, {
+          allowTaint: true,
+          useCORS: true,
+          scale: 2, // 高解像度
+          logging: false,
+          foreignObjectRendering: false,
+          removeContainer: false,
+          backgroundColor: null, // 透過背景
+          ignoreElements: (element: Element) => {
+            // チャート以外の要素を無視（ツールバーやサイドバーなど）
+            return element.classList.contains('ignore-screenshot');
+          }
+        });
+        
+        logger.debug('Chart element captured via html2canvas');
+        return fullCanvas.toDataURL('image/png', 1.0);
+      }
+    } catch (error) {
+      logger.error('Direct element capture failed:', error);
     }
     
-    logger.error('All chart capture methods failed');
-    return null;
+    // 方法3: チャートパネル全体をhtml2canvas方式でキャプチャ（最終手段）
+    logger.debug('Falling back to chart panel html2canvas method');
+    const chartPanel = document.getElementById('chart-panel');
+    if (!chartPanel) {
+      logger.error('Chart panel element not found');
+      return null;
+    }
+
+    // レンダリング完了のために短い遅延を入れる
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const canvas = await html2canvas(chartPanel as HTMLElement, {
+      allowTaint: true,
+      useCORS: true,
+      scale: 2, // 高解像度
+      logging: false,
+      backgroundColor: null, // 透過背景
+      ignoreElements: (element: Element) => {
+        // チャート以外の要素を無視（ツールバーやサイドバーなど）
+        return element.classList.contains('ignore-screenshot');
+      },
+      onclone: (documentClone: Document) => {
+        logger.debug('Capturing chart panel via html2canvas...');
+        
+        // 複製されたDOMでも価格スケールが表示されるように調整
+        const panelClone = documentClone.getElementById('chart-panel');
+        if (panelClone) {
+          // スタイル調整（表示を確実にする）
+          const priceScales = panelClone.querySelectorAll('.price-scale');
+          priceScales.forEach(scale => {
+            (scale as HTMLElement).style.visibility = 'visible';
+            (scale as HTMLElement).style.display = 'block';
+          });
+        }
+        
+        return documentClone;
+      }
+    });
+    
+    logger.debug('Chart screenshot successful via html2canvas');
+    return canvas.toDataURL('image/png', 1.0);
   } catch (error) {
     logger.error('Screenshot capture failed:', error);
     return null;

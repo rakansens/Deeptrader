@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import animatePlugin from 'tailwindcss-animate';
 
 /**
  * TradingView風チャート用カラー変数
@@ -102,6 +103,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [animatePlugin],
 };
 export default config;

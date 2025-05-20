@@ -69,4 +69,5 @@ pnpm dev
 
 ## ライセンス
 
+本プロジェクトは [LICENSE](./LICENSE) ファイルの内容に基づき提供されています。
 Copyright © 2023 DeepTrader Team. All rights reserved.

@@ -2,19 +2,15 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { formatDateTime } from "@/lib/format";
-import TypingIndicator from "./typing-indicator";
-import { Copy, VolumeX, Volume2 } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { useSettings } from "@/hooks/use-settings";
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
-import { motion } from "framer-motion";
 
 export interface MessageBubbleProps {
   role: ChatRole;
@@ -42,72 +38,6 @@ export function MessageBubble({
   type = 'text',
   prompt,
 }: MessageBubbleProps) {
-  const { speechSynthesisEnabled } = useSettings();
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [imageExpanded, setImageExpanded] = useState(false);
-  
-  const handleCopy = () => {
-    if (typeof children !== "string" || typing) return;
-    try {
-      void navigator.clipboard.writeText(children);
-    } catch {
-      // ignore clipboard errors
-    }
-  };
-  
-  const speakMessage = () => {
-    if (typeof children !== "string" || typing) return;
-    
-    try {
-      if (isSpeaking) {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-        return;
-      }
-      
-      const utter = new SpeechSynthesisUtterance(children as string);
-      utter.lang = "ja-JP";
-      
-      // イベントハンドラー
-      utter.onstart = () => setIsSpeaking(true);
-      utter.onend = () => setIsSpeaking(false);
-      utter.onerror = () => setIsSpeaking(false);
-      
-      // 日本語の音声を優先的に選択
-      // Chrome特有の問題対応: 音声リストが初回はemptyの場合がある
-      if (window.speechSynthesis.getVoices().length === 0) {
-        // Chrome向けの対応
-        window.speechSynthesis.onvoiceschanged = function() {
-          const voices = window.speechSynthesis.getVoices();
-          const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
-          if (jaVoice) {
-            utter.voice = jaVoice;
-          }
-          window.speechSynthesis.speak(utter);
-        };
-      } else {
-        // 通常の処理
-        const voices = window.speechSynthesis.getVoices();
-        const jaVoice = voices.find(v => v.lang.includes("ja-JP"));
-        if (jaVoice) {
-          utter.voice = jaVoice;
-        }
-        window.speechSynthesis.speak(utter);
-      }
-    } catch (error) {
-      console.error("メッセージ読み上げエラー:", error);
-    }
-  };
-  
-  // 読み上げ中にページを離れたときに停止する
-  useEffect(() => {
-    return () => {
-      if (isSpeaking) {
-        window.speechSynthesis?.cancel();
-      }
-    };
-  }, [isSpeaking]);
-  
   const date = timestamp ? new Date(timestamp) : new Date();
   const formattedDate = new Intl.DateTimeFormat("ja-JP", {
     dateStyle: "short",
@@ -118,6 +48,7 @@ export function MessageBubble({
   const isImage = type === 'image' && typeof children === 'string' && children.startsWith('data:image/');
   
   // 画像表示サイズの管理
+  const [imageExpanded, setImageExpanded] = useState(false);
   const handleImageClick = () => {
     setImageExpanded(!imageExpanded);
   };
