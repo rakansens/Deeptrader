@@ -16,6 +16,12 @@ import {
   DialogHeader,
 } from '@/components/ui/dialog'
 import { TrendingUp, Activity, BarChart3, Waves, Settings } from 'lucide-react'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
@@ -149,279 +155,363 @@ export default function ChartToolbar({
             <DialogHeader>
               <DialogTitle>指標設定</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between text-sm">
-                <span>SMA</span>
-                <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
-                  value={settings.sma}
-                  min={1}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      sma: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>RSI</span>
-                <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
-                  value={settings.rsi}
-                  min={1}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      rsi: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>MACD Short</span>
-                <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
-                  value={settings.macd.short}
-                  min={1}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      macd: {
-                        ...settings.macd,
-                        short: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>MACD Long</span>
-                <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
-                  value={settings.macd.long}
-                  min={1}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      macd: {
-                        ...settings.macd,
-                        long: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>MACD Signal</span>
-                <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
-                  value={settings.macd.signal}
-                  min={1}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      macd: {
-                        ...settings.macd,
-                        signal: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>Bollinger</span>
-                <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
-                  value={settings.boll}
-                  min={1}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      boll: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>MA Width</span>
-                  <div className="flex items-center gap-2">
-                    <span>{settings.lineWidth.ma}px</span>
-                    <input 
-                      type="color" 
-                      value={settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma}
-                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
-                      onChange={(e) => onSettingsChange({
-                        ...settings,
-                        colors: { ...settings.colors, ma: e.target.value }
-                      })}
-                    />
+            <Accordion type="single" collapsible className="w-full space-y-1">
+              <AccordionItem value="ma-settings">
+                <AccordionTrigger>
+                  <div className="flex items-center justify-between w-full pr-2">
+                    <span className="flex items-center">
+                      <TrendingUp className="h-4 w-4 mr-2 text-muted-foreground" />
+                      移動平均線 (MA)
+                    </span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>期間: {settings.sma}</span>
+                      <span>太さ: {settings.lineWidth.ma}px</span>
+                      <span 
+                        className="w-3 h-3 rounded-full border"
+                        style={{ backgroundColor: settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma }}
+                      ></span>
+                    </div>
                   </div>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={settings.lineWidth.ma}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      lineWidth: {
-                        ...settings.lineWidth,
-                        ma: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
-                  <div
-                    style={{
-                      height: `${settings.lineWidth.ma}px`,
-                      width: '100%',
-                      backgroundColor: settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma,
-                      borderRadius: '2px',
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>RSI Width</span>
-                  <div className="flex items-center gap-2">
-                    <span>{settings.lineWidth.rsi}px</span>
-                    <input 
-                      type="color" 
-                      value={settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi}
-                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
-                      onChange={(e) => onSettingsChange({
-                        ...settings,
-                        colors: { ...settings.colors, rsi: e.target.value }
-                      })}
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3 space-y-3">
+                  <label className="flex items-center justify-between text-sm">
+                    <span>期間 (SMA)</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.sma} 
+                      min={1}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          sma: Number(e.target.value),
+                        })
+                      }
                     />
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={settings.lineWidth.rsi}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      lineWidth: {
-                        ...settings.lineWidth,
-                        rsi: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
-                  <div
-                    style={{
-                      height: `${settings.lineWidth.rsi}px`,
-                      width: '100%',
-                      backgroundColor: settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi,
-                      borderRadius: '2px',
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>MACD Width</span>
-                  <div className="flex items-center gap-2">
-                    <span>{settings.lineWidth.macd}px</span>
-                    <input 
-                      type="color" 
-                      value={settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd}
-                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
-                      onChange={(e) => onSettingsChange({
-                        ...settings,
-                        colors: { ...settings.colors, macd: e.target.value }
-                      })}
+                  </label>
+                  <div className="pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span>MA Width</span>
+                      <div className="flex items-center gap-2">
+                        <span>{settings.lineWidth.ma}px</span>
+                        <input 
+                          type="color" 
+                          value={settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma}
+                          className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                          onChange={(e) => onSettingsChange({
+                            ...settings,
+                            colors: { ...settings.colors, ma: e.target.value }
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={settings.lineWidth.ma}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          lineWidth: {
+                            ...settings.lineWidth,
+                            ma: Number(e.target.value),
+                          },
+                        })
+                      }
                     />
+                    <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                      <div
+                        style={{
+                          height: `${settings.lineWidth.ma}px`,
+                          width: '100%',
+                          backgroundColor: settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma,
+                          borderRadius: '2px',
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={settings.lineWidth.macd}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      lineWidth: {
-                        ...settings.lineWidth,
-                        macd: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
-                  <div
-                    style={{
-                      height: `${settings.lineWidth.macd}px`,
-                      width: '100%',
-                      backgroundColor: settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd,
-                      borderRadius: '2px',
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>BOLL Width</span>
-                  <div className="flex items-center gap-2">
-                    <span>{settings.lineWidth.boll}px</span>
-                    <input 
-                      type="color" 
-                      value={settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll}
-                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
-                      onChange={(e) => onSettingsChange({
-                        ...settings,
-                        colors: { ...settings.colors, boll: e.target.value }
-                      })}
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="rsi-settings">
+                <AccordionTrigger>
+                  <div className="flex items-center justify-between w-full pr-2">
+                    <span className="flex items-center">
+                      <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
+                      RSI
+                    </span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>期間: {settings.rsi}</span>
+                       <span>太さ: {settings.lineWidth.rsi}px</span>
+                       <span 
+                        className="w-3 h-3 rounded-full border"
+                        style={{ backgroundColor: settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi }}
+                      ></span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3 space-y-3">
+                  <label className="flex items-center justify-between text-sm">
+                    <span>期間</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.rsi}
+                      min={1}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          rsi: Number(e.target.value),
+                        })
+                      }
                     />
+                  </label>
+                  <div className="pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span>RSI Width</span>
+                      <div className="flex items-center gap-2">
+                        <span>{settings.lineWidth.rsi}px</span>
+                        <input 
+                          type="color" 
+                          value={settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi}
+                          className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                          onChange={(e) => onSettingsChange({
+                            ...settings,
+                            colors: { ...settings.colors, rsi: e.target.value }
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={settings.lineWidth.rsi}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          lineWidth: {
+                            ...settings.lineWidth,
+                            rsi: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                    <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                      <div
+                        style={{
+                          height: `${settings.lineWidth.rsi}px`,
+                          width: '100%',
+                          backgroundColor: settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi,
+                          borderRadius: '2px',
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={settings.lineWidth.boll}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      lineWidth: {
-                        ...settings.lineWidth,
-                        boll: Number(e.target.value),
-                      },
-                    })
-                  }
-                />
-                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
-                  <div
-                    style={{
-                      height: `${settings.lineWidth.boll}px`,
-                      width: '100%',
-                      backgroundColor: settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll,
-                      borderRadius: '2px',
-                    }}
-                  ></div>
-                </div>
-              </div>
-            </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="macd-settings">
+                <AccordionTrigger>
+                  <div className="flex items-center justify-between w-full pr-2">
+                    <span className="flex items-center">
+                      <BarChart3 className="h-4 w-4 mr-2 text-muted-foreground" />
+                      MACD
+                    </span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>S:{settings.macd.short} L:{settings.macd.long} Si:{settings.macd.signal}</span>
+                      <span>太さ: {settings.lineWidth.macd}px</span>
+                       <span 
+                        className="w-3 h-3 rounded-full border"
+                        style={{ backgroundColor: settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd }}
+                      ></span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3 space-y-3">
+                  <label className="flex items-center justify-between text-sm">
+                    <span>Short</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.macd.short}
+                      min={1}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          macd: {
+                            ...settings.macd,
+                            short: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="flex items-center justify-between text-sm">
+                    <span>Long</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.macd.long}
+                      min={1}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          macd: {
+                            ...settings.macd,
+                            long: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="flex items-center justify-between text-sm">
+                    <span>Signal</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.macd.signal}
+                      min={1}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          macd: {
+                            ...settings.macd,
+                            signal: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  <div className="pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span>MACD Width</span>
+                      <div className="flex items-center gap-2">
+                        <span>{settings.lineWidth.macd}px</span>
+                        <input 
+                          type="color" 
+                          value={settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd}
+                          className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                          onChange={(e) => onSettingsChange({
+                            ...settings,
+                            colors: { ...settings.colors, macd: e.target.value }
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={settings.lineWidth.macd}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          lineWidth: {
+                            ...settings.lineWidth,
+                            macd: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                    <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                      <div
+                        style={{
+                          height: `${settings.lineWidth.macd}px`,
+                          width: '100%',
+                          backgroundColor: settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd,
+                          borderRadius: '2px',
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="boll-settings">
+                <AccordionTrigger>
+                  <div className="flex items-center justify-between w-full pr-2">
+                    <span className="flex items-center">
+                      <Waves className="h-4 w-4 mr-2 text-muted-foreground" />
+                      Bollinger Bands
+                    </span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>期間: {settings.boll}</span>
+                      <span>太さ: {settings.lineWidth.boll}px</span>
+                       <span 
+                        className="w-3 h-3 rounded-full border"
+                        style={{ backgroundColor: settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll }}
+                      ></span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3 space-y-3">
+                  <label className="flex items-center justify-between text-sm">
+                    <span>期間</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.boll}
+                      min={1}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          boll: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                  <div className="pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span>BOLL Width</span>
+                      <div className="flex items-center gap-2">
+                        <span>{settings.lineWidth.boll}px</span>
+                        <input 
+                          type="color" 
+                          value={settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll}
+                          className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                          onChange={(e) => onSettingsChange({
+                            ...settings,
+                            colors: { ...settings.colors, boll: e.target.value }
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={settings.lineWidth.boll}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          lineWidth: {
+                            ...settings.lineWidth,
+                            boll: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                    <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                      <div
+                        style={{
+                          height: `${settings.lineWidth.boll}px`,
+                          width: '100%',
+                          backgroundColor: settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll,
+                          borderRadius: '2px',
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+            </Accordion>
           </DialogContent>
         </Dialog>
       </div>
