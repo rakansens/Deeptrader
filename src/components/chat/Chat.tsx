@@ -11,6 +11,7 @@ import {
   Mic,
   MicOff,
   Camera,
+  TrendingUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -271,6 +272,76 @@ export default function Chat() {
           )}
         </div>
         <div className="mt-4 relative">
+          <div className="flex justify-end mb-2 space-x-2">
+            <Button
+              onClick={async () => {
+                try {
+                  // チャートキャプチャを実行
+                  toast({ 
+                    title: "📸 チャートキャプチャ中", 
+                    description: "チャートの画像を取得しています...", 
+                    duration: 3000 
+                  });
+                  
+                  const url = await captureChart();
+                  
+                  if (url) {
+                    // 画像データのプレビュー（デバッグ用）
+                    if (process.env.NODE_ENV !== 'production') {
+                      const debugImg = document.createElement('img');
+                      debugImg.src = url;
+                      debugImg.style.position = 'fixed';
+                      debugImg.style.top = '0';
+                      debugImg.style.right = '0';
+                      debugImg.style.width = '200px';
+                      debugImg.style.zIndex = '9999';
+                      debugImg.style.border = '2px solid red';
+                      debugImg.style.background = '#fff';
+                      debugImg.style.opacity = '0.9';
+                      debugImg.addEventListener('click', () => document.body.removeChild(debugImg));
+                      document.body.appendChild(debugImg);
+                      
+                      // 5秒後に自動で消える
+                      setTimeout(() => {
+                        if (document.body.contains(debugImg)) {
+                          document.body.removeChild(debugImg);
+                        }
+                      }, 5000);
+                    }
+                    
+                    // AIへ送信
+                    await sendImageMessage(url);
+                    
+                    toast({ 
+                      title: "✅ チャート送信完了", 
+                      description: "チャートデータをAIに送信しました",
+                      duration: 3000
+                    });
+                  } else {
+                    toast({ 
+                      title: "❌ エラー", 
+                      description: "チャートのキャプチャに失敗しました", 
+                      variant: "destructive" 
+                    });
+                  }
+                } catch (err) {
+                  console.error('スクリーンショット送信エラー:', err);
+                  toast({ 
+                    title: "❌ エラー", 
+                    description: "スクリーンショットの送信に失敗しました", 
+                    variant: "destructive" 
+                  });
+                }
+              }}
+              disabled={loading}
+              size="sm"
+              variant="outline"
+              className="relative flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 ease-in-out overflow-hidden hover:w-auto hover:pl-3 hover:pr-4 group"
+            >
+              <TrendingUp className="h-5 w-5 min-w-5 transition-transform group-hover:scale-110 duration-200" />
+              <span className="max-w-0 whitespace-nowrap opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-out text-sm font-medium">チャートを送信</span>
+            </Button>
+          </div>
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -321,81 +392,6 @@ export default function Chat() {
               </Tooltip>
             </TooltipProvider>
           )}
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={async () => {
-                    try {
-                      // チャートキャプチャを実行
-                      toast({ 
-                        title: "チャートキャプチャ中", 
-                        description: "チャートの画像を取得しています..." 
-                      });
-                      
-                      const url = await captureChart();
-                      
-                      if (url) {
-                        // 画像データのプレビュー（デバッグ用）
-                        if (process.env.NODE_ENV !== 'production') {
-                          const debugImg = document.createElement('img');
-                          debugImg.src = url;
-                          debugImg.style.position = 'fixed';
-                          debugImg.style.top = '0';
-                          debugImg.style.right = '0';
-                          debugImg.style.width = '200px';
-                          debugImg.style.zIndex = '9999';
-                          debugImg.style.border = '2px solid red';
-                          debugImg.style.background = '#fff';
-                          debugImg.style.opacity = '0.9';
-                          debugImg.addEventListener('click', () => document.body.removeChild(debugImg));
-                          document.body.appendChild(debugImg);
-                          
-                          // 5秒後に自動で消える
-                          setTimeout(() => {
-                            if (document.body.contains(debugImg)) {
-                              document.body.removeChild(debugImg);
-                            }
-                          }, 5000);
-                        }
-                        
-                        // AIへ送信
-                        await sendImageMessage(url);
-                        
-                        toast({ 
-                          title: "スクリーンショット送信", 
-                          description: "チャートのスクリーンショットをAIに送信しました" 
-                        });
-                      } else {
-                        toast({ 
-                          title: "エラー", 
-                          description: "チャートのキャプチャに失敗しました", 
-                          variant: "destructive" 
-                        });
-                      }
-                    } catch (err) {
-                      console.error('スクリーンショット送信エラー:', err);
-                      toast({ 
-                        title: "エラー", 
-                        description: "スクリーンショットの送信に失敗しました", 
-                        variant: "destructive" 
-                      });
-                    }
-                  }}
-                  disabled={loading}
-                  size="icon"
-                  aria-label="チャートスクリーンショットを送信"
-                  className="absolute right-10 bottom-2"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>チャートのスクリーンショットを送信</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           
           <Button
             onClick={handleSendMessage}
