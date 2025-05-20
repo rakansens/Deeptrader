@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger'
 async function getChartCanvasWithPriceScale(): Promise<HTMLElement | null> {
   try {
     // DOMからチャート要素を直接取得
-    const getChartElement = (window as any).__getChartElement;
+    const getChartElement = window.__getChartElement;
     if (typeof getChartElement === 'function') {
       const chartElement = getChartElement();
       if (chartElement) {
@@ -120,7 +120,7 @@ export async function captureChart(): Promise<string | null> {
     logger.debug('Chart screenshot requested');
     
     // チャートインスタンスの取得を試みる
-    const chartInstance = (window as any).__chartInstance as IChartApi | null;
+    const chartInstance = window.__chartInstance;
     
     // チャートインスタンスのデバッグ情報
     if (chartInstance) {

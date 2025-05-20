@@ -100,21 +100,18 @@ export default function CandlestickChart({
   const isDrawingEnabled = true;
 
   // チャートインスタンスをグローバルに露出（スクリーンショット用）
-  // 意図的にTSエラーを抑制（window拡張の代替策）
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     // チャートインスタンスを保存するグローバル変数
-    (window as any).__chartInstance = null;
+    window.__chartInstance = null;
 
     // DOMからチャート要素を取得するヘルパー関数も追加
-    (window as any).__getChartElement = () => {
+    window.__getChartElement = () => {
       const container = document.querySelector(
-        '[data-testid="chart-container"]',
+        '[data-testid="chart-container"]'
       );
-      return container;
+      return container as HTMLElement | null;
     };
   }
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const {
     candles = [],
@@ -190,18 +187,17 @@ export default function CandlestickChart({
 
   // チャートインスタンスをグローバルに保存（スクリーンショット用）
   useEffect(() => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     // チャートインスタンスの変更を監視し、グローバル変数に保存
     const checkAndSaveChart = () => {
-      if (typeof window !== "undefined") {
+      if (typeof window !== 'undefined') {
         if (chartRef.current) {
-          (window as any).__chartInstance = chartRef.current;
+          window.__chartInstance = chartRef.current;
           logger.debug(
-            "Chart instance saved for screenshots:",
-            chartRef.current,
+            'Chart instance saved for screenshots:',
+            chartRef.current
           );
         } else {
-          logger.warn("Chart instance is null, cannot save for screenshots");
+          logger.warn('Chart instance is null, cannot save for screenshots');
         }
       }
     };
@@ -212,12 +208,11 @@ export default function CandlestickChart({
 
     return () => {
       clearTimeout(timer);
-      if (typeof window !== "undefined") {
-        (window as any).__chartInstance = null;
-        logger.debug("Chart instance cleared from global");
+      if (typeof window !== 'undefined') {
+        window.__chartInstance = null;
+        logger.debug('Chart instance cleared from global');
       }
     };
-    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, [chartRef.current]);
 
   useEffect(() => {

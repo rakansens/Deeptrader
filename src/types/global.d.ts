@@ -1,3 +1,5 @@
+import type { IChartApi } from 'lightweight-charts'
+
 export {}
 
 declare global {
@@ -44,4 +46,9 @@ declare global {
     prototype: SpeechRecognition
     new (): SpeechRecognition
   } | undefined
+
+  interface Window {
+    __chartInstance?: IChartApi | null
+    __getChartElement?: () => HTMLElement | null
+  }
 }
