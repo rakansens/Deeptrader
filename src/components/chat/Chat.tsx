@@ -36,6 +36,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import SettingsDialog from "@/components/SettingsDialog";
+import ChatToolbar from "./chat-toolbar";
+import ChatInput from "./chat-input";
+import { useScreenshot } from "@/hooks/use-screenshot";
 
 export default function Chat() {
   const {
@@ -68,6 +71,12 @@ export default function Chat() {
       setInput(text);
     },
     lang: "ja-JP"
+  });
+
+  const { captureScreenshot } = useScreenshot({
+    onCapture: async (url: string) => {
+      await sendImageMessage(url, "このチャートを分析してください");
+    },
   });
 
   // メッセージ送信の共通ロジック
@@ -205,55 +214,11 @@ export default function Chat() {
         />
       </div>
       <div className="flex-1 flex flex-col h-full p-4 relative">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
-              aria-expanded={sidebarOpen}
-              aria-controls="conversationSidebar"
-              onClick={toggleSidebar}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </Button>
-          </div>
-
-          <div className="flex items-center space-x-1">
-            <SettingsDialog />
-            
-            <DropdownMenu>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="会話をエクスポート"
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>会話をエクスポート</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => exportConversation('json')}>
-                  JSONでダウンロード
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => exportConversation('txt')}>
-                  テキストでダウンロード
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+        <ChatToolbar
+          sidebarOpen={sidebarOpen}
+          toggleSidebar={toggleSidebar}
+          exportConversation={exportConversation}
+        />
         <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2" aria-live="polite">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
@@ -304,153 +269,17 @@ export default function Chat() {
             </MessageBubble>
           )}
         </div>
-        <div className="mt-4 relative">
-          <div className="flex justify-end mb-2 space-x-2">
-            <Button
-              aria-label="スクリーンショット送信"
-              onClick={async () => {
-                try {
-                  // チャートキャプチャを実行
-                  toast({ 
-                    title: "📸 チャートキャプチャ中", 
-                    description: "チャートの画像を取得しています...", 
-                    duration: 3000 
-                  });
-                  
-                  const url = await captureChart();
-                  
-                  if (url) {
-                    // 画像データのプレビュー（デバッグ用）
-                    if (process.env.NODE_ENV !== 'production') {
-                      const debugImg = document.createElement('img');
-                      debugImg.src = url;
-                      debugImg.style.position = 'fixed';
-                      debugImg.style.top = '0';
-                      debugImg.style.right = '0';
-                      debugImg.style.width = '200px';
-                      debugImg.style.zIndex = '9999';
-                      debugImg.style.border = '2px solid red';
-                      debugImg.style.background = '#fff';
-                      debugImg.style.opacity = '0.9';
-                      debugImg.addEventListener('click', () => document.body.removeChild(debugImg));
-                      document.body.appendChild(debugImg);
-                    }
-                    
-                    // トースト通知
-                    toast({ 
-                      title: "✅ キャプチャ成功", 
-                      description: "チャートイメージを送信しました", 
-                      duration: 2000 
-                    });
-                    
-                    // 画像メッセージを送信
-                    await sendImageMessage(url, "このチャートを分析してください");
-                  } else {
-                    toast({ 
-                      title: "❌ エラー", 
-                      description: "チャートのキャプチャに失敗しました", 
-                      variant: "destructive" 
-                    });
-                  }
-                } catch (err) {
-                  console.error('スクリーンショット送信エラー:', err);
-                  toast({ 
-                    title: "❌ エラー", 
-                    description: "スクリーンショットの送信に失敗しました", 
-                    variant: "destructive" 
-                  });
-                }
-              }}
-              disabled={loading}
-              size="sm"
-              variant="outline"
-              className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary transition-all duration-300 ease-in-out overflow-hidden group hover:w-auto hover:pl-3 hover:pr-4"
-            >
-              <TrendingUp className="h-5 w-5 min-w-5 transition-transform group-hover:scale-110 duration-200 text-inherit" />
-              <span className="max-w-0 whitespace-nowrap opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-out text-sm font-medium">チャートを送信</span>
-            </Button>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              data-testid="image-input"
-            />
-            <Button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading || uploading}
-              size="sm"
-              variant="outline"
-              aria-label="画像をアップロード"
-              className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary"
-            >
-              {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ImagePlus className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="メッセージを入力..."
-            aria-label="メッセージ入力"
-            className={cn(
-              "min-h-[80px] resize-none pr-12",
-              "focus-visible:ring-primary",
-              voiceInputEnabled ? "pl-12" : "pl-4" // 音声入力ボタンの有無でパディングを調整
-            )}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-          />
-          
-          {voiceInputEnabled && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    onClick={toggleListening}
-                    size="icon"
-                    variant="ghost"
-                    disabled={loading}
-                    className={cn(
-                      "absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 border",
-                      isListening && "bg-red-500 text-white border-0",
-                      !isListening && "text-muted-foreground"
-                    )}
-                  >
-                    {isListening ? (
-                      <MicOff className="h-4 w-4" />
-                    ) : (
-                      <Mic className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p>{isListening ? "音声入力を停止" : "音声入力を開始"}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          <Button
-            type="submit"
-            size="icon"
-            onClick={handleSendMessage}
-            disabled={loading || !input.trim()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-primary-foreground"
-          >
-            <ArrowUpIcon className="h-4 w-4" />
-          </Button>
-        </div>
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          loading={loading}
+          onSendMessage={handleSendMessage}
+          onScreenshot={captureScreenshot}
+          onUploadImage={handleFileChange}
+          voiceInputEnabled={voiceInputEnabled}
+          isListening={isListening}
+          toggleListening={toggleListening}
+        />
       </div>
     </div>
   );

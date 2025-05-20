@@ -59,7 +59,9 @@ export function useChat(): UseChat {
     id: selectedId,
     initialMessages: messages.map((m) => ({
       role: m.role,
-      content: m.content,
+      content: (m.type === 'image' && m.imageUrl && m.prompt)
+                ? [ {type: 'text', text: m.prompt}, {type: 'image_url', image_url: { url: m.imageUrl }} ]
+                : m.content,
     })) as any,
   });
 
@@ -86,7 +88,6 @@ export function useChat(): UseChat {
 
   // 選択中の会話が変わったら保存済みメッセージを読み込む
   useEffect(() => {
-    // まずローカルストレージから読み込む（即時表示のため）
     try {
       const stored = localStorage.getItem(`messages_${selectedId}`);
       if (stored) {
@@ -102,7 +103,12 @@ export function useChat(): UseChat {
         }));
         setMessages(msgs);
         setAiMessages(
-          msgs.map((m) => ({ role: m.role, content: m.content })) as any,
+          msgs.map((m) => ({
+            role: m.role,
+            content: (m.type === 'image' && m.imageUrl && m.prompt)
+                      ? [ {type: 'text', text: m.prompt}, {type: 'image_url', image_url: { url: m.imageUrl }} ]
+                      : m.content,
+          })) as any,
         );
         lastSynced.current = msgs.length;
       }
@@ -110,7 +116,6 @@ export function useChat(): UseChat {
       logger.error('ローカルストレージからの読み込みに失敗', err);
     }
 
-    // 次にSupabaseから読み込む（最新データを取得）
     fetchMessages(selectedId)
       .then((data) => {
         if (data && data.length > 0) {
@@ -126,69 +131,63 @@ export function useChat(): UseChat {
           }));
           setMessages(msgs);
           setAiMessages(
-            msgs.map((m) => ({ role: m.role, content: m.content })) as any,
+            msgs.map((m) => ({
+              role: m.role,
+              content: (m.type === 'image' && m.imageUrl && m.prompt)
+                        ? [ {type: 'text', text: m.prompt}, {type: 'image_url', image_url: { url: m.imageUrl }} ]
+                        : m.content,
+            })) as any,
           );
           lastSynced.current = msgs.length;
         }
       })
       .catch((err) => {
         logger.error('Supabaseからの取得に失敗', err);
-        // エラーが発生しても既にローカルストレージから読み込んでいるので何もしない
       });
   }, [selectedId, setAiMessages]);
 
-  // aiMessagesの変更を自メッセージに反映
+  // Vercel AI SDKのaiMessagesの変更をローカルのmessagesに反映
   useEffect(() => {
-    setMessages((prev) =>
-      aiMessages.map((m, i) => {
-        // contentの処理を改善
-        let messageContent = (m as any).content;
-        
-        // 配列の場合（マルチモーダルメッセージ）
-        if (Array.isArray(messageContent)) {
-          // テキスト部分を抽出
-          const textItem = messageContent.find((item: any) => item.type === 'text');
-          messageContent = textItem ? textItem.text : JSON.stringify(messageContent);
-        } 
-        // オブジェクトの場合
-        else if (typeof messageContent === 'object' && messageContent !== null) {
-          if (messageContent.text) {
-            messageContent = messageContent.text;
-          } else {
-            // 安全のためオブジェクトを文字列化
-            try {
-              messageContent = JSON.stringify(messageContent);
-            } catch {
-              messageContent = '[複雑なメッセージ]';
-            }
+    if (!isLoading && aiMessages.length > messages.length) {
+      const newFormattedMessages = aiMessages.map((aiMsg, index) => {
+        const prevMsg = messages[index];
+        let content = aiMsg.content;
+        let type: Message['type'] = 'text';
+        let prompt: string | undefined = undefined;
+        let imageUrl: string | undefined = undefined;
+
+        if (Array.isArray(aiMsg.content)) {
+          const textItem = aiMsg.content.find(item => item.type === 'text');
+          const imageItem = aiMsg.content.find(item => item.type === 'image_url');
+          content = textItem?.text || '';
+          if (imageItem) {
+            type = 'image';
+            imageUrl = imageItem.image_url.url;
+            prompt = content;
+          }
+        } else if (typeof aiMsg.content === 'object' && aiMsg.content !== null) {
+          try {
+            content = JSON.stringify(aiMsg.content);
+          } catch {
+            content = '[複雑なメッセージ形式]';
           }
         }
-        
-        // type属性を取得（画像メッセージかどうかの判別に使用）
-        const msgType = (m as any).type || prev[i]?.type || 'text';
-        
-        // promptプロパティを保持
-        const msgPrompt = (m as any).prompt || prev[i]?.prompt;
-        
-        // 画像タイプの場合は、元のコンテンツを保持
-        if (msgType === 'image' && prev[i]?.content && typeof prev[i]?.content === 'string' && prev[i]?.content.startsWith('data:image/')) {
-          messageContent = prev[i].content;
-        }
-        
-        return {
-          id: prev[i]?.id ?? (m as any).id ?? crypto.randomUUID(),
-          role: m.role as Message['role'],
-          content: messageContent,
-          type: msgType,
-          prompt: msgPrompt,
-          imageUrl: (m as any).imageUrl || prev[i]?.imageUrl,
-          timestamp: prev[i]?.timestamp ?? Date.now(),
-        };
-      })
-    );
-  }, [aiMessages]);
 
-  // メッセージをlocalStorageへ保存
+        return {
+          id: prevMsg?.id ?? (aiMsg as any).id ?? crypto.randomUUID(),
+          role: aiMsg.role as Message['role'],
+          content: content as string,
+          type: prevMsg?.type ?? type,
+          prompt: prevMsg?.prompt ?? prompt,
+          imageUrl: prevMsg?.imageUrl ?? imageUrl,
+          timestamp: prevMsg?.timestamp ?? Date.now(),
+        };
+      });
+      setMessages(newFormattedMessages);
+    }
+  }, [aiMessages, isLoading, messages]);
+
+  // ローカルのmessagesをlocalStorageとSupabaseに保存
   useEffect(() => {
     try {
       localStorage.setItem(`messages_${selectedId}`, JSON.stringify(messages));
@@ -196,92 +195,109 @@ export function useChat(): UseChat {
       // ignore write errors
     }
     
-    // DB同期: まだ同期していないメッセージのみをDBに追加
     messages.forEach((m, idx) => {
       if (idx >= lastSynced.current) {
-        addMessage(selectedId, m.role, m.content, m.type, m.prompt, m.imageUrl).catch((err) => {
-          logger.error('DBへのメッセージ保存に失敗', err);
-        });
+        addMessage(selectedId, m.role, m.content, m.type, m.prompt, m.imageUrl)
+          .then(() => {
+            if (idx === messages.length - 1) {
+              lastSynced.current = messages.length;
+            }
+          })
+          .catch((err) => logger.error("DBへのメッセージ追加に失敗:", err));
       }
     });
-    lastSynced.current = messages.length;
   }, [messages, selectedId]);
 
   const sendMessage = async (textParam?: string, imageFile?: File) => {
-    const text = (textParam ?? input).trim();
-    if (!text && !imageFile) return;
+    const text = textParam ?? input;
+    if (!text.trim() && !imageFile) return;
 
-    setError(null);
+    const userMessageId = crypto.randomUUID();
+    let messageContentForAppend: any = text;
+    let uiContent = text;
+    let messageType: Message['type'] = 'text';
+    let imageUrlForDb: string | undefined;
+
+    if (imageFile) {
+      messageType = 'image';
+      const reader = new FileReader();
+      const dataUrlPromise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(imageFile);
+      const dataUrl = await dataUrlPromise;
+      imageUrlForDb = dataUrl;
+      uiContent = text || 'この画像を説明してください。';
+      messageContentForAppend = [
+        { type: 'text', text: uiContent },
+        { type: 'image_url', image_url: { url: dataUrl } },
+      ];
+    }
+
+    const messageToAppend = {
+      id: userMessageId,
+      role: 'user' as const,
+      content: messageContentForAppend,
+    };
+
+    const uiMessage: Message = {
+      id: userMessageId,
+      role: 'user',
+      content: uiContent,
+      type: messageType,
+      prompt: text || (imageFile ? 'この画像を説明してください。' : undefined),
+      imageUrl: imageUrlForDb,
+      timestamp: Date.now(),
+    };
+    setMessages((prev) => [...prev, uiMessage]);
+    
     try {
-      let imageUrl: string | undefined;
-      if (imageFile) {
-        const ext = imageFile.name.split('.').pop() || 'png';
-        const fileName = `${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from('chat-images')
-          .upload(fileName, imageFile);
-        if (upErr) throw upErr;
-        const { data } = supabase.storage.from('chat-images').getPublicUrl(fileName);
-        imageUrl = data.publicUrl;
-      }
-
-      await append({
-        role: 'user',
-        content: imageUrl ? text || '画像を送信しました' : text,
-        type: imageUrl ? 'image' : 'text',
-        prompt: imageUrl ? text : undefined,
-        imageUrl,
-      } as any);
+      await addMessage(selectedId, 'user', uiContent, messageType, uiMessage.prompt, imageUrlForDb);
+      lastSynced.current = messages.length + 1;
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'メッセージ送信中にエラーが発生しました';
-      setError(message);
+      logger.error("DBへのメッセージ保存に失敗:", err);
+    }
+
+    await append(messageToAppend);
+
+    if (!imageFile) {
+      setInput("");
     }
   };
 
-  const sendImageMessage = async (dataUrl: string, prompt = 'このチャートを分析してください') => {
-    if (!dataUrl) return;
-    setError(null);
-    
+  const sendImageMessage = async (dataUrl: string, promptText = 'このチャートを分析してください') => {
+    const userMessageId = crypto.randomUUID();
+
+    const messageToAppend = {
+      id: userMessageId,
+      role: 'user' as const,
+      content: [
+        { type: 'text', text: promptText },
+        { type: 'image_url', image_url: { url: dataUrl } },
+      ],
+    };
+
+    const uiMessage: Message = {
+      id: userMessageId,
+      role: 'user',
+      content: promptText,
+      type: 'image',
+      prompt: promptText,
+      imageUrl: dataUrl,
+      timestamp: Date.now(),
+    };
+
+    setMessages((prev) => [...prev, uiMessage]);
+
     try {
-      logger.debug('画像メッセージを送信します');
-      
-      // 画像が正しいデータURLかチェック
-      if (!dataUrl.startsWith('data:image/')) {
-        throw new Error('無効な画像データです');
-      }
-      
-      // まずローカルUI用のメッセージを追加
-      const imageMsg: Message = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: dataUrl,
-        type: 'image',
-        prompt,
-        timestamp: Date.now(),
-      };
-      
-      // UIに即時反映
-      setMessages((prev) => [...prev, imageMsg]);
-      
-      // APIにリクエストを送信
-      await append({
-        role: 'user',
-        content: prompt,
-        type: 'image',
-        prompt,
-      } as any);
-      
+      await addMessage(selectedId, 'user', promptText, 'image', promptText, dataUrl);
+      lastSynced.current = messages.length + 1;
     } catch (err) {
-      logger.error('画像メッセージの送信に失敗:', err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : '画像の送信中にエラーが発生しました';
-      setError(message);
+      logger.error("DBへの画像メッセージ保存に失敗:", err);
     }
+
+    await append(messageToAppend);
   };
 
   return {

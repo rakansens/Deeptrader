@@ -25,13 +25,21 @@ jest.mock('@mastra/core/tools', () => ({
   createTool: (opts: any) => opts
 }), { virtual: true });
 
-import { orchestratorAgent, delegateTradingTool, delegateResearchTool } from '@/mastra/agents/orchestratorAgent';
+import {
+  orchestratorAgent,
+  delegateTradingTool,
+  delegateResearchTool,
+  delegateUiControlTool,
+  delegateBacktestTool,
+} from '@/mastra/agents/orchestratorAgent';
 
 describe('orchestratorAgent', () => {
   it('is configured correctly', () => {
     expect(orchestratorAgent.name).toBe('オーケストラエージェント');
     expect(orchestratorAgent.tools.delegateTradingTool).toBe(delegateTradingTool);
     expect(orchestratorAgent.tools.delegateResearchTool).toBe(delegateResearchTool);
+    expect(orchestratorAgent.tools.delegateUiControlTool).toBe(delegateUiControlTool);
+    expect(orchestratorAgent.tools.delegateBacktestTool).toBe(delegateBacktestTool);
     expect(orchestratorAgent.getMemory()).toBeDefined();
   });
 });

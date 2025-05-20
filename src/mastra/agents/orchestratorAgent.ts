@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { tradingAgent } from './tradingAgent';
 import { researchAgent } from './researchAgent';
 import { uiControlAgent } from './uiControlAgent';
+import { backtestAgent } from './backtestAgent';
 
 // メモリ設定
 const memory = new Memory({
@@ -53,6 +54,16 @@ export const delegateUiControlTool = createTool({
   execute: async ({ context }) => uiControlAgent.stream(context.message)
 });
 
+// バックテストエージェントへの委任ツール
+export const delegateBacktestTool = createTool({
+  id: 'delegate-backtest-tool',
+  description: 'バックテストエージェントへ指示を渡します',
+  inputSchema: z.object({
+    message: z.string().describe('ユーザーからの問い合わせ')
+  }),
+  execute: async ({ context }) => backtestAgent.stream(context.message)
+});
+
 /**
  * オーケストラエージェント
  * ユーザーの入力を解析し、適切な専門エージェントへ委任して結果を統合します
@@ -61,12 +72,14 @@ export const orchestratorAgent = new Agent({
   name: 'オーケストラエージェント',
   instructions: `あなたは複数の専門AIを統合するオーケストレーターです。
   ユーザーの入力を解析し、適切な専門エージェントへ委任して結果を統合する。
-  トレーディング関連はトレーディングエージェント、情報収集はリサーチエージェントを活用し、最終的な回答をまとめて提示してください。`,
+  トレーディング関連はトレーディングエージェント、情報収集はリサーチエージェントを活用し、最終的な回答をまとめて提示してください。
+  UI操作に関する指示はUIコントロールエージェントへ、バックテストの依頼はバックテストエージェントへそれぞれ委任してください。`,
   model: openai('gpt-4o'),
   tools: {
     delegateTradingTool,
     delegateResearchTool,
-    delegateUiControlTool
+    delegateUiControlTool,
+    delegateBacktestTool
   },
   memory
 });
