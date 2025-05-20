@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { createChart, CrosshairMode, IChartApi } from "lightweight-charts";
 import useChartTheme from "./use-chart-theme";
 import { logger } from "@/lib/logger";
+import { setActiveChartForCapture } from "@/lib/chart-capture-service";
 
 interface UseChartInstanceParams {
   container: HTMLDivElement | null;
@@ -59,7 +60,8 @@ export function useChartInstance({
     
     // チャートインスタンスを保存
     chartRef.current = chart;
-    logger.debug('Chart instance created and saved to ref');
+    setActiveChartForCapture(chart, container); // Register active chart
+    logger.debug('Chart instance created, saved to ref, and set for capture');
 
     // takeScreenshotメソッドの存在確認
     if ('takeScreenshot' in chart) {
@@ -102,6 +104,7 @@ export function useChartInstance({
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      setActiveChartForCapture(null, null); // Unregister active chart
       logger.debug('Removing chart instance');
       chart.remove();
       chartRef.current = null;

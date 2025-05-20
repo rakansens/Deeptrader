@@ -1,71 +1,20 @@
-import type { LineData, UTCTimestamp } from "lightweight-charts";
-import type { IndicatorSettings } from "@/types/chart";
-import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
-import {
-  computeBollinger,
-  computeMACD,
-  computeRSI,
-  computeSMA,
-  RsiCalculator,
-} from "./indicators";
+import type { UTCTimestamp } from "lightweight-charts";
+// Unused imports related to calculateIndicators have been removed:
+// import type { LineData } from "lightweight-charts";
+// import type { IndicatorSettings } from "@/types/chart";
+// import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
+// import {
+//   computeBollinger,
+//   computeMACD,
+//   computeRSI,
+//   computeSMA,
+//   RsiCalculator, // This was the old RsiCalculator
+// } from "./indicators";
 
-export interface IndicatorSeries {
-  ma?: LineData;
-  rsi?: LineData;
-  macd?: LineData;
-  signal?: LineData;
-  histogram?: LineData;
-  bollUpper?: LineData;
-  bollLower?: LineData;
-}
+// The IndicatorSeries interface is no longer needed as calculateIndicators is removed.
 
-/**
- * 価格履歴からインジケーターを計算する
- * @param prices - 終値の配列
- * @param time - データ時刻
- * @param settingsOrRsiCalc - RSI計算機インスタンスまたは設定オブジェクト
- * @returns 計算結果
- */
-export function calculateIndicators(
-  prices: number[],
-  time: UTCTimestamp,
-  settingsOrRsiCalc: IndicatorSettings | RsiCalculator = DEFAULT_INDICATOR_SETTINGS,
-): IndicatorSeries {
-  const result: IndicatorSeries = {};
-  const settings = settingsOrRsiCalc instanceof RsiCalculator 
-    ? DEFAULT_INDICATOR_SETTINGS 
-    : settingsOrRsiCalc;
-  
-  const ma = computeSMA(prices, settings.sma);
-  if (ma !== null) result.ma = { time, value: ma };
-
-  // RSIの計算方法を決定
-  let rsi: number | null;
-  if (settingsOrRsiCalc instanceof RsiCalculator) {
-    rsi = settingsOrRsiCalc.update(prices[prices.length - 1]);
-  } else {
-    rsi = computeRSI(prices, settings.rsi);
-  }
-  if (rsi !== null) result.rsi = { time, value: rsi };
-
-  const macd = computeMACD(
-    prices,
-    settings.macd.short,
-    settings.macd.long,
-    settings.macd.signal,
-  );
-  if (macd) {
-    result.macd = { time, value: macd.macd };
-    result.signal = { time, value: macd.signal };
-    result.histogram = { time, value: macd.histogram };
-  }
-  const boll = computeBollinger(prices, settings.boll);
-  if (boll) {
-    result.bollUpper = { time, value: boll.upper };
-    result.bollLower = { time, value: boll.lower };
-  }
-  return result;
-}
+// The calculateIndicators function has been removed as its logic is now
+// handled directly within use-candlestick-data.ts using the new calculator classes.
 
 /**
  * 時系列データを更新・追加するユーティリティ
@@ -74,33 +23,35 @@ export function calculateIndicators(
  * @param limit - 最大保持数
  * @returns 更新後の配列
  */
-const seriesCache = new WeakMap<unknown[], Map<UTCTimestamp, unknown>>();
-
 export function upsertSeries<T extends { time: UTCTimestamp }>(
   arr: T[],
   item: T,
   limit: number,
 ): T[] {
-  let map = seriesCache.get(arr) as Map<UTCTimestamp, T> | undefined;
-  if (!map) {
-    map = new Map<UTCTimestamp, T>();
-    for (const d of arr) {
-      map.set(d.time, d);
+  // Create a new Map from the input array on each call.
+  // This allows efficient updates by timestamp.
+  const map = new Map<UTCTimestamp, T>();
+  for (const d of arr) {
+    map.set(d.time, d);
+  }
+
+  // Check if the item's timestamp already exists to determine if it's an update or new.
+  // This is important for the limit logic: only trim if a truly new item pushes size over limit.
+  const isExistingItem = map.has(item.time);
+  map.set(item.time, item); // Add or update the item
+
+  // If it was a new item (not an update) and the map size exceeds the limit,
+  // remove the oldest item. Maps iterate in insertion order, so the first key is the oldest.
+  if (!isExistingItem && map.size > limit) {
+    // map.keys().next().value retrieves the first key (oldest timestamp)
+    const oldestKey = map.keys().next().value;
+    if (oldestKey !== undefined) {
+      map.delete(oldestKey);
     }
   }
 
-  const isNew = !map.has(item.time);
-  map.set(item.time, item);
-
-  if (isNew && map.size > limit) {
-    const firstKey = map.keys().next().value as UTCTimestamp | undefined;
-    if (firstKey !== undefined) {
-      map.delete(firstKey);
-    }
-  }
-
-  const result = Array.from(map.values());
-  seriesCache.delete(arr);
-  seriesCache.set(result, map as Map<UTCTimestamp, unknown>);
-  return result;
+  // Convert the map values back to an array.
+  // The order will be based on insertion order, which should be chronological
+  // if the input array `arr` was sorted and new items are later or updates.
+  return Array.from(map.values());
 }

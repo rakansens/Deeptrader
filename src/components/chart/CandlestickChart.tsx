@@ -99,19 +99,8 @@ export default function CandlestickChart({
   // 描画キャンバスは常に有効にして内容を保持する
   const isDrawingEnabled = true;
 
-  // チャートインスタンスをグローバルに露出（スクリーンショット用）
-  if (typeof window !== 'undefined') {
-    // チャートインスタンスを保存するグローバル変数
-    window.__chartInstance = null;
-
-    // DOMからチャート要素を取得するヘルパー関数も追加
-    window.__getChartElement = () => {
-      const container = document.querySelector(
-        '[data-testid="chart-container"]'
-      );
-      return container as HTMLElement | null;
-    };
-  }
+  // Global chart instance exposure for screenshots is now handled by
+  // useChartInstance.ts and src/lib/chart-capture-service.ts
 
   const {
     candles = [],
@@ -185,35 +174,8 @@ export default function CandlestickChart({
     logger.debug("描画モード変更:", mode);
   }, [mode]);
 
-  // チャートインスタンスをグローバルに保存（スクリーンショット用）
-  useEffect(() => {
-    // チャートインスタンスの変更を監視し、グローバル変数に保存
-    const checkAndSaveChart = () => {
-      if (typeof window !== 'undefined') {
-        if (chartRef.current) {
-          window.__chartInstance = chartRef.current;
-          logger.debug(
-            'Chart instance saved for screenshots:',
-            chartRef.current
-          );
-        } else {
-          logger.warn('Chart instance is null, cannot save for screenshots');
-        }
-      }
-    };
-
-    // 即時実行と300ms後の実行で確実に保存
-    checkAndSaveChart();
-    const timer = setTimeout(checkAndSaveChart, 300);
-
-    return () => {
-      clearTimeout(timer);
-      if (typeof window !== 'undefined') {
-        window.__chartInstance = null;
-        logger.debug('Chart instance cleared from global');
-      }
-    };
-  }, [chartRef.current]);
+  // The useEffect hook that previously saved chartRef.current to window.__chartInstance
+  // has been removed as this functionality is now centralized in useChartInstance.ts
 
   useEffect(() => {
     logger.debug("描画有効状態変更:", drawingEnabled);
