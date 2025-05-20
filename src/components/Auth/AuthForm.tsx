@@ -4,7 +4,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { signIn, signUp } from "@/infrastructure/supabase/auth-service";
 
 interface AuthFormProps {
   redirectTo?: string;
@@ -26,22 +26,9 @@ export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
+        await signIn(email, password);
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-          },
-        });
-
-        if (error) throw error;
+        await signUp(email, password);
         setMessage("確認メールを送信しました。メールを確認してください。");
       }
     } catch (error: unknown) {

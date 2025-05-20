@@ -41,9 +41,11 @@ export function useSettings(): UseSettings {
   }, []);
 
   // 設定を再読み込みする関数（外部から呼び出し可能）
+  // 依存配列を空にして、再レンダリングの原因にならないようにする
   const refreshSettings = useCallback(() => {
     loadSettings();
-  }, [loadSettings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 初期化時に一度だけ実行
   useEffect(() => {

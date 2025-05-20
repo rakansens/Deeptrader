@@ -139,16 +139,17 @@ export default function Chat() {
 
   // 設定変更を監視して定期的に最新の設定を読み込む
   useEffect(() => {
-    // 3秒ごとに設定を更新（より頻繁に確認）
+    // コンポーネントのマウント時に一度読み込む
+    refreshSettings();
+    
+    // 3秒ごとに設定を更新
     const interval = setInterval(() => {
       refreshSettings();
     }, 3000);
     
-    // コンポーネントのマウント時にも一度読み込む
-    refreshSettings();
-    
     return () => clearInterval(interval);
-  }, [refreshSettings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 依存配列を空にして、マウント時のみ実行されるようにする
 
   return (
     <div className="flex h-full relative">

@@ -11,6 +11,63 @@ import type { OrderSide } from "./order";
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          username: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          username?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          username?: string | null;
+          created_at?: string;
+        };
+      };
+      conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+      };
+      messages: {
+        Row: {
+          id: number;
+          conversation_id: string;
+          sender: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          conversation_id: string;
+          sender: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          conversation_id?: string;
+          sender?: string;
+          content?: string;
+          created_at?: string;
+        };
+      };
       users: {
         Row: {
           id: string;

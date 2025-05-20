@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useChat as useAIChat } from "ai/react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
 import type { Conversation, Message } from "@/types";
 import { logger } from "@/lib/logger";
+import {
+  addMessage,
+  fetchMessages,
+} from "@/infrastructure/supabase/db-service";
 
 export interface UseChat {
   messages: Message[];
@@ -38,7 +42,8 @@ export function useChat(): UseChat {
     removeConversation,
   } = useConversations();
 
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([]);
+  const lastSynced = useRef(0);
 
   const {
     messages: aiMessages,
@@ -51,7 +56,10 @@ export function useChat(): UseChat {
   } = useAIChat({
     api: "/api/chat",
     id: selectedId,
-    initialMessages: messages.map((m) => ({ role: m.role, content: m.content })) as any,
+    initialMessages: messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    })) as any,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -77,23 +85,53 @@ export function useChat(): UseChat {
 
   // 選択中の会話が変わったら保存済みメッセージを読み込む
   useEffect(() => {
+    // まずローカルストレージから読み込む（即時表示のため）
     try {
-      const stored = localStorage.getItem(`messages_${selectedId}`)
-      const parsed = stored ? (JSON.parse(stored) as Partial<Message>[]) : []
-      const msgs = parsed.map((m) => ({
-        id: m.id ?? crypto.randomUUID(),
-        role: m.role as Message['role'],
-        content: m.content ?? '',
-        type: m.type ?? 'text',
-        prompt: m.prompt,
-        timestamp: m.timestamp ?? Date.now(),
-      }))
-      setMessages(msgs)
-      setAiMessages(msgs.map((m) => ({ role: m.role, content: m.content })) as any)
-    } catch {
-      setMessages([])
-      setAiMessages([])
+      const stored = localStorage.getItem(`messages_${selectedId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<Message>[];
+        const msgs = parsed.map((m) => ({
+          id: m.id ?? crypto.randomUUID(),
+          role: m.role as Message["role"],
+          content: m.content ?? "",
+          type: m.type ?? 'text',
+          prompt: m.prompt,
+          timestamp: m.timestamp ?? Date.now(),
+        }));
+        setMessages(msgs);
+        setAiMessages(
+          msgs.map((m) => ({ role: m.role, content: m.content })) as any,
+        );
+        lastSynced.current = msgs.length;
+      }
+    } catch (err) {
+      logger.error('ローカルストレージからの読み込みに失敗', err);
     }
+
+    // 次にSupabaseから読み込む（最新データを取得）
+    fetchMessages(selectedId)
+      .then((data) => {
+        if (data && data.length > 0) {
+          logger.debug('Supabaseからメッセージを取得しました', data.length);
+          const msgs = data.map((m) => ({
+            id: String(m.id),
+            role: m.sender as Message["role"],
+            content: m.content,
+            type: m.type ?? 'text',
+            prompt: m.prompt,
+            timestamp: new Date(m.created_at).getTime(),
+          }));
+          setMessages(msgs);
+          setAiMessages(
+            msgs.map((m) => ({ role: m.role, content: m.content })) as any,
+          );
+          lastSynced.current = msgs.length;
+        }
+      })
+      .catch((err) => {
+        logger.error('Supabaseからの取得に失敗', err);
+        // エラーが発生しても既にローカルストレージから読み込んでいるので何もしない
+      });
   }, [selectedId, setAiMessages]);
 
   // aiMessagesの変更を自メッセージに反映
@@ -135,15 +173,15 @@ export function useChat(): UseChat {
         }
         
         return {
-        id: prev[i]?.id ?? (m as any).id ?? crypto.randomUUID(),
-        role: m.role as Message['role'],
+          id: prev[i]?.id ?? (m as any).id ?? crypto.randomUUID(),
+          role: m.role as Message['role'],
           content: messageContent,
           type: msgType,
           prompt: msgPrompt,
-        timestamp: prev[i]?.timestamp ?? Date.now(),
+          timestamp: prev[i]?.timestamp ?? Date.now(),
         };
       })
-    )
+    );
   }, [aiMessages]);
 
   // メッセージをlocalStorageへ保存
@@ -153,12 +191,22 @@ export function useChat(): UseChat {
     } catch {
       // ignore write errors
     }
+    
+    // DB同期: まだ同期していないメッセージのみをDBに追加
+    messages.forEach((m, idx) => {
+      if (idx >= lastSynced.current) {
+        addMessage(selectedId, m.role, m.content).catch((err) => {
+          logger.error('DBへのメッセージ保存に失敗', err);
+        });
+      }
+    });
+    lastSynced.current = messages.length;
   }, [messages, selectedId]);
 
   const sendMessage = async (textParam?: string) => {
     const text = (textParam ?? input).trim();
     if (!text) return;
-    
+
     setError(null);
     try {
       // Chat.tsx側で既に入力欄をクリアしているので、ここでは何もしない
