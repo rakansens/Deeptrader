@@ -15,7 +15,16 @@ import {
   DialogTitle,
   DialogHeader,
 } from '@/components/ui/dialog'
-import { TrendingUp, Activity, BarChart3, Waves, Settings } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { ListPlus, TrendingUp, Activity, BarChart3, Waves, Settings } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
@@ -88,76 +97,78 @@ export default function ChartToolbar({
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4" aria-hidden="true" />
-          <Switch
-            id="ma-toggle"
-            checked={indicators.ma}
-            onCheckedChange={(v) =>
-              onIndicatorsChange({ ...indicators, ma: v })
-            }
-          />
-          <Label htmlFor="ma-toggle" className="text-xs sm:text-sm">
-            MA
-          </Label>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-auto">
+                <ListPlus className="h-4 w-4 mr-2" />
+                インジケーター
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-60">
+              <DropdownMenuLabel>表示する指標</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={indicators.ma}
+                onCheckedChange={(checked) => onIndicatorsChange({ ...indicators, ma: checked })}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <TrendingUp className="h-4 w-4 mr-2 opacity-70" />
+                移動平均線 (MA)
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={indicators.rsi}
+                onCheckedChange={(checked) => onIndicatorsChange({ ...indicators, rsi: checked })}
+                onSelect={(e) => e.preventDefault()}
+                data-testid="checkbox-rsi"
+              >
+                <Activity className="h-4 w-4 mr-2 opacity-70" />
+                RSI
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={!!indicators.macd}
+                onCheckedChange={(checked) => onIndicatorsChange({ ...indicators, macd: checked })}
+                onSelect={(e) => e.preventDefault()}
+                data-testid="checkbox-macd"
+              >
+                <BarChart3 className="h-4 w-4 mr-2 opacity-70" />
+                MACD
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={!!indicators.boll}
+                onCheckedChange={(checked) => onIndicatorsChange({ ...indicators, boll: checked })}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Waves className="h-4 w-4 mr-2 opacity-70" />
+                Bollinger Bands
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="hidden md:flex items-center gap-1.5 text-muted-foreground ml-2">
+            {indicators.ma && <TrendingUp className="h-3.5 w-3.5" />}
+            {indicators.rsi && <Activity className="h-3.5 w-3.5" />}
+            {indicators.macd && <BarChart3 className="h-3.5 w-3.5" />}
+            {indicators.boll && <Waves className="h-3.5 w-3.5" />}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4" aria-hidden="true" />
-          <Switch
-            id="rsi-toggle"
-            data-testid="switch-rsi"
-            checked={indicators.rsi}
-            onCheckedChange={(v) =>
-              onIndicatorsChange({ ...indicators, rsi: v })
-            }
-          />
-          <Label htmlFor="rsi-toggle" className="text-xs sm:text-sm">
-            RSI
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4" aria-hidden="true" />
-          <Switch
-            id="macd-toggle"
-            data-testid="switch-macd"
-            checked={!!indicators.macd}
-            onCheckedChange={(v) =>
-              onIndicatorsChange({ ...indicators, macd: v })
-            }
-          />
-          <Label htmlFor="macd-toggle" className="text-xs sm:text-sm">
-            MACD
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <Waves className="h-4 w-4" aria-hidden="true" />
-          <Switch
-            id="boll-toggle"
-            checked={!!indicators.boll}
-            onCheckedChange={(v) =>
-              onIndicatorsChange({ ...indicators, boll: v })
-            }
-          />
-          <Label htmlFor="boll-toggle" className="text-xs sm:text-sm">
-            BOLL
-          </Label>
-        </div>
+
         <ThemeToggle />
-        <Dialog>
-          <DialogTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <button
               className="p-1 rounded hover:bg-accent"
               aria-label="Indicator settings"
             >
               <Settings className="h-4 w-4" />
             </button>
-          </DialogTrigger>
-          <DialogContent className="w-80">
-            <DialogHeader>
-              <DialogTitle>指標設定</DialogTitle>
-            </DialogHeader>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80 p-4">
+            <h3 className="text-lg font-medium mb-2">指標設定</h3>
             <Accordion type="single" collapsible className="w-full space-y-1">
               <AccordionItem value="ma-settings">
-                <AccordionTrigger>
+                <AccordionTrigger 
+                  onSelect={(e) => e.preventDefault()}
+                >
                   <div className="flex items-center justify-between w-full pr-2">
                     <span className="flex items-center">
                       <TrendingUp className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -173,7 +184,7 @@ export default function ChartToolbar({
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-3 space-y-3">
+                <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
                   <label className="flex items-center justify-between text-sm">
                     <span>期間 (SMA)</span>
                     <input
@@ -236,7 +247,9 @@ export default function ChartToolbar({
               </AccordionItem>
 
               <AccordionItem value="rsi-settings">
-                <AccordionTrigger>
+                <AccordionTrigger
+                  onSelect={(e) => e.preventDefault()}
+                >
                   <div className="flex items-center justify-between w-full pr-2">
                     <span className="flex items-center">
                       <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -252,7 +265,7 @@ export default function ChartToolbar({
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-3 space-y-3">
+                <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
                   <label className="flex items-center justify-between text-sm">
                     <span>期間</span>
                     <input
@@ -315,7 +328,9 @@ export default function ChartToolbar({
               </AccordionItem>
 
               <AccordionItem value="macd-settings">
-                <AccordionTrigger>
+                <AccordionTrigger
+                  onSelect={(e) => e.preventDefault()}
+                >
                   <div className="flex items-center justify-between w-full pr-2">
                     <span className="flex items-center">
                       <BarChart3 className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -331,7 +346,7 @@ export default function ChartToolbar({
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-3 space-y-3">
+                <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
                   <label className="flex items-center justify-between text-sm">
                     <span>Short</span>
                     <input
@@ -433,7 +448,9 @@ export default function ChartToolbar({
               </AccordionItem>
 
               <AccordionItem value="boll-settings">
-                <AccordionTrigger>
+                <AccordionTrigger
+                  onSelect={(e) => e.preventDefault()}
+                >
                   <div className="flex items-center justify-between w-full pr-2">
                     <span className="flex items-center">
                       <Waves className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -449,7 +466,7 @@ export default function ChartToolbar({
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-3 space-y-3">
+                <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
                   <label className="flex items-center justify-between text-sm">
                     <span>期間</span>
                     <input
@@ -512,8 +529,8 @@ export default function ChartToolbar({
               </AccordionItem>
 
             </Accordion>
-          </DialogContent>
-        </Dialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
