@@ -7,6 +7,16 @@ import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { SYMBOLS, TIMEFRAMES } from '@/constants/chart';
 import type { BinanceKline } from '@/types/binance';
 
+// 戻り値の型を定義
+interface BacktestResult {
+  symbol: string;
+  timeframe: string;
+  trades: number;
+  finalBalance: number;
+  profit: number;
+  returnPct: number;
+}
+
 jest.mock('@/infrastructure/exchange/binance-service');
 
 describe('backtestTool', () => {
@@ -47,7 +57,8 @@ describe('backtestTool', () => {
         initialBalance: 1000,
         limit: sample.length,
       }
-    } as any);
+    } as any) as BacktestResult;
+    
     expect(fetchKlines).toHaveBeenCalledWith(
       SYMBOLS[0].value,
       TIMEFRAMES[0],
