@@ -2,6 +2,7 @@
 // ニュース分析ツール
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { fetchNewsSummary } from '@/infrastructure/news-service';
 
 /**
  * ニュース記事の要約を取得する簡易ツール
@@ -14,10 +15,7 @@ export const newsAnalysisTool = createTool({
     query: z.string().describe('検索キーワード')
   }),
   execute: async ({ context }) => {
-    // ダミー結果を返す
-    return {
-      headline: `${context.query} に関する最新ニュース`,
-      summary: 'この機能はまだ開発中です'
-    };
+    const article = await fetchNewsSummary(context.query);
+    return article;
   }
 });
