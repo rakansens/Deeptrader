@@ -19,7 +19,7 @@ describe('captureChart', () => {
 
   it('skips takeScreenshot when element missing', async () => {
     const takeScreenshot = jest.fn()
-    ;(window as any).__chartInstance = { takeScreenshot } as IChartApi
+    ;(window as any).__chartInstance = { takeScreenshot } as unknown as IChartApi
     ;(window as any).__getChartElement = jest.fn(() => document.createElement('div'))
     document.body.innerHTML = '<div id="chart-panel"></div>'
 

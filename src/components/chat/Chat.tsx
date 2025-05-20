@@ -101,8 +101,7 @@ export default function Chat() {
   };
 
   // 画像ファイル選択時の処理
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = (file: File) => {
     if (!file) return;
 
     const text = input;

@@ -22,11 +22,28 @@ export const entrySuggestionTool = createTool({
   execute: async ({ context }) => {
     const limit = context.period ?? 50;
     try {
-      const klines: BinanceKline[] = await fetchKlines(
+      const klinesObj = await fetchKlines(
         context.symbol,
         context.timeframe,
         limit,
       );
+      
+      // オブジェクト形式の配列から数値と文字列の配列に変換
+      const klines: BinanceKline[] = klinesObj.map(k => [
+        k.openTime,
+        k.open,
+        k.high,
+        k.low,
+        k.close,
+        k.volume,
+        k.closeTime,
+        k.quoteAssetVolume,
+        k.tradeCount,
+        k.takerBuyBaseVolume,
+        k.takerBuyQuoteVolume,
+        k.ignore
+      ]);
+      
       const closes = klines.map((k) => parseFloat(k[4]));
       const rsi = computeRSI(closes, 14);
       const lastPrice = closes[closes.length - 1];
