@@ -57,18 +57,33 @@ export function calculateIndicators(
  * @param limit - 最大保持数
  * @returns 更新後の配列
  */
+const seriesCache = new WeakMap<unknown[], Map<UTCTimestamp, unknown>>();
+
 export function upsertSeries<T extends { time: UTCTimestamp }>(
   arr: T[],
   item: T,
   limit: number,
 ): T[] {
-  const idx = arr.findIndex((d) => d.time === item.time);
-  const next = [...arr];
-  if (idx >= 0) {
-    next[idx] = item;
-  } else {
-    next.push(item);
-    if (next.length > limit) next.shift();
+  let map = seriesCache.get(arr) as Map<UTCTimestamp, T> | undefined;
+  if (!map) {
+    map = new Map<UTCTimestamp, T>();
+    for (const d of arr) {
+      map.set(d.time, d);
+    }
   }
-  return next;
+
+  const isNew = !map.has(item.time);
+  map.set(item.time, item);
+
+  if (isNew && map.size > limit) {
+    const firstKey = map.keys().next().value as UTCTimestamp | undefined;
+    if (firstKey !== undefined) {
+      map.delete(firstKey);
+    }
+  }
+
+  const result = Array.from(map.values());
+  seriesCache.delete(arr);
+  seriesCache.set(result, map as Map<UTCTimestamp, unknown>);
+  return result;
 }

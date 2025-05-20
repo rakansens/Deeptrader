@@ -1,25 +1,22 @@
 "use client";
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
 import useChartTheme from "@/hooks/use-chart-theme";
 import useCandlestickData from "@/hooks/use-candlestick-data";
 import useCandlestickSeries from "@/hooks/use-candlestick-series";
 import useIndicatorSeries from "@/hooks/use-indicator-series";
 import useChartInstance from "@/hooks/use-chart-instance";
 import useWindowSize from "@/hooks/use-window-size";
+import useDrawingControls from "@/hooks/use-drawing-controls";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
 import DrawingCanvas from "./drawing-canvas";
-import type {
-  DrawingCanvasHandle,
-  DrawingMode,
-  IndicatorOptions,
-  IndicatorsChangeHandler,
-} from "@/types/chart";
+import type { IndicatorOptions, IndicatorsChangeHandler } from "@/types/chart";
 import ChartSidebar from "./ChartSidebar";
+import SidebarToggleButton from "./sidebar-toggle-button";
+import EraserSizeControl from "./eraser-size-control";
 import { logger } from "@/lib/logger";
 import {
   SYMBOLS,
@@ -27,8 +24,6 @@ import {
   type SymbolValue,
   type Timeframe,
 } from "@/constants/chart";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
 
 interface CandlestickChartProps {
   className?: string;
@@ -65,10 +60,17 @@ export default function CandlestickChart({
   const maRef = useRef<ISeriesApi<"Line"> | null>(null);
   const bollUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
   const bollLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const drawingRef = useRef<DrawingCanvasHandle>(null);
-  const [mode, setMode] = useState<DrawingMode | null>(null);
-  const [eraserSize, setEraserSize] = useState<number>(30);
-  const [showSidebar, setShowSidebar] = useState<boolean>(false);
+  const {
+    drawingRef,
+    mode,
+    eraserSize,
+    showSidebar,
+    setEraserSize,
+    handleModeChange,
+    handleClearDrawing,
+    toggleSidebar,
+    handleWheel,
+  } = useDrawingControls({ containerRef, drawingEnabled });
   const { width } = useWindowSize();
 
   // 画面幅に応じて高さを調整する
@@ -81,34 +83,6 @@ export default function CandlestickChart({
    * 1. 描画モード中  : オーバーレイ(div)がイベントを取得するため転送が必要
    * 2. 選択モード(null): オーバーレイ自体を pointer-events:none にするので転送不要
    */
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    // オリジナルイベントを無効化し軽量チャートへ新しいイベントを送る
-    e.preventDefault();
-
-    const cloned = new WheelEvent('wheel', {
-      bubbles: true,
-      cancelable: true,
-      deltaX: e.deltaX,
-      deltaY: e.deltaY,
-      deltaMode: e.deltaMode,
-      clientX: e.clientX,
-      clientY: e.clientY,
-      ctrlKey: e.ctrlKey,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      metaKey: e.metaKey,
-    });
-
-    containerRef.current.dispatchEvent(cloned);
-  };
-
-  // 描画をクリアするハンドラー
-  const handleClearDrawing = () => {
-    if (drawingRef.current) {
-      drawingRef.current.clear();
-    }
-  };
 
   // 描画キャンバスは常に有効にして内容を保持する
   const isDrawingEnabled = true;
@@ -168,11 +142,6 @@ export default function CandlestickChart({
     }
   }, [drawingEnabled]);
 
-  // 型安全なモード変更ハンドラー
-  const handleModeChange = (newMode: DrawingMode) => {
-    setMode(newMode);
-  };
-
   // インジケーターのトグル処理を最適化
   const handleToggleIndicator = useCallback((key: keyof typeof indicators, value: boolean) => {
     if (onIndicatorsChange) {
@@ -184,9 +153,6 @@ export default function CandlestickChart({
     }
   }, [indicators, onIndicatorsChange]);
 
-  const toggleSidebar = () => {
-    setShowSidebar(!showSidebar);
-  };
 
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
@@ -210,51 +176,21 @@ export default function CandlestickChart({
             data-testid="chart-container"
           />
           
-          {/* サイドバー表示/非表示トグルボタン - サイドバー非表示時のみ表示 */}
-          {!showSidebar && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute top-2 left-2 z-30 w-8 h-8 p-1.5"
-              onClick={toggleSidebar}
-              title="サイドバーを表示"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          )}
-          
-          {/* サイドバーを条件付きでレンダリング - トグルボタンと同じ位置に配置 */}
+          <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
           {showSidebar && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute top-2 left-2 z-30 w-8 h-8 p-1.5"
-                onClick={toggleSidebar}
-                title="サイドバーを非表示"
-              >
-                <EyeOff className="h-4 w-4" />
-              </Button>
-              <ChartSidebar
-                mode={mode}
-                onModeChange={handleModeChange}
-                onClear={handleClearDrawing}
-                className="absolute top-12 left-2 z-20" // ボタンの下に配置
-              />
-            </>
+            <ChartSidebar
+              mode={mode}
+              onModeChange={handleModeChange}
+              onClear={handleClearDrawing}
+              className="absolute top-12 left-2 z-20"
+            />
           )}
           {mode === 'eraser' && (
-            <div className="absolute top-2 right-2 bg-background/90 p-3 rounded-md border border-input z-30 flex flex-col gap-2" style={{ width: '180px' }}>
-              <div className="text-xs font-medium text-muted-foreground mb-1">消しゴムサイズ</div>
-              <Slider
-                value={[eraserSize]}
-                min={10}
-                max={100}
-                step={5}
-                onValueChange={(values) => setEraserSize(values[0])}
-              />
-              <div className="text-xs text-right text-muted-foreground mt-1">{eraserSize}px</div>
-            </div>
+            <EraserSizeControl
+              size={eraserSize}
+              onChange={setEraserSize}
+              className="absolute top-2 right-2 z-30 w-[180px]"
+            />
           )}
           <div
             className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? 'pointer-events-none' : ''}`}
