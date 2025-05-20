@@ -1,4 +1,5 @@
 import type { BinanceKline, BinanceKlineObject } from '@/types/binance';
+import type { OrderBookEntry } from '@/types';
 import { BINANCE_BASE_URL } from '@/lib/env';
 import { fetchWithTimeout } from '@/lib/fetch';
 
@@ -64,4 +65,28 @@ export async function fetchKlines(
   }
   const data = (await res.json()) as BinanceKline[];
   return data.map(klineTupleToObject);
+}
+
+/**
+ * オーダーブックを取得する
+ * @param symbol - 例: "BTCUSDT"
+ * @param limit - 取得する深さ (デフォルト20)
+ * @returns bidsとasks
+ */
+export async function fetchOrderBook(
+  symbol: string,
+  limit = 20,
+): Promise<{ bids: OrderBookEntry[]; asks: OrderBookEntry[] }> {
+  const url = new URL('/api/v3/depth', BASE_URL)
+  url.searchParams.set('symbol', symbol)
+  url.searchParams.set('limit', String(limit))
+
+  const res = await fetchWithTimeout(url.toString())
+  if (!res.ok) {
+    throw new Error(`Failed to fetch order book: ${res.status} ${res.statusText}`)
+  }
+  const data = (await res.json()) as { bids: [string, string][]; asks: [string, string][] }
+  const bids = data.bids.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }))
+  const asks = data.asks.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }))
+  return { bids, asks }
 }

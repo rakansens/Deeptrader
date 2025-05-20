@@ -16,6 +16,7 @@ interface IndicatorPanelProps {
    * 戻り値はクリーンアップ関数
    */
   initChart?: (container: HTMLDivElement) => () => void
+  children?: React.ReactNode
 }
 
 export default function IndicatorPanel({
@@ -23,7 +24,8 @@ export default function IndicatorPanel({
   height,
   className,
   onClose,
-  initChart
+  initChart,
+  children
 }: IndicatorPanelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -49,7 +51,7 @@ export default function IndicatorPanel({
           <X className="w-3 h-3" />
         </button>
       </div>
-      <div ref={containerRef} className="flex-1" />
+      <div ref={containerRef} className="flex-1 overflow-auto">{children}</div>
     </div>
   )
 }

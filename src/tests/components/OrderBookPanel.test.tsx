@@ -1,0 +1,22 @@
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import OrderBookPanel from '@/components/chart/OrderBookPanel'
+import useOrderBook from '@/hooks/use-order-book'
+
+jest.mock('@/hooks/use-order-book')
+const mockUseOrderBook = useOrderBook as jest.Mock
+
+describe('OrderBookPanel', () => {
+  it('renders bid and ask tables', () => {
+    mockUseOrderBook.mockReturnValue({
+      bids: [{ price: 1, quantity: 2 }],
+      asks: [{ price: 1.1, quantity: 3 }],
+      connected: true
+    })
+    render(<OrderBookPanel symbol="BTCUSDT" height={100} />)
+    expect(screen.getByTestId('orderbook-panel')).toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText('1.1')).toBeInTheDocument()
+  })
+})
+

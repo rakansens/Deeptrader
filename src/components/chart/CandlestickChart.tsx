@@ -12,6 +12,7 @@ import useWindowSize from "@/hooks/use-window-size";
 import useDrawingControls from "@/hooks/use-drawing-controls";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
+import OrderBookPanel from "./OrderBookPanel";
 import DrawingCanvas from "./drawing-canvas";
 import type {
   DrawingCanvasHandle,
@@ -22,6 +23,7 @@ import type {
 import type { IndicatorSettings } from "@/types/chart";
 import { DEFAULT_INDICATOR_SETTINGS, DRAWING_MODES } from "@/types/chart";
 import ChartSidebar from "./ChartSidebar";
+const SHOW_ORDER_BOOK = true;
 import SidebarToggleButton from "./sidebar-toggle-button";
 import EraserSizeControl from "./eraser-size-control";
 import CandleCountdown from "./CandleCountdown";
@@ -249,75 +251,84 @@ export default function CandlestickChart({
 
   return (
     <div className={className} id="chart-panel">
-      <div className="flex flex-col space-y-4">
-        <div className="relative w-full h-full">
-          <div
-            ref={containerRef}
-            className="w-full rounded-md overflow-hidden border border-border"
-            style={{ height: chartHeight }}
-            data-testid="chart-container"
-          />
-
-          {!loading && !error && candles.length > 0 && (
-            <CandleCountdown
-              interval={initialInterval}
-              backgroundColor={countdownBgColor}
-              textColor={countdownTextColor}
-              className="absolute top-2 right-16 z-20"
+      <div className="flex w-full gap-4">
+        <div className="flex flex-col flex-1 space-y-4">
+          <div className="relative w-full h-full">
+            <div
+              ref={containerRef}
+              className="w-full rounded-md overflow-hidden border border-border"
+              style={{ height: chartHeight }}
+              data-testid="chart-container"
             />
-          )}
-
-          <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
-          {showSidebar && (
-            <ChartSidebar
-              mode={mode}
-              onModeChange={handleModeChange}
-              onClear={handleClearDrawing}
-              className="absolute top-12 left-2 z-20"
-            />
-          )}
-          {mode === DRAWING_MODES[6] && (
-            <EraserSizeControl
-              size={eraserSize}
-              onChange={setEraserSize}
-              className="absolute top-2 right-2 z-30 w-[180px]"
-            />
-          )}
-          <div
-            className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? "pointer-events-none" : ""}`}
-            onWheel={handleWheel}
-          >
-            <DrawingCanvas
-              ref={drawingRef}
-              enabled={isDrawingEnabled}
-              className="w-full h-full"
-              color={drawingColor}
-              strokeWidth={2}
-              mode={mode}
-              eraserSize={eraserSize}
-            />
+            
+            {!loading && !error && candles.length > 0 && (
+              <CandleCountdown
+                interval={initialInterval}
+                backgroundColor={countdownBgColor}
+                textColor={countdownTextColor}
+                className="absolute top-2 right-16 z-20"
+              />
+            )}
+            
+            <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
+            {showSidebar && (
+              <ChartSidebar
+                mode={mode}
+                onModeChange={handleModeChange}
+                onClear={handleClearDrawing}
+                className="absolute top-12 left-2 z-20"
+              />
+            )}
+            {mode === DRAWING_MODES[6] && (
+              <EraserSizeControl
+                size={eraserSize}
+                onChange={setEraserSize}
+                className="absolute top-2 right-2 z-30 w-[180px]"
+              />
+            )}
+            <div
+              className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? "pointer-events-none" : ""}`}
+              onWheel={handleWheel}
+            >
+              <DrawingCanvas
+                ref={drawingRef}
+                enabled={isDrawingEnabled}
+                className="w-full h-full"
+                color={drawingColor}
+                strokeWidth={2}
+                mode={mode}
+                eraserSize={eraserSize}
+              />
+            </div>
           </div>
+          {indicators.rsi && (
+            <RsiPanel
+              data={rsi}
+              chart={chartRef.current}
+              height={subHeight}
+              lineWidth={indicatorSettings.lineWidth.rsi}
+              color={indicatorSettings.colors?.rsi}
+              onClose={() => handleToggleIndicator("rsi", false)}
+            />
+          )}
+          {indicators.macd && (
+            <MacdPanel
+              macd={macd}
+              signal={signal}
+              histogram={histogram}
+              chart={chartRef.current}
+              height={subHeight}
+              lineWidth={indicatorSettings.lineWidth.macd}
+              macdColor={indicatorSettings.colors?.macd}
+              onClose={() => handleToggleIndicator("macd", false)}
+            />
+          )}
         </div>
-        {indicators.rsi && (
-          <RsiPanel
-            data={rsi}
-            chart={chartRef.current}
-            height={subHeight}
-            lineWidth={indicatorSettings.lineWidth.rsi}
-            color={indicatorSettings.colors?.rsi}
-            onClose={() => handleToggleIndicator("rsi", false)}
-          />
-        )}
-        {indicators.macd && (
-          <MacdPanel
-            macd={macd}
-            signal={signal}
-            histogram={histogram}
-            chart={chartRef.current}
-            height={subHeight}
-            lineWidth={indicatorSettings.lineWidth.macd}
-            macdColor={indicatorSettings.colors?.macd}
-            onClose={() => handleToggleIndicator("macd", false)}
+        {SHOW_ORDER_BOOK && (
+          <OrderBookPanel 
+            symbol={initialSymbol} 
+            height={chartHeight} 
+            className="w-[250px] flex-shrink-0"
           />
         )}
       </div>
