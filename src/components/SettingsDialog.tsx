@@ -32,7 +32,6 @@ export function SettingsDialog() {
   
   // 設定を適用（保存）
   const applySettings = () => {
-    console.log("設定を保存します:", { 音声入力: localVoiceEnabled, 読み上げ: localSpeechEnabled });
     
     // localStorageに直接書き込む
     localStorage.setItem("voiceInputEnabled", String(localVoiceEnabled));
@@ -45,7 +44,6 @@ export function SettingsDialog() {
     // 設定の保存を確認
     const storedVoice = localStorage.getItem("voiceInputEnabled");
     const storedSpeech = localStorage.getItem("speechSynthesisEnabled");
-    console.log("保存後の確認:", { 音声入力: storedVoice, 読み上げ: storedSpeech });
     
     toast({
       title: "設定を保存しました",
@@ -69,10 +67,6 @@ export function SettingsDialog() {
       const storedVoice = localStorage.getItem("voiceInputEnabled");
       const storedSpeech = localStorage.getItem("speechSynthesisEnabled");
       
-      console.log("ダイアログオープン時の値:", { 
-        hooksの値: { 音声入力: voiceInputEnabled, 読み上げ: speechSynthesisEnabled },
-        localStorage値: { 音声入力: storedVoice, 読み上げ: storedSpeech }
-      });
       
       // LocalStorageの値を優先
       if (storedVoice !== null) {

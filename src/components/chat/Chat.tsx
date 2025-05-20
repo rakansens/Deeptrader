@@ -121,6 +121,8 @@ export default function Chat() {
   useEffect(() => {
     // この関数では何もしないように変更
     // 読み上げはメッセージバブルの個別ボタンから行うため
+    
+    // 以下の処理を無効化
   }, [messages, loading, speechSynthesisEnabled]); // 依存配列はそのまま残す
 
   // エラーが発生した場合にトースト表示
@@ -151,6 +153,8 @@ export default function Chat() {
   return (
     <div className="flex h-full relative">
       <div
+        id="conversationSidebar"
+        aria-hidden={!sidebarOpen}
         className={cn(
           'relative overflow-hidden transition-all duration-300',
           sidebarOpen ? 'w-full md:w-56' : 'w-0'
@@ -180,6 +184,8 @@ export default function Chat() {
               variant="ghost"
               size="icon"
               aria-label={sidebarOpen ? "スレッドを非表示" : "スレッドを表示"}
+              aria-expanded={sidebarOpen}
+              aria-controls="conversationSidebar"
               onClick={toggleSidebar}
               className="text-muted-foreground hover:text-foreground"
             >

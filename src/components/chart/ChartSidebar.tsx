@@ -1,6 +1,5 @@
 'use client';
 
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Pencil,
   TrendingUp,
@@ -12,6 +11,7 @@ import {
   Trash2,
   Eraser,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { DrawingMode } from '@/types/chart';
 
 interface ChartSidebarProps {
@@ -20,6 +20,23 @@ interface ChartSidebarProps {
   onClear?: () => void;
   className?: string;
 }
+
+interface ToolInfo {
+  mode: DrawingMode;
+  icon: LucideIcon;
+  label: string;
+}
+
+const DRAWING_TOOLS: ToolInfo[] = [
+  { mode: null, icon: MousePointer, label: '選択ツール' },
+  { mode: 'freehand', icon: Pencil, label: 'フリーハンド描画' },
+  { mode: 'trendline', icon: TrendingUp, label: 'トレンドライン' },
+  { mode: 'fibonacci', icon: BarChart3, label: 'フィボナッチリトレースメント' },
+  { mode: 'horizontal-line', icon: Minus, label: '水平線' },
+  { mode: 'box', icon: Square, label: 'ボックス描画' },
+  { mode: 'arrow', icon: ArrowUpRight, label: '矢印マーカー' },
+  { mode: 'eraser', icon: Eraser, label: '消しゴム' },
+];
 
 /**
  * チャート横に表示する描画ツールバー
@@ -49,101 +66,25 @@ export default function ChartSidebar({
       data-testid="chart-sidebar"
       className={`flex flex-col gap-2 p-2 bg-background/80 backdrop-blur-sm rounded-md border ${className ?? ''}`}
     >
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive(null) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick(null)}
-        aria-label="選択ツール"
-        title="選択ツール"
-      >
-        <MousePointer className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('freehand') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick('freehand')}
-        aria-label="フリーハンド描画"
-        title="フリーハンド描画"
-      >
-        <Pencil className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('trendline') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick('trendline')}
-        aria-label="トレンドライン"
-        title="トレンドライン"
-      >
-        <TrendingUp className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('fibonacci') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick('fibonacci')}
-        aria-label="フィボナッチリトレースメント"
-        title="フィボナッチリトレースメント"
-      >
-        <BarChart3 className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('horizontal-line')
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick('horizontal-line')}
-        aria-label="水平線"
-        title="水平線"
-      >
-        <Minus className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('box')
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick('box')}
-        aria-label="ボックス描画"
-        title="ボックス描画"
-      >
-        <Square className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('arrow')
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-        }`}
-        onClick={() => handleToolClick('arrow')}
-        aria-label="矢印マーカー"
-        title="矢印マーカー"
-      >
-        <ArrowUpRight className="h-4 w-4" />
-      </button>
-
-      <button
-        className={`w-full p-2 rounded-md flex items-center justify-center ${
-          isActive('eraser')
-            ? 'bg-red-500 text-white'
-            : 'bg-red-100 text-red-500 hover:bg-red-200'
-        }`}
-        onClick={() => handleToolClick('eraser')}
-        aria-label="消しゴム"
-        title="消しゴム"
-      >
-        <Eraser className="h-4 w-4" />
-      </button>
+      {DRAWING_TOOLS.map(({ mode: toolMode, icon: Icon, label }) => (
+        <button
+          key={label}
+          className={`w-full p-2 rounded-md flex items-center justify-center ${
+            toolMode === 'eraser'
+              ? isActive(toolMode)
+                ? 'bg-red-500 text-white'
+                : 'bg-red-100 text-red-500 hover:bg-red-200'
+              : isActive(toolMode)
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+          onClick={() => handleToolClick(toolMode)}
+          aria-label={label}
+          title={label}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
 
       {onClear && (
         <button
