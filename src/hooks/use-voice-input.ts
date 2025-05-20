@@ -22,7 +22,7 @@ export function useVoiceInput({
   lang = "ja-JP",
 }: UseVoiceInputOptions = {}): UseVoiceInput {
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isSendingRef = useRef(false);
 
   const stopListening = () => {
@@ -41,24 +41,25 @@ export function useVoiceInput({
       return;
     }
 
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionCtor =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
     
     // ブラウザが音声認識をサポートしていない場合
-    if (!SpeechRecognition) {
+    if (!SpeechRecognitionCtor) {
       return;
     }
-    
-    const rec: any = new SpeechRecognition();
+
+    const rec: SpeechRecognition = new SpeechRecognitionCtor();
     recognitionRef.current = rec;
     rec.lang = lang;
     rec.interimResults = false;
-    rec.onresult = (e: any) => {
+    rec.onresult = (e: SpeechRecognitionEvent) => {
       // 無効化済みインスタンスや送信中は無視
       if (rec !== recognitionRef.current || isSendingRef.current) return;
 
       const text = Array.from(e.results)
-        .map((r: any) => r[0].transcript)
+        .map((r) => r[0].transcript)
         .join("");
       
       if (onResult) {

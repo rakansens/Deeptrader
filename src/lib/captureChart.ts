@@ -152,17 +152,20 @@ export async function captureChart(): Promise<string | null> {
     // 方法1: Lightweight Charts のネイティブスクリーンショット機能を使用
     if (chartInstance) {
       logger.debug('Using Lightweight Charts native screenshot API');
-      
+
       try {
         // レンダリングの完了を保証するために少し待機
         await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // takeScreenshotメソッドが存在するか確認
-        if (typeof chartInstance.takeScreenshot === 'function') {
+
+        // チャートコンテナがまだDOMに存在するか確認
+        const el = (window as any).__getChartElement?.();
+        if (!el || !document.contains(el)) {
+          logger.warn('Chart container not attached; skipping native screenshot');
+        } else if (typeof chartInstance.takeScreenshot === 'function') {
           // チャートスクリーンショットをPNG画像としてエクスポート
           const canvas = await chartInstance.takeScreenshot();
           logger.debug('Chart screenshot successful via native API');
-          
+
           // 高品質なPNG画像を生成（品質1.0、最高画質）
           return canvas.toDataURL('image/png', 1.0);
         } else {
