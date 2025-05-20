@@ -1,5 +1,6 @@
 import type { BinanceKline } from '@/types/binance';
 import { BINANCE_BASE_URL } from '@/lib/env';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 /**
  * Binance APIの基本URL
@@ -23,7 +24,7 @@ export async function fetchKlines(
   url.searchParams.set('interval', interval);
   url.searchParams.set('limit', String(limit));
 
-  const res = await fetch(url.toString());
+  const res = await fetchWithTimeout(url.toString());
   if (!res.ok) {
     throw new Error(`Failed to fetch klines: ${res.status} ${res.statusText}`);
   }

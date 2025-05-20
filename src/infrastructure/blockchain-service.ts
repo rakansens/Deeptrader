@@ -9,6 +9,7 @@ import {
   BLOCKCHAIR_API_KEY,
   BLOCKCHAIR_BASE_URL,
 } from '@/lib/env';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 const BASE_URL = BLOCKCHAIR_BASE_URL;
 const API_KEY = BLOCKCHAIR_API_KEY;
@@ -23,7 +24,7 @@ export async function getAddressInfo(address: string): Promise<AddressInfo> {
     url.searchParams.append('key', API_KEY);
   }
 
-  const res = await fetch(url.toString());
+  const res = await fetchWithTimeout(url.toString());
   if (!res.ok) {
     throw new Error(`Failed to fetch address info: ${res.status} ${res.statusText}`);
   }

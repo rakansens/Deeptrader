@@ -1,6 +1,7 @@
 // src/infrastructure/sentiment-service.ts
 import { logger } from '@/lib/logger';
 import { SENTIMENT_API_KEY, SENTIMENT_API_URL } from '@/lib/env';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 export interface SentimentMetrics {
   /** 数値化されたセンチメントスコア (0-100) */
@@ -21,7 +22,7 @@ const API_KEY = SENTIMENT_API_KEY;
 export async function fetchSentiment(symbol: string): Promise<SentimentMetrics> {
   const url = `${BASE_URL}?symbol=${encodeURIComponent(symbol)}&apikey=${API_KEY}&limit=1`;
   logger.debug('fetchSentiment url:', url);
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch sentiment: ${res.status} ${res.statusText}`);

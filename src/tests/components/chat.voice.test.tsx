@@ -87,7 +87,11 @@ describe('Chat voice features', () => {
   it('speaks assistant reply when enabled', async () => {
     const user = userEvent.setup()
     const speak = jest.fn()
-    ;(window as any).speechSynthesis = { speak }
+    ;(window as any).speechSynthesis = {
+      speak,
+      cancel: jest.fn(),
+      getVoices: () => [{ lang: 'ja-JP', name: 'ja' }]
+    }
     ;(window as any).SpeechSynthesisUtterance = function (this: any, t: string) { this.text = t }
     const encoder = new TextEncoder()
     const stream = new ReadableStream({

@@ -1,5 +1,6 @@
 import type { Json, OrderSide, OrderType } from "@/types";
 import { BITGET_API_KEY, BITGET_BASE_URL } from '@/lib/env';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 /**
  * Bitget APIの基本URL
@@ -26,7 +27,7 @@ export interface Ticker {
  */
 export async function getTicker(symbol: string): Promise<Ticker> {
   const url = `${BASE_URL}/api/v2/spot/market/ticker?symbol=${symbol}`;
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch ticker: ${res.status} ${res.statusText}`);
@@ -80,7 +81,7 @@ export async function placeOrder(req: OrderRequest): Promise<void> {
     extraParams: req.extraParams,
   });
 
-  const res = await fetch(url, { method: "POST", headers, body });
+  const res = await fetchWithTimeout(url, { method: "POST", headers, body });
   if (!res.ok) {
     throw new Error(`Order failed: ${res.status} ${res.statusText}`);
   }

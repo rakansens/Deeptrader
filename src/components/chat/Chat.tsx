@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
 import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
@@ -27,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { useSettings } from "@/hooks/use-settings";
+import { logger } from "@/lib/logger";
 import {
   Tooltip,
   TooltipContent,
@@ -221,7 +223,11 @@ export default function Chat() {
             </DropdownMenu>
           </div>
         </div>
-        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2" aria-live="polite">
+        <div
+          ref={listRef}
+          className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2"
+          aria-live="polite"
+        >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-4">質問や指示を入力してください</p>
@@ -271,7 +277,11 @@ export default function Chat() {
           )}
         </div>
         <div className="mt-4 relative">
+          <Label htmlFor="chat-input" className="sr-only">
+            メッセージ入力
+          </Label>
           <Textarea
+            id="chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="メッセージを入力..."
@@ -334,7 +344,19 @@ export default function Chat() {
                         description: "チャートの画像を取得しています..." 
                       });
                       
-                      const url = await captureChart();
+                      // 待機して描画を安定させる
+                      await new Promise(resolve => setTimeout(resolve, 500));
+                      
+                      // チャートキャプチャを実行（複数回試行する）
+                      let url: string | null = null;
+                      for (let attempt = 0; attempt < 3 && !url; attempt++) {
+                        if (attempt > 0) {
+                          // 再試行前に待機
+                          await new Promise(resolve => setTimeout(resolve, 300));
+                          logger.debug(`チャートキャプチャ再試行 (${attempt + 1}/3)`);
+                        }
+                        url = await captureChart();
+                      }
                       
                       if (url) {
                         // 画像データのプレビュー（デバッグ用）
@@ -344,7 +366,7 @@ export default function Chat() {
                           debugImg.style.position = 'fixed';
                           debugImg.style.top = '0';
                           debugImg.style.right = '0';
-                          debugImg.style.width = '200px';
+                          debugImg.style.width = '300px'; // 大きめに表示
                           debugImg.style.zIndex = '9999';
                           debugImg.style.border = '2px solid red';
                           debugImg.style.background = '#fff';
@@ -352,12 +374,12 @@ export default function Chat() {
                           debugImg.addEventListener('click', () => document.body.removeChild(debugImg));
                           document.body.appendChild(debugImg);
                           
-                          // 5秒後に自動で消える
+                          // 10秒後に自動で消える（時間を延長）
                           setTimeout(() => {
                             if (document.body.contains(debugImg)) {
                               document.body.removeChild(debugImg);
                             }
-                          }, 5000);
+                          }, 10000);
                         }
                         
                         // AIへ送信

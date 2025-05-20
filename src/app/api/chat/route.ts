@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 import { logger } from '@/lib/logger';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 export const runtime = 'edge';
 
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     }
 
     logger.debug('Sending request to OpenAI API');
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
         messages: openAIMessages,
         max_tokens: 1000,
       }),
+      timeout: 10000,
     });
 
     if (!res.ok || !res.body) {
