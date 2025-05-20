@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import CandlestickChart from '@/components/chart/CandlestickChart'
 import { toast } from '@/hooks/use-toast'
 import { SYMBOLS, TIMEFRAMES } from '@/constants/chart'
+import { DEFAULT_INDICATOR_SETTINGS } from '@/types/chart'
 
 jest.mock('@/hooks/use-toast', () => ({
   toast: jest.fn(),
@@ -73,7 +74,12 @@ describe('CandlestickChart', () => {
     })
     global.fetch = jest.fn().mockReturnValue(fetchPromise)
     render(
-      <CandlestickChart symbol={SYMBOLS[0].value} interval={TIMEFRAMES[0]} useApi={true} />
+      <CandlestickChart
+        symbol={SYMBOLS[0].value}
+        interval={TIMEFRAMES[0]}
+        useApi={true}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
+      />
     )
     expect(screen.getByTestId('loading')).toBeInTheDocument()
     resolveFetch!({ ok: true, json: async () => [] } as Response)
@@ -84,7 +90,12 @@ describe('CandlestickChart', () => {
   it.skip('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false } as Response)
     render(
-      <CandlestickChart symbol={SYMBOLS[0].value} interval={TIMEFRAMES[0]} useApi={true} />
+      <CandlestickChart
+        symbol={SYMBOLS[0].value}
+        interval={TIMEFRAMES[0]}
+        useApi={true}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
+      />
     )
     await waitFor(() => {})
     expect(true).toBe(true)
@@ -104,7 +115,12 @@ describe('CandlestickChart', () => {
     global.WebSocket = jest.fn(() => mockWebSocket) as any
     
     render(
-      <CandlestickChart symbol={SYMBOLS[0].value} interval={TIMEFRAMES[0]} useApi={false} />
+      <CandlestickChart
+        symbol={SYMBOLS[0].value}
+        interval={TIMEFRAMES[0]}
+        useApi={false}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
+      />
     )
     expect(screen.getByTestId('chart-container')).toBeInTheDocument()
 
@@ -151,6 +167,7 @@ describe('CandlestickChart', () => {
         interval={TIMEFRAMES[0]}
         useApi={false}
         indicators={{ ma: false, rsi: true, macd: false, boll: false }}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
 
@@ -163,6 +180,7 @@ describe('CandlestickChart', () => {
         interval={TIMEFRAMES[0]}
         useApi={false}
         indicators={{ ma: false, rsi: false, macd: true, boll: false }}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
 
@@ -188,6 +206,7 @@ describe('CandlestickChart', () => {
         interval={TIMEFRAMES[0]}
         useApi={false}
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
 
@@ -208,6 +227,7 @@ describe('CandlestickChart', () => {
         interval={TIMEFRAMES[0]}
         useApi={false}
         indicators={{ ma: false, rsi: true, macd: false, boll: false }}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
 

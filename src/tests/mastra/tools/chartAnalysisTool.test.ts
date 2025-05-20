@@ -49,7 +49,13 @@ describe('chartAnalysisTool', () => {
         timeframe: TIMEFRAMES[3],
         indicators: ['SMA', 'RSI', 'MACD', 'Bollinger'],
         patternDetection: false,
-        period: 40
+        period: 40,
+        settings: {
+          sma: 14,
+          rsi: 14,
+          macd: { short: 12, long: 26, signal: 9 },
+          boll: 20,
+        }
       }
     } as any)) as any;
     const closes = sample.map((k) => parseFloat(k[4]));

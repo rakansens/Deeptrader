@@ -13,7 +13,14 @@ import useDrawingControls from "@/hooks/use-drawing-controls";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
 import DrawingCanvas from "./drawing-canvas";
-import type { IndicatorOptions, IndicatorsChangeHandler } from "@/types/chart";
+import type {
+  DrawingCanvasHandle,
+  DrawingMode,
+  IndicatorOptions,
+  IndicatorsChangeHandler,
+} from "@/types/chart";
+import type { IndicatorSettings } from "@/types/chart";
+import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
 import ChartSidebar from "./ChartSidebar";
 import SidebarToggleButton from "./sidebar-toggle-button";
 import EraserSizeControl from "./eraser-size-control";
@@ -33,6 +40,8 @@ interface CandlestickChartProps {
   useApi?: boolean;
   indicators?: IndicatorOptions;
   onIndicatorsChange?: IndicatorsChangeHandler;
+  /** インジケーター計算期間 */
+  indicatorSettings?: IndicatorSettings;
   /** 描画キャンバスを有効にするか */
   drawingEnabled?: boolean;
   /** 描画色 */
@@ -50,6 +59,7 @@ export default function CandlestickChart({
   useApi = false,
   indicators = { ma: false, rsi: false, macd: false, boll: false },
   onIndicatorsChange,
+  indicatorSettings = DEFAULT_INDICATOR_SETTINGS,
   drawingEnabled = false,
   drawingColor = "#ef4444",
 }: CandlestickChartProps) {
@@ -99,7 +109,7 @@ export default function CandlestickChart({
     bollLower = [],
     loading,
     error,
-  } = useCandlestickData(initialSymbol, initialInterval);
+  } = useCandlestickData(initialSymbol, initialInterval, indicatorSettings);
 
   const chartRef = useChartInstance({
     container: containerRef.current,

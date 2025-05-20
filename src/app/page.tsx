@@ -13,6 +13,7 @@ import {
   type Timeframe,
   type SymbolValue,
 } from '@/constants/chart';
+import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/types/chart';
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,
@@ -31,6 +32,7 @@ export default function Home() {
   const [timeframe, setTimeframe] = useState<Timeframe>(TIMEFRAMES[3]);
   const [symbol, setSymbol] = useState<SymbolValue>(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
+  const [settings, setSettings] = useState<IndicatorSettings>(DEFAULT_INDICATOR_SETTINGS);
   const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);
 
   // 型安全なハンドラー関数を定義
@@ -80,6 +82,8 @@ export default function Home() {
                     onSymbolChange={handleSymbolChange}
                     indicators={indicators}
                     onIndicatorsChange={setIndicators}
+                    settings={settings}
+                    onSettingsChange={setSettings}
                   />
                 </CardHeader>
                 <CardContent>
@@ -104,6 +108,7 @@ export default function Home() {
                       interval={timeframe}
                       symbol={symbol}
                       onIndicatorsChange={setIndicators}
+                      indicatorSettings={settings}
                       drawingColor={drawingColor}
                     />
                   </div>

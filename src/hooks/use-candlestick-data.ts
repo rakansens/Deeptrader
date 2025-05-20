@@ -9,6 +9,8 @@ import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import useBinanceSocket from "./use-binance-socket";
 import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
 import { RsiCalculator } from "@/lib/indicators";
+import type { IndicatorSettings } from "@/types/chart";
+import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
 
 export interface UseCandlestickDataResult {
@@ -34,6 +36,7 @@ export interface UseCandlestickDataResult {
 export function useCandlestickData(
   symbol: SymbolValue,
   interval: Timeframe,
+  settings: IndicatorSettings = DEFAULT_INDICATOR_SETTINGS,
 ): UseCandlestickDataResult {
   const [candles, setCandles] = useState<CandlestickData<UTCTimestamp>[]>(() => {
     try {
@@ -62,7 +65,7 @@ export function useCandlestickData(
   const [error, setError] = useState<string | null>(null);
 
   const pricesRef = useRef<number[]>([]);
-  const rsiCalcRef = useRef<RsiCalculator>(new RsiCalculator(14));
+  const rsiCalcRef = useRef<RsiCalculator>(new RsiCalculator(settings.rsi));
 
   // 初期データ取得
   useEffect(() => {
@@ -71,7 +74,7 @@ export function useCandlestickData(
       setLoading(true);
       setError(null);
       pricesRef.current = [];
-      rsiCalcRef.current = new RsiCalculator(14);
+      rsiCalcRef.current = new RsiCalculator(settings.rsi);
       setMa([]);
       setRsi([]);
       setMacd([]);
@@ -113,11 +116,9 @@ export function useCandlestickData(
           };
           v.push(volume);
           pricesRef.current.push(candle.close);
-          const ind = calculateIndicators(
-            pricesRef.current,
-            time,
-            rsiCalcRef.current,
-          );
+          // RSIは独自に計算して管理
+          rsiCalcRef.current.update(candle.close);
+          const ind = calculateIndicators(pricesRef.current, time, settings);
           if (ind.ma) maArr.push(ind.ma as LineData<UTCTimestamp>);
           if (ind.rsi) rsiArr.push(ind.rsi as LineData<UTCTimestamp>);
           if (ind.macd) macdArr.push(ind.macd as LineData<UTCTimestamp>);
@@ -159,7 +160,7 @@ export function useCandlestickData(
     }
     load();
     return () => controller.abort();
-  }, [symbol, interval]);
+  }, [symbol, interval, settings]);
 
   // WebSocketメッセージ処理
   const handleMessage = useCallback(
@@ -205,11 +206,11 @@ export function useCandlestickData(
       });
       pricesRef.current.push(candle.close);
       if (pricesRef.current.length > 1000) pricesRef.current.shift();
-      const ind = calculateIndicators(
-        pricesRef.current,
-        time,
-        rsiCalcRef.current,
-      );
+      
+      // RSIは独自に計算して管理
+      rsiCalcRef.current.update(candle.close);
+      const ind = calculateIndicators(pricesRef.current, time, settings);
+      
       if (ind.ma) {
         setMa((prev) => upsertSeries(prev, ind.ma as LineData<UTCTimestamp>, 500));
       }
@@ -236,7 +237,7 @@ export function useCandlestickData(
         );
       }
     },
-    [symbol, interval],
+    [symbol, interval, settings],
   );
 
   const { status } = useBinanceSocket<BinanceKlineMessage>({

@@ -1,4 +1,6 @@
 import type { LineData, UTCTimestamp } from "lightweight-charts";
+import type { IndicatorSettings } from "@/types/chart";
+import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
 import {
   computeBollinger,
   computeMACD,
@@ -21,28 +23,43 @@ export interface IndicatorSeries {
  * 価格履歴からインジケーターを計算する
  * @param prices - 終値の配列
  * @param time - データ時刻
- * @param rsiCalc - RSI計算機インスタンス（オプション）
+ * @param settingsOrRsiCalc - RSI計算機インスタンスまたは設定オブジェクト
  * @returns 計算結果
  */
 export function calculateIndicators(
   prices: number[],
   time: UTCTimestamp,
-  rsiCalc?: RsiCalculator,
+  settingsOrRsiCalc: IndicatorSettings | RsiCalculator = DEFAULT_INDICATOR_SETTINGS,
 ): IndicatorSeries {
   const result: IndicatorSeries = {};
-  const ma = computeSMA(prices, 14);
+  const settings = settingsOrRsiCalc instanceof RsiCalculator 
+    ? DEFAULT_INDICATOR_SETTINGS 
+    : settingsOrRsiCalc;
+  
+  const ma = computeSMA(prices, settings.sma);
   if (ma !== null) result.ma = { time, value: ma };
-  const rsi = rsiCalc
-    ? rsiCalc.update(prices[prices.length - 1])
-    : computeRSI(prices, 14);
+
+  // RSIの計算方法を決定
+  let rsi: number | null;
+  if (settingsOrRsiCalc instanceof RsiCalculator) {
+    rsi = settingsOrRsiCalc.update(prices[prices.length - 1]);
+  } else {
+    rsi = computeRSI(prices, settings.rsi);
+  }
   if (rsi !== null) result.rsi = { time, value: rsi };
-  const macd = computeMACD(prices);
+
+  const macd = computeMACD(
+    prices,
+    settings.macd.short,
+    settings.macd.long,
+    settings.macd.signal,
+  );
   if (macd) {
     result.macd = { time, value: macd.macd };
     result.signal = { time, value: macd.signal };
     result.histogram = { time, value: macd.histogram };
   }
-  const boll = computeBollinger(prices);
+  const boll = computeBollinger(prices, settings.boll);
   if (boll) {
     result.bollUpper = { time, value: boll.upper };
     result.bollLower = { time, value: boll.lower };

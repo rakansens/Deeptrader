@@ -4,11 +4,28 @@ import type { LineData, UTCTimestamp } from "lightweight-charts";
 
 describe("candlestick-utils", () => {
   describe("calculateIndicators", () => {
-    it("returns indicator values when enough data", () => {
+    it("returns indicator values when enough data with RsiCalculator", () => {
       const prices = Array.from({ length: 50 }, (_, i) => i + 1);
       const rsiCalc = new RsiCalculator(14);
       prices.forEach((p) => rsiCalc.update(p));
       const res = calculateIndicators(prices, 1 as UTCTimestamp, rsiCalc);
+      expect(res.ma).toBeDefined();
+      expect(res.rsi).toBeDefined();
+      expect(res.macd).toBeDefined();
+      expect(res.signal).toBeDefined();
+      expect(res.histogram).toBeDefined();
+      expect(res.bollUpper).toBeDefined();
+      expect(res.bollLower).toBeDefined();
+    });
+
+    it("returns indicator values when enough data with settings", () => {
+      const prices = Array.from({ length: 50 }, (_, i) => i + 1);
+      const res = calculateIndicators(prices, 1 as UTCTimestamp, {
+        sma: 10,
+        rsi: 10,
+        macd: { short: 5, long: 8, signal: 3 },
+        boll: 10,
+      });
       expect(res.ma).toBeDefined();
       expect(res.rsi).toBeDefined();
       expect(res.macd).toBeDefined();

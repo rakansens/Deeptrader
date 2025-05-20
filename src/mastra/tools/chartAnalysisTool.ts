@@ -4,8 +4,9 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
-import { computeSMA, computeRSI, computeBollinger, MacdCalculator } from '@/lib/indicators';
+import { computeSMA, computeRSI, computeBollinger, computeMACD } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
+import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/types/chart';
 import type { BinanceKline } from '@/types/binance';
 import type { IndicatorResult } from '@/types';
 
@@ -44,6 +45,21 @@ export const chartAnalysisTool = createTool({
       .describe("計算するテクニカル指標のリスト (例: ['RSI', 'MACD', 'Bollinger'])"),
     patternDetection: z.boolean().optional().describe('チャートパターン検出を実行するかどうか'),
     period: z.number().optional().describe('分析する期間（バー数）'),
+    settings: z
+      .object({
+        sma: z.number().optional(),
+        rsi: z.number().optional(),
+        macd: z
+          .object({
+            short: z.number().optional(),
+            long: z.number().optional(),
+            signal: z.number().optional(),
+          })
+          .optional(),
+        boll: z.number().optional(),
+      })
+      .optional()
+      .describe('各インジケーターの計算期間設定'),
   }),
 
   execute: async ({ context }) => {
@@ -54,7 +70,14 @@ export const chartAnalysisTool = createTool({
       indicators = ['SMA', 'RSI', 'MACD', 'Bollinger'],
       patternDetection = false,
       period = 100,
+      settings = {},
     } = context;
+
+    const mergedSettings: IndicatorSettings = {
+      ...DEFAULT_INDICATOR_SETTINGS,
+      ...settings,
+      macd: { ...DEFAULT_INDICATOR_SETTINGS.macd, ...settings.macd },
+    };
 
     let klines: BinanceKline[];
     try {
@@ -69,23 +92,23 @@ export const chartAnalysisTool = createTool({
     for (const ind of indicators) {
       const name = ind.toUpperCase();
       if (name === 'SMA') {
-        const value = computeSMA(closes, 14);
+        const value = computeSMA(closes, mergedSettings.sma);
         if (value !== null) results.push({ name: 'SMA', value });
       } else if (name === 'RSI') {
-        const value = computeRSI(closes, 14);
+        const value = computeRSI(closes, mergedSettings.rsi);
         if (value !== null) results.push({ name: 'RSI', value });
       } else if (name === 'MACD') {
-        const calc = new MacdCalculator();
-        let macdRes: { macd: number; signal: number; histogram: number } | null = null;
-        for (const p of closes) {
-          const r = calc.update(p);
-          if (r) macdRes = r;
-        }
-        if (macdRes) {
-          results.push({ name: 'MACD', macd: macdRes.macd, signal: macdRes.signal, histogram: macdRes.histogram });
+        const macd = computeMACD(
+          closes,
+          mergedSettings.macd.short,
+          mergedSettings.macd.long,
+          mergedSettings.macd.signal,
+        );
+        if (macd) {
+          results.push({ name: 'MACD', macd: macd.macd, signal: macd.signal, histogram: macd.histogram });
         }
       } else if (name === 'BOLLINGER' || name === 'BOLLINGERBANDS' || name === 'BOLLINGER_BANDS') {
-        const band = computeBollinger(closes);
+        const band = computeBollinger(closes, mergedSettings.boll);
         if (band) results.push({ name: 'Bollinger', upper: band.upper, lower: band.lower });
       }
     }

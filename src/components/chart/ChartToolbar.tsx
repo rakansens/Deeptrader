@@ -9,10 +9,18 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { TrendingUp, Activity, BarChart3, Waves } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+  DialogHeader,
+} from '@/components/ui/dialog'
+import { TrendingUp, Activity, BarChart3, Waves, Settings } from 'lucide-react'
 import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
+  IndicatorSettings,
 } from '@/types/chart'
 import {
   TIMEFRAMES,
@@ -28,6 +36,8 @@ interface ChartToolbarProps {
   onSymbolChange?: (symbol: SymbolValue) => void
   indicators: IndicatorOptions
   onIndicatorsChange: IndicatorsChangeHandler
+  settings: IndicatorSettings
+  onSettingsChange: (s: IndicatorSettings) => void
 }
 
 
@@ -38,6 +48,8 @@ export default function ChartToolbar({
   onSymbolChange,
   indicators,
   onIndicatorsChange,
+  settings,
+  onSettingsChange,
 }: ChartToolbarProps) {
   return (
     <div 
@@ -124,6 +136,122 @@ export default function ChartToolbar({
           </Label>
         </div>
         <ThemeToggle />
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              className="p-1 rounded hover:bg-accent"
+              aria-label="Indicator settings"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          </DialogTrigger>
+          <DialogContent className="w-80">
+            <DialogHeader>
+              <DialogTitle>指標設定</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <label className="flex items-center justify-between text-sm">
+                <span>SMA</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.sma}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      sma: Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>RSI</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.rsi}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      rsi: Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>MACD Short</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.macd.short}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      macd: {
+                        ...settings.macd,
+                        short: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>MACD Long</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.macd.long}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      macd: {
+                        ...settings.macd,
+                        long: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>MACD Signal</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.macd.signal}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      macd: {
+                        ...settings.macd,
+                        signal: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>Bollinger</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.boll}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      boll: Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

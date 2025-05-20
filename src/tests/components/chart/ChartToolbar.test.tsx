@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import ChartToolbar from './ChartToolbar'
+import ChartToolbar from '@/components/chart/ChartToolbar'
 import { TIMEFRAMES } from '@/constants/chart'
 
 describe('ChartToolbar', () => {
@@ -14,6 +14,13 @@ describe('ChartToolbar', () => {
         onTimeframeChange={onTf}
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={onInd}
+        settings={{
+          sma: 14,
+          rsi: 14,
+          macd: { short: 12, long: 26, signal: 9 },
+          boll: 20,
+        }}
+        onSettingsChange={jest.fn()}
       />
     )
 
@@ -33,6 +40,13 @@ describe('ChartToolbar', () => {
         onTimeframeChange={() => {}}
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={() => {}}
+        settings={{
+          sma: 14,
+          rsi: 14,
+          macd: { short: 12, long: 26, signal: 9 },
+          boll: 20,
+        }}
+        onSettingsChange={() => {}}
       />
     )
 
