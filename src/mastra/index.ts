@@ -7,6 +7,7 @@ import { createLogger } from "@mastra/core/logger";
 import { tradingAgent } from "./agents/tradingAgent";
 import { researchAgent } from "./agents/researchAgent";
 import { orchestratorAgent } from "./agents/orchestratorAgent";
+import { backtestAgent } from "./agents/backtestAgent";
 import { uiControlAgent } from "./agents/uiControlAgent";
 
 /**
@@ -20,6 +21,7 @@ export const mastra = new Mastra({
     tradingAgent,
     researchAgent,
     orchestratorAgent,
+    backtestAgent,
     uiControlAgent,
   },
   // ロガー設定
