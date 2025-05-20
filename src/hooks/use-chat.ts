@@ -135,12 +135,12 @@ export function useChat(): UseChat {
         }
         
         return {
-          id: prev[i]?.id ?? (m as any).id ?? crypto.randomUUID(),
-          role: m.role as Message['role'],
+        id: prev[i]?.id ?? (m as any).id ?? crypto.randomUUID(),
+        role: m.role as Message['role'],
           content: messageContent,
           type: msgType,
           prompt: msgPrompt,
-          timestamp: prev[i]?.timestamp ?? Date.now(),
+        timestamp: prev[i]?.timestamp ?? Date.now(),
         };
       })
     )

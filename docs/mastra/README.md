@@ -294,7 +294,7 @@ export async function createTradingAgent() {
     model: process.env.AI_MODEL,
     memory: createMemory({
       type: "postgres",
-      connectionString: process.env.SUPABASE_URL,
+      connectionString: process.env.NEXT_PUBLIC_SUPABASE_URL,
     }),
     tools: tradingTools,
     // エージェントの追加設定

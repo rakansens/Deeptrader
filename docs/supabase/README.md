@@ -19,8 +19,8 @@ cp .env.example .env.local
 `.env.local` には次の変数を設定します。
 
 ```
-SUPABASE_URL=your-supabase-url
-SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
