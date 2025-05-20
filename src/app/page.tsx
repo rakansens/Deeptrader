@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import Chat from '@/components/chat/Chat';
 import ChartToolbar from '@/components/chart/ChartToolbar';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -17,6 +18,7 @@ import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/types/char
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,
+  loading: () => <Skeleton className="w-full h-[600px]" />,
 });
 
 // 描画色のオプション

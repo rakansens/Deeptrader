@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import animatePlugin from 'tailwindcss-animate';
+import plugin from 'tailwindcss/plugin';
 
 /**
  * TradingView風チャート用カラー変数
@@ -103,6 +104,20 @@ const config: Config = {
       },
     },
   },
-  plugins: [animatePlugin],
+  plugins: [
+    animatePlugin,
+    plugin(({ addUtilities, theme }) => {
+      const animations = theme('animation') as Record<string, string>;
+      const motionSafe: Record<string, any> = {};
+      Object.entries(animations).forEach(([name, value]) => {
+        motionSafe[`.motion-safe\\:animate-${name}`] = {
+          '@media (prefers-reduced-motion: no-preference)': {
+            animation: value,
+          },
+        };
+      });
+      addUtilities(motionSafe);
+    }),
+  ],
 };
 export default config;
