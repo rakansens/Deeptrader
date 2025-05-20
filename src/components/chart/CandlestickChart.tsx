@@ -149,6 +149,10 @@ export default function CandlestickChart({
       ma: indicatorSettings.lineWidth.ma,
       boll: indicatorSettings.lineWidth.boll,
     },
+    colors: {
+      ma: indicatorSettings.colors?.ma,
+      boll: indicatorSettings.colors?.boll,
+    }
   });
 
   useCandlestickSeries({
@@ -285,6 +289,7 @@ export default function CandlestickChart({
             chart={chartRef.current}
             height={subHeight}
             lineWidth={indicatorSettings.lineWidth.rsi}
+            color={indicatorSettings.colors?.rsi}
             onClose={() => handleToggleIndicator("rsi", false)}
           />
         )}
@@ -296,6 +301,7 @@ export default function CandlestickChart({
             chart={chartRef.current}
             height={subHeight}
             lineWidth={indicatorSettings.lineWidth.macd}
+            macdColor={indicatorSettings.colors?.macd}
             onClose={() => handleToggleIndicator("macd", false)}
           />
         )}

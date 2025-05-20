@@ -1,8 +1,7 @@
 'use client'
 
 /**
- * チャートの期間やインジケーターを切り替えるツールバー
- * すべてのコントロールを横一列に配置して切替を容易にする
+ * インジケーターの線幅設定UIをスライダーとリアルタイムプレビューに変更。
  */
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -28,6 +27,7 @@ import {
   type Timeframe,
   type SymbolValue,
 } from '@/constants/chart'
+import { DEFAULT_INDICATOR_SETTINGS } from '@/types/chart'
 
 interface ChartToolbarProps {
   timeframe: Timeframe
@@ -249,13 +249,28 @@ export default function ChartToolbar({
                   }
                 />
               </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>MA Width</span>
+              <div className="pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span>MA Width</span>
+                  <div className="flex items-center gap-2">
+                    <span>{settings.lineWidth.ma}px</span>
+                    <input 
+                      type="color" 
+                      value={settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma}
+                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                      onChange={(e) => onSettingsChange({
+                        ...settings,
+                        colors: { ...settings.colors, ma: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
                 <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  type="range"
+                  min="1"
+                  max="10"
                   value={settings.lineWidth.ma}
-                  min={1}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                   onChange={(e) =>
                     onSettingsChange({
                       ...settings,
@@ -266,14 +281,39 @@ export default function ChartToolbar({
                     })
                   }
                 />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>RSI Width</span>
+                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                  <div
+                    style={{
+                      height: `${settings.lineWidth.ma}px`,
+                      width: '100%',
+                      backgroundColor: settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma,
+                      borderRadius: '2px',
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span>RSI Width</span>
+                  <div className="flex items-center gap-2">
+                    <span>{settings.lineWidth.rsi}px</span>
+                    <input 
+                      type="color" 
+                      value={settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi}
+                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                      onChange={(e) => onSettingsChange({
+                        ...settings,
+                        colors: { ...settings.colors, rsi: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
                 <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  type="range"
+                  min="1"
+                  max="10"
                   value={settings.lineWidth.rsi}
-                  min={1}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                   onChange={(e) =>
                     onSettingsChange({
                       ...settings,
@@ -284,14 +324,39 @@ export default function ChartToolbar({
                     })
                   }
                 />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>MACD Width</span>
+                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                  <div
+                    style={{
+                      height: `${settings.lineWidth.rsi}px`,
+                      width: '100%',
+                      backgroundColor: settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi,
+                      borderRadius: '2px',
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span>MACD Width</span>
+                  <div className="flex items-center gap-2">
+                    <span>{settings.lineWidth.macd}px</span>
+                    <input 
+                      type="color" 
+                      value={settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd}
+                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                      onChange={(e) => onSettingsChange({
+                        ...settings,
+                        colors: { ...settings.colors, macd: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
                 <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  type="range"
+                  min="1"
+                  max="10"
                   value={settings.lineWidth.macd}
-                  min={1}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                   onChange={(e) =>
                     onSettingsChange({
                       ...settings,
@@ -302,14 +367,39 @@ export default function ChartToolbar({
                     })
                   }
                 />
-              </label>
-              <label className="flex items-center justify-between text-sm">
-                <span>BOLL Width</span>
+                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                  <div
+                    style={{
+                      height: `${settings.lineWidth.macd}px`,
+                      width: '100%',
+                      backgroundColor: settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd,
+                      borderRadius: '2px',
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span>BOLL Width</span>
+                  <div className="flex items-center gap-2">
+                    <span>{settings.lineWidth.boll}px</span>
+                    <input 
+                      type="color" 
+                      value={settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll}
+                      className="w-6 h-6 p-0.5 border rounded cursor-pointer bg-background"
+                      onChange={(e) => onSettingsChange({
+                        ...settings,
+                        colors: { ...settings.colors, boll: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
                 <input
-                  type="number"
-                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  type="range"
+                  min="1"
+                  max="10"
                   value={settings.lineWidth.boll}
-                  min={1}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                   onChange={(e) =>
                     onSettingsChange({
                       ...settings,
@@ -320,7 +410,17 @@ export default function ChartToolbar({
                     })
                   }
                 />
-              </label>
+                <div className="mt-1 h-5 w-full bg-muted/30 dark:bg-muted/20 rounded flex items-center justify-center overflow-hidden p-[2px]">
+                  <div
+                    style={{
+                      height: `${settings.lineWidth.boll}px`,
+                      width: '100%',
+                      backgroundColor: settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll,
+                      borderRadius: '2px',
+                    }}
+                  ></div>
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

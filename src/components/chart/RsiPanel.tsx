@@ -5,6 +5,7 @@ import {
   ISeriesApi,
   LineData,
   UTCTimestamp,
+  LineSeriesPartialOptions,
 } from "lightweight-charts";
 import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/use-indicator-chart";
@@ -17,6 +18,7 @@ interface RsiPanelProps {
   height: number;
   onClose?: () => void;
   lineWidth?: number;
+  color?: string;
 }
 
 /**
@@ -27,6 +29,7 @@ export default function RsiPanel({
   chart,
   height,
   lineWidth = 2,
+  color = "#2962FF",
   onClose,
 }: RsiPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
@@ -51,12 +54,12 @@ export default function RsiPanel({
       series,
       cleanup,
     } = createIndicatorChart(containerRef.current, {
-      color: "#2962FF",
+      color,
       lineWidth,
       title: "RSI",
       priceLineVisible: false,
       lastValueVisible: true,
-    });
+    } as LineSeriesPartialOptions);
     chartRef.current = rsiChart;
 
     // RSI特有の設定

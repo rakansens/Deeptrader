@@ -15,6 +15,10 @@ interface UseIndicatorSeriesParams {
     ma: number;
     boll: number;
   };
+  colors: {
+    ma?: string;
+    boll?: string;
+  };
 }
 
 /**
@@ -31,12 +35,17 @@ export function useIndicatorSeries({
   enabledMa,
   enabledBoll,
   lineWidth,
+  colors,
 }: UseIndicatorSeriesParams) {
   useLineSeries({
     chart,
     ref: maRef,
     enabled: enabledMa,
-    options: { color: "#f59e0b", lineWidth: lineWidth.ma, priceLineVisible: false },
+    options: { 
+      color: colors?.ma,
+      lineWidth: lineWidth.ma,
+      priceLineVisible: false
+    },
     data: ma,
   });
 
@@ -44,7 +53,11 @@ export function useIndicatorSeries({
     chart,
     ref: bollUpperRef,
     enabled: enabledBoll,
-    options: { color: "#a855f7", lineWidth: lineWidth.boll, priceLineVisible: false },
+    options: { 
+      color: colors?.boll,
+      lineWidth: lineWidth.boll,
+      priceLineVisible: false
+    },
     data: bollUpper,
   });
 
@@ -52,7 +65,11 @@ export function useIndicatorSeries({
     chart,
     ref: bollLowerRef,
     enabled: enabledBoll,
-    options: { color: "#a855f7", lineWidth: lineWidth.boll, priceLineVisible: false },
+    options: { 
+      color: colors?.boll,
+      lineWidth: lineWidth.boll,
+      priceLineVisible: false
+    },
     data: bollLower,
   });
 }

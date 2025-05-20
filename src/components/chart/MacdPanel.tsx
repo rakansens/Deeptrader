@@ -6,6 +6,7 @@ import {
   LineData,
   HistogramData,
   UTCTimestamp,
+  LineSeriesPartialOptions,
 } from "lightweight-charts";
 import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/use-indicator-chart";
@@ -20,6 +21,7 @@ interface MacdPanelProps {
   height: number;
   onClose?: () => void;
   lineWidth?: number;
+  macdColor?: string;
 }
 
 /**
@@ -32,6 +34,7 @@ export default function MacdPanel({
   chart,
   height,
   lineWidth = 2,
+  macdColor = "#2962FF",
   onClose,
 }: MacdPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
@@ -59,12 +62,12 @@ export default function MacdPanel({
       series,
       cleanup,
     } = createIndicatorChart(containerRef.current, {
-      color: "#2962FF",
+      color: macdColor,
       lineWidth,
       title: "MACD",
       priceLineVisible: false,
       lastValueVisible: true,
-    });
+    } as LineSeriesPartialOptions);
     chartRef.current = macdChart;
 
     macdRef.current = series;
@@ -74,7 +77,7 @@ export default function MacdPanel({
       title: "Signal",
       priceLineVisible: false,
       lastValueVisible: true,
-    });
+    } as LineSeriesPartialOptions);
     histRef.current = macdChart.addHistogramSeries({
       color: "#26a69a",
       priceFormat: { type: "price" },

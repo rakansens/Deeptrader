@@ -43,6 +43,12 @@ export interface IndicatorSettings {
     macd: number;
     boll: number;
   };
+  colors?: {
+    ma?: string;
+    rsi?: string;
+    macd?: string;
+    boll?: string;
+  };
 }
 
 /** デフォルトのインジケーター設定 */
@@ -52,6 +58,12 @@ export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   macd: { short: 12, long: 26, signal: 9 },
   boll: 20,
   lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
+  colors: {
+    ma: '#FF6347',
+    rsi: '#4682B4',
+    macd: '#32CD32',
+    boll: '#FFD700',
+  },
 };
 
 export type IndicatorsChangeHandler = (value: IndicatorOptions) => void;
