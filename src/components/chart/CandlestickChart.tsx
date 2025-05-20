@@ -1,7 +1,7 @@
 "use client";
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState, CSSProperties } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import useChartTheme from "@/hooks/use-chart-theme";
 import useCandlestickData from "@/hooks/use-candlestick-data";
@@ -64,7 +64,7 @@ export default function CandlestickChart({
   drawingEnabled = false,
   drawingColor = "#ef4444",
 }: CandlestickChartProps) {
-  const colors = useChartTheme();
+  const themeColors = useChartTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
@@ -162,11 +162,27 @@ export default function CandlestickChart({
     candles,
     volumes,
     colors: {
-      upColor: colors.upColor,
-      downColor: colors.downColor,
-      volume: colors.volume,
+      upColor: themeColors.upColor,
+      downColor: themeColors.downColor,
+      volume: themeColors.volume,
     },
   });
+
+  const [countdownBgColor, setCountdownBgColor] = useState<string | undefined>();
+  const [countdownTextColor, setCountdownTextColor] = useState<string>("#ffffff");
+
+  useEffect(() => {
+    if (candles.length > 0 && themeColors) {
+      const latestCandle = candles[candles.length - 1];
+      if (!latestCandle) return;
+
+      setCountdownBgColor(
+        latestCandle.close >= latestCandle.open
+          ? themeColors.upColor
+          : themeColors.downColor
+      );
+    }
+  }, [candles, themeColors]);
 
   useEffect(() => {
     logger.debug("描画モード変更:", mode);
@@ -247,10 +263,14 @@ export default function CandlestickChart({
             data-testid="chart-container"
           />
 
-          <CandleCountdown
-            interval={initialInterval}
-            className="absolute bottom-2 right-2 z-20 text-xs opacity-80"
-          />
+          {!loading && !error && candles.length > 0 && (
+            <CandleCountdown
+              interval={initialInterval}
+              backgroundColor={countdownBgColor}
+              textColor={countdownTextColor}
+              className="absolute top-2 right-16 z-20"
+            />
+          )}
 
           <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
           {showSidebar && (
