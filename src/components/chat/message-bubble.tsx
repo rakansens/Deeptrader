@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format";
 import TypingIndicator from "./typing-indicator";
@@ -13,6 +14,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
+import { motion } from "framer-motion";
 
 export interface MessageBubbleProps {
   role: ChatRole;
@@ -42,6 +44,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const { speechSynthesisEnabled } = useSettings();
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [imageExpanded, setImageExpanded] = useState(false);
   
   const handleCopy = () => {
     if (typeof children !== "string" || typing) return;
@@ -105,17 +108,80 @@ export function MessageBubble({
     };
   }, [isSpeaking]);
   
+  const date = timestamp ? new Date(timestamp) : new Date();
+  const formattedDate = new Intl.DateTimeFormat("ja-JP", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
+
+  // 画像メッセージ用の表示処理
+  const isImage = type === 'image' && typeof children === 'string' && children.startsWith('data:image/');
+  
+  // 画像表示サイズの管理
+  const handleImageClick = () => {
+    setImageExpanded(!imageExpanded);
+  };
+
+  // テキスト部分のエスケープ
+  const renderContent = () => {
+    // 画像の場合
+    if (isImage) {
+      return (
+        <div className="relative">
+          <img 
+            src={children as string} 
+            alt={prompt || "チャートイメージ"} 
+            className={cn(
+              "rounded-md border border-border max-w-full",
+              imageExpanded ? "w-auto max-h-[80vh]" : "w-60 sm:w-80 max-h-60"
+            )}
+            onClick={handleImageClick}
+            style={{ cursor: 'pointer' }}
+          />
+          <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between">
+            <span>{prompt || "チャートイメージ"}</span>
+            <button 
+              onClick={handleImageClick}
+              className="text-xs text-primary hover:underline"
+            >
+              {imageExpanded ? "縮小" : "クリックで拡大"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    // テキストの場合
+    if (typeof children === 'string') {
+      // 改行をbrタグに変換
+      const lines = children.split('\n');
+      return lines.map((line, i) => (
+        <React.Fragment key={i}>
+          {line}
+          {i < lines.length - 1 && <br />}
+        </React.Fragment>
+      ));
+    }
+    
+    // その他の場合はそのまま返す
+    return children;
+  };
+
   return (
     <div
       className={cn(
-        "p-4 rounded-md space-y-1 animate-in fade-in-0",
-        role === "user"
-          ? "bg-primary/10 border-l-4 border-primary ml-4"
-          : "bg-muted/50",
-        className,
+        "flex gap-3 w-full max-w-full",
+        role === "user" ? "flex-row-reverse" : ""
       )}
     >
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div
+        className={cn(
+          "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium text-center",
+          role === "user"
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-secondary-foreground"
+        )}
+      >
         {avatar ? (
           typeof avatar === "string" ? (
             <Avatar className="h-5 w-5">
@@ -125,64 +191,41 @@ export function MessageBubble({
           ) : (
             avatar
           )
-        ) : null}
-        <span className="font-medium">
-          {role === "user" ? "あなた" : "DeepTrader AI"}
-        </span>
-        {timestamp !== undefined && (
-          <span className="ml-auto">{formatDateTime(timestamp)}</span>
-        )}
-        
-        <div className="flex items-center gap-1">
-          {role === "assistant" && speechSynthesisEnabled && type === 'text' && typeof children === "string" && !typing && (
-            <button
-              type="button"
-              aria-label={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
-              onClick={speakMessage}
-              className="p-1 hover:text-foreground"
-              title={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
-            >
-              {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-            </button>
-          )}
-          
-          {type === 'text' && typeof children === "string" && !typing && (
-            <button
-              type="button"
-              aria-label="コピー"
-              onClick={handleCopy}
-              className="p-1 hover:text-foreground"
-            >
-              <Copy className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="text-sm whitespace-pre-wrap">
-        {typing ? (
-          <div className="flex items-center gap-2">
-            <TypingIndicator />
-            {children}
-          </div>
-        ) : type === 'image' && typeof children === 'string' ? (
-          <div className="space-y-4">
-            <div className="relative">
-              <img 
-                src={children} 
-                alt={prompt ?? 'チャート画像'} 
-                className="w-full max-h-[500px] object-contain rounded-md border border-border shadow-sm" 
-                onClick={() => window.open(children, '_blank')}
-                style={{ cursor: 'pointer' }}
-              />
-              <div className="absolute bottom-2 right-2 bg-background/80 text-xs px-2 py-1 rounded text-muted-foreground">
-                クリックで拡大
-              </div>
-            </div>
-            {prompt && <div className="text-sm bg-muted/30 p-2 rounded-md border-l-2 border-primary/50">{prompt}</div>}
-          </div>
         ) : (
-          children
+          <span className="font-medium">
+            {role === "user" ? "あなた" : "DeepTrader AI"}
+          </span>
         )}
+      </div>
+
+      <div
+        className={cn(
+          "flex flex-col max-w-[90%] sm:max-w-[75%]",
+          role === "user" ? "items-end" : "items-start"
+        )}
+      >
+        <div
+          className={cn(
+            "px-4 py-2 rounded-lg h-fit",
+            role === "user"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-foreground",
+            typing && "animate-pulse"
+          )}
+        >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="max-w-full break-words text-pretty"
+          >
+            {renderContent()}
+          </motion.div>
+        </div>
+        
+        <div className="text-xs text-muted-foreground mt-1">
+          {formattedDate}
+        </div>
       </div>
     </div>
   );
