@@ -3,6 +3,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { placeOrder } from '@/infrastructure/exchange/bitget-service';
+import { orderSideSchema, orderTypeSchema } from '@/types/order';
 
 /**
  * 取引実行ツール
@@ -13,8 +14,8 @@ export const tradingExecutionTool = createTool({
   description: 'Bitgetで注文を実行します',
   inputSchema: z.object({
     symbol: z.string(),
-    side: z.enum(['buy', 'sell']),
-    type: z.enum(['limit', 'market']),
+    side: orderSideSchema,
+    type: orderTypeSchema,
     quantity: z.number(),
     price: z.number().optional()
   }),
