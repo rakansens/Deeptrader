@@ -44,3 +44,9 @@ export const BLOCKCHAIR_BASE_URL = process.env.BLOCKCHAIR_BASE_URL ?? "https://a
 export const BLOCKCHAIR_API_KEY = process.env.BLOCKCHAIR_API_KEY ?? "";
 export const SENTIMENT_API_URL = process.env.SENTIMENT_API_URL ?? "https://api.alternative.me/fng/";
 export const SENTIMENT_API_KEY = process.env.SENTIMENT_API_KEY ?? "";
+
+export const COINGLASS_BASE_URL = process.env.COINGLASS_BASE_URL ??
+  "https://open-api.coinglass.com/public/v2";
+export const COINGLASS_API_KEY = process.env.COINGLASS_API_KEY ?? "";
+
+

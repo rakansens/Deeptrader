@@ -10,6 +10,7 @@ import { newsAnalysisTool } from "../tools/newsAnalysisTool";
 import { onChainDataTool } from "../tools/onChainDataTool";
 import { marketSentimentTool } from "../tools/marketSentimentTool";
 import { evaluationTool } from "../tools/evaluationTool";
+import { openInterestTool } from "../tools/openInterestTool";
 
 // メモリ設定
 const memory = new Memory({
@@ -40,6 +41,7 @@ export const researchAgent = new Agent({
   - ニュース分析ツール: 暗号資産関連のニュース記事を検索・分析
   - オンチェーンデータツール: ブロックチェーン上のトランザクション、ウォレット活動などを分析
   - 市場センチメントツール: ソーシャルメディアやディスカッションフォーラムの感情分析
+  - オープンインタレストツール: 先物建玉の増減を取得
   
   ガイドライン:
   - 情報源を常に引用し、信頼性を評価する
@@ -59,6 +61,7 @@ export const researchAgent = new Agent({
     onChainDataTool,
     marketSentimentTool,
     evaluationTool,
+    openInterestTool,
   },
 
   // メモリ設定
