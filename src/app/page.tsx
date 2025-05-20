@@ -1,9 +1,18 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Chat from '@/components/chat/Chat';
 import ChartToolbar from '@/components/chart/ChartToolbar';
@@ -36,20 +45,87 @@ export default function Home() {
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   const [settings, setSettings] = useState<IndicatorSettings>(DEFAULT_INDICATOR_SETTINGS);
   const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // 型安全なハンドラー関数を定義
   const handleTimeframeChange = (tf: Timeframe) => setTimeframe(tf);
   const handleSymbolChange = (sym: SymbolValue) => setSymbol(sym);
 
+  const toggleIndicator = (indicatorName: string, enable?: boolean) => {
+    setIndicators(prevIndicators => {
+      const key = indicatorName.toLowerCase() as keyof typeof prevIndicators;
+      if (key === 'ma' || key === 'rsi' || key === 'macd' || key === 'boll') {
+        const currentIndicatorState = prevIndicators[key];
+        return {
+          ...prevIndicators,
+          [key]: typeof enable === 'boolean' ? enable : !currentIndicatorState,
+        };
+      }
+      console.warn(`Unknown indicator: ${indicatorName}`);
+      return prevIndicators;
+    });
+  };
+
+  useEffect(() => {
+    (window as any).toggleIndicator = toggleIndicator;
+    console.log('toggleIndicator function exposed to window');
+
+    return () => {
+      delete (window as any).toggleIndicator;
+      console.log('toggleIndicator function removed from window');
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs once on mount and cleanup on unmount
+
+  useEffect(() => {
+    const hasSeenModal = localStorage.getItem('hasSeenWelcomeModal');
+    if (!hasSeenModal) {
+      setShowWelcomeModal(true);
+    }
+  }, []); // Empty dependency array to run only on mount
+
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem('hasSeenWelcomeModal', 'true');
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
+      {showWelcomeModal && (
+        <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>DeepTrader AIへようこそ！</DialogTitle>
+              <DialogDescription>
+                あなたのパーソナル取引アシスタントです。
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2 text-sm">
+              <p>
+                左側のチャットを使って、AIに質問したり、市場分析を依頼したり、チャートの表示を操作することができます。(例: 「RSIインジケーターを表示して」)
+              </p>
+              <p>
+                右側のチャートでは市場データをリアルタイムで確認できます。チャート上のツールバーで通貨ペアや時間足を変更できます。
+              </p>
+              <p>
+                まずは気軽に話しかけてみてください！
+              </p>
+            </div>
+            <DialogFooter className="sm:justify-end">
+              <Button type="button" onClick={handleCloseWelcomeModal}>
+                使ってみる
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
       <Navbar />
       <ResizablePanelGroup
         direction="horizontal"
         className="flex-1 overflow-hidden"
         onLayout={() => window.dispatchEvent(new Event('resize'))}
       >
-        <ResizablePanel defaultSize={30} minSize={20} className="border-r">
+        <ResizablePanel defaultSize={40} minSize={20} className="border-r">
           <div className="flex flex-col h-[calc(100vh-3.5rem)]">
             <div className="p-4 border-b">
               <h2 className="text-xl font-semibold">AIアシスタント</h2>
