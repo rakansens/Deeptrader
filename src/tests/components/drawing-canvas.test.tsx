@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import DrawingCanvas from "@/components/chart/drawing-canvas";
 import type { DrawingCanvasHandle } from "@/types/chart";
+import { DRAWING_MODES } from "@/types/chart";
 import { act } from "react-dom/test-utils";
 
 const mockCtx = {
@@ -14,7 +15,9 @@ const mockCtx = {
   closePath: jest.fn(),
   fill: jest.fn(),
   fillText: jest.fn(),
-  getImageData: jest.fn(() => ({ data: new Uint8ClampedArray(0) } as ImageData)),
+  getImageData: jest.fn(
+    () => ({ data: new Uint8ClampedArray(0) }) as ImageData,
+  ),
   putImageData: jest.fn(),
 };
 
@@ -51,9 +54,7 @@ describe("DrawingCanvas", () => {
   });
 
   it("draws trendline on click", async () => {
-    const { getByTestId } = render(
-      <DrawingCanvas mode="trendline" />,
-    );
+    const { getByTestId } = render(<DrawingCanvas mode={DRAWING_MODES[1]} />);
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
       fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
@@ -65,9 +66,7 @@ describe("DrawingCanvas", () => {
   });
 
   it("draws fibonacci retracement", async () => {
-    const { getByTestId } = render(
-      <DrawingCanvas mode="fibonacci" />,
-    );
+    const { getByTestId } = render(<DrawingCanvas mode={DRAWING_MODES[2]} />);
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
       fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
@@ -78,9 +77,7 @@ describe("DrawingCanvas", () => {
   });
 
   it("draws horizontal line", async () => {
-    const { getByTestId } = render(
-      <DrawingCanvas mode="horizontal-line" />,
-    );
+    const { getByTestId } = render(<DrawingCanvas mode={DRAWING_MODES[3]} />);
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
       fireEvent.pointerDown(canvas, { clientX: 0, clientY: 20 });
@@ -91,9 +88,7 @@ describe("DrawingCanvas", () => {
   });
 
   it("draws box", async () => {
-    const { getByTestId } = render(
-      <DrawingCanvas mode="box" />,
-    );
+    const { getByTestId } = render(<DrawingCanvas mode={DRAWING_MODES[4]} />);
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
       fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
@@ -103,9 +98,7 @@ describe("DrawingCanvas", () => {
   });
 
   it("draws arrow", async () => {
-    const { getByTestId } = render(
-      <DrawingCanvas mode="arrow" />,
-    );
+    const { getByTestId } = render(<DrawingCanvas mode={DRAWING_MODES[5]} />);
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
       fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
@@ -132,7 +125,7 @@ describe("DrawingCanvas", () => {
 
   it("does not draw when enabled is false", async () => {
     const { getByTestId } = render(
-      <DrawingCanvas mode="freehand" enabled={false} />,
+      <DrawingCanvas mode={DRAWING_MODES[0]} enabled={false} />,
     );
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
@@ -155,37 +148,41 @@ describe("DrawingCanvas", () => {
 
   it("preserves drawing content when switching modes", () => {
     const ref = React.createRef<DrawingCanvasHandle>();
-    const { rerender } = render(<DrawingCanvas mode="trendline" ref={ref} />);
-    
+    const { rerender } = render(
+      <DrawingCanvas mode={DRAWING_MODES[1]} ref={ref} />,
+    );
+
     // トレンドラインモードで描画
     act(() => {
-      const canvas = document.querySelector('[data-testid="drawing-canvas"]') as HTMLCanvasElement;
+      const canvas = document.querySelector(
+        '[data-testid="drawing-canvas"]',
+      ) as HTMLCanvasElement;
       fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
       fireEvent.pointerUp(canvas, { clientX: 100, clientY: 100 });
     });
-    
+
     // 選択モードに切り替え
     rerender(<DrawingCanvas mode={null} ref={ref} />);
-    
+
     // 保存したキャンバス状態が復元されていること
     expect(mockCtx.putImageData).toHaveBeenCalled();
     // キャンバスがクリアされていないこと
   });
 
-  it('shows eraser cursor when eraser mode is active', async () => {
+  it("shows eraser cursor when eraser mode is active", async () => {
     const { getByTestId, queryByTestId } = render(
-      <DrawingCanvas mode="eraser" />,
+      <DrawingCanvas mode={DRAWING_MODES[6]} />,
     );
-    
+
     // エラサーカーソルが表示されていることを確認
-    expect(queryByTestId('eraser-cursor')).toBeInTheDocument();
-    
+    expect(queryByTestId("eraser-cursor")).toBeInTheDocument();
+
     // マウス移動で位置が更新されることをテスト
     const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
     await act(async () => {
       fireEvent.pointerMove(canvas, { clientX: 50, clientY: 50 });
     });
-    
+
     // マウスがキャンバスから出たら消えることをテスト
     await act(async () => {
       fireEvent.pointerLeave(canvas);

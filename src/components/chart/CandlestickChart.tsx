@@ -20,7 +20,7 @@ import type {
   IndicatorsChangeHandler,
 } from "@/types/chart";
 import type { IndicatorSettings } from "@/types/chart";
-import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
+import { DEFAULT_INDICATOR_SETTINGS, DRAWING_MODES } from "@/types/chart";
 import ChartSidebar from "./ChartSidebar";
 import SidebarToggleButton from "./sidebar-toggle-button";
 import EraserSizeControl from "./eraser-size-control";
@@ -84,7 +84,8 @@ export default function CandlestickChart({
   const { width } = useWindowSize();
 
   // 画面幅に応じて高さを調整する
-  const chartHeight = width > 0 && width < 768 ? Math.floor(width * 0.6) : height;
+  const chartHeight =
+    width > 0 && width < 768 ? Math.floor(width * 0.6) : height;
 
   /*
    * 選択モード以外でもマウスホイールでチャートのズームを行えるように、
@@ -100,13 +101,15 @@ export default function CandlestickChart({
   // チャートインスタンスをグローバルに露出（スクリーンショット用）
   // 意図的にTSエラーを抑制（window拡張の代替策）
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     // チャートインスタンスを保存するグローバル変数
     (window as any).__chartInstance = null;
-    
+
     // DOMからチャート要素を取得するヘルパー関数も追加
     (window as any).__getChartElement = () => {
-      const container = document.querySelector('[data-testid="chart-container"]');
+      const container = document.querySelector(
+        '[data-testid="chart-container"]',
+      );
       return container;
     };
   }
@@ -157,7 +160,7 @@ export default function CandlestickChart({
   });
 
   useEffect(() => {
-    logger.debug('描画モード変更:', mode);
+    logger.debug("描画モード変更:", mode);
   }, [mode]);
 
   // チャートインスタンスをグローバルに保存（スクリーンショット用）
@@ -165,48 +168,53 @@ export default function CandlestickChart({
     /* eslint-disable @typescript-eslint/no-explicit-any */
     // チャートインスタンスの変更を監視し、グローバル変数に保存
     const checkAndSaveChart = () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         if (chartRef.current) {
           (window as any).__chartInstance = chartRef.current;
-          logger.debug('Chart instance saved for screenshots:', chartRef.current);
+          logger.debug(
+            "Chart instance saved for screenshots:",
+            chartRef.current,
+          );
         } else {
-          logger.warn('Chart instance is null, cannot save for screenshots');
+          logger.warn("Chart instance is null, cannot save for screenshots");
         }
       }
     };
-    
+
     // 即時実行と300ms後の実行で確実に保存
     checkAndSaveChart();
     const timer = setTimeout(checkAndSaveChart, 300);
-    
+
     return () => {
       clearTimeout(timer);
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         (window as any).__chartInstance = null;
-        logger.debug('Chart instance cleared from global');
+        logger.debug("Chart instance cleared from global");
       }
     };
     /* eslint-enable @typescript-eslint/no-explicit-any */
   }, [chartRef.current]);
 
   useEffect(() => {
-    logger.debug('描画有効状態変更:', drawingEnabled);
+    logger.debug("描画有効状態変更:", drawingEnabled);
     if (!drawingEnabled && drawingRef.current) {
       drawingRef.current.clear();
     }
   }, [drawingEnabled]);
 
   // インジケーターのトグル処理を最適化
-  const handleToggleIndicator = useCallback((key: keyof typeof indicators, value: boolean) => {
-    if (onIndicatorsChange) {
-      // パネルの追加/削除時にチャートのリサイズをデバウンスするため
-      // requestAnimationFrameを使用して次のフレームで更新
-      requestAnimationFrame(() => {
-        onIndicatorsChange?.({ ...indicators, [key]: value });
-      });
-    }
-  }, [indicators, onIndicatorsChange]);
-
+  const handleToggleIndicator = useCallback(
+    (key: keyof typeof indicators, value: boolean) => {
+      if (onIndicatorsChange) {
+        // パネルの追加/削除時にチャートのリサイズをデバウンスするため
+        // requestAnimationFrameを使用して次のフレームで更新
+        requestAnimationFrame(() => {
+          onIndicatorsChange?.({ ...indicators, [key]: value });
+        });
+      }
+    },
+    [indicators, onIndicatorsChange],
+  );
 
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
@@ -229,7 +237,7 @@ export default function CandlestickChart({
             style={{ height: chartHeight }}
             data-testid="chart-container"
           />
-          
+
           <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
           {showSidebar && (
             <ChartSidebar
@@ -239,7 +247,7 @@ export default function CandlestickChart({
               className="absolute top-12 left-2 z-20"
             />
           )}
-          {mode === 'eraser' && (
+          {mode === DRAWING_MODES[6] && (
             <EraserSizeControl
               size={eraserSize}
               onChange={setEraserSize}
@@ -247,7 +255,7 @@ export default function CandlestickChart({
             />
           )}
           <div
-            className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? 'pointer-events-none' : ''}`}
+            className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? "pointer-events-none" : ""}`}
             onWheel={handleWheel}
           >
             <DrawingCanvas
@@ -266,7 +274,7 @@ export default function CandlestickChart({
             data={rsi}
             chart={chartRef.current}
             height={subHeight}
-            onClose={() => handleToggleIndicator('rsi', false)}
+            onClose={() => handleToggleIndicator("rsi", false)}
           />
         )}
         {indicators.macd && (
@@ -276,7 +284,7 @@ export default function CandlestickChart({
             histogram={histogram}
             chart={chartRef.current}
             height={subHeight}
-            onClose={() => handleToggleIndicator('macd', false)}
+            onClose={() => handleToggleIndicator("macd", false)}
           />
         )}
       </div>

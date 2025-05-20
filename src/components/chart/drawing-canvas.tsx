@@ -5,6 +5,7 @@ import useDrawingCanvas, {
   UseDrawingCanvasProps,
 } from "@/hooks/use-drawing-canvas";
 import type { DrawingCanvasHandle } from "@/types/chart";
+import { DRAWING_MODES } from "@/types/chart";
 
 export interface DrawingCanvasProps extends UseDrawingCanvasProps {
   className?: string;
@@ -29,7 +30,7 @@ function DrawingCanvas(
     handlePointerLeave,
     handleContainerMouseMove,
   } = useDrawingCanvas(options, ref);
-  const { mode = "freehand", enabled = true, eraserSize = 30 } = options;
+  const { mode = DRAWING_MODES[0], enabled = true, eraserSize = 30 } = options;
 
   return (
     <div
@@ -37,7 +38,7 @@ function DrawingCanvas(
       className="relative w-full h-full"
       onMouseMove={handleContainerMouseMove}
     >
-      {mode === "eraser" && eraserPosition && (
+      {mode === DRAWING_MODES[6] && eraserPosition && (
         <div
           className="absolute pointer-events-none rounded-full z-50"
           style={{

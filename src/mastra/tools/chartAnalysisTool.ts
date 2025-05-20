@@ -7,7 +7,7 @@ import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeBollinger, computeMACD } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
 import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/types/chart';
-import type { BinanceKline } from '@/types/binance';
+import type { BinanceKlineObject } from '@/types/binance';
 import type { IndicatorResult } from '@/types';
 
 /** 価格配列からダブルトップを検出 */
@@ -79,7 +79,7 @@ export const chartAnalysisTool = createTool({
       macd: { ...DEFAULT_INDICATOR_SETTINGS.macd, ...settings.macd },
     };
 
-    let klines: BinanceKline[];
+    let klines: BinanceKlineObject[];
     try {
       klines = await fetchKlines(symbol, timeframe, period);
     } catch (err) {
@@ -87,7 +87,7 @@ export const chartAnalysisTool = createTool({
       throw new Error('ローソク足データの取得に失敗しました');
     }
 
-    const closes = klines.map((k) => parseFloat(k[4]));
+    const closes = klines.map((k) => parseFloat(k.close));
     const results: IndicatorResult[] = [];
     for (const ind of indicators) {
       const name = ind.toUpperCase();

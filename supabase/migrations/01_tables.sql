@@ -1,87 +1,169 @@
 -- 01_tables.sql
--- テーブル作成ファイル
--- 作成日: 2025/5/7
+-- 全てのテーブル定義
+-- 作成日: 2025/5/20
+-- 更新内容: 初期作成、全テーブルの定義、user_idの一意制約追加
+
+/*
+このスクリプトは全てのテーブル構造を定義します。
+主な変更点:
+- テーブル名とフィールド名の一貫性を確保
+- 適切な制約とデフォルト値の設定
+- profilesテーブルにuser_idの一意制約を追加
+- 型定義に存在するが実際のスキーマに存在しなかったテーブルを追加
+*/
+
+-- トランザクション開始
+BEGIN;
+
+-- ストレージバケットテーブル
+CREATE TABLE storage.buckets (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  owner UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  public BOOLEAN DEFAULT FALSE
+);
+
+-- ストレージオブジェクトテーブル
+CREATE TABLE storage.objects (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  bucket_id TEXT REFERENCES storage.buckets(id),
+  name TEXT,
+  owner UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  metadata JSONB,
+  path TEXT
+);
 
 -- usersテーブル
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
+  full_name TEXT,
+  avatar_url TEXT,
   is_admin BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   settings JSONB DEFAULT '{}'::jsonb
 );
 
--- profilesテーブル
-CREATE TABLE IF NOT EXISTS profiles (
+-- profilesテーブル（user_idに一意制約を追加）
+CREATE TABLE profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE, -- 一意制約を追加
+  username TEXT,
   display_name TEXT,
-  avatar_url TEXT,
   bio TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- chat_imagesテーブル（先に作成する必要がある）
-CREATE TABLE IF NOT EXISTS chat_images (
+-- conversationsテーブル
+CREATE TABLE conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  image_data TEXT NOT NULL, -- Base64エンコードされた画像データ
+  title TEXT NOT NULL DEFAULT 'New Conversation',
+  system_prompt TEXT,
+  is_archived BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- chat_imagesテーブル
+CREATE TABLE chat_images (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  image_data TEXT,
   image_caption TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- chat_messagesテーブル
-CREATE TABLE IF NOT EXISTS chat_messages (
+CREATE TABLE chat_messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
   content TEXT NOT NULL,
+  type TEXT DEFAULT 'text' CHECK (type IN ('text', 'image')),
+  prompt TEXT,
+  image_url TEXT,
+  image_id UUID REFERENCES chat_images(id) ON DELETE SET NULL,
   is_proposal BOOLEAN DEFAULT FALSE,
   is_public BOOLEAN DEFAULT FALSE,
   proposal_type TEXT CHECK (proposal_type IN ('buy', 'sell') OR proposal_type IS NULL),
   price NUMERIC,
   take_profit NUMERIC,
   stop_loss NUMERIC,
-  image_id UUID REFERENCES chat_images(id) ON DELETE SET NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- entriesテーブル
-CREATE TABLE IF NOT EXISTS entries (
+CREATE TABLE entries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   side TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
   symbol TEXT NOT NULL,
   price NUMERIC NOT NULL,
-  time TIMESTAMP WITH TIME ZONE NOT NULL,
+  quantity NUMERIC NOT NULL DEFAULT 1,
+  time TIMESTAMPTZ NOT NULL,
   take_profit NUMERIC,
   stop_loss NUMERIC,
   status TEXT NOT NULL CHECK (status IN ('open', 'closed', 'canceled')),
   is_public BOOLEAN DEFAULT FALSE,
   exit_price NUMERIC,
-  exit_time TIMESTAMP WITH TIME ZONE,
+  exit_time TIMESTAMPTZ,
   profit NUMERIC,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- trading_strategiesテーブル
+CREATE TABLE trading_strategies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- trading_historyテーブル
+CREATE TABLE trading_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  strategy_id UUID REFERENCES trading_strategies(id) ON DELETE SET NULL,
+  symbol TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('buy', 'sell')),
+  quantity NUMERIC NOT NULL,
+  price NUMERIC NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'cancelled', 'failed')),
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- symbol_settingsテーブル
-CREATE TABLE IF NOT EXISTS symbol_settings (
+CREATE TABLE symbol_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   symbol TEXT NOT NULL,
   is_favorite BOOLEAN DEFAULT FALSE,
   display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, symbol)
 );
 
 -- chart_settingsテーブル
-CREATE TABLE IF NOT EXISTS chart_settings (
+CREATE TABLE chart_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   timeframe TEXT NOT NULL,
@@ -90,12 +172,12 @@ CREATE TABLE IF NOT EXISTS chart_settings (
   show_grid BOOLEAN DEFAULT TRUE,
   show_legend BOOLEAN DEFAULT TRUE,
   theme TEXT DEFAULT 'dark',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- indicator_settingsテーブル
-CREATE TABLE IF NOT EXISTS indicator_settings (
+CREATE TABLE indicator_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   chart_settings_id UUID REFERENCES chart_settings(id) ON DELETE CASCADE NOT NULL,
@@ -103,88 +185,62 @@ CREATE TABLE IF NOT EXISTS indicator_settings (
   params JSONB NOT NULL DEFAULT '{}'::jsonb,
   color TEXT,
   visible BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- cached_dataテーブル
-CREATE TABLE IF NOT EXISTS cached_data (
+CREATE TABLE cached_data (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   data_type TEXT NOT NULL,
   symbol TEXT NOT NULL,
   timeframe TEXT,
   data JSONB NOT NULL,
-  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- user_relationsテーブル
-CREATE TABLE IF NOT EXISTS user_relations (
+CREATE TABLE user_relations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   follower_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   following_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(follower_id, following_id)
 );
 
 -- backtest_dataテーブル
-CREATE TABLE IF NOT EXISTS backtest_data (
+CREATE TABLE backtest_data (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   symbol TEXT NOT NULL,
   timeframe TEXT NOT NULL,
-  start_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  start_date TIMESTAMPTZ NOT NULL,
+  end_date TIMESTAMPTZ NOT NULL,
   strategy JSONB NOT NULL,
   results JSONB NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 更新日時を自動的に更新するトリガー関数
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- memoriesテーブル（ベクトル検索用）
+CREATE TABLE memories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL,
+  embedding VECTOR(1536),
+  metadata JSONB DEFAULT '{}'::jsonb,
+  external_id TEXT,
+  is_synced BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- 各テーブルに更新日時トリガーを設定
-CREATE TRIGGER update_users_updated_at
-BEFORE UPDATE ON users
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- 管理者チェック用のビュー作成（パフォーマンス最適化）
+CREATE OR REPLACE VIEW admin_users AS
+SELECT id FROM users WHERE is_admin = true;
 
-CREATE TRIGGER update_profiles_updated_at
-BEFORE UPDATE ON profiles
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_chat_messages_updated_at
-BEFORE UPDATE ON chat_messages
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_entries_updated_at
-BEFORE UPDATE ON entries
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_symbol_settings_updated_at
-BEFORE UPDATE ON symbol_settings
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_chart_settings_updated_at
-BEFORE UPDATE ON chart_settings
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_indicator_settings_updated_at
-BEFORE UPDATE ON indicator_settings
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_cached_data_updated_at
-BEFORE UPDATE ON cached_data
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_backtest_data_updated_at
-BEFORE UPDATE ON backtest_data
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- トランザクション終了
+COMMIT;

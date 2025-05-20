@@ -3,6 +3,10 @@
 import { useRef, useEffect, useImperativeHandle, useState } from "react";
 import { logger } from "@/lib/logger";
 import type { DrawingCanvasHandle, DrawingMode } from "@/types/chart";
+import { DRAWING_MODES } from "@/types/chart";
+
+const [FREEHAND, TRENDLINE, FIBONACCI, HORIZONTAL_LINE, BOX, ARROW, ERASER] =
+  DRAWING_MODES;
 
 /**
  * チャート上に手描きできるキャンバスコンポーネント
@@ -15,7 +19,7 @@ export interface UseDrawingCanvasProps {
   /** 線の太さ */
   strokeWidth?: number;
   /** 描画モード */
-  mode?: DrawingMode;
+  mode?: DrawingMode | null;
   /** 消しゴムサイズ */
   eraserSize?: number;
 }
@@ -25,7 +29,7 @@ export function useDrawingCanvas(
     enabled = true,
     color = "#ef4444",
     strokeWidth = 2,
-    mode = "freehand",
+    mode = DRAWING_MODES[0],
     eraserSize = 30,
   }: UseDrawingCanvasProps,
   ref: React.Ref<DrawingCanvasHandle>,
@@ -43,8 +47,8 @@ export function useDrawingCanvas(
     y: number;
   } | null>(null);
 
-  // モードがnullの場合、'freehand'として扱う
-  const actualMode = mode === null ? "freehand" : mode;
+  // モードがnullの場合、デフォルトのフリーハンドとして扱う
+  const actualMode = mode === null ? DRAWING_MODES[0] : mode;
 
   useImperativeHandle(ref, () => ({
     clear() {
@@ -87,7 +91,7 @@ export function useDrawingCanvas(
 
   // モードが変更されたら消しゴム位置をリセット
   useEffect(() => {
-    if (mode === "eraser") {
+    if (mode === ERASER) {
       // 初期位置をキャンバスの中央に設定
       const canvas = canvasRef.current;
       if (canvas) {
@@ -164,12 +168,12 @@ export function useDrawingCanvas(
       );
     }
 
-    if (actualMode === "freehand" || actualMode === "eraser") {
+    if (actualMode === FREEHAND || actualMode === ERASER) {
       drawing.current = true;
       lastPoint.current = point;
 
       // 消しゴムの場合、ポイントダウン時点で消去
-      if (actualMode === "eraser") {
+      if (actualMode === ERASER) {
         erase(point.x, point.y);
       }
     } else {
@@ -311,9 +315,9 @@ export function useDrawingCanvas(
     switch (mode) {
       case null:
         return "cursor-default"; // 選択モード
-      case "freehand":
+      case FREEHAND:
         return "cursor-pointer"; // フリーハンド (Tailwindにcursor-pencilがないため)
-      case "eraser":
+      case ERASER:
         return "cursor-not-allowed"; // 消しゴム
       default:
         return "cursor-crosshair"; // その他の描画ツール
@@ -330,7 +334,7 @@ export function useDrawingCanvas(
     const y = e.clientY - rect.top;
 
     // 消しゴムモードの場合、常に位置を更新
-    if (mode === "eraser") {
+    if (mode === ERASER) {
       logger.debug(
         `消しゴム位置更新: x=${x}, y=${y}, rect=${JSON.stringify({
           left: rect.left,
@@ -342,7 +346,7 @@ export function useDrawingCanvas(
       setEraserPosition({ x, y });
     }
 
-    if (actualMode === "freehand" && drawing.current) {
+    if (actualMode === FREEHAND && drawing.current) {
       // フリーハンド描画処理（従来通り）
       const ctx = getContext();
       const canvas = canvasRef.current;
@@ -355,21 +359,21 @@ export function useDrawingCanvas(
       ctx.lineTo(x, y);
       ctx.stroke();
       lastPoint.current = { x, y };
-    } else if (actualMode === "eraser" && drawing.current) {
+    } else if (actualMode === ERASER && drawing.current) {
       // 消しゴム処理
       erase(x, y);
       lastPoint.current = { x, y };
     } else if (startPoint.current) {
       // 各モードのリアルタイムプレビュー
-      if (actualMode === "trendline") {
+      if (actualMode === TRENDLINE) {
         drawTrendlinePreview(x, y);
-      } else if (actualMode === "fibonacci") {
+      } else if (actualMode === FIBONACCI) {
         drawFibonacciPreview(x, y);
-      } else if (actualMode === "horizontal-line") {
+      } else if (actualMode === HORIZONTAL_LINE) {
         drawHorizontalLinePreview(y);
-      } else if (actualMode === "box") {
+      } else if (actualMode === BOX) {
         drawBoxPreview(x, y);
-      } else if (actualMode === "arrow") {
+      } else if (actualMode === ARROW) {
         drawArrowPreview(x, y);
       }
     }
@@ -382,7 +386,7 @@ export function useDrawingCanvas(
 
     logger.debug("描画終了");
 
-    if (actualMode === "freehand" || actualMode === "eraser") {
+    if (actualMode === FREEHAND || actualMode === ERASER) {
       drawing.current = false;
       lastPoint.current = null;
       // 描画終了時に現在の状態を保存
@@ -411,15 +415,15 @@ export function useDrawingCanvas(
 
       // プレビューと同じ描画をここで行う（最終確定）
       // プレビューをクリアせずそのまま残すことも可能
-      if (actualMode === "trendline") {
+      if (actualMode === TRENDLINE) {
         drawTrendlinePreview(end.x, end.y);
-      } else if (actualMode === "fibonacci") {
+      } else if (actualMode === FIBONACCI) {
         drawFibonacciPreview(end.x, end.y);
-      } else if (actualMode === "horizontal-line") {
+      } else if (actualMode === HORIZONTAL_LINE) {
         drawHorizontalLinePreview(end.y);
-      } else if (actualMode === "box") {
+      } else if (actualMode === BOX) {
         drawBoxPreview(end.x, end.y);
-      } else if (actualMode === "arrow") {
+      } else if (actualMode === ARROW) {
         drawArrowPreview(end.x, end.y);
       }
 
@@ -438,7 +442,7 @@ export function useDrawingCanvas(
 
   // 消しゴムモードの場合、消しゴムのプレビューを表示するためのスタイル
   const getEraserCursorStyle = () => {
-    if (mode === "eraser") {
+    if (mode === ERASER) {
       return {
         cursor: "none", // 標準カーソルを非表示
       };
@@ -448,7 +452,7 @@ export function useDrawingCanvas(
 
   // キャンバスのマウスエンター/リーブイベントハンドラ
   const handlePointerEnter = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (mode === "eraser") {
+    if (mode === ERASER) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -459,7 +463,7 @@ export function useDrawingCanvas(
 
   const handlePointerLeave = (e: React.PointerEvent<HTMLCanvasElement>) => {
     endDrawing(e);
-    if (mode === "eraser") {
+    if (mode === ERASER) {
       logger.debug("ポインタ退場: 消しゴム非表示");
       setEraserPosition(null);
     }
@@ -467,7 +471,7 @@ export function useDrawingCanvas(
 
   // グローバルマウス移動イベントを追加してキャンバス外でも動作するようにする
   useEffect(() => {
-    if (mode === "eraser" && canvasRef.current) {
+    if (mode === ERASER && canvasRef.current) {
       const handleGlobalMouseMove = (e: MouseEvent) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -496,7 +500,7 @@ export function useDrawingCanvas(
 
   // 親コンテナのマウス移動イベントハンドラ
   const handleContainerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (mode === "eraser") {
+    if (mode === ERASER) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
         const x = e.clientX - rect.left;

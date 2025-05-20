@@ -21,7 +21,7 @@ export function useDrawingControls({
     setShowSidebar((prev) => !prev);
   }, []);
 
-  const handleModeChange = useCallback((newMode: DrawingMode) => {
+  const handleModeChange = useCallback((newMode: DrawingMode | null) => {
     setMode(newMode);
   }, []);
 

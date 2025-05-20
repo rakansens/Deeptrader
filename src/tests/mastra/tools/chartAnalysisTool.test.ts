@@ -9,7 +9,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test'
 import { chartAnalysisTool } from '@/mastra/tools/chartAnalysisTool';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeBollinger, MacdCalculator } from '@/lib/indicators';
-import type { BinanceKline } from '@/types/binance';
+import type { BinanceKline, BinanceKlineObject } from '@/types/binance';
 import { SYMBOLS, TIMEFRAMES } from '@/constants/chart';
 
 jest.mock('@/infrastructure/exchange/binance-service', () => ({
@@ -17,20 +17,20 @@ jest.mock('@/infrastructure/exchange/binance-service', () => ({
 }));
 
 describe('chartAnalysisTool', () => {
-  const sample: BinanceKline[] = Array.from({ length: 40 }, (_, i) => [
-    i,
-    '',
-    '',
-    '',
-    String(i + 1),
-    '',
-    i,
-    '',
-    0,
-    '',
-    '',
-    ''
-  ]) as BinanceKline[];
+  const sample: BinanceKlineObject[] = Array.from({ length: 40 }, (_, i) => ({
+    openTime: i,
+    open: '',
+    high: '',
+    low: '',
+    close: String(i + 1),
+    volume: '',
+    closeTime: i,
+    quoteAssetVolume: '',
+    tradeCount: 0,
+    takerBuyBaseVolume: '',
+    takerBuyQuoteVolume: '',
+    ignore: '',
+  }));
 
   it('validates input schema', () => {
     expect(() =>
@@ -58,7 +58,7 @@ describe('chartAnalysisTool', () => {
         }
       }
     } as any)) as any;
-    const closes = sample.map((k) => parseFloat(k[4]));
+    const closes = sample.map((k) => parseFloat(k.close));
     
     // MACD計算用のカリキュレータ
     const macdCalc = new MacdCalculator();

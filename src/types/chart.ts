@@ -1,12 +1,13 @@
-export type DrawingMode =
-  | 'freehand'
-  | 'trendline'
-  | 'fibonacci'
-  | 'horizontal-line'
-  | 'box'
-  | 'arrow'
-  | 'eraser'
-  | null;
+export const DRAWING_MODES = [
+  "freehand",
+  "trendline",
+  "fibonacci",
+  "horizontal-line",
+  "box",
+  "arrow",
+  "eraser",
+] as const;
+export type DrawingMode = (typeof DRAWING_MODES)[number];
 
 export interface DrawingCanvasHandle {
   clear: () => void;
@@ -45,8 +46,6 @@ export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   boll: 20,
 };
 
-export type IndicatorsChangeHandler = (
-  value: IndicatorOptions,
-) => void;
+export type IndicatorsChangeHandler = (value: IndicatorOptions) => void;
 
-export type { ChartTheme } from '../hooks/use-chart-theme';
+export type { ChartTheme } from "../hooks/use-chart-theme";

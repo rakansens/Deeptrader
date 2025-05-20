@@ -1,77 +1,73 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import ChartSidebar from '@/components/chart/ChartSidebar';
-import type { DrawingMode } from '@/types/chart';
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import ChartSidebar from "@/components/chart/ChartSidebar";
+import { DRAWING_MODES, type DrawingMode } from "@/types/chart";
 
-describe('ChartSidebar', () => {
-  it('calls onModeChange when tool selected', async () => {
+describe("ChartSidebar", () => {
+  it("calls onModeChange when tool selected", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
-    await user.click(screen.getByTitle('トレンドライン'));
-    expect(onChange).toHaveBeenCalledWith('trendline');
+    await user.click(screen.getByTitle("トレンドライン"));
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[1]);
   });
 
-  it('deactivates tool when clicked twice', async () => {
+  it("deactivates tool when clicked twice", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(<ChartSidebar mode='trendline' onModeChange={onChange} />);
-    await user.click(screen.getByTitle('トレンドライン'));
+    render(<ChartSidebar mode={DRAWING_MODES[1]} onModeChange={onChange} />);
+    await user.click(screen.getByTitle("トレンドライン"));
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  it('switches between tools', async () => {
+  it("switches between tools", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(<ChartSidebar mode='freehand' onModeChange={onChange} />);
-    await user.click(screen.getByTitle('フィボナッチリトレースメント'));
-    expect(onChange).toHaveBeenCalledWith('fibonacci');
+    render(<ChartSidebar mode={DRAWING_MODES[0]} onModeChange={onChange} />);
+    await user.click(screen.getByTitle("フィボナッチリトレースメント"));
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[2]);
   });
 
-  it('selects horizontal line tool', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(<ChartSidebar mode={null} onModeChange={onChange} />);
-    await user.click(screen.getByTitle('水平線'));
-    expect(onChange).toHaveBeenCalledWith('horizontal-line');
-  });
-
-  it('selects eraser tool', async () => {
+  it("selects horizontal line tool", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
-    await user.click(screen.getByTitle('消しゴム'));
-    expect(onChange).toHaveBeenCalledWith('eraser');
+    await user.click(screen.getByTitle("水平線"));
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[3]);
   });
 
-  it('calls onClear when clear button clicked', async () => {
+  it("selects eraser tool", async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<ChartSidebar mode={null} onModeChange={onChange} />);
+    await user.click(screen.getByTitle("消しゴム"));
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[6]);
+  });
+
+  it("calls onClear when clear button clicked", async () => {
     const user = userEvent.setup();
     const onClear = jest.fn();
     render(
-      <ChartSidebar
-        mode={null}
-        onModeChange={() => {}}
-        onClear={onClear}
-      />
+      <ChartSidebar mode={null} onModeChange={() => {}} onClear={onClear} />,
     );
-    await user.click(screen.getByTitle('全て消去'));
+    await user.click(screen.getByTitle("全て消去"));
     expect(onClear).toHaveBeenCalled();
   });
 
-  it('does not render clear button when onClear not provided', () => {
+  it("does not render clear button when onClear not provided", () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
-    expect(screen.queryByTitle('全て消去')).not.toBeInTheDocument();
+    expect(screen.queryByTitle("全て消去")).not.toBeInTheDocument();
   });
 
-  it('shows selection tool as active when mode is null', () => {
+  it("shows selection tool as active when mode is null", () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
-    const selectionTool = screen.getByTitle('選択ツール');
-    expect(selectionTool.className).toContain('bg-primary');
+    const selectionTool = screen.getByTitle("選択ツール");
+    expect(selectionTool.className).toContain("bg-primary");
   });
 
-  it('renders vertically', () => {
+  it("renders vertically", () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
-    const sidebar = screen.getByTestId('chart-sidebar');
-    expect(sidebar.className).toContain('flex-col');
+    const sidebar = screen.getByTestId("chart-sidebar");
+    expect(sidebar.className).toContain("flex-col");
   });
 });

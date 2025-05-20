@@ -1,4 +1,4 @@
-import { fetchKlines } from '@/infrastructure/exchange/binance-service';
+import { fetchKlines, klineTupleToObject } from '@/infrastructure/exchange/binance-service';
 
 const originalFetch = global.fetch;
 
@@ -16,15 +16,32 @@ describe('fetchKlines', () => {
   });
 
   it('calls Binance API and returns data', async () => {
-    const mockData = [["1"]] as any;
+    const tuple = [
+      1,
+      '0',
+      '0',
+      '0',
+      '0',
+      '0',
+      2,
+      '0',
+      3,
+      '0',
+      '0',
+      '0',
+    ] as any;
+    const mockData = [tuple];
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => mockData
+      json: async () => mockData,
     } as Response);
 
     const result = await fetchKlines('BTCUSDT', '1h', 10);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('klines'));
-    expect(result).toEqual(mockData);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('klines'),
+      expect.any(Object),
+    );
+    expect(result).toEqual(mockData.map(klineTupleToObject));
   });
 
   it('throws error when response is not ok', async () => {

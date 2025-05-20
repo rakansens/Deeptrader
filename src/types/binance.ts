@@ -19,6 +19,24 @@ export type BinanceKline = [
 ];
 
 /**
+ * 変換後のローソク足オブジェクト型
+ */
+export interface BinanceKlineObject {
+  openTime: number;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
+  closeTime: number;
+  quoteAssetVolume: string;
+  tradeCount: number;
+  takerBuyBaseVolume: string;
+  takerBuyQuoteVolume: string;
+  ignore: string;
+}
+
+/**
  * Binance WebSocketの取引データメッセージ
  */
 export interface BinanceTradeMessage {
@@ -84,4 +102,3 @@ export interface BinanceKlineMessage {
   /** リクエストID */
   id?: number;
 }
-
