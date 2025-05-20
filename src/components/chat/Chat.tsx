@@ -10,7 +10,6 @@ import {
   Download,
   Mic,
   MicOff,
-  Camera,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -336,9 +335,9 @@ export default function Chat() {
               disabled={loading}
               size="sm"
               variant="outline"
-              className="relative flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 ease-in-out overflow-hidden hover:w-auto hover:pl-3 hover:pr-4 group"
+              className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary transition-all duration-300 ease-in-out overflow-hidden group hover:w-auto hover:pl-3 hover:pr-4"
             >
-              <TrendingUp className="h-5 w-5 min-w-5 transition-transform group-hover:scale-110 duration-200" />
+              <TrendingUp className="h-5 w-5 min-w-5 transition-transform group-hover:scale-110 duration-200 text-inherit" />
               <span className="max-w-0 whitespace-nowrap opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-out text-sm font-medium">チャートを送信</span>
             </Button>
           </div>
