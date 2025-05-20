@@ -1,22 +1,4 @@
--- 06_initial_data.sql
--- 初期データを挿入するスクリプト
--- 作成日: 2025/5/20
--- 更新内容: 修正版、初期データ挿入処理を修正し、ユーザー作成後に動作するよう調整
-
-/*
-このスクリプトは初期データをデータベースに挿入します。
-主な内容:
-- 管理者ユーザーの作成
-- デフォルトのチャート設定
-- デフォルトのシンボル設定
-- ストレージバケットの作成
-*/
-
--- トランザクション開始
-BEGIN;
-
 -- 管理者ユーザーの作成（既に存在する場合は更新）
--- 注意: UUIDはユーザー固有のものを使用します。ここでは簡単のため決め打ちしています。
 INSERT INTO users (id, email, full_name, is_admin)
 VALUES 
   ('396c7505-4679-4440-8c95-a4c9fe62c2ca', 'rakansens@gmail.com', 'Administrator', true)
@@ -31,12 +13,6 @@ INSERT INTO profiles (user_id, username, display_name)
 VALUES 
   ('396c7505-4679-4440-8c95-a4c9fe62c2ca', 'admin', 'Administrator')
 ON CONFLICT (user_id) DO NOTHING;
-
--- トランザクション終了
-COMMIT;
-
--- デフォルトのシンボル設定を作成
-BEGIN;
 
 -- デフォルトのシンボル設定
 INSERT INTO symbol_settings (user_id, symbol, is_favorite, display_order)
@@ -57,17 +33,5 @@ VALUES
   ('396c7505-4679-4440-8c95-a4c9fe62c2ca', '1h', 'candlestick')
 ON CONFLICT DO NOTHING;
 
--- トランザクション終了
-COMMIT;
-
--- ストレージバケットの作成（Supabaseが管理するテーブルへの挿入）
-BEGIN;
-
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('chat-images', 'chat-images', true)
-ON CONFLICT (id) DO NOTHING;
-
-COMMIT;
-
--- 注意: 初期データの挿入は既存のデータと競合する可能性があります。
--- ON CONFLICT句を使用して適切に処理してください。
+-- ストレージバケットの作成（手動で作成）
+-- このSQLはコマンドラインで実行する必要があります 

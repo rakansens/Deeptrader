@@ -8,6 +8,7 @@ import {
   Minus,
   Square,
   ArrowUpRight,
+  Type,
   Trash2,
   Eraser,
 } from "lucide-react";
@@ -30,17 +31,14 @@ interface ToolInfo {
 
 const DRAWING_TOOLS: ToolInfo[] = [
   { mode: null, icon: MousePointer, label: "選択ツール" },
-  { mode: DRAWING_MODES[0], icon: Pencil, label: "フリーハンド描画" },
-  { mode: DRAWING_MODES[1], icon: TrendingUp, label: "トレンドライン" },
-  {
-    mode: DRAWING_MODES[2],
-    icon: BarChart3,
-    label: "フィボナッチリトレースメント",
-  },
-  { mode: DRAWING_MODES[3], icon: Minus, label: "水平線" },
-  { mode: DRAWING_MODES[4], icon: Square, label: "ボックス描画" },
-  { mode: DRAWING_MODES[5], icon: ArrowUpRight, label: "矢印マーカー" },
-  { mode: DRAWING_MODES[6], icon: Eraser, label: "消しゴム" },
+  { mode: "freehand", icon: Pencil, label: "フリーハンド描画" },
+  { mode: "trendline", icon: TrendingUp, label: "トレンドライン" },
+  { mode: "fibonacci", icon: BarChart3, label: "フィボナッチリトレースメント" },
+  { mode: "horizontal-line", icon: Minus, label: "水平線" },
+  { mode: "box", icon: Square, label: "ボックス描画" },
+  { mode: "arrow", icon: ArrowUpRight, label: "矢印マーカー" },
+  { mode: "text", icon: Type, label: "テキスト" },
+  { mode: "eraser", icon: Eraser, label: "消しゴム" },
 ];
 
 /**
@@ -75,7 +73,7 @@ export default function ChartSidebar({
         <button
           key={label}
           className={`w-full p-2 rounded-md flex items-center justify-center ${
-            toolMode === DRAWING_MODES[6]
+            toolMode === "eraser"
               ? isActive(toolMode)
                 ? "bg-red-500 text-white"
                 : "bg-red-100 text-red-500 hover:bg-red-200"

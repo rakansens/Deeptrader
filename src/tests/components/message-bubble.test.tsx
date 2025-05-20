@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MessageBubble from '@/components/chat/message-bubble'
-import { formatDateTime } from '@/lib/format'
 
 describe('MessageBubble', () => {
   it('displays user label', () => {

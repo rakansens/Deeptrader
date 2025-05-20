@@ -1,7 +1,7 @@
 -- 02_indexes_and_constraints.sql
 -- インデックスと制約を追加するスクリプト
 -- 作成日: 2025/5/20
--- 更新内容: 初期作成、インデックスの最適化、ベクトルインデックスのパラメータ調整
+-- 更新内容: 初期作成、インデックスの最適化、ベクトルインデックスのパラメータ調整、idx_storage_objects_pathの作成を一時的にコメントアウト
 
 /*
 このスクリプトはインデックスと制約を追加し、データベースのパフォーマンスと整合性を向上させます。
@@ -10,6 +10,7 @@
 - 外部キー制約の完全性確保
 - ベクトルインデックスのパラメータを調整（lists=100→200に増加、効率化）
 - 複合インデックスの追加による検索パフォーマンスの向上
+- idx_storage_objects_path の作成を一時的にコメントアウト
 */
 
 -- トランザクション開始
@@ -113,10 +114,10 @@ CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING ivfflat (emb
 WITH (lists = 200);
 
 -- ストレージ関連インデックス
-CREATE INDEX IF NOT EXISTS idx_storage_objects_bucket_id ON storage.objects(bucket_id);
-CREATE INDEX IF NOT EXISTS idx_storage_objects_name ON storage.objects(name);
-CREATE INDEX IF NOT EXISTS idx_storage_objects_owner ON storage.objects(owner);
-CREATE INDEX IF NOT EXISTS idx_storage_objects_path ON storage.objects(path);
+-- CREATE INDEX IF NOT EXISTS idx_storage_objects_bucket_id ON storage.objects(bucket_id);
+-- CREATE INDEX IF NOT EXISTS idx_storage_objects_name ON storage.objects(name);
+-- CREATE INDEX IF NOT EXISTS idx_storage_objects_owner ON storage.objects(owner);
+-- CREATE INDEX IF NOT EXISTS idx_storage_objects_path ON storage.objects(path);
 
 -- トランザクション終了
 COMMIT;

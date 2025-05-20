@@ -18,18 +18,6 @@ jest.mock('ai/react', () => {
   }
 })
 
-jest.mock('@/lib/chat-storage', () => {
-  return {
-    loadMessages: (id: string) => {
-      const stored = localStorage.getItem(`messages_${id}`)
-      return stored ? JSON.parse(stored) : []
-    },
-    saveMessages: (id: string, messages: any[]) => {
-      localStorage.setItem(`messages_${id}`, JSON.stringify(messages))
-    }
-  }
-})
-
 global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder
 global.ReadableStream = ReadableStream as any
 global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder

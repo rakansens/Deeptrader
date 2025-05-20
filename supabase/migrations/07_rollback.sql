@@ -1,7 +1,7 @@
 -- 07_rollback.sql
 -- ロールバック用のスクリプト
 -- 作成日: 2025/5/20
--- 更新内容: 初期作成、ロールバック手順の定義
+-- 更新内容: 初期作成、ロールバック手順の定義、DROP SCHEMA storage, 全DROP EXTENSION, storage関連テーブルのDROPを一時的にコメントアウト
 
 /*
 このスクリプトは、マイグレーションに問題が発生した場合にロールバックするためのものです。
@@ -210,8 +210,8 @@ DROP TABLE IF EXISTS memories CASCADE;
 DROP TABLE IF EXISTS conversations CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS storage.objects CASCADE;
-DROP TABLE IF EXISTS storage.buckets CASCADE;
+-- DROP TABLE IF EXISTS storage.objects CASCADE; -- Supabaseサービスエラー回避のため一時的にコメントアウト
+-- DROP TABLE IF EXISTS storage.buckets CASCADE; -- Supabaseサービスエラー回避のため一時的にコメントアウト
 COMMIT;
 
 -- 関数を削除（別トランザクションで実行）
@@ -224,15 +224,15 @@ COMMIT;
 
 -- スキーマを削除（別トランザクションで実行）
 BEGIN;
-DROP SCHEMA IF EXISTS storage CASCADE;
+-- DROP SCHEMA IF EXISTS storage CASCADE; -- storageスキーマの所有権問題のため一時的にコメントアウト
 COMMIT;
 
 -- 拡張機能を削除（別トランザクションで実行）
 BEGIN;
-DROP EXTENSION IF EXISTS "uuid-ossp";
-DROP EXTENSION IF EXISTS "pgcrypto";
-DROP EXTENSION IF EXISTS "pg_net";
-DROP EXTENSION IF EXISTS "vector";
+-- DROP EXTENSION IF EXISTS "uuid-ossp"; -- 依存関係エラー回避のため一時的にコメントアウト
+-- DROP EXTENSION IF EXISTS "pgcrypto"; -- 依存関係エラー回避のため一時的にコメントアウト
+-- DROP EXTENSION IF EXISTS "pg_net"; -- 依存関係エラー回避のため一時的にコメントアウト
+-- DROP EXTENSION IF EXISTS "vector"; -- 依存関係エラー回避のため一時的にコメントアウト
 COMMIT;
 
 -- 注意: このスクリプトを実行すると、すべてのデータが失われます。

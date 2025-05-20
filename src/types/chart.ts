@@ -7,7 +7,16 @@ export const DRAWING_MODES = [
   "arrow",
   "eraser",
 ] as const;
-export type DrawingMode = (typeof DRAWING_MODES)[number];
+export type DrawingMode =
+  | 'freehand'
+  | 'trendline'
+  | 'fibonacci'
+  | 'horizontal-line'
+  | 'box'
+  | 'arrow'
+  | 'text'
+  | 'eraser'
+  | null;
 
 export interface DrawingCanvasHandle {
   clear: () => void;

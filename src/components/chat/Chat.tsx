@@ -60,7 +60,6 @@ export default function Chat() {
   } = useChat();
   const { toast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
-  const spokenRef = useRef<string | null>(null);
   const isSendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);

@@ -20,6 +20,8 @@ function DrawingCanvas(
     canvasRef,
     containerRef,
     eraserPosition,
+    textInput,
+    textInputRef,
     isDrawing,
     getCursorStyle,
     getEraserCursorStyle,
@@ -29,6 +31,8 @@ function DrawingCanvas(
     handlePointerEnter,
     handlePointerLeave,
     handleContainerMouseMove,
+    handleTextChange,
+    handleTextSubmit,
   } = useDrawingCanvas(options, ref);
   const { mode = DRAWING_MODES[0], enabled = true, eraserSize = 30 } = options;
 
@@ -85,6 +89,47 @@ function DrawingCanvas(
               }}
             ></div>
           </div>
+        </div>
+      )}
+      {textInput && (
+        <div
+          className="absolute z-50"
+          style={{
+            position: "absolute",
+            left: `${textInput.x}px`,
+            top: `${textInput.y}px`,
+            zIndex: 9999,
+          }}
+          data-testid="text-input-container"
+        >
+          <input
+            ref={textInputRef}
+            value={textInput.text}
+            onChange={handleTextChange}
+            onBlur={handleTextSubmit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleTextSubmit();
+              }
+              if (e.key === "Escape") {
+                // setTextInput(null); // 必要に応じてキャンセル処理を追加
+              }
+            }}
+            className="text-base border rounded shadow-md"
+            style={{
+              border: "3px solid red",
+              backgroundColor: "white",
+              color: "black",
+              width: "200px",
+              height: "40px",
+              padding: "5px",
+              fontSize: "16px",
+            }}
+            autoFocus
+            placeholder="テキストを入力"
+            data-testid="text-input"
+          />
         </div>
       )}
       <canvas

@@ -47,8 +47,19 @@ export function useDrawingCanvas(
     y: number;
   } | null>(null);
 
+  // テキスト入力用の状態
+  const [textInput, setTextInput] = useState<
+    | { x: number; y: number; text: string }
+    | null
+  >(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
+
   // モードがnullの場合、デフォルトのフリーハンドとして扱う
   const actualMode = mode === null ? DRAWING_MODES[0] : mode;
+
+  useEffect(() => {
+    logger.debug(`[useDrawingCanvas] mode prop: ${mode}, actualMode: ${actualMode}`);
+  }, [mode, actualMode]);
 
   useImperativeHandle(ref, () => ({
     clear() {
@@ -72,6 +83,11 @@ export function useDrawingCanvas(
         logger.debug(
           `Canvas resized: ${canvas.width}x${canvas.height}, Enabled: ${enabled}`,
         );
+        // リサイズ時に保存された描画を再描画（オプション）
+        if (savedCanvasState.current) {
+          const ctx = canvas.getContext("2d");
+          ctx?.putImageData(savedCanvasState.current, 0, 0);
+        }
       }
     };
     resize();
@@ -103,6 +119,13 @@ export function useDrawingCanvas(
       setEraserPosition(null);
     }
   }, [mode]);
+
+  // テキスト入力が表示されたらフォーカスする
+  useEffect(() => {
+    if (textInput && textInputRef.current) {
+      textInputRef.current.focus();
+    }
+  }, [textInput]);
 
   const getContext = () => canvasRef.current?.getContext("2d");
 
@@ -147,16 +170,39 @@ export function useDrawingCanvas(
     );
   };
 
+  // テキスト入力を確定してキャンバスに描画
+  const handleTextSubmit = () => {
+    if (!textInput) return;
+    const ctx = getContext();
+    const canvas = canvasRef.current;
+    if (!ctx || !canvas) {
+      setTextInput(null);
+      return;
+    }
+    ctx.fillStyle = color;
+    ctx.font = `${14}px Arial`; // フォントサイズは固定、必要ならpropsで調整可能に
+    ctx.fillText(textInput.text, textInput.x, textInput.y);
+    savedCanvasState.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setTextInput(null);
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (textInput) {
+      setTextInput({ ...textInput, text: e.target.value });
+    }
+  };
+
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!enabled) return;
-    // 選択モード（null）の場合は描画せずに返る
-    if (mode === null) return;
+    logger.debug(`[handlePointerDown] 開始 - enabled: ${enabled}, mode: ${mode}, actualMode: ${actualMode}`);
+    if (!enabled || mode === null) {
+      logger.debug("[handlePointerDown] 描画不可 (enabled が false または mode が null)");
+      return;
+    }
 
     logger.debug("描画開始");
     const rect = e.currentTarget.getBoundingClientRect();
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
-    // キャンバスの現在状態を保存
     const canvas = canvasRef.current;
     const ctx = getContext();
     if (canvas && ctx) {
@@ -166,6 +212,14 @@ export function useDrawingCanvas(
         canvas.width,
         canvas.height,
       );
+    }
+
+    if (actualMode === "text") {
+      logger.debug(`テキストモードでクリックされました。位置: x=${point.x}, y=${point.y}`);
+      // 直接クリック位置を使用
+      setTextInput({ x: point.x, y: point.y, text: "" });
+      logger.debug(`テキスト入力フィールドを表示: x=${point.x}, y=${point.y}`);
+      return;
     }
 
     if (actualMode === FREEHAND || actualMode === ERASER) {
@@ -319,15 +373,15 @@ export function useDrawingCanvas(
         return "cursor-pointer"; // フリーハンド (Tailwindにcursor-pencilがないため)
       case ERASER:
         return "cursor-not-allowed"; // 消しゴム
+      case "text":
+        return "cursor-text"; // テキストモード用のカーソル
       default:
         return "cursor-crosshair"; // その他の描画ツール
     }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!enabled) return;
-    // 選択モード（null）の場合は描画せずに返る
-    if (mode === null) return;
+    if (!enabled || mode === null) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -380,11 +434,14 @@ export function useDrawingCanvas(
   };
 
   const endDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!enabled) return;
-    // 選択モード（null）の場合は描画せずに返る
-    if (mode === null) return;
+    if (!enabled || mode === null) return;
 
     logger.debug("描画終了");
+
+    if (actualMode === "text") { // テキストモードでは何もしない
+      // textInput があれば、ここで確定する代わりに blur イベントで処理される
+      return;
+    }
 
     if (actualMode === FREEHAND || actualMode === ERASER) {
       drawing.current = false;
@@ -413,8 +470,10 @@ export function useDrawingCanvas(
         y: e.clientY - rect.top,
       };
 
-      // プレビューと同じ描画をここで行う（最終確定）
-      // プレビューをクリアせずそのまま残すことも可能
+      // プレビューをクリア（重要：最終描画前にクリアする）
+      clearPreview();
+
+      // 最終的な描画処理
       if (actualMode === TRENDLINE) {
         drawTrendlinePreview(end.x, end.y);
       } else if (actualMode === FIBONACCI) {
@@ -427,16 +486,14 @@ export function useDrawingCanvas(
         drawArrowPreview(end.x, end.y);
       }
 
-      startPoint.current = null;
-      // 描画終了時に現在の状態を保存
-      if (canvas && ctx) {
-        savedCanvasState.current = ctx.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        );
-      }
+      // 描画後に状態を保存
+      savedCanvasState.current = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      startPoint.current = null; // 描画終了時に始点をリセット
     }
   };
 
@@ -515,6 +572,8 @@ export function useDrawingCanvas(
     canvasRef,
     containerRef,
     eraserPosition,
+    textInput,
+    textInputRef,
     isDrawing: drawing.current,
     getCursorStyle,
     getEraserCursorStyle,
@@ -524,6 +583,8 @@ export function useDrawingCanvas(
     handlePointerEnter,
     handlePointerLeave,
     handleContainerMouseMove,
+    handleTextChange,
+    handleTextSubmit,
   };
 }
 export default useDrawingCanvas;

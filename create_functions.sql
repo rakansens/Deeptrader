@@ -1,19 +1,3 @@
--- 03_functions.sql
--- 関数定義（ベクトル検索関数など）
--- 作成日: 2025/5/20
--- 更新内容: 修正版、NULL値のエラー処理を追加し、依存関係を強化
-
-/*
-このスクリプトはデータベース関数を定義します。
-主な内容:
-- 更新日時を自動的に更新するトリガー関数
-- ベクトル検索関数（NULL値のエラー処理を追加）
-- その他のユーティリティ関数
-*/
-
--- トランザクション開始
-BEGIN;
-
 -- 更新日時を自動的に更新するトリガー関数
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -24,10 +8,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ベクトル検索関数（エラー処理強化版）
--- 変更点:
--- - NULL値のエラー処理を追加
--- - 類似度計算の最適化
--- - インデックス活用のためのクエリ構造改善
 CREATE OR REPLACE FUNCTION match_documents(
   query_embedding VECTOR(1536),
   match_threshold FLOAT,
@@ -67,8 +47,7 @@ BEGIN
 END;
 $$;
 
--- 管理者チェック関数（パフォーマンス最適化）
--- ビューを使用して管理者チェックを高速化
+-- 管理者チェック関数
 CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -84,7 +63,6 @@ END;
 $$;
 
 -- 会話メッセージ取得関数
--- 指定された会話のメッセージを取得する関数
 CREATE OR REPLACE FUNCTION get_conversation_messages(
   conversation_uuid UUID,
   message_limit INT DEFAULT 100,
@@ -120,7 +98,4 @@ BEGIN
   LIMIT message_limit
   OFFSET message_offset;
 END;
-$$;
-
--- トランザクション終了
-COMMIT;
+$$; 

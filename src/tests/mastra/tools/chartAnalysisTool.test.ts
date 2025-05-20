@@ -8,7 +8,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test'
 
 import { chartAnalysisTool } from '@/mastra/tools/chartAnalysisTool';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
-import { computeSMA, computeRSI, computeBollinger, MacdCalculator } from '@/lib/indicators';
+import { computeSMA, computeRSI, computeBollinger, computeMACD } from '@/lib/indicators';
 import type { BinanceKline, BinanceKlineObject } from '@/types/binance';
 import { SYMBOLS, TIMEFRAMES } from '@/constants/chart';
 
@@ -60,13 +60,8 @@ describe('chartAnalysisTool', () => {
     } as any)) as any;
     const closes = sample.map((k) => parseFloat(k.close));
     
-    // MACD計算用のカリキュレータ
-    const macdCalc = new MacdCalculator();
-    let expectedMacd: { macd: number; signal: number; histogram: number } | null = null;
-    for (const p of closes) {
-      const r = macdCalc.update(p);
-      if (r) expectedMacd = r;
-    }
+    // MACDを計算
+    const expectedMacd = computeMACD(closes)!;
     
     const expectedBoll = computeBollinger(closes)!;
     expect(result.indicators).toEqual([

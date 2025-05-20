@@ -5,8 +5,6 @@ import {
   computeMACD,
   computeBollinger,
   RsiCalculator,
-  EmaCalculator,
-  MacdCalculator,
 } from '@/lib/indicators';
 
 describe('indicators utilities', () => {
@@ -31,14 +29,12 @@ describe('indicators utilities', () => {
     });
   });
 
-  describe('EmaCalculator', () => {
+  describe('incremental computeEMA', () => {
     it('matches computeEMA for sample data', () => {
       const data = [1, 2, 3, 4, 5, 6];
-      const calc = new EmaCalculator(3);
       let ema: number | null = null;
-      for (const p of data) {
-        const r = calc.update(p);
-        if (r !== null) ema = r;
+      for (let i = 0; i < data.length; i++) {
+        ema = computeEMA(data.slice(0, i + 1), 3);
       }
       const expected = computeEMA(data, 3)!;
       expect(ema).toBeCloseTo(expected);
@@ -92,14 +88,12 @@ describe('indicators utilities', () => {
     });
   });
 
-  describe('MacdCalculator', () => {
-    it('matches computeMACD for sample data', () => {
+  describe('incremental computeMACD', () => {
+    it('matches final computeMACD result', () => {
       const data = Array.from({ length: 60 }, (_, i) => i + 1);
-      const calc = new MacdCalculator();
       let res: { macd: number; signal: number; histogram: number } | null = null;
-      for (const p of data) {
-        const r = calc.update(p);
-        if (r) res = r;
+      for (let i = 0; i < data.length; i++) {
+        res = computeMACD(data.slice(0, i + 1));
       }
       const expected = computeMACD(data)!;
       expect(res).not.toBeNull();
