@@ -13,6 +13,8 @@ export interface Message {
   type?: 'text' | 'image';
   /** 画像メッセージの場合の付加テキスト */
   prompt?: string;
+  /** 画像がSupabaseにアップロードされた場合の公開URL */
+  imageUrl?: string;
   /** UNIXタイムスタンプ（ミリ秒） */
   timestamp: number;
 }

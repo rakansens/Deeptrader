@@ -34,11 +34,21 @@ export async function addMessage(
   conversationId: string,
   sender: string,
   content: string,
+  type: string = 'text',
+  prompt?: string,
+  imageUrl?: string,
 ) {
   try {
     const { error } = await supabase
       .from("messages")
-      .insert({ conversation_id: conversationId, sender, content });
+      .insert({ 
+        conversation_id: conversationId, 
+        sender, 
+        content,
+        type,
+        prompt,
+        image_url: imageUrl
+      });
     
     if (error) {
       // テーブルが存在しない場合は静かに失敗

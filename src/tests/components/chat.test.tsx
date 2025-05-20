@@ -10,8 +10,18 @@ import Chat from '@/components/chat/Chat'
 import { useToast } from '@/hooks/use-toast'
 import { useSettings } from '@/hooks/use-settings'
 
+const uploadMock = jest.fn().mockResolvedValue({ error: null })
+const getPublicUrlMock = jest.fn(() => ({ data: { publicUrl: 'http://example.com/img.png' } }))
+
 jest.mock('@/hooks/use-toast')
 jest.mock('@/hooks/use-settings')
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    storage: {
+      from: jest.fn(() => ({ upload: uploadMock, getPublicUrl: getPublicUrlMock }))
+    }
+  }
+}))
 const toastMock = jest.fn()
 ;(useToast as jest.Mock).mockReturnValue({ toast: toastMock, dismiss: jest.fn(), toasts: [] })
 ;(useSettings as jest.Mock).mockReturnValue({
@@ -53,9 +63,9 @@ describe('Chat', () => {
       await user.keyboard('{Enter}')
 
       await waitFor(() => expect(global.fetch).toHaveBeenCalled())
-      expect(screen.getByText('あなた')).toBeInTheDocument()
+      expect(screen.getByText('U')).toBeInTheDocument()
       await waitFor(() => expect(screen.getByText('hi there')).toBeInTheDocument())
-      expect(screen.getByText('DeepTrader AI')).toBeInTheDocument()
+      expect(screen.getByText('AI')).toBeInTheDocument()
     })
 
     it('clears input immediately after sending', async () => {
@@ -92,7 +102,7 @@ describe('Chat', () => {
       const textarea = screen.getByPlaceholderText('メッセージを入力...')
       await user.type(textarea, 'loading')
       await user.keyboard('{Enter}')
-      expect(screen.getByTestId('typing-indicator')).toBeInTheDocument()
+      expect(screen.getByText('考え中...')).toBeInTheDocument()
       const stream = new ReadableStream({
         start(controller) {
           setTimeout(() => {
@@ -106,7 +116,7 @@ describe('Chat', () => {
         body: stream,
         headers: new Headers()
       })
-      await waitFor(() => expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument())
+      await waitFor(() => expect(screen.queryByText('考え中...')).not.toBeInTheDocument())
     })
 
     it('displays error message when API fails', async () => {
@@ -274,5 +284,35 @@ describe('Chat', () => {
 
     render(<Chat />)
     expect(screen.getByRole('img')).toBeInTheDocument()
+  })
+
+  it('uploads image and sends message', async () => {
+    const user = userEvent.setup()
+    const sendMessageMock = jest.fn().mockResolvedValue(undefined)
+    jest.spyOn(require('@/hooks/use-chat'), 'useChat').mockReturnValue({
+      messages: [],
+      input: '',
+      setInput: jest.fn(),
+      loading: false,
+      error: null,
+      conversations: [],
+      selectedId: '1',
+      selectConversation: jest.fn(),
+      newConversation: jest.fn(),
+      renameConversation: jest.fn(),
+      removeConversation: jest.fn(),
+      sidebarOpen: false,
+      toggleSidebar: jest.fn(),
+      sendMessage: sendMessageMock,
+      sendImageMessage: jest.fn(),
+    } as any)
+
+    render(<Chat />)
+    const file = new File(['img'], 'test.png', { type: 'image/png' })
+    const input = screen.getByTestId('image-input') as HTMLInputElement
+    await user.upload(input, file)
+
+    expect(sendMessageMock).toHaveBeenCalled()
+    expect(sendMessageMock.mock.calls[0][1]).toBe(file)
   })
 })

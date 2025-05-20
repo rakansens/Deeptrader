@@ -11,6 +11,8 @@ import {
   Mic,
   MicOff,
   TrendingUp,
+  ImagePlus,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,6 +59,8 @@ export default function Chat() {
   const listRef = useRef<HTMLDivElement>(null);
   const spokenRef = useRef<string | null>(null);
   const isSendingRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   
   // 音声入力フックを使用
   const { isListening, startListening, stopListening, toggleListening } = useVoiceInput({
@@ -86,6 +90,28 @@ export default function Chat() {
         isSendingRef.current = false;
       });
     }, 0);
+  };
+
+  // 画像ファイル選択時の処理
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = input;
+
+    flushSync(() => {
+      setInput("");
+    });
+
+    setUploading(true);
+    sendMessage(text, file)
+      .catch((err) => {
+        console.error('画像送信エラー', err);
+      })
+      .finally(() => {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      });
   };
 
   const {
@@ -258,9 +284,10 @@ export default function Chat() {
                 key={idx}
                 role={m.role}
                 timestamp={m.timestamp}
-                avatar={m.role === "user" ? "U" : "AI"}
+                avatar={m.role === 'user' ? 'U' : 'AI'}
                 type={m.type}
                 prompt={m.prompt}
+                imageUrl={m.imageUrl}
               >
                 {m.content}
               </MessageBubble>
@@ -280,6 +307,7 @@ export default function Chat() {
         <div className="mt-4 relative">
           <div className="flex justify-end mb-2 space-x-2">
             <Button
+              aria-label="スクリーンショット送信"
               onClick={async () => {
                 try {
                   // チャートキャプチャを実行
@@ -306,23 +334,17 @@ export default function Chat() {
                       debugImg.style.opacity = '0.9';
                       debugImg.addEventListener('click', () => document.body.removeChild(debugImg));
                       document.body.appendChild(debugImg);
-                      
-                      // 5秒後に自動で消える
-                      setTimeout(() => {
-                        if (document.body.contains(debugImg)) {
-                          document.body.removeChild(debugImg);
-                        }
-                      }, 5000);
                     }
                     
-                    // AIへ送信
-                    await sendImageMessage(url);
-                    
+                    // トースト通知
                     toast({ 
-                      title: "✅ チャート送信完了", 
-                      description: "チャートデータをAIに送信しました",
-                      duration: 3000
+                      title: "✅ キャプチャ成功", 
+                      description: "チャートイメージを送信しました", 
+                      duration: 2000 
                     });
+                    
+                    // 画像メッセージを送信
+                    await sendImageMessage(url, "このチャートを分析してください");
                   } else {
                     toast({ 
                       title: "❌ エラー", 
@@ -346,6 +368,29 @@ export default function Chat() {
             >
               <TrendingUp className="h-5 w-5 min-w-5 transition-transform group-hover:scale-110 duration-200 text-inherit" />
               <span className="max-w-0 whitespace-nowrap opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-out text-sm font-medium">チャートを送信</span>
+            </Button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              data-testid="image-input"
+            />
+            <Button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading || uploading}
+              size="sm"
+              variant="outline"
+              aria-label="画像をアップロード"
+              className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImagePlus className="h-5 w-5" />
+              )}
             </Button>
           </div>
           <Textarea
@@ -373,12 +418,13 @@ export default function Chat() {
                   <Button
                     type="button"
                     onClick={toggleListening}
-                    variant={isListening ? "default" : "outline"}
                     size="icon"
-                    aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
+                    variant="ghost"
+                    disabled={loading}
                     className={cn(
-                      "absolute left-2 bottom-2",
-                      isListening && "bg-red-500 hover:bg-red-600 text-white"
+                      "absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 border",
+                      isListening && "bg-red-500 text-white border-0",
+                      !isListening && "text-muted-foreground"
                     )}
                   >
                     {isListening ? (
@@ -388,23 +434,19 @@ export default function Chat() {
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isListening 
-                      ? "音声入力中（クリックで停止）" 
-                      : "音声入力を開始"}
-                  </p>
+                <TooltipContent side="left">
+                  <p>{isListening ? "音声入力を停止" : "音声入力を開始"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
           
           <Button
+            type="submit"
+            size="icon"
             onClick={handleSendMessage}
             disabled={loading || !input.trim()}
-            size="icon"
-            aria-label="送信"
-            className="absolute right-2 bottom-2"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-primary-foreground"
           >
             <ArrowUpIcon className="h-4 w-4" />
           </Button>

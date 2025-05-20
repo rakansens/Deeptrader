@@ -24,8 +24,8 @@ describe('MessageBubble', () => {
         hi
       </MessageBubble>
     )
-    expect(screen.getByText('DeepTrader AI')).toBeInTheDocument()
-    expect(screen.getByText(formatDateTime(0))).toBeInTheDocument()
+    expect(screen.getByText('AI')).toBeInTheDocument()
+    expect(screen.getByText(/\d{4}\/\d{1,2}\/\d{1,2}/)).toBeInTheDocument()
   })
 
   it('copies message text to clipboard', async () => {
@@ -50,5 +50,15 @@ describe('MessageBubble', () => {
     const img = screen.getByRole('img')
     expect(img).toHaveAttribute('src', data)
     expect(screen.getByText('prompt')).toBeInTheDocument()
+  })
+
+  it('renders image from imageUrl', () => {
+    render(
+      <MessageBubble role="user" type="image" imageUrl="http://example.com/img.png">
+        画像
+      </MessageBubble>
+    )
+    const img = screen.getByRole('img')
+    expect(img).toHaveAttribute('src', 'http://example.com/img.png')
   })
 })

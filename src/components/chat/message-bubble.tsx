@@ -26,6 +26,8 @@ export interface MessageBubbleProps {
   type?: 'text' | 'image';
   /** 画像メッセージの説明 */
   prompt?: string;
+  /** Supabaseにアップロードした画像のURL */
+  imageUrl?: string;
 }
 
 export function MessageBubble({
@@ -37,6 +39,7 @@ export function MessageBubble({
   avatar,
   type = 'text',
   prompt,
+  imageUrl,
 }: MessageBubbleProps) {
   const date = timestamp ? new Date(timestamp) : new Date();
   const formattedDate = new Intl.DateTimeFormat("ja-JP", {
@@ -45,7 +48,9 @@ export function MessageBubble({
   }).format(date);
 
   // 画像メッセージ用の表示処理
-  const isImage = type === 'image' && typeof children === 'string' && children.startsWith('data:image/');
+  const isImage =
+    type === 'image' &&
+    ((typeof children === 'string' && children.startsWith('data:image/')) || !!imageUrl);
   
   // 画像表示サイズの管理
   const [imageExpanded, setImageExpanded] = useState(false);
@@ -57,11 +62,12 @@ export function MessageBubble({
   const renderContent = () => {
     // 画像の場合
     if (isImage) {
+      const src = imageUrl || (typeof children === 'string' ? children : '');
       return (
         <div className="relative">
-          <img 
-            src={children as string} 
-            alt={prompt || "チャートイメージ"} 
+          <img
+            src={src}
+            alt={prompt || "チャートイメージ"}
             className={cn(
               "rounded-md border border-border max-w-full",
               imageExpanded ? "w-auto max-h-[80vh]" : "w-60 sm:w-80 max-h-60"

@@ -10,6 +10,7 @@ import {
   addMessage,
   fetchMessages,
 } from "@/infrastructure/supabase/db-service";
+import { supabase } from "@/lib/supabase";
 
 export interface UseChat {
   messages: Message[];
@@ -25,7 +26,7 @@ export interface UseChat {
   removeConversation: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
-  sendMessage: (text?: string) => Promise<void>;
+  sendMessage: (text?: string, imageFile?: File) => Promise<void>;
   sendImageMessage: (dataUrl: string, prompt?: string) => Promise<void>;
 }
 
@@ -96,6 +97,7 @@ export function useChat(): UseChat {
           content: m.content ?? "",
           type: m.type ?? 'text',
           prompt: m.prompt,
+          imageUrl: m.imageUrl,
           timestamp: m.timestamp ?? Date.now(),
         }));
         setMessages(msgs);
@@ -119,6 +121,7 @@ export function useChat(): UseChat {
             content: m.content,
             type: m.type ?? 'text',
             prompt: m.prompt,
+            imageUrl: m.image_url,
             timestamp: new Date(m.created_at).getTime(),
           }));
           setMessages(msgs);
@@ -178,6 +181,7 @@ export function useChat(): UseChat {
           content: messageContent,
           type: msgType,
           prompt: msgPrompt,
+          imageUrl: (m as any).imageUrl || prev[i]?.imageUrl,
           timestamp: prev[i]?.timestamp ?? Date.now(),
         };
       })
@@ -195,7 +199,7 @@ export function useChat(): UseChat {
     // DB同期: まだ同期していないメッセージのみをDBに追加
     messages.forEach((m, idx) => {
       if (idx >= lastSynced.current) {
-        addMessage(selectedId, m.role, m.content).catch((err) => {
+        addMessage(selectedId, m.role, m.content, m.type, m.prompt, m.imageUrl).catch((err) => {
           logger.error('DBへのメッセージ保存に失敗', err);
         });
       }
@@ -203,23 +207,36 @@ export function useChat(): UseChat {
     lastSynced.current = messages.length;
   }, [messages, selectedId]);
 
-  const sendMessage = async (textParam?: string) => {
+  const sendMessage = async (textParam?: string, imageFile?: File) => {
     const text = (textParam ?? input).trim();
-    if (!text) return;
+    if (!text && !imageFile) return;
 
     setError(null);
     try {
-      // Chat.tsx側で既に入力欄をクリアしているので、ここでは何もしない
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        const ext = imageFile.name.split('.').pop() || 'png';
+        const fileName = `${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('chat-images')
+          .upload(fileName, imageFile);
+        if (upErr) throw upErr;
+        const { data } = supabase.storage.from('chat-images').getPublicUrl(fileName);
+        imageUrl = data.publicUrl;
+      }
+
       await append({
-        role: "user",
-        content: text,
-        type: "text",
+        role: 'user',
+        content: imageUrl ? text || '画像を送信しました' : text,
+        type: imageUrl ? 'image' : 'text',
+        prompt: imageUrl ? text : undefined,
+        imageUrl,
       } as any);
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : "メッセージ送信中にエラーが発生しました";
+          : 'メッセージ送信中にエラーが発生しました';
       setError(message);
     }
   };
@@ -249,22 +266,21 @@ export function useChat(): UseChat {
       // UIに即時反映
       setMessages((prev) => [...prev, imageMsg]);
       
-      // APIに送信するフォーマット（OpenAIのマルチモーダルメッセージ形式）
+      // APIにリクエストを送信
       await append({
         role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: dataUrl } },
-        ],
+        content: prompt,
         type: 'image',
         prompt,
       } as any);
       
-      logger.debug('画像メッセージ送信完了');
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'メッセージ送信中にエラーが発生しました';
-      logger.error('画像メッセージ送信エラー:', errorMsg);
-      setError(errorMsg);
+      logger.error('画像メッセージの送信に失敗:', err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : '画像の送信中にエラーが発生しました';
+      setError(message);
     }
   };
 
