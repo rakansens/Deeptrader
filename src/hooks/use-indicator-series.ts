@@ -1,4 +1,4 @@
-import type { IChartApi, ISeriesApi, LineData } from "lightweight-charts";
+import type { IChartApi, ISeriesApi, LineData, DeepPartial, LineWidth } from "lightweight-charts";
 import useLineSeries from "./use-line-series";
 
 interface UseIndicatorSeriesParams {
@@ -43,7 +43,7 @@ export function useIndicatorSeries({
     enabled: enabledMa,
     options: { 
       color: colors?.ma,
-      lineWidth: lineWidth.ma,
+      lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
     data: ma,
@@ -55,7 +55,7 @@ export function useIndicatorSeries({
     enabled: enabledBoll,
     options: { 
       color: colors?.boll,
-      lineWidth: lineWidth.boll,
+      lineWidth: lineWidth.boll as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
     data: bollUpper,
@@ -67,7 +67,7 @@ export function useIndicatorSeries({
     enabled: enabledBoll,
     options: { 
       color: colors?.boll,
-      lineWidth: lineWidth.boll,
+      lineWidth: lineWidth.boll as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
     data: bollLower,

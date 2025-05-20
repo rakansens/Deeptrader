@@ -25,6 +25,8 @@ describe("candlestick-utils", () => {
         rsi: 10,
         macd: { short: 5, long: 8, signal: 3 },
         boll: 10,
+        lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
+        colors: { ma: '#FF0000', rsi: '#00FF00', macd: '#0000FF', boll: '#FFFF00' }
       });
       expect(res.ma).toBeDefined();
       expect(res.rsi).toBeDefined();

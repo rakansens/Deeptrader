@@ -18,7 +18,8 @@ describe('useIndicatorSeries', () => {
         bollLower: [],
         enabledMa: true,
         enabledBoll: false,
-        lineWidth: { ma: 3, boll: 1 }
+        lineWidth: { ma: 3, boll: 1 },
+        colors: { ma: '#FF0000', boll: '#0000FF' }
       })
     )
 

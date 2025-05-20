@@ -3,7 +3,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
-import { fetchKlines } from '@/infrastructure/exchange/binance-service';
+import { fetchKlines, klineTupleToObject } from '@/infrastructure/exchange/binance-service';
 import { computeSMA } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
 import type { BinanceKline } from '@/types/binance';
@@ -36,7 +36,22 @@ export const backtestTool = createTool({
 
     let klines: BinanceKline[];
     try {
-      klines = await fetchKlines(symbol, timeframe, limit);
+      // BinanceKlineObject[]型をBinanceKline[]型に変換
+      const klineObjects = await fetchKlines(symbol, timeframe, limit);
+      klines = klineObjects.map(obj => [
+        obj.openTime,
+        obj.open,
+        obj.high,
+        obj.low,
+        obj.close,
+        obj.volume,
+        obj.closeTime,
+        obj.quoteAssetVolume,
+        obj.tradeCount,
+        obj.takerBuyBaseVolume,
+        obj.takerBuyQuoteVolume,
+        obj.ignore
+      ]);
     } catch (err) {
       logger.error('failed to fetch klines', err);
       throw new Error('ローソク足データの取得に失敗しました');
