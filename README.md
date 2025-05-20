@@ -49,6 +49,11 @@ pnpm install
 cp .env.example .env.local
 # `.env.local` に Supabase の接続情報と各種 API キーを設定
 
+### AIモデル設定
+
+OpenAI Chat API で利用するモデルは環境変数 `AI_MODEL` で指定できます。
+`.env.local` に値を設定しない場合、デフォルトで `gpt-4o` が使用されます。
+
 # 開発サーバーの起動
 pnpm dev
 ```

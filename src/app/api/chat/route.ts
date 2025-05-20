@@ -3,6 +3,9 @@ import { OpenAIStream, StreamingTextResponse } from 'ai';
 import { logger } from '@/lib/logger';
 import type { Message, OpenAIChatMessage } from '@/types';
 
+// デフォルトのAIモデル。環境変数 `AI_MODEL` が未設定の場合は gpt-4o
+const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
+
 export const runtime = 'edge';
 
 export async function POST(request: Request) {
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: aiModel,
         stream: true,
         messages: openAIMessages,
         max_tokens: 1000,

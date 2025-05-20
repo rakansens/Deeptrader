@@ -2,6 +2,9 @@
 // オーケストラエージェントの定義
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
+
+// 使用するAIモデル。環境変数 `AI_MODEL` が未設定の場合は gpt-4o を使用
+const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
 import { Memory } from '@mastra/memory';
 import type { MastraMemory } from '@mastra/core';
 import { createTool } from '@mastra/core/tools';
@@ -72,9 +75,8 @@ export const orchestratorAgent = new Agent({
   name: 'オーケストラエージェント',
   instructions: `あなたは複数の専門AIを統合するオーケストレーターです。
   ユーザーの入力を解析し、適切な専門エージェントへ委任して結果を統合する。
-  トレーディング関連はトレーディングエージェント、情報収集はリサーチエージェントを活用し、最終的な回答をまとめて提示してください。
-  UI操作に関する指示はUIコントロールエージェントへ、バックテストの依頼はバックテストエージェントへそれぞれ委任してください。`,
-  model: openai('gpt-4o'),
+  トレーディング関連はトレーディングエージェント、情報収集はリサーチエージェントを活用し、最終的な回答をまとめて提示してください。`,
+  model: openai(aiModel),
   tools: {
     delegateTradingTool,
     delegateResearchTool,

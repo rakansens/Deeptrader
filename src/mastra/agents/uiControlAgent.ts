@@ -2,6 +2,9 @@
 // UI制御専用エージェントの定義
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
+
+// AIモデルの設定。`AI_MODEL` が未指定の場合は gpt-4o
+const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
 import { Memory } from '@mastra/memory';
 import type { MastraMemory } from '@mastra/core';
 
@@ -29,7 +32,7 @@ export const uiControlAgent = new Agent({
   instructions: `あなたはDeepTraderのユーザーインターフェースを操作する専門エージェントです。
   指定されたツールを用いて、チャートの時間足変更やインジケーターの切り替えなどのUI操作を実行してください。
   実行結果は簡潔に報告してください。`,
-  model: openai('gpt-4o'),
+  model: openai(aiModel),
   tools: {
     changeTimeframeTool,
     toggleIndicatorTool,

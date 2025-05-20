@@ -2,6 +2,9 @@
 // 市場リサーチエージェントの定義
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
+
+// 環境変数からAIモデルを取得。未指定時は gpt-4o
+const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
 import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 
@@ -53,7 +56,7 @@ export const researchAgent = new Agent({
   注意: あなたの分析は教育目的のみであり、投資アドバイスではありません。`,
 
   // OpenAI GPT-4 モデルを使用
-  model: openai("gpt-4o"),
+  model: openai(aiModel),
 
   // ツール設定
   tools: {

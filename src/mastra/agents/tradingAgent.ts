@@ -2,6 +2,9 @@
 // トレーディングアドバイザーエージェントの定義
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
+
+// 使用するAIモデルを環境変数から取得。未指定の場合は gpt-4o
+const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
 import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 import { z } from "zod";
@@ -10,6 +13,7 @@ import { z } from "zod";
 import { chartAnalysisTool } from "../tools/chartAnalysisTool";
 import { marketDataTool } from "../tools/marketDataTool";
 import { tradingExecutionTool } from "../tools/tradingExecutionTool";
+import { entrySuggestionTool } from "../tools/entrySuggestionTool";
 
 // メモリ設定
 const memory = new Memory({
@@ -64,6 +68,7 @@ export const tradingAgent = new Agent({
   - チャート分析ツール: チャートの読み取り、パターン認識、テクニカル指標の計算
   - 市場データツール: 現在の価格、取引量、その他の市場データの取得
   - トレード実行ツール: ユーザーの承認を得て取引を実行
+  - エントリー提案ツール: RSIに基づき売買エントリー候補を提示
   
   ガイドライン:
   - 常に明確で実用的なアドバイスを提供する
@@ -96,13 +101,14 @@ export const tradingAgent = new Agent({
   `,
 
   // OpenAI GPT-4 モデルを使用
-  model: openai("gpt-4o"),
+  model: openai(aiModel),
 
   // ツール設定
   tools: {
     chartAnalysisTool,
     marketDataTool,
     tradingExecutionTool,
+    entrySuggestionTool,
   },
 
   // メモリ設定
