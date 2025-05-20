@@ -24,6 +24,7 @@ import { DEFAULT_INDICATOR_SETTINGS, DRAWING_MODES } from "@/types/chart";
 import ChartSidebar from "./ChartSidebar";
 import SidebarToggleButton from "./sidebar-toggle-button";
 import EraserSizeControl from "./eraser-size-control";
+import CandleCountdown from "./CandleCountdown";
 import { logger } from "@/lib/logger";
 import {
   SYMBOLS,
@@ -144,6 +145,10 @@ export default function CandlestickChart({
     bollLower,
     enabledMa: indicators.ma,
     enabledBoll: !!indicators.boll,
+    lineWidth: {
+      ma: indicatorSettings.lineWidth.ma,
+      boll: indicatorSettings.lineWidth.boll,
+    },
   });
 
   useCandlestickSeries({
@@ -238,6 +243,11 @@ export default function CandlestickChart({
             data-testid="chart-container"
           />
 
+          <CandleCountdown
+            interval={initialInterval}
+            className="absolute bottom-2 right-2 z-20 text-xs opacity-80"
+          />
+
           <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
           {showSidebar && (
             <ChartSidebar
@@ -274,6 +284,7 @@ export default function CandlestickChart({
             data={rsi}
             chart={chartRef.current}
             height={subHeight}
+            lineWidth={indicatorSettings.lineWidth.rsi}
             onClose={() => handleToggleIndicator("rsi", false)}
           />
         )}
@@ -284,6 +295,7 @@ export default function CandlestickChart({
             histogram={histogram}
             chart={chartRef.current}
             height={subHeight}
+            lineWidth={indicatorSettings.lineWidth.macd}
             onClose={() => handleToggleIndicator("macd", false)}
           />
         )}

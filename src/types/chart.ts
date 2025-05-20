@@ -36,6 +36,13 @@ export interface IndicatorSettings {
   };
   /** ボリンジャーバンドの期間 */
   boll: number;
+  /** ライン幅設定 */
+  lineWidth: {
+    ma: number;
+    rsi: number;
+    macd: number;
+    boll: number;
+  };
 }
 
 /** デフォルトのインジケーター設定 */
@@ -44,6 +51,7 @@ export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   rsi: 14,
   macd: { short: 12, long: 26, signal: 9 },
   boll: 20,
+  lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
 };
 
 export type IndicatorsChangeHandler = (value: IndicatorOptions) => void;

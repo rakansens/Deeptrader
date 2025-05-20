@@ -19,6 +19,7 @@ interface MacdPanelProps {
   chart: IChartApi | null;
   height: number;
   onClose?: () => void;
+  lineWidth?: number;
 }
 
 /**
@@ -30,6 +31,7 @@ export default function MacdPanel({
   histogram,
   chart,
   height,
+  lineWidth = 2,
   onClose,
 }: MacdPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
@@ -58,7 +60,7 @@ export default function MacdPanel({
       cleanup,
     } = createIndicatorChart(containerRef.current, {
       color: "#2962FF",
-      lineWidth: 2,
+      lineWidth,
       title: "MACD",
       priceLineVisible: false,
       lastValueVisible: true,
@@ -68,7 +70,7 @@ export default function MacdPanel({
     macdRef.current = series;
     signalRef.current = macdChart.addLineSeries({
       color: "#FF6D00",
-      lineWidth: 2,
+      lineWidth,
       title: "Signal",
       priceLineVisible: false,
       lastValueVisible: true,

@@ -17,12 +17,19 @@ describe('useIndicatorSeries', () => {
         bollUpper: [],
         bollLower: [],
         enabledMa: true,
-        enabledBoll: false
+        enabledBoll: false,
+        lineWidth: { ma: 3, boll: 1 }
       })
     )
 
     expect(mockUseLineSeries).toHaveBeenCalledTimes(3)
-    expect(mockUseLineSeries.mock.calls[0][0]).toMatchObject({ enabled: true })
-    expect(mockUseLineSeries.mock.calls[1][0]).toMatchObject({ enabled: false })
+    expect(mockUseLineSeries.mock.calls[0][0]).toMatchObject({
+      enabled: true,
+      options: expect.objectContaining({ lineWidth: 3 })
+    })
+    expect(mockUseLineSeries.mock.calls[1][0]).toMatchObject({
+      enabled: false,
+      options: expect.objectContaining({ lineWidth: 1 })
+    })
   })
 })

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ChartToolbar from '@/components/chart/ChartToolbar'
 import { TIMEFRAMES } from '@/constants/chart'
@@ -19,6 +19,7 @@ describe('ChartToolbar', () => {
           rsi: 14,
           macd: { short: 12, long: 26, signal: 9 },
           boll: 20,
+          lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
         }}
         onSettingsChange={jest.fn()}
       />
@@ -33,6 +34,33 @@ describe('ChartToolbar', () => {
     expect(onInd).toHaveBeenLastCalledWith({ ma: true, rsi: false, macd: false, boll: false })
   })
 
+  it('calls onSettingsChange when width changed', async () => {
+    const user = userEvent.setup()
+    const onSettings = jest.fn()
+    render(
+      <ChartToolbar
+        timeframe="1m"
+        onTimeframeChange={() => {}}
+        indicators={{ ma: false, rsi: false, macd: false, boll: false }}
+        onIndicatorsChange={() => {}}
+        settings={{
+          sma: 14,
+          rsi: 14,
+          macd: { short: 12, long: 26, signal: 9 },
+          boll: 20,
+          lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
+        }}
+        onSettingsChange={onSettings}
+      />
+    )
+
+    fireEvent.click(screen.getByLabelText('Indicator settings'))
+    fireEvent.change(screen.getByLabelText('MA Width'), { target: { value: 3 } })
+    expect(onSettings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ lineWidth: expect.objectContaining({ ma: 3 }) })
+    )
+  })
+
   it('renders controls in a single row', () => {
     render(
       <ChartToolbar
@@ -45,6 +73,7 @@ describe('ChartToolbar', () => {
           rsi: 14,
           macd: { short: 12, long: 26, signal: 9 },
           boll: 20,
+          lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
         }}
         onSettingsChange={() => {}}
       />

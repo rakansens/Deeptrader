@@ -249,6 +249,78 @@ export default function ChartToolbar({
                   }
                 />
               </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>MA Width</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.lineWidth.ma}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      lineWidth: {
+                        ...settings.lineWidth,
+                        ma: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>RSI Width</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.lineWidth.rsi}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      lineWidth: {
+                        ...settings.lineWidth,
+                        rsi: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>MACD Width</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.lineWidth.macd}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      lineWidth: {
+                        ...settings.lineWidth,
+                        macd: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>BOLL Width</span>
+                <input
+                  type="number"
+                  className="w-16 border rounded px-1 py-0.5 bg-background"
+                  value={settings.lineWidth.boll}
+                  min={1}
+                  onChange={(e) =>
+                    onSettingsChange({
+                      ...settings,
+                      lineWidth: {
+                        ...settings.lineWidth,
+                        boll: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
             </div>
           </DialogContent>
         </Dialog>

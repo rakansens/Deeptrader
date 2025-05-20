@@ -16,6 +16,7 @@ interface RsiPanelProps {
   chart: IChartApi | null;
   height: number;
   onClose?: () => void;
+  lineWidth?: number;
 }
 
 /**
@@ -25,6 +26,7 @@ export default function RsiPanel({
   data,
   chart,
   height,
+  lineWidth = 2,
   onClose,
 }: RsiPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
@@ -50,7 +52,7 @@ export default function RsiPanel({
       cleanup,
     } = createIndicatorChart(containerRef.current, {
       color: "#2962FF",
-      lineWidth: 2,
+      lineWidth,
       title: "RSI",
       priceLineVisible: false,
       lastValueVisible: true,
