@@ -1,5 +1,5 @@
 import type { UTCTimestamp } from "lightweight-charts";
-import type { IndicatorSettings } from "@/constants/chart";
+import type { IndicatorSettings } from "@/types/chart";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import {
   computeBollinger,

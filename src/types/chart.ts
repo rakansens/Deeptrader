@@ -57,23 +57,6 @@ export interface IndicatorSettings {
   };
 }
 
-/** デフォルトのインジケーター設定 */
-export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
-  sma: 14,
-  rsi: 14,
-  rsiUpper: 70,
-  rsiLower: 30,
-  macd: { short: 12, long: 26, signal: 9 },
-  boll: { period: 20, stdDev: 2 },
-  lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
-  colors: {
-    ma: '#FF6347',
-    rsi: '#4682B4',
-    macd: '#32CD32',
-    boll: '#FFD700',
-  },
-};
-
 export type IndicatorsChangeHandler = (value: IndicatorOptions) => void;
 
 export interface ChartTheme {

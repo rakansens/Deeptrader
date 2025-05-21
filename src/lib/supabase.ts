@@ -3,11 +3,12 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types";
+
+// クライアントサイドの環境変数のみをインポート
 import {
   NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY,
-} from "@/lib/env";
+} from "@/lib/env.client";
 
 // 環境変数から取得した情報でクライアントを初期化
 const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL;
@@ -20,9 +21,12 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export const createServiceRoleClient = () => {
   // サーバーサイドでのみ実行されるようにする
   if (typeof window !== "undefined") {
-    console.error("Service role client should only be used on the server");
+    console.error("❌ Service role client should only be used on the server");
     return supabase; // クライアントサイドでは通常のクライアントを返す
   }
 
+  // サーバーサイドでのみサービスロールキーをインポート
+  const { SUPABASE_SERVICE_ROLE_KEY } = require("@/lib/env.server");
+  
   return createClient<Database>(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
 };

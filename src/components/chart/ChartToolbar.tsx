@@ -39,10 +39,10 @@ import {
   TIMEFRAMES,
   SYMBOLS,
   DEFAULT_INDICATOR_SETTINGS,
-  type IndicatorSettings,
   type Timeframe,
   type SymbolValue,
 } from '@/constants/chart'
+import type { IndicatorSettings } from '@/types/chart'
 
 interface ChartToolbarProps {
   timeframe: Timeframe

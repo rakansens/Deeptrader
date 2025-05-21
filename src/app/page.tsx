@@ -24,7 +24,8 @@ import {
   type Timeframe,
   type SymbolValue,
 } from '@/constants/chart';
-import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart';
+import { DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart';
+import type { IndicatorSettings } from '@/types/chart';
 
 const CandlestickChart = dynamic(() => import('@/components/chart/CandlestickChart'), {
   ssr: false,

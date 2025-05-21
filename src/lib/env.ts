@@ -3,59 +3,113 @@
 
 /**
  * アプリケーションで使用する環境変数を管理するモジュール
- * Zod で定義したスキーマを用いて検証を行う
+ * 
+ * ⚠️ セキュリティ上の理由から、このファイルは2つに分割されました:
+ * - env.client.ts: クライアントサイドで使用する環境変数（NEXT_PUBLIC_プレフィックス）
+ * - env.server.ts: サーバーサイドでのみ使用する環境変数（機密情報を含む）
+ * 
+ * このファイルは後方互換性のために残されていますが、新しいコードでは
+ * 適切な方のファイルを直接インポートすることをお勧めします。
  */
 
-import { z } from "zod";
+// クライアントサイドの環境変数をインポート
+export {
+  NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_API_BASE_URL,
+  NEXT_PUBLIC_BASE_URL,
+  NEXT_PUBLIC_DEBUG_MODE,
+  NEXT_PUBLIC_BITGET_API_URL,
+  NEXT_PUBLIC_BITGET_WS_URL,
+  NEXT_PUBLIC_ENABLE_DEMO_MODE
+} from './env.client';
 
-// 環境変数スキーマ
-const envSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string(),
-  OPENAI_API_KEY: z.string().optional(),
-  AI_MODEL: z.string().default("gpt-4o"),
+// サーバーサイドの環境変数
+let SUPABASE_SERVICE_ROLE_KEY: string;
+let OPENAI_API_KEY: string;
+let AI_MODEL: string;
+let BINANCE_BASE_URL: string;
+let BITGET_BASE_URL: string;
+let BITGET_API_KEY: string;
+let BLOCKCHAIR_BASE_URL: string;
+let BLOCKCHAIR_API_KEY: string;
+let SENTIMENT_API_URL: string;
+let SENTIMENT_API_KEY: string;
+let NEWS_API_URL: string;
+let NEWS_API_KEY: string;
+let COINGLASS_BASE_URL: string;
+let COINGLASS_API_KEY: string;
 
-  BINANCE_BASE_URL: z.string().url().default("https://api.binance.com"),
-  BITGET_BASE_URL: z.string().url().default("https://api.bitget.com"),
-  BITGET_API_KEY: z.string().optional(),
-  BLOCKCHAIR_BASE_URL: z
-    .string()
-    .url()
-    .default("https://api.blockchair.com/ethereum"),
-  BLOCKCHAIR_API_KEY: z.string().optional(),
-  SENTIMENT_API_URL: z
-    .string()
-    .url()
-    .default("https://api.alternative.me/fng/"),
-  SENTIMENT_API_KEY: z.string().optional(),
-  NEWS_API_URL: z.string().url().default("https://newsapi.org/v2/everything"),
-  NEWS_API_KEY: z.string().optional(),
-  COINGLASS_BASE_URL: z
-    .string()
-    .url()
-    .default("https://open-api.coinglass.com/public/v2"),
-  COINGLASS_API_KEY: z.string().optional(),
-});
+// サーバーサイドの環境変数をインポート（サーバーサイドでのみ使用可能）
+if (typeof window === 'undefined') {
+  // サーバーサイドでは、サーバー環境変数をインポート
+  const serverEnv = require('./env.server');
+  
+  // サーバーサイドの環境変数を設定
+  SUPABASE_SERVICE_ROLE_KEY = serverEnv.SUPABASE_SERVICE_ROLE_KEY;
+  OPENAI_API_KEY = serverEnv.OPENAI_API_KEY;
+  AI_MODEL = serverEnv.AI_MODEL;
+  BINANCE_BASE_URL = serverEnv.BINANCE_BASE_URL;
+  BITGET_BASE_URL = serverEnv.BITGET_BASE_URL;
+  BITGET_API_KEY = serverEnv.BITGET_API_KEY;
+  BLOCKCHAIR_BASE_URL = serverEnv.BLOCKCHAIR_BASE_URL;
+  BLOCKCHAIR_API_KEY = serverEnv.BLOCKCHAIR_API_KEY;
+  SENTIMENT_API_URL = serverEnv.SENTIMENT_API_URL;
+  SENTIMENT_API_KEY = serverEnv.SENTIMENT_API_KEY;
+  NEWS_API_URL = serverEnv.NEWS_API_URL;
+  NEWS_API_KEY = serverEnv.NEWS_API_KEY;
+  COINGLASS_BASE_URL = serverEnv.COINGLASS_BASE_URL;
+  COINGLASS_API_KEY = serverEnv.COINGLASS_API_KEY;
+} else {
+  // クライアントサイドでは、サーバー環境変数にアクセスしようとするとエラーを表示
+  const createServerSideOnlyError = (varName: string) => () => {
+    throw new Error(
+      `❌ ${varName}はサーバーサイドでのみ使用できます。クライアントサイドでの使用は避けてください。`
+    );
+  };
+  
+  // クライアントサイドでは、サーバー環境変数にアクセスしようとするとエラーを表示する関数を定義
+  const createServerSideOnlyProxy = (varName: string) => {
+    return new Proxy({} as any, {
+      get: () => {
+        throw new Error(
+          `❌ ${varName}はサーバーサイドでのみ使用できます。クライアントサイドでの使用は避けてください。`
+        );
+      }
+    });
+  };
+  
+  // サーバーサイド環境変数のプロキシを作成
+  SUPABASE_SERVICE_ROLE_KEY = createServerSideOnlyProxy('SUPABASE_SERVICE_ROLE_KEY') as any;
+  OPENAI_API_KEY = createServerSideOnlyProxy('OPENAI_API_KEY') as any;
+  AI_MODEL = createServerSideOnlyProxy('AI_MODEL') as any;
+  BINANCE_BASE_URL = createServerSideOnlyProxy('BINANCE_BASE_URL') as any;
+  BITGET_BASE_URL = createServerSideOnlyProxy('BITGET_BASE_URL') as any;
+  BITGET_API_KEY = createServerSideOnlyProxy('BITGET_API_KEY') as any;
+  BLOCKCHAIR_BASE_URL = createServerSideOnlyProxy('BLOCKCHAIR_BASE_URL') as any;
+  BLOCKCHAIR_API_KEY = createServerSideOnlyProxy('BLOCKCHAIR_API_KEY') as any;
+  SENTIMENT_API_URL = createServerSideOnlyProxy('SENTIMENT_API_URL') as any;
+  SENTIMENT_API_KEY = createServerSideOnlyProxy('SENTIMENT_API_KEY') as any;
+  NEWS_API_URL = createServerSideOnlyProxy('NEWS_API_URL') as any;
+  NEWS_API_KEY = createServerSideOnlyProxy('NEWS_API_KEY') as any;
+  COINGLASS_BASE_URL = createServerSideOnlyProxy('COINGLASS_BASE_URL') as any;
+  COINGLASS_API_KEY = createServerSideOnlyProxy('COINGLASS_API_KEY') as any;
+}
 
-// スキーマに基づいて環境変数を検証
-const env = envSchema.parse(process.env);
-
-// 変数のエクスポート
-export const NEXT_PUBLIC_SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
-export const NEXT_PUBLIC_SUPABASE_ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-export const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
-export const OPENAI_API_KEY = env.OPENAI_API_KEY ?? "";
-export const AI_MODEL = env.AI_MODEL;
-
-export const BINANCE_BASE_URL = env.BINANCE_BASE_URL;
-export const BITGET_BASE_URL = env.BITGET_BASE_URL;
-export const BITGET_API_KEY = env.BITGET_API_KEY ?? "";
-export const BLOCKCHAIR_BASE_URL = env.BLOCKCHAIR_BASE_URL;
-export const BLOCKCHAIR_API_KEY = env.BLOCKCHAIR_API_KEY ?? "";
-export const SENTIMENT_API_URL = env.SENTIMENT_API_URL;
-export const SENTIMENT_API_KEY = env.SENTIMENT_API_KEY ?? "";
-export const NEWS_API_URL = env.NEWS_API_URL;
-export const NEWS_API_KEY = env.NEWS_API_KEY ?? "";
-export const COINGLASS_BASE_URL = env.COINGLASS_BASE_URL;
-export const COINGLASS_API_KEY = env.COINGLASS_API_KEY ?? "";
+// サーバーサイド環境変数のエクスポート
+export {
+  SUPABASE_SERVICE_ROLE_KEY,
+  OPENAI_API_KEY,
+  AI_MODEL,
+  BINANCE_BASE_URL,
+  BITGET_BASE_URL,
+  BITGET_API_KEY,
+  BLOCKCHAIR_BASE_URL,
+  BLOCKCHAIR_API_KEY,
+  SENTIMENT_API_URL,
+  SENTIMENT_API_KEY,
+  NEWS_API_URL,
+  NEWS_API_KEY,
+  COINGLASS_BASE_URL,
+  COINGLASS_API_KEY
+};

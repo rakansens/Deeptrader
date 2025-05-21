@@ -5,7 +5,8 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeBollinger, computeMACD } from '@/lib/indicators';
-import { TIMEFRAMES, DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart';
+import { TIMEFRAMES, DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart';
+import type { IndicatorSettings } from '@/types/chart';
 import type { BinanceKlineObject } from '@/types/binance';
 import type { IndicatorResult } from '@/types';
 

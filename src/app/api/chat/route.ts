@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import { logger } from "@/lib/logger";
 import type { Message, OpenAIChatMessage } from "@/types";
-import { AI_MODEL, OPENAI_API_KEY } from "@/lib/env";
+import { AI_MODEL, OPENAI_API_KEY } from "@/lib/env.server";
 
 // 使用するAIモデル
 const aiModel = AI_MODEL;

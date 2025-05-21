@@ -1,3 +1,5 @@
+import type { IndicatorSettings } from '@/types/chart';
+
 export type Timeframe =
   | '1m' | '3m' | '5m' | '15m' | '30m'
   | '1h' | '2h' | '4h' | '6h' | '8h'
@@ -19,27 +21,6 @@ export const SYMBOLS: SymbolOption[] = [
 export type SymbolValue = string;
 
 /** indicator run-time knobs used across hooks & tools */
-export interface IndicatorSettings {
-  sma: number;
-  rsi: number;
-  rsiUpper: number;
-  rsiLower: number;
-  macd: { short:number; long:number; signal:number };
-  boll: { period:number; stdDev:number };
-  /** ライン幅設定 */
-  lineWidth: {
-    ma: number;
-    rsi: number;
-    macd: number;
-    boll: number;
-  };
-  colors?: {
-    ma?: string;
-    rsi?: string;
-    macd?: string;
-    boll?: string;
-  };
-}
 
 export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   sma: 14,
