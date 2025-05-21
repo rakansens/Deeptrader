@@ -2,6 +2,7 @@ jest.mock('@mastra/core/tools', () => ({
   createTool: (opts: any) => opts,
 }), { virtual: true });
 
+import React from 'react';
 import { render } from '@testing-library/react';
 import { UiControlProvider } from '@/contexts/UiControlContext';
 import { toggleIndicatorTool } from '@/mastra/tools/toggleIndicatorTool';
@@ -27,4 +28,4 @@ describe('toggleIndicatorTool', () => {
     expect(result).toEqual({ success: true });
     unmount();
   });
-});
+}); 

@@ -65,7 +65,7 @@ export default function Chat() {
   const [uploading, setUploading] = useState(false);
 
   // 音声入力フックを使用
-  const { isListening, startListening, stopListening, toggleListening } =
+  const { isListening, startListening, stopListening, toggleListening, recordingTime } =
     useVoiceInput({
       onResult: (text) => {
         setInput(text);
@@ -324,6 +324,7 @@ export default function Chat() {
           voiceInputEnabled={voiceInputEnabled}
           isListening={isListening}
           toggleListening={toggleListening}
+          recordingTime={recordingTime}
         />
       </div>
     </div>

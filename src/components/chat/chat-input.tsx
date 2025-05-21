@@ -22,6 +22,7 @@ interface ChatInputProps {
   voiceInputEnabled: boolean;
   isListening: boolean;
   toggleListening: () => void;
+  recordingTime: number;
 }
 
 export function ChatInput({
@@ -34,6 +35,7 @@ export function ChatInput({
   voiceInputEnabled,
   isListening,
   toggleListening,
+  recordingTime,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -133,7 +135,7 @@ export function ChatInput({
         className={cn(
           "min-h-[80px] resize-none pr-12",
           "focus-visible:ring-primary",
-          voiceInputEnabled ? "pl-12" : "pl-4"
+          voiceInputEnabled ? "pl-20" : "pl-4"
         )}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
@@ -147,24 +149,35 @@ export function ChatInput({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                type="button"
-                onClick={toggleListening}
-                size="icon"
-                variant="ghost"
-                disabled={loading}
-                className={cn(
-                  "absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 border",
-                  isListening && "bg-red-500 text-white border-0",
-                  !isListening && "text-muted-foreground"
+              <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                <Button
+                  type="button"
+                  onClick={toggleListening}
+                  size="icon"
+                  variant="ghost"
+                  disabled={loading}
+                  aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
+                  className={cn(
+                    "h-8 w-8 border",
+                    isListening && "bg-red-500 text-white border-0",
+                    !isListening && "text-muted-foreground"
+                  )}
+                >
+                  {isListening ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+                {isListening && (
+                  <span
+                    className="text-xs text-muted-foreground"
+                    data-testid="recording-timer"
+                  >
+                    {new Date(recordingTime).toISOString().substring(14, 19)}
+                  </span>
                 )}
-              >
-                {isListening ? (
-                  <MicOff className="h-4 w-4" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-              </Button>
+              </div>
             </TooltipTrigger>
             <TooltipContent side="left">
               <p>{isListening ? "音声入力を停止" : "音声入力を開始"}</p>

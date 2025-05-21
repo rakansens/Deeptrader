@@ -10,6 +10,7 @@ const baseProps = {
   voiceInputEnabled: false,
   isListening: false,
   toggleListening: jest.fn(),
+  recordingTime: 0,
 }
 
 describe('ChatInput drag and drop', () => {
