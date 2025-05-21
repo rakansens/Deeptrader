@@ -42,7 +42,7 @@ function DrawingCanvas(
       className="relative w-full h-full"
       onMouseMove={handleContainerMouseMove}
     >
-      {mode === DRAWING_MODES[6] && eraserPosition && (
+      {mode === DRAWING_MODES[7] && eraserPosition && (
         <div
           className="absolute pointer-events-none rounded-full z-50"
           style={{

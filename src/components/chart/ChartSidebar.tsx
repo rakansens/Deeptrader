@@ -8,6 +8,7 @@ import {
   Minus,
   Square,
   ArrowUpRight,
+  Ruler,
   Type,
   Trash2,
   Eraser,
@@ -37,6 +38,7 @@ const DRAWING_TOOLS: ToolInfo[] = [
   { mode: "horizontal-line", icon: Minus, label: "水平線" },
   { mode: "box", icon: Square, label: "ボックス描画" },
   { mode: "arrow", icon: ArrowUpRight, label: "矢印マーカー" },
+  { mode: "ruler", icon: Ruler, label: "ルーラー" },
   { mode: "text", icon: Type, label: "テキスト" },
   { mode: "eraser", icon: Eraser, label: "消しゴム" },
 ];

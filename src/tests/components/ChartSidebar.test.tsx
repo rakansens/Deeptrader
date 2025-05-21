@@ -36,12 +36,20 @@ describe("ChartSidebar", () => {
     expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[3]);
   });
 
+  it("selects ruler tool", async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<ChartSidebar mode={null} onModeChange={onChange} />);
+    await user.click(screen.getByTitle("ルーラー"));
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[6]);
+  });
+
   it("selects eraser tool", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
     await user.click(screen.getByTitle("消しゴム"));
-    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[6]);
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[7]);
   });
 
   it("calls onClear when clear button clicked", async () => {

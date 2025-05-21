@@ -108,6 +108,17 @@ describe("DrawingCanvas", () => {
     expect(mockCtx.fill).toHaveBeenCalled();
   });
 
+  it("draws ruler with measurement", async () => {
+    const { getByTestId } = render(<DrawingCanvas mode={DRAWING_MODES[6]} />);
+    const canvas = getByTestId("drawing-canvas") as HTMLCanvasElement;
+    await act(async () => {
+      fireEvent.pointerDown(canvas, { clientX: 0, clientY: 0 });
+      fireEvent.pointerUp(canvas, { clientX: 0, clientY: 100 });
+    });
+    expect(mockCtx.beginPath).toHaveBeenCalled();
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
   it("treats null mode as freehand", async () => {
     const { getByTestId } = render(
       <DrawingCanvas mode={null} enabled={true} />,
@@ -171,7 +182,7 @@ describe("DrawingCanvas", () => {
 
   it("shows eraser cursor when eraser mode is active", async () => {
     const { getByTestId, queryByTestId } = render(
-      <DrawingCanvas mode={DRAWING_MODES[6]} />,
+      <DrawingCanvas mode={DRAWING_MODES[7]} />,
     );
 
     // エラサーカーソルが表示されていることを確認

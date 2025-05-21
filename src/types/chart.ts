@@ -5,6 +5,7 @@ export const DRAWING_MODES = [
   "horizontal-line",
   "box",
   "arrow",
+  "ruler",
   "eraser",
   "text",
 ] as const;
@@ -15,6 +16,7 @@ export type DrawingMode =
   | 'horizontal-line'
   | 'box'
   | 'arrow'
+  | 'ruler'
   | 'text'
   | 'eraser'
   | null;

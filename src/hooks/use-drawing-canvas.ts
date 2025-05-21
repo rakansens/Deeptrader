@@ -5,8 +5,16 @@ import { logger } from "@/lib/logger";
 import type { DrawingCanvasHandle, DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
 
-const [FREEHAND, TRENDLINE, FIBONACCI, HORIZONTAL_LINE, BOX, ARROW, ERASER] =
-  DRAWING_MODES;
+const [
+  FREEHAND,
+  TRENDLINE,
+  FIBONACCI,
+  HORIZONTAL_LINE,
+  BOX,
+  ARROW,
+  RULER,
+  ERASER,
+] = DRAWING_MODES;
 
 /**
  * チャート上に手描きできるキャンバスコンポーネント
@@ -361,6 +369,33 @@ export function useDrawingCanvas(
     ctx.fill();
   };
 
+  // ルーラーのプレビュー
+  const drawRulerPreview = (endX: number, endY: number) => {
+    const ctx = getContext();
+    const canvas = canvasRef.current;
+    if (!ctx || !canvas || !startPoint.current) return;
+
+    clearPreview();
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.beginPath();
+    ctx.moveTo(startPoint.current.x, startPoint.current.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    const diff = Math.abs(endY - startPoint.current.y);
+    const percent = ((diff / canvas.height) * 100).toFixed(2);
+    const text = `${diff.toFixed(2)}px (${percent}%)`;
+    ctx.fillStyle = color;
+    ctx.font = "12px Arial";
+    ctx.fillText(
+      text,
+      (startPoint.current.x + endX) / 2 + 5,
+      (startPoint.current.y + endY) / 2 - 5,
+    );
+  };
+
   // カーソルスタイルを決定
   const getCursorStyle = () => {
     if (!enabled) return "";
@@ -429,6 +464,8 @@ export function useDrawingCanvas(
         drawBoxPreview(x, y);
       } else if (actualMode === ARROW) {
         drawArrowPreview(x, y);
+      } else if (actualMode === RULER) {
+        drawRulerPreview(x, y);
       }
     }
   };
@@ -484,6 +521,8 @@ export function useDrawingCanvas(
         drawBoxPreview(end.x, end.y);
       } else if (actualMode === ARROW) {
         drawArrowPreview(end.x, end.y);
+      } else if (actualMode === RULER) {
+        drawRulerPreview(end.x, end.y);
       }
 
       // 描画後に状態を保存
