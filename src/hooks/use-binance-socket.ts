@@ -111,7 +111,9 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
                   pongTimeoutRef.current = null;
                 }
                 cleanupResources();
-                ws.close();
+                if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                  ws.close();
+                }
               }
             }
           }, pingInterval);

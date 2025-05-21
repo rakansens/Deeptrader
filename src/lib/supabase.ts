@@ -3,10 +3,19 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types";
+import { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } from "./env";
 
-// 環境変数から直接取得（クライアントサイドでも動作するように）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://prpktdgudkhkvlaxfelf.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBycGt0ZGd1ZGtoa3ZsYXhmZWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1MzQ1NjQsImV4cCI6MjA2MzExMDU2NH0.GpfC1yjceni-2JDSM68KnMpRXOInqXnW3sScBHozIU8';
+// 環境変数から取得し、存在しない場合は明確なエラーを投げる
+const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined");
+}
+
+if (!supabaseAnonKey) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined");
+}
 
 // 型付きSupabaseクライアントの作成
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);

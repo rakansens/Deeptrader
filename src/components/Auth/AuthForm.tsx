@@ -99,6 +99,14 @@ export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+          <div className="text-right mt-1">
+            <a
+              href="/forgot-password"
+              className="text-xs text-indigo-600 hover:text-indigo-500"
+            >
+              パスワードを忘れた場合
+            </a>
+          </div>
         </div>
 
         <div>

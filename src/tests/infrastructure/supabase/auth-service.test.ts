@@ -3,6 +3,7 @@ import {
   signUp,
   signOut,
   getCurrentUser,
+  resetPassword,
 } from "@/infrastructure/supabase/auth-service";
 import { supabase } from "@/lib/supabase";
 
@@ -15,6 +16,7 @@ jest.mock("@/lib/supabase", () => ({
       signUp: jest.fn(),
       signOut: jest.fn(),
       getUser: jest.fn(),
+      resetPasswordForEmail: jest.fn(),
     },
   },
 }));
@@ -60,5 +62,13 @@ describe("auth-service", () => {
     });
     await getCurrentUser();
     expect(auth.getUser).toHaveBeenCalled();
+  });
+
+  it("resetPassword calls supabase", async () => {
+    (auth.resetPasswordForEmail as jest.Mock).mockResolvedValue({
+      error: null,
+    });
+    await resetPassword("test@example.com");
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("test@example.com");
   });
 });

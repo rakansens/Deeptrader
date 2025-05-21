@@ -42,3 +42,12 @@ export async function getCurrentUser(): Promise<User | null> {
   if (error) throw error;
   return data.user;
 }
+
+/**
+ * パスワードリセットメールを送信
+ * @param email - メールアドレス
+ */
+export async function resetPassword(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (error) throw error;
+}

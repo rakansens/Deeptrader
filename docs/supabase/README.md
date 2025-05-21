@@ -24,6 +24,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
+`NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` が設定されていない
+場合、アプリケーション起動時にエラーが発生します。必ず値を入力してください。
+
 その他の API キーも必要に応じて設定してください。
 
 ## 3. テーブル定義

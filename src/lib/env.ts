@@ -25,8 +25,7 @@ function getEnv(name: string, isRequired: boolean = true): string {
   return value || '';
 }
 
-// 注意: 以下の変数はsupabase.tsで直接使用されなくなりました
-// 他のファイルでの参照のために残しています
+// Supabaseクライアントなどで使用する環境変数
 
 // クライアントサイドで使用する環境変数
 export const NEXT_PUBLIC_SUPABASE_URL = getEnv("NEXT_PUBLIC_SUPABASE_URL", false);
