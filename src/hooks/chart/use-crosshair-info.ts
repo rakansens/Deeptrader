@@ -7,7 +7,7 @@ import type {
   UTCTimestamp,
   MouseEventParams,
 } from "lightweight-charts";
-import type { CrosshairInfo } from "@/types";
+import type { CrosshairInfo } from "@/types/chart";
 
 interface UseCrosshairInfoParams {
   chart: IChartApi | null;
