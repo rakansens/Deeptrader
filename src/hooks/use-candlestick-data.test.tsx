@@ -8,7 +8,7 @@ import {
   BollingerBandsCalculator 
 } from '@/lib/indicators';
 import type { BinanceKline, BinanceKlineMessage } from '@/types';
-import type { IndicatorSettings } from '@/types/chart';
+import type { IndicatorSettings } from '@/constants/chart';
 import type { SymbolValue, Timeframe } from '@/constants/chart';
 import { DEFAULT_INDICATOR_SETTINGS, TIMEFRAMES, SYMBOLS } from '@/constants/chart';
 import { UTCTimestamp } from 'lightweight-charts';

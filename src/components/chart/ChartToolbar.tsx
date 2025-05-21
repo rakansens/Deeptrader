@@ -42,7 +42,7 @@ import {
   type Timeframe,
   type SymbolValue,
 } from '@/constants/chart'
-import type { IndicatorSettings } from '@/types/chart'
+import type { IndicatorSettings } from '@/constants/chart'
 
 interface ChartToolbarProps {
   timeframe: Timeframe

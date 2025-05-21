@@ -50,5 +50,7 @@ declare global {
   interface Window {
     __chartInstance?: IChartApi | null
     __getChartElement?: () => HTMLElement | null
+    toggleIndicator?: (name: string, enabled?: boolean) => void
+    changeTimeframe?: (tf: string) => void
   }
 }

@@ -24,7 +24,7 @@ import type {
 } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
-import type { IndicatorSettings } from "@/types/chart";
+import type { IndicatorSettings } from "@/constants/chart";
 import ChartSidebar from "./ChartSidebar";
 const SHOW_ORDER_BOOK = true;
 import SidebarToggleButton from "./sidebar-toggle-button";

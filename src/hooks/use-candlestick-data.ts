@@ -16,7 +16,7 @@ import {
   EMACalculator, // Though EMACalculator is used by MACD, it's good practice if it were directly needed
 } from "@/lib/indicators";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
-import type { IndicatorSettings } from "@/types/chart";
+import type { IndicatorSettings } from "@/constants/chart";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
 
 export interface UseCandlestickDataResult {
