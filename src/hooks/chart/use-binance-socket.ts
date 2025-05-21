@@ -74,7 +74,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
 
     // 既存の接続をクリーンアップ
     if (wsRef.current && wsRef.current.readyState !== 3) { // 3 = WebSocket.CLOSED
-      wsRef.current.close();
+      wsRef.current.close(1000, "reconnect");
     }
     
     cleanupResources();
@@ -108,7 +108,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
                 pongTimeoutRef.current = setTimeout(() => {
                   if (ws.readyState === 1) { // 1 = WebSocket.OPEN
                     cleanupResources();
-                    ws.close();
+                    ws.close(1000, "pong timeout");
                   }
                 }, PONG_TIMEOUT);
               } catch (e) {
@@ -119,7 +119,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
                 }
                 cleanupResources();
                 if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                  ws.close();
+                  ws.close(1000, "ping failed");
                 }
               }
             }
@@ -172,7 +172,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
         setStatus("disconnected");
         onError?.(e);
         if (ws.readyState !== 3) { // 3 = WebSocket.CLOSED
-          ws.close();
+          ws.close(1000, "error");
         }
       };
     } catch (error) {
@@ -194,7 +194,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
       mountedRef.current = false;
       if (wsRef.current) {
         try {
-          wsRef.current.close();
+          wsRef.current.close(1000, "unmount");
         } catch (e) {
           logger.error("WebSocketクローズエラー", e);
         }

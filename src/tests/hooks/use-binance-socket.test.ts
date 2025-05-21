@@ -16,7 +16,7 @@ class MockWebSocket {
   send(data: string) {
     this.sent.push(data)
   }
-  close() {}
+  close(code?: number, reason?: string) {}
 }
 
 ;(global as any).WebSocket = MockWebSocket as any
