@@ -79,15 +79,29 @@ export default function ChartToolbar({
     >
       <div className="flex gap-4 items-center">
         {onSymbolChange && (
-          <select
-            value={symbol}
-            onChange={(e) => onSymbolChange(e.target.value as SymbolValue)}
-            className="border rounded px-2 py-1 text-sm bg-background"
-          >
-            {SYMBOLS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
+          <div className="flex-wrap md:flex-nowrap">
+            <Select
+              value={symbol}
+              onValueChange={(v) => v && onSymbolChange(v as SymbolValue)}
+            >
+              <SelectTrigger
+                className="w-[8.5rem]"
+                data-testid="symbol-trigger"
+                aria-label="Symbol"
+              >
+                <SelectValue>
+                  {SYMBOLS.find(s => s.value === symbol)?.label || symbol}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SYMBOLS.map((s) => (
+                  <SelectItem key={s.value} value={s.value} aria-label={`Symbol ${s.label}`}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         <div className="flex-wrap md:flex-nowrap">
           <Select
@@ -95,7 +109,7 @@ export default function ChartToolbar({
             onValueChange={(v) => v && onTimeframeChange(v as Timeframe)}
           >
             <SelectTrigger
-              className="w-[5.5rem]"
+              className="w-[8.5rem]"
               data-testid="timeframe-trigger"
               aria-label="Timeframe"
             >
