@@ -4,6 +4,8 @@ import { useScreenshot } from "@/hooks/use-screenshot";
 import { useSettings } from "@/hooks/use-settings";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 
+const baseProps = { symbol: "BTCUSDT", timeframe: "1h" as const };
+
 jest.mock("@/hooks/use-settings");
 jest.mock("@/hooks/use-screenshot");
 jest.mock("@/hooks/use-voice-input");
@@ -46,7 +48,7 @@ describe("Chat keyboard shortcuts", () => {
       toggleListening,
     });
 
-    render(<Chat />);
+    render(<Chat {...baseProps} />);
 
     fireEvent.keyDown(window, { key: "s", ctrlKey: true, shiftKey: true });
     expect(captureScreenshot).toHaveBeenCalled();

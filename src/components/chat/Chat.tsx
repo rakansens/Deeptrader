@@ -40,8 +40,14 @@ import SettingsDialog from "@/components/SettingsDialog";
 import ChatToolbar from "./chat-toolbar";
 import ChatInput from "./chat-input";
 import { useScreenshot } from "@/hooks/use-screenshot";
+import type { SymbolValue, Timeframe } from "@/constants/chart";
 
-export default function Chat() {
+interface ChatProps {
+  symbol: SymbolValue;
+  timeframe: Timeframe;
+}
+
+export default function Chat({ symbol, timeframe }: ChatProps) {
   const {
     messages,
     input,
@@ -66,17 +72,39 @@ export default function Chat() {
   const [uploading, setUploading] = useState(false);
 
   // 音声入力フックを使用
-  const { isListening, startListening, stopListening, toggleListening, recordingTime } =
-    useVoiceInput({
-      onResult: (text) => {
-        setInput(text);
-      },
-      lang: "ja-JP",
-    });
+  const {
+    isListening,
+    startListening,
+    stopListening,
+    toggleListening,
+    recordingTime,
+  } = useVoiceInput({
+    onResult: (text) => {
+      setInput(text);
+    },
+    lang: "ja-JP",
+  });
 
   const { captureScreenshot } = useScreenshot({
     onCapture: async (url: string) => {
-      await sendImageMessage(url, "このチャートを分析してください");
+      let analysis = "";
+      try {
+        const res = await fetch("/api/chart-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol, timeframe }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          analysis = JSON.stringify(data);
+        } else {
+          logger.error("Chart analysis API error", data);
+        }
+      } catch (err) {
+        logger.error("Chart analysis request failed", err);
+      }
+      const prompt = `このチャートを分析してください\n${analysis}`;
+      await sendImageMessage(url, prompt);
     },
   });
 
@@ -263,9 +291,13 @@ export default function Chat() {
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
               <div className="text-center">
-                <p className="text-lg font-semibold mb-2">DeepTrader AIへようこそ！</p>
+                <p className="text-lg font-semibold mb-2">
+                  DeepTrader AIへようこそ！
+                </p>
                 <p className="mb-1">あなたのパーソナル取引アシスタントです。</p>
-                <p className="mb-4">下のように、市場分析、チャート操作、一般的な質問など、何でも聞いてみてくださいね。</p>
+                <p className="mb-4">
+                  下のように、市場分析、チャート操作、一般的な質問など、何でも聞いてみてくださいね。
+                </p>
               </div>
               <div className="flex flex-col gap-2 mx-auto w-full max-w-sm">
                 {[
