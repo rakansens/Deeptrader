@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
+import { UiControlProvider } from '@/contexts/UiControlContext';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -66,16 +67,6 @@ export default function Home() {
     });
   };
 
-  useEffect(() => {
-    (window as any).toggleIndicator = toggleIndicator;
-    console.log('toggleIndicator function exposed to window');
-
-    return () => {
-      delete (window as any).toggleIndicator;
-      console.log('toggleIndicator function removed from window');
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs once on mount and cleanup on unmount
 
   useEffect(() => {
     const hasSeenModal = localStorage.getItem('hasSeenWelcomeModal');
@@ -90,7 +81,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <UiControlProvider value={{ toggleIndicator, changeTimeframe: handleTimeframeChange }}>
+      <div className="flex min-h-screen flex-col">
       {showWelcomeModal && (
         <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
           <DialogContent className="sm:max-w-md">
@@ -199,5 +191,6 @@ export default function Home() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
+    </UiControlProvider>
   );
 }

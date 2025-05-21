@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import { TIMEFRAMES } from '@/constants/chart';
+import { TIMEFRAMES, type Timeframe } from '@/constants/chart';
+import { getUiControl } from '@/contexts/UiControlContext';
 
 /**
  * チャートの時間足を変更するツール
@@ -13,11 +14,12 @@ export const changeTimeframeTool = createTool({
     timeframe: z.enum(['1m','3m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w','1M']).describe('例: 1m, 5m, 1h'),
   }),
   execute: async ({ context }) => {
-    const fn = (window as any).changeTimeframe as ((tf: string) => void) | undefined;
-    if (typeof fn === 'function') {
-      fn(context.timeframe);
+    try {
+      const { changeTimeframe } = getUiControl();
+      changeTimeframe(context.timeframe as Timeframe);
       return { success: true };
+    } catch {
+      throw new Error('changeTimeframe 関数が定義されていません');
     }
-    throw new Error('changeTimeframe 関数が定義されていません');
   },
 });

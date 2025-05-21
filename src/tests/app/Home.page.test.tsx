@@ -1,5 +1,6 @@
 import { render, act, screen } from '@testing-library/react';
 import Home from '@/app/page';
+import { getUiControl } from '@/contexts/UiControlContext';
 import CandlestickChart from '@/components/chart/CandlestickChart'; // Path to the actual component for jest.mock
 import { Navbar } from '@/components/Navbar'; // Path to the actual component for jest.mock
 
@@ -27,7 +28,7 @@ jest.mock('@/components/ui/resizable', () => ({
 }));
 
 
-describe('Home Page - window.toggleIndicator functionality', () => {
+describe('Home Page - UiControlContext functionality', () => {
   // Clear mocks before each test to ensure a clean state for assertions like toHaveBeenLastCalledWith
   beforeEach(() => {
     MockedCandlestickChart.mockClear();
@@ -38,10 +39,9 @@ describe('Home Page - window.toggleIndicator functionality', () => {
     localStorage.clear(); 
   });
 
-  it('should update CandlestickChart indicators prop when window.toggleIndicator is called', () => {
+  it('updates CandlestickChart indicators when toggleIndicator is called', () => {
     render(<Home />);
-    
-    expect((window as any).toggleIndicator).toBeDefined();
+    const ui = getUiControl();
 
     // Initial state check (ma:true, rsi:false, macd: false, boll: false by default)
     // The component renders multiple times initially due to useEffects and dynamic imports.
@@ -55,7 +55,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
 
     // Toggle RSI on
     act(() => {
-      (window as any).toggleIndicator('rsi', true);
+      ui.toggleIndicator('rsi', true);
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -66,7 +66,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
 
     // Toggle RSI off
     act(() => {
-      (window as any).toggleIndicator('rsi', false);
+      ui.toggleIndicator('rsi', false);
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -77,7 +77,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
 
     // Toggle MACD on (initially false)
     act(() => {
-      (window as any).toggleIndicator('macd'); 
+      ui.toggleIndicator('macd');
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -88,7 +88,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
 
     // Toggle MACD off
     act(() => {
-      (window as any).toggleIndicator('macd');
+      ui.toggleIndicator('macd');
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -99,7 +99,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
 
     // Toggle BOLL on (initially false)
     act(() => {
-      (window as any).toggleIndicator('boll', true);
+      ui.toggleIndicator('boll', true);
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -110,7 +110,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
     
     // Toggle MA off (initially true)
     act(() => {
-      (window as any).toggleIndicator('ma');
+      ui.toggleIndicator('ma');
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -121,7 +121,7 @@ describe('Home Page - window.toggleIndicator functionality', () => {
 
     // Toggle MA back on
     act(() => {
-      (window as any).toggleIndicator('ma');
+      ui.toggleIndicator('ma');
     });
     expect(MockedCandlestickChart).toHaveBeenLastCalledWith(
       expect.objectContaining({

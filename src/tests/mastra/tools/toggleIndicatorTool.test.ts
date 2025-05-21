@@ -2,6 +2,8 @@ jest.mock('@mastra/core/tools', () => ({
   createTool: (opts: any) => opts,
 }), { virtual: true });
 
+import { render } from '@testing-library/react';
+import { UiControlProvider } from '@/contexts/UiControlContext';
 import { toggleIndicatorTool } from '@/mastra/tools/toggleIndicatorTool';
 
 describe('toggleIndicatorTool', () => {
@@ -11,13 +13,18 @@ describe('toggleIndicatorTool', () => {
     ).not.toThrow();
   });
 
-  it('calls global function and returns success', async () => {
+  it('uses context function and returns success', async () => {
     const mockFn = jest.fn();
-    (global as any).window = { toggleIndicator: mockFn } as any;
-    // executeメソッドが存在することを保証
+    const { unmount } = render(
+      <UiControlProvider value={{ toggleIndicator: mockFn, changeTimeframe: jest.fn() }}>
+        <div />
+      </UiControlProvider>
+    );
+
     const execute = toggleIndicatorTool.execute as (params: any) => Promise<any>;
     const result = await execute({ context: { indicator: 'rsi', enabled: false } } as any);
     expect(mockFn).toHaveBeenCalledWith('rsi', false);
     expect(result).toEqual({ success: true });
+    unmount();
   });
 });
