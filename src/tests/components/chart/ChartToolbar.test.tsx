@@ -27,8 +27,9 @@ describe('ChartToolbar', () => {
       />
     )
 
+    await user.click(screen.getByTestId('timeframe-trigger'))
     await user.click(
-      screen.getByRole('radio', { name: `Timeframe ${TIMEFRAMES[1]}` })
+      screen.getByRole('option', { name: `Timeframe ${TIMEFRAMES[1]}` })
     )
     expect(onTf).toHaveBeenCalledWith(TIMEFRAMES[1])
 
@@ -65,7 +66,7 @@ describe('ChartToolbar', () => {
     )
   })
 
-  it('renders controls in a single row', () => {
+  it('applies responsive classes', () => {
     render(
       <ChartToolbar
         timeframe="1m"
@@ -87,6 +88,7 @@ describe('ChartToolbar', () => {
 
     const toolbar = screen.getByTestId('chart-toolbar')
     expect(toolbar.className).toContain('flex-col')
-    expect(toolbar.className).not.toContain('flex-wrap')
+    const tfGroup = screen.getByRole('group')
+    expect(tfGroup.className).toContain('flex-wrap')
   })
 })

@@ -4,7 +4,13 @@
  * インジケーターの線幅設定UIをスライダーとリアルタイムプレビューに変更。
  */
 
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -83,17 +89,27 @@ export default function ChartToolbar({
             ))}
           </select>
         )}
-        <ToggleGroup
-          type="single"
-          value={timeframe}
-          onValueChange={(v) => v && onTimeframeChange(v as Timeframe)}
-        >
-          {TIMEFRAMES.map((tf) => (
-            <ToggleGroupItem key={tf} value={tf} aria-label={`Timeframe ${tf}`}>
-              {tf}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <div className="flex-wrap md:flex-nowrap">
+          <Select
+            value={timeframe}
+            onValueChange={(v) => v && onTimeframeChange(v as Timeframe)}
+          >
+            <SelectTrigger
+              className="w-[5.5rem]"
+              data-testid="timeframe-trigger"
+              aria-label="Timeframe"
+            >
+              <SelectValue>{timeframe}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEFRAMES.map((tf) => (
+                <SelectItem key={tf} value={tf} aria-label={`Timeframe ${tf}`}>
+                  {tf}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
