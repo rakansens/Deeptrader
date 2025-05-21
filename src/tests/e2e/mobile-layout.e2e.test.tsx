@@ -31,4 +31,13 @@ describe('Mobile layout', () => {
     const container = screen.getByTestId('chart-container') as HTMLDivElement
     expect(container.style.height).toBe('216px')
   })
+
+  it('uses flex column layout on small screens', () => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 360 })
+    window.dispatchEvent(new Event('resize'))
+
+    render(<CandlestickChart />)
+    const wrapper = screen.getByTestId('chart-layout')
+    expect(wrapper.className).toContain('flex-col')
+  })
 })
