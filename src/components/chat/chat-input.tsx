@@ -37,10 +37,13 @@ export function ChatInput({
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  /**
+   * ファイルをアップロードする共通処理
+   * @param file - 画像ファイル
+   */
+  const uploadFile = async (file: File) => {
     setUploading(true);
     try {
       await onUploadImage(file);
@@ -50,8 +53,42 @@ export function ChatInput({
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
   return (
-    <div className="mt-4 relative">
+    <div
+      className={cn(
+        "mt-4 relative",
+        dragging && "ring-2 ring-primary rounded-md"
+      )}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      data-testid="chat-input"
+    >
       <div className="flex justify-end mb-2 space-x-2">
         <Button
           aria-label="スクリーンショット送信"
