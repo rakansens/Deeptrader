@@ -27,6 +27,12 @@ describe('MessageBubble', () => {
     expect(screen.getByText(/\d{4}\/\d{1,2}\/\d{1,2}/)).toBeInTheDocument()
   })
 
+  it('shows fallback avatar when none provided', () => {
+    render(<MessageBubble role="assistant">hi</MessageBubble>)
+    // Fallback text 'AI' should be visible
+    expect(screen.getAllByText('AI')[0]).toBeInTheDocument()
+  })
+
   it('copies message text to clipboard', async () => {
     const user = userEvent.setup()
     const writeText = jest.fn()

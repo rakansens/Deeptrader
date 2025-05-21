@@ -6,6 +6,7 @@ export const DRAWING_MODES = [
   "box",
   "arrow",
   "eraser",
+  "text",
 ] as const;
 export type DrawingMode =
   | 'freehand'

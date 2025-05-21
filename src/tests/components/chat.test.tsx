@@ -30,6 +30,10 @@ const toastMock = jest.fn()
   speechSynthesisEnabled: false,
   setSpeechSynthesisEnabled: jest.fn(),
   refreshSettings: jest.fn(),
+  userAvatar: '',
+  setUserAvatar: jest.fn(),
+  assistantAvatar: '',
+  setAssistantAvatar: jest.fn(),
 })
 
 describe('Chat', () => {

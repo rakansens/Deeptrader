@@ -6,7 +6,8 @@ declare module 'html2canvas' {
     logging?: boolean;
     foreignObjectRendering?: boolean;
     onclone?: (document: Document) => Document;
-    [key: string]: any;
+    // 任意の追加オプションを受け取る
+    [key: string]: unknown;
   }
   
   const html2canvas: (

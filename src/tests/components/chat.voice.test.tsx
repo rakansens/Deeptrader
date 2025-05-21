@@ -24,6 +24,10 @@ describe('Chat voice features', () => {
       speechSynthesisEnabled: true,
       setSpeechSynthesisEnabled: jest.fn(),
       refreshSettings: jest.fn(),
+      userAvatar: '',
+      setUserAvatar: jest.fn(),
+      assistantAvatar: '',
+      setAssistantAvatar: jest.fn(),
     })
   })
 

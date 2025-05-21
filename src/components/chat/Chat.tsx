@@ -125,6 +125,8 @@ export default function Chat() {
     voiceInputEnabled,
     speechSynthesisEnabled,
     refreshSettings,
+    userAvatar,
+    assistantAvatar,
   } = useSettings();
 
   const exportConversation = (format: 'json' | 'txt') => {
@@ -253,7 +255,7 @@ export default function Chat() {
                 key={idx}
                 role={m.role}
                 timestamp={m.timestamp}
-                avatar={m.role === 'user' ? 'U' : 'AI'}
+                avatar={m.role === "user" ? userAvatar : assistantAvatar}
                 type={m.type}
                 prompt={m.prompt}
                 imageUrl={m.imageUrl}

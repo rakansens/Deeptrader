@@ -111,28 +111,22 @@ export function MessageBubble({
         role === "user" ? "flex-row-reverse" : ""
       )}
     >
-      <div
-        className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium text-center",
-          role === "user"
-            ? "bg-secondary text-secondary-foreground"
-            : "bg-primary text-primary-foreground"
-        )}
-      >
-        {avatar ? (
-          typeof avatar === "string" ? (
-            <Avatar className="h-5 w-5">
-              <AvatarImage src={avatar} />
-              <AvatarFallback>{role === "user" ? "U" : "AI"}</AvatarFallback>
-            </Avatar>
-          ) : (
-            avatar
-          )
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {typeof avatar === "string" ? (
+          <Avatar className="h-5 w-5">
+            {avatar && <AvatarImage src={avatar} />}
+            <AvatarFallback>{role === "user" ? "U" : "AI"}</AvatarFallback>
+          </Avatar>
+        ) : avatar ? (
+          avatar
         ) : (
+          <Avatar className="h-5 w-5">
+            <AvatarFallback>{role === "user" ? "U" : "AI"}</AvatarFallback>
+          </Avatar>
+        )}
         <span className="font-medium">
           {role === "user" ? "あなた" : "DeepTrader AI"}
         </span>
-        )}
       </div>
 
       <div
@@ -140,7 +134,7 @@ export function MessageBubble({
           "flex flex-col max-w-[90%] sm:max-w-[75%]",
           role === "user" ? "items-end" : "items-start"
         )}
-            >
+      >
         <div
           className={cn(
             // 画像メッセージは背景・余白を除去してネイティブな見た目に
