@@ -172,6 +172,8 @@ export default function CandlestickChart({
     volumeSeries: volumeRef.current,
   });
 
+  const currentPrice = candles.length > 0 ? candles[candles.length - 1].close : undefined;
+
   const [countdownBgColor, setCountdownBgColor] = useState<string | undefined>();
   const [countdownTextColor, setCountdownTextColor] = useState<string>("#ffffff");
 
@@ -306,9 +308,10 @@ export default function CandlestickChart({
           )}
         </div>
         {SHOW_ORDER_BOOK && (
-          <OrderBookPanel 
-            symbol={initialSymbol} 
-            height={chartHeight} 
+          <OrderBookPanel
+            symbol={initialSymbol}
+            height={chartHeight}
+            currentPrice={currentPrice}
             className="w-[250px] flex-shrink-0"
           />
         )}

@@ -22,5 +22,16 @@ describe('OrderBookPanel', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.getByText('1.1')).toBeInTheDocument()
   })
+
+  it('highlights current price row', () => {
+    mockUseOrderBook.mockReturnValue({
+      bids: [{ price: 1, quantity: 2 }],
+      asks: [{ price: 1.1, quantity: 3 }],
+      connected: true,
+    })
+    render(<OrderBookPanel symbol="BTCUSDT" height={100} currentPrice={1} />)
+    const row = screen.getByTestId('current-price-row')
+    expect(row).toBeInTheDocument()
+  })
 })
 
