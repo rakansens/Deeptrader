@@ -27,8 +27,21 @@ describe('ChatInput drag and drop', () => {
     render(<ChatInput {...baseProps} onUploadImage={onUploadImage} />)
     const container = screen.getByTestId('chat-input')
     const file = new File(['data'], 'test.png', { type: 'image/png' })
-    const data = { files: [file], items: { add: jest.fn() } } as DataTransfer
-    await fireEvent.drop(container, { dataTransfer: data })
+    
+    // DataTransferオブジェクトのモックを作成し、型キャストを修正
+    const dataTransferMock = {
+      files: [file],
+      items: { add: jest.fn() },
+      getData: jest.fn(),
+      setData: jest.fn(),
+      clearData: jest.fn(),
+      setDragImage: jest.fn(),
+      effectAllowed: 'none',
+      dropEffect: 'none',
+      types: []
+    } as unknown as DataTransfer;
+    
+    await fireEvent.drop(container, { dataTransfer: dataTransferMock })
     await waitFor(() => expect(onUploadImage).toHaveBeenCalledWith(file))
   })
 
