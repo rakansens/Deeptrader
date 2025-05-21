@@ -32,6 +32,7 @@ import { logger } from "@/lib/logger";
 import {
   TIMEFRAMES,
   SYMBOLS,
+  DRAWING_COLORS,
   type Timeframe,
   type SymbolValue,
 } from "@/constants/chart";
@@ -46,14 +47,6 @@ const CandlestickChart = dynamic(
   },
 );
 
-// 描画色のオプション
-const DRAWING_COLORS = [
-  { value: "#ef4444", label: "赤", class: "bg-red-500" },
-  { value: "#3b82f6", label: "青", class: "bg-blue-500" },
-  { value: "#22c55e", label: "緑", class: "bg-green-500" },
-  { value: "#f59e0b", label: "橙", class: "bg-amber-500" },
-  { value: "#a855f7", label: "紫", class: "bg-purple-500" },
-];
 
 export default function Home() {
   const [timeframe, setTimeframe] = useState<Timeframe>(TIMEFRAMES[3]);
@@ -218,25 +211,7 @@ export default function Home() {
                     />
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-xs text-muted-foreground">
-                        描画色:
-                      </span>
-                      {DRAWING_COLORS.map((c) => (
-                        <button
-                          key={c.value}
-                          title={c.label}
-                          onClick={() => handleDrawingColorChange(c.value)}
-                          className={`w-6 h-6 rounded-full ${c.class} border border-border transition-all ${
-                            drawingColor === c.value
-                              ? "ring-2 ring-offset-1 ring-primary"
-                              : "opacity-70 hover:opacity-100"
-                          }`}
-                          aria-label={`色を${c.label}に変更`}
-                          suppressHydrationWarning
-                        />
-                      ))}
-                    </div>
+                    {/* 描画色選択はサイドバーに移動 */}
                     <div className="w-full relative">
                       <CandlestickChart
                         height={600}
@@ -246,6 +221,7 @@ export default function Home() {
                         onIndicatorsChange={setIndicators}
                         indicatorSettings={settings}
                         drawingColor={drawingColor}
+                        onDrawingColorChange={handleDrawingColorChange}
                       />
                     </div>
                   </CardContent>

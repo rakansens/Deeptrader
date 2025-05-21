@@ -1,9 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Home from '@/app/page';
+import ChartSidebar from '@/components/chart/ChartSidebar';
 
-// CandlestickChart uses next/dynamic, stub to avoid async import
-jest.mock('next/dynamic', () => () => () => <div data-testid="chart" />);
+// Stub next/dynamic to render a ChartSidebar for color tests
+jest.mock('next/dynamic', () => () => (props: any) => (
+  <ChartSidebar
+    mode={null}
+    onModeChange={() => {}}
+    drawingColor={props.drawingColor}
+    onColorChange={props.onDrawingColorChange}
+  />
+));
 
 jest.mock('@/components/Navbar', () => () => <div />);
 jest.mock('@/components/chat/Chat', () => () => <div />);

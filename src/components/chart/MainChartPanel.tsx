@@ -42,6 +42,7 @@ export interface MainChartPanelProps {
   unregisterShortcuts: () => void;
   setEraserSize: (size: number) => void;
   drawingColor: string;
+  onDrawingColorChange: (color: string) => void;
   indicators: IndicatorOptions;
   handleToggleIndicator: (key: keyof IndicatorOptions, value: boolean) => void;
   chartRef: MutableRefObject<IChartApi | null>;
@@ -78,6 +79,7 @@ function MainChartPanelComponent({
   unregisterShortcuts,
   setEraserSize,
   drawingColor,
+  onDrawingColorChange,
   indicators,
   handleToggleIndicator,
   chartRef,
@@ -112,6 +114,8 @@ function MainChartPanelComponent({
             mode={mode}
             onModeChange={handleModeChange}
             onClear={handleClearDrawing}
+            drawingColor={drawingColor}
+            onColorChange={onDrawingColorChange}
             registerShortcuts={registerShortcuts}
             unregisterShortcuts={unregisterShortcuts}
             className="absolute top-12 left-2 z-20"

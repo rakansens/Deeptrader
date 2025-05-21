@@ -17,11 +17,14 @@ import { useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
+import DrawingColorPicker from "./drawing-color-picker";
 
 interface ChartSidebarProps {
   mode: DrawingMode | null;
   onModeChange: (mode: DrawingMode | null) => void;
   onClear?: () => void;
+  drawingColor: string;
+  onColorChange: (color: string) => void;
   registerShortcuts?: () => void;
   unregisterShortcuts?: () => void;
   className?: string;
@@ -54,6 +57,8 @@ export default function ChartSidebar({
   mode,
   onModeChange,
   onClear,
+  drawingColor,
+  onColorChange,
   registerShortcuts,
   unregisterShortcuts,
   className,
@@ -105,6 +110,12 @@ export default function ChartSidebar({
           <Icon className="h-4 w-4" />
         </button>
       ))}
+
+      <DrawingColorPicker
+        value={drawingColor}
+        onChange={onColorChange}
+        className="mt-2"
+      />
 
       {onClear && (
         <button

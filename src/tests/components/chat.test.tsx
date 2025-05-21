@@ -253,6 +253,43 @@ describe("Chat", () => {
     await waitFor(() => expect(top).toBe(100));
   });
 
+  it("shows scroll button when scrolled up and scrolls to bottom", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Chat {...baseProps} />);
+    const list = container.querySelector("div.space-y-4") as HTMLDivElement;
+
+    Object.defineProperty(list, "scrollHeight", {
+      get: () => 200,
+      configurable: true,
+    });
+    Object.defineProperty(list, "clientHeight", {
+      get: () => 100,
+      configurable: true,
+    });
+    let top = 200;
+    Object.defineProperty(list, "scrollTop", {
+      get: () => top,
+      set: (v) => {
+        top = v as number;
+      },
+      configurable: true,
+    });
+
+    // wait for initial scroll to bottom
+    await waitFor(() => expect(top).toBe(200));
+
+    // user scrolls up
+    top = 50;
+    list.dispatchEvent(new Event("scroll"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "スクロールダウン" })).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole("button", { name: "スクロールダウン" }));
+    expect(top).toBe(200);
+  });
+
   it("shows toast when error occurs", async () => {
     const user = userEvent.setup();
     global.fetch = jest.fn().mockResolvedValue({

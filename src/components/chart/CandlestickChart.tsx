@@ -50,6 +50,8 @@ interface CandlestickChartProps {
   drawingEnabled?: boolean;
   /** 描画色 */
   drawingColor?: string;
+  /** 色変更ハンドラ */
+  onDrawingColorChange?: (color: string) => void;
 }
 
 /**
@@ -66,6 +68,7 @@ export default function CandlestickChart({
   indicatorSettings = DEFAULT_INDICATOR_SETTINGS,
   drawingEnabled = false,
   drawingColor = "#ef4444",
+  onDrawingColorChange = () => {},
 }: CandlestickChartProps) {
   const themeColors = useChartTheme();
   const [showOrderBook, setShowOrderBook] = useState(true);
@@ -254,6 +257,9 @@ export default function CandlestickChart({
       unregisterShortcuts,
       setEraserSize,
       drawingColor,
+      onDrawingColorChange,
+      onDrawingColorChange,
+      onDrawingColorChange,
       indicators,
       handleToggleIndicator,
       chartRef,
@@ -286,6 +292,7 @@ export default function CandlestickChart({
       unregisterShortcuts,
       setEraserSize,
       drawingColor,
+      onDrawingColorChange,
       indicators,
       handleToggleIndicator,
       chartRef,
