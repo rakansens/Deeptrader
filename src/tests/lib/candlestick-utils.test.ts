@@ -63,5 +63,57 @@ describe("candlestick-utils", () => {
       expect(result.length).toBe(3);
       expect(result[2].value).toBe(4);
     });
+
+    it("correctly handles multiple calls with the same array instance (verifying caching)", () => {
+      const sharedArrayInstance: LineData<UTCTimestamp>[] = [
+        { time: 1 as UTCTimestamp, value: 100 },
+        { time: 2 as UTCTimestamp, value: 200 },
+      ];
+      const limit = 3;
+
+      // Call 1: Add item3
+      const result1 = upsertSeries(
+        sharedArrayInstance,
+        { time: 3 as UTCTimestamp, value: 300 },
+        limit,
+      );
+      expect(result1).toEqual([
+        { time: 1 as UTCTimestamp, value: 100 },
+        { time: 2 as UTCTimestamp, value: 200 },
+        { time: 3 as UTCTimestamp, value: 300 },
+      ]);
+
+      // Call 2: Add item4 (item1 should be trimmed)
+      // Pass sharedArrayInstance again
+      const result2 = upsertSeries(
+        sharedArrayInstance,
+        { time: 4 as UTCTimestamp, value: 400 },
+        limit,
+      );
+      // Because the map is mutated in place, and keys are ordered by insertion,
+      // when item1 is deleted and item4 is added, the order will be item2, item3, item4.
+      expect(result2).toEqual([
+        { time: 2 as UTCTimestamp, value: 200 },
+        { time: 3 as UTCTimestamp, value: 300 },
+        { time: 4 as UTCTimestamp, value: 400 },
+      ]);
+
+      // Call 3: Update item2's value
+      // Pass sharedArrayInstance again
+      const result3 = upsertSeries(
+        sharedArrayInstance,
+        { time: 2 as UTCTimestamp, value: 222 }, // Update existing time: 2
+        limit,
+      );
+      // Map preserves insertion order for keys. Updating a value doesn't change key order.
+      // The items in the map (keyed by 'sharedArrayInstance') are {2:200, 3:300, 4:400}.
+      // Updating time:2 will result in {2:222, 3:300, 4:400}.
+      expect(result3).toEqual([
+        { time: 2 as UTCTimestamp, value: 222 },
+        { time: 3 as UTCTimestamp, value: 300 },
+        { time: 4 as UTCTimestamp, value: 400 },
+      ]);
+      expect(result3.length).toBe(3); // Ensure limit is still respected
+    });
   });
 });

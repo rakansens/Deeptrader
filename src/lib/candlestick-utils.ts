@@ -82,25 +82,30 @@ export function upsertSeries<T extends { time: UTCTimestamp }>(
   limit: number,
 ): T[] {
   let map = seriesCache.get(arr) as Map<UTCTimestamp, T> | undefined;
+
   if (!map) {
+    // Cache miss: construct map and add it to cache against arr
     map = new Map<UTCTimestamp, T>();
     for (const d of arr) {
       map.set(d.time, d);
     }
+    seriesCache.set(arr, map); // Cache the new map using arr as the key
   }
+  // From here, 'map' is the map to be mutated (either newly created or from cache)
 
   const isNew = !map.has(item.time);
   map.set(item.time, item);
 
   if (isNew && map.size > limit) {
+    // This logic for finding the oldest key might need review if arrays are not sorted,
+    // but for this task, leave this part as is.
     const firstKey = map.keys().next().value as UTCTimestamp | undefined;
     if (firstKey !== undefined) {
       map.delete(firstKey);
     }
   }
 
-  const result = Array.from(map.values());
-  seriesCache.delete(arr);
-  seriesCache.set(result, map as Map<UTCTimestamp, unknown>);
-  return result;
+  // The function must still return a new array instance.
+  // The old cache modification lines (delete and set for result) are removed.
+  return Array.from(map.values());
 }
