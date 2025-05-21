@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import type { IChartApi, ISeriesApi, CandlestickData, HistogramData } from 'lightweight-charts'
 import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 
@@ -28,6 +28,8 @@ export function useCandlestickSeries({
   volumes,
   colors,
 }: UseCandlestickSeriesParams) {
+  const prevCandleLength = useRef(0)
+  const prevVolumeLength = useRef(0)
   const processedCandles = useMemo(
     () => processTimeSeriesData<CandlestickData>(candles, toNumericTime),
     [candles]
@@ -69,6 +71,7 @@ export function useCandlestickSeries({
           /* ignore */
         }
         candleRef.current = null
+        prevCandleLength.current = 0
       }
       if (volumeRef.current) {
         try {
@@ -77,6 +80,7 @@ export function useCandlestickSeries({
           /* ignore */
         }
         volumeRef.current = null
+        prevVolumeLength.current = 0
       }
     }
   }, [chart, candleRef, volumeRef, colors.upColor, colors.downColor, colors.volume])
@@ -96,10 +100,24 @@ export function useCandlestickSeries({
   // データ更新
   useEffect(() => {
     if (candleRef.current && processedCandles.length > 0) {
-      candleRef.current.setData(processedCandles)
+      if (prevCandleLength.current === processedCandles.length) {
+        candleRef.current.update(
+          processedCandles[processedCandles.length - 1]
+        )
+      } else {
+        candleRef.current.setData(processedCandles)
+      }
+      prevCandleLength.current = processedCandles.length
     }
     if (volumeRef.current && processedVolumes.length > 0) {
-      volumeRef.current.setData(processedVolumes)
+      if (prevVolumeLength.current === processedVolumes.length) {
+        volumeRef.current.update(
+          processedVolumes[processedVolumes.length - 1]
+        )
+      } else {
+        volumeRef.current.setData(processedVolumes)
+      }
+      prevVolumeLength.current = processedVolumes.length
     }
   }, [candleRef, volumeRef, processedCandles, processedVolumes])
 }
