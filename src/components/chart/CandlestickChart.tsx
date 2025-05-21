@@ -11,6 +11,7 @@ import useChartInstance from "@/hooks/use-chart-instance";
 import useWindowSize from "@/hooks/use-window-size";
 import useDrawingControls from "@/hooks/use-drawing-controls";
 import useCrosshairInfo from "@/hooks/use-crosshair-info";
+import useCountdownColor from "@/hooks/use-countdown-color";
 import OrderBookPanel from "./OrderBookPanel";
 import OrderBookToggleButton from "./orderbook-toggle-button";
 import {
@@ -195,28 +196,8 @@ export default function CandlestickChart({
     [latestCandle],
   );
 
-  const [countdownBgColor, setCountdownBgColor] = useState<
-    string | undefined
-  >();
-  const [countdownTextColor, setCountdownTextColor] =
-    useState<string>("#ffffff");
-
-  useEffect(() => {
-    if (candles.length > 0 && themeColors) {
-      const latestCandle = candles[candles.length - 1];
-      if (!latestCandle) return;
-
-      const newColor =
-        latestCandle.close >= latestCandle.open
-          ? themeColors.upColor
-          : themeColors.downColor;
-
-      setCountdownBgColor((prevColor) => {
-        if (prevColor !== newColor) return newColor;
-        return prevColor;
-      });
-    }
-  }, [candles, themeColors]);
+  const { backgroundColor: countdownBgColor, textColor: countdownTextColor } =
+    useCountdownColor(candles, themeColors);
 
   useEffect(() => {
     logger.debug("描画モード変更:", mode);
