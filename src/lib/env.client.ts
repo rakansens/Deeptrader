@@ -7,6 +7,7 @@
  */
 
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // クライアント環境変数スキーマ（NEXT_PUBLIC_プレフィックスのみ）
 const clientEnvSchema = z.object({
@@ -50,7 +51,7 @@ let NEXT_PUBLIC_ENABLE_DEMO_MODE: boolean;
 
 // 検証に失敗した場合はエラーメッセージを表示して例外をスロー
 if (!clientEnv.success) {
-  console.error("❌ .env.local の環境変数が不足しています:", clientEnv.error.format());
+  logger.error("❌ .env.local の環境変数が不足しています:", clientEnv.error.format());
   
   // 開発環境でも本番環境でも例外をスローして、環境変数の設定漏れに気づかせる
   throw new Error(

@@ -46,11 +46,21 @@ describe("db-service", () => {
     from.mockReturnValue(chain);
     await addMessage("c", "user", "hi");
     expect(from).toHaveBeenCalledWith("messages");
-    expect(chain.insert).toHaveBeenCalledWith({
-      conversation_id: "c",
-      sender: "user",
-      content: "hi",
-    });
+    expect(chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversation_id: "c",
+        sender: "user",
+        content: "hi",
+      })
+    );
+  });
+
+  it("addMessage throws on error", async () => {
+    const chain = {
+      insert: jest.fn().mockResolvedValue({ error: { code: "123", message: "e" } }),
+    };
+    from.mockReturnValue(chain);
+    await expect(addMessage("c", "user", "hi")).rejects.toBeTruthy();
   });
 
   it("fetchMessages selects messages", async () => {

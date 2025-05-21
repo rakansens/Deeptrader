@@ -2,6 +2,8 @@
  * テキストを音声で読み上げるユーティリティ
  */
 
+import { logger } from '@/lib/logger';
+
 // 読み上げを停止する
 export function stopSpeech() {
   if (window.speechSynthesis) {
@@ -12,7 +14,7 @@ export function stopSpeech() {
 // テキストを読み上げる
 export function speakText(text: string, lang = 'ja-JP') {
   if (!window.speechSynthesis) {
-    console.error('Speech synthesis is not supported in this browser');
+    logger.error('Speech synthesis is not supported in this browser');
     return;
   }
 

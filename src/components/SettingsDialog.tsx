@@ -17,6 +17,7 @@ import {
 import { Settings, Upload, Image, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import {
   Avatar,
   AvatarFallback,
@@ -90,7 +91,7 @@ export function SettingsDialog() {
         description: "画像が正常にアップロードされました",
       });
     } catch (error) {
-      console.error('アバターアップロードエラー:', error);
+      logger.error('アバターアップロードエラー:', error);
       toast({
         title: "アップロードエラー",
         description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
@@ -115,7 +116,7 @@ export function SettingsDialog() {
   
   // 設定を適用（保存）
   const applySettings = () => {
-    console.log("設定を保存します:", { 音声入力: localVoiceEnabled, 読み上げ: localSpeechEnabled });
+    logger.info('設定を保存します:', { 音声入力: localVoiceEnabled, 読み上げ: localSpeechEnabled });
 
     // localStorageに直接書き込む
     localStorage.setItem("voiceInputEnabled", String(localVoiceEnabled));

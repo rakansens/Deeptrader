@@ -8,6 +8,7 @@
  */
 
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // サーバーサイドでのみ実行されることを確認
 if (typeof window !== "undefined") {
@@ -63,7 +64,7 @@ let COINGLASS_API_KEY: string;
 
 // 検証に失敗した場合はエラーメッセージを表示して例外をスロー
 if (!serverEnv.success) {
-  console.error(
+  logger.error(
     "❌ サーバー環境変数の検証に失敗しました。.env.localファイルを確認してください:",
     serverEnv.error.format()
   );

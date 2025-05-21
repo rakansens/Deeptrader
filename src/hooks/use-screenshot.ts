@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { captureChart } from "@/lib/capture-chart";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 
 interface UseScreenshotOptions {
   onCapture?: (url: string) => Promise<void> | void;
@@ -40,7 +41,7 @@ export function useScreenshot({ onCapture }: UseScreenshotOptions = {}) {
 
       await onCapture?.(url);
     } catch (err) {
-      console.error("スクリーンショット送信エラー:", err);
+      logger.error("スクリーンショット送信エラー:", err);
       toast({
         title: "❌ エラー",
         description: "スクリーンショットの送信に失敗しました",

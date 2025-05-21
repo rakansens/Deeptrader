@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { logger } from "@/lib/logger";
 
 export interface UseSettings {
   voiceInputEnabled: boolean;
@@ -52,7 +53,7 @@ export function useSettings(): UseSettings {
       }
       
     } catch (error) {
-      console.error("[useSettings] 設定読み込みエラー:", error);
+      logger.error("[useSettings] 設定読み込みエラー:", error);
     }
   }, []);
 
@@ -79,7 +80,7 @@ export function useSettings(): UseSettings {
       // 次に状態を更新
       setVoiceInputEnabledState(value);
     } catch (error) {
-      console.error("[useSettings] 音声入力設定の保存に失敗:", error);
+      logger.error("[useSettings] 音声入力設定の保存に失敗:", error);
     }
   }, []);
 
@@ -90,7 +91,7 @@ export function useSettings(): UseSettings {
       // 次に状態を更新
       setSpeechSynthesisEnabledState(value);
     } catch (error) {
-      console.error("[useSettings] 読み上げ設定の保存に失敗:", error);
+      logger.error("[useSettings] 読み上げ設定の保存に失敗:", error);
     }
   }, []);
 
@@ -99,7 +100,7 @@ export function useSettings(): UseSettings {
       localStorage.setItem("userAvatar", value);
       setUserAvatarState(value);
     } catch (error) {
-      console.error("[useSettings] ユーザーアイコンの保存に失敗:", error);
+      logger.error("[useSettings] ユーザーアイコンの保存に失敗:", error);
     }
   }, []);
 
@@ -108,7 +109,7 @@ export function useSettings(): UseSettings {
       localStorage.setItem("assistantAvatar", value);
       setAssistantAvatarState(value);
     } catch (error) {
-      console.error("[useSettings] AIアイコンの保存に失敗:", error);
+      logger.error("[useSettings] AIアイコンの保存に失敗:", error);
     }
   }, []);
 

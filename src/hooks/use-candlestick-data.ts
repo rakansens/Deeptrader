@@ -7,7 +7,8 @@ import {
 } from "lightweight-charts";
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import useBinanceSocket from "./use-binance-socket";
-import { upsertSeries } from "@/lib/candlestick-utils"; 
+import { upsertSeries } from "@/lib/candlestick-utils";
+import { logger } from "@/lib/logger";
 import { 
   RsiCalculator, 
   SMACalculator, 
@@ -69,17 +70,17 @@ export function useCandlestickData(
           if (Array.isArray(parsedCandles) && (parsedCandles.length === 0 || (parsedCandles[0] && typeof parsedCandles[0].time === 'number'))) {
             initialCandles = parsedCandles as CandlestickData<UTCTimestamp>[];
           } else {
-            console.warn(`Invalid format for cached candles (symbol: ${symbol}, interval: ${interval}). Expected array of CandlestickData.`);
+            logger.warn(`Invalid format for cached candles (symbol: ${symbol}, interval: ${interval}). Expected array of CandlestickData.`);
             initialCandles = []; // Fallback to empty array
           }
         } catch (parseError) {
-          console.warn(`Failed to parse cached candles (symbol: ${symbol}, interval: ${interval}):`, parseError);
+          logger.warn(`Failed to parse cached candles (symbol: ${symbol}, interval: ${interval}):`, parseError);
           initialCandles = []; // Fallback to empty array on parse error
         }
       }
     } catch (e) {
       // This catches errors from localStorage.getItem itself (e.g., security restrictions)
-      console.warn(`Error accessing cached candles (symbol: ${symbol}, interval: ${interval}) from localStorage:`, e);
+      logger.warn(`Error accessing cached candles (symbol: ${symbol}, interval: ${interval}) from localStorage:`, e);
       initialCandles = []; // Default to empty array on any localStorage access error
     }
 
@@ -92,17 +93,17 @@ export function useCandlestickData(
           if (Array.isArray(parsedVolumes) && (parsedVolumes.length === 0 || (parsedVolumes[0] && typeof parsedVolumes[0].time === 'number'))) {
             initialVolumes = parsedVolumes as HistogramData<UTCTimestamp>[];
           } else {
-            console.warn(`Invalid format for cached volumes (symbol: ${symbol}, interval: ${interval}). Expected array of HistogramData.`);
+            logger.warn(`Invalid format for cached volumes (symbol: ${symbol}, interval: ${interval}). Expected array of HistogramData.`);
             initialVolumes = []; // Fallback to empty array
           }
         } catch (parseError) {
-          console.warn(`Failed to parse cached volumes (symbol: ${symbol}, interval: ${interval}):`, parseError);
+          logger.warn(`Failed to parse cached volumes (symbol: ${symbol}, interval: ${interval}):`, parseError);
           initialVolumes = []; // Fallback to empty array on parse error
         }
       }
     } catch (e) {
       // This catches errors from localStorage.getItem itself
-      console.warn(`Error accessing cached volumes (symbol: ${symbol}, interval: ${interval}) from localStorage:`, e);
+      logger.warn(`Error accessing cached volumes (symbol: ${symbol}, interval: ${interval}) from localStorage:`, e);
       initialVolumes = []; // Default to empty array on any localStorage access error
     }
 
@@ -263,7 +264,7 @@ export function useCandlestickData(
               JSON.stringify(initialData.candles),
             );
           } catch (e) {
-            console.warn(`Failed to save candles to localStorage (symbol: ${symbol}, interval: ${interval}):`, e);
+            logger.warn(`Failed to save candles to localStorage (symbol: ${symbol}, interval: ${interval}):`, e);
           }
           try {
             localStorage.setItem(
@@ -271,7 +272,7 @@ export function useCandlestickData(
               JSON.stringify(initialData.volumes),
             );
           } catch (e) {
-            console.warn(`Failed to save volumes to localStorage (symbol: ${symbol}, interval: ${interval}):`, e);
+            logger.warn(`Failed to save volumes to localStorage (symbol: ${symbol}, interval: ${interval}):`, e);
           }
         }
       } catch (e) {
@@ -321,7 +322,7 @@ export function useCandlestickData(
             JSON.stringify(updatedCandles),
           );
         } catch (e) {
-          console.warn(`Failed to save candles to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
+          logger.warn(`Failed to save candles to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
         }
         const volume: HistogramData<UTCTimestamp> = {
           time,
@@ -335,7 +336,7 @@ export function useCandlestickData(
             JSON.stringify(updatedVolumes),
           );
         } catch (e) {
-          console.warn(`Failed to save volumes to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
+          logger.warn(`Failed to save volumes to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
         }
         
         const currentPrice = parseFloat(k.c);

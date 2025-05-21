@@ -5,6 +5,7 @@ import type {
   CandlestickData,
   HistogramData,
   UTCTimestamp,
+  MouseEventParams,
 } from 'lightweight-charts'
 
 export interface CrosshairInfo {
@@ -37,7 +38,7 @@ export function useCrosshairInfo({
   useEffect(() => {
     if (!chart || !candleSeries) return
 
-    const handler = (param: any) => {
+    const handler = (param: MouseEventParams) => {
       if (!param.time) {
         setInfo(null)
         return

@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types";
+import { logger } from "@/lib/logger";
 
 /**
  * 会話を作成
@@ -41,25 +42,25 @@ export async function addMessage(
   try {
     const { error } = await supabase
       .from("messages")
-      .insert({ 
-        conversation_id: conversationId, 
-        sender, 
+      .insert({
+        conversation_id: conversationId,
+        sender,
         content,
         type,
         prompt,
-        image_url: imageUrl
+        image_url: imageUrl,
       });
-    
+
     if (error) {
       // テーブルが存在しない場合は静かに失敗
       if (error.code === '42P01') { // relation does not exist
-        console.warn('messages テーブルが存在しません。メッセージは保存されません。');
+        logger.warn('messages テーブルが存在しません。メッセージは保存されません。');
         return;
       }
       throw error;
     }
   } catch (err) {
-    console.error('メッセージ追加エラー:', err);
+    logger.error('メッセージ追加エラー:', err);
     // エラーを上位に伝播させない
   }
 }
@@ -78,7 +79,7 @@ export async function fetchMessages(conversationId: string) {
     if (error) {
       // テーブルが存在しない場合は空の配列を返す
       if (error.code === '42P01') { // relation does not exist
-        console.warn('messages テーブルが存在しません。空の配列を返します。');
+        logger.warn('messages テーブルが存在しません。空の配列を返します。');
         return [];
       }
       throw error;
@@ -86,7 +87,7 @@ export async function fetchMessages(conversationId: string) {
     
     return data;
   } catch (err) {
-    console.error('メッセージ取得エラー:', err);
+    logger.error('メッセージ取得エラー:', err);
     return []; // エラー時は空配列を返す
   }
 }

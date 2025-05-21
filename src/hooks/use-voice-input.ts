@@ -34,7 +34,10 @@ export function useVoiceInput({
   const beep = () => {
     try {
       const AudioCtx =
-        (window as any).AudioContext || (window as any).webkitAudioContext;
+        window.AudioContext ?? window.webkitAudioContext;
+      if (!AudioCtx) {
+        return;
+      }
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
       osc.type = "sine";
@@ -75,7 +78,8 @@ export function useVoiceInput({
     }
 
     const SpeechRecognitionCtor =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+      window.SpeechRecognition ??
+      window.webkitSpeechRecognition;
     
     // ブラウザが音声認識をサポートしていない場合
     if (!SpeechRecognitionCtor) {

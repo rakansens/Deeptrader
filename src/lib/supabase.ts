@@ -3,6 +3,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types";
+import { logger } from "@/lib/logger";
 
 // クライアントサイドの環境変数のみをインポート
 import {
@@ -21,7 +22,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export const createServiceRoleClient = () => {
   // サーバーサイドでのみ実行されるようにする
   if (typeof window !== "undefined") {
-    console.error("❌ Service role client should only be used on the server");
+    logger.error("❌ Service role client should only be used on the server");
     return supabase; // クライアントサイドでは通常のクライアントを返す
   }
 

@@ -10,6 +10,14 @@ interface UseChartInstanceParams {
 }
 
 /**
+ * `_private__container` を参照できるようにした IChartApi 拡張インターフェース
+ */
+interface ChartWithContainer extends IChartApi {
+  /** LightweightCharts 内部で管理されているコンテナ要素 */
+  _private__container?: HTMLElement;
+}
+
+/**
  * チャートインスタンスの生成と更新を管理するフック
  * Lightweight Charts v4.1.3+ の機能に対応
  */
@@ -71,20 +79,24 @@ export function useChartInstance({
       
       // メソッドをモンキーパッチとして追加（可能な場合）
       try {
-        if (typeof (chart as any).takeScreenshot !== 'function') {
+        if (typeof (chart as ChartWithContainer).takeScreenshot !== 'function') {
           // canvasを取得する簡易スクリーンショット機能を実装
-          (chart as any).takeScreenshot = async function() {
+          (chart as ChartWithContainer).takeScreenshot = async function() {
             logger.debug('Using custom takeScreenshot implementation');
-            const container = (chart as any)._private__container;
-            if (container && container.querySelector('canvas')) {
+            const container = (chart as ChartWithContainer)._private__container;
+            if (container) {
               const canvas = container.querySelector('canvas');
-              // 新しいキャンバスにコピーして返す
-              const newCanvas = document.createElement('canvas');
-              newCanvas.width = canvas.width;
-              newCanvas.height = canvas.height;
-              const ctx = newCanvas.getContext('2d');
-              ctx?.drawImage(canvas, 0, 0);
-              return newCanvas;
+              if (canvas) {
+                // 新しいキャンバスにコピーして返す
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(canvas, 0, 0);
+                }
+                return newCanvas;
+              }
             }
             throw new Error('Canvas element not found in chart container');
           };

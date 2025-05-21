@@ -48,6 +48,11 @@ declare global {
     new (): SpeechRecognition
   } | undefined
 
+  var webkitAudioContext: {
+    prototype: AudioContext
+    new (contextOptions?: AudioContextOptions): AudioContext
+  } | undefined
+
   interface Window {
     __chartInstance?: IChartApi | null
     __getChartElement?: () => HTMLElement | null

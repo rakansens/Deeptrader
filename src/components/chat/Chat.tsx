@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { captureChart } from "@/lib/capture-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
+import { logger } from "@/lib/logger";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { useSettings } from "@/hooks/use-settings";
 import {
@@ -114,7 +115,7 @@ export default function Chat() {
     setUploading(true);
     sendMessage(text, file)
       .catch((err) => {
-        console.error("画像送信エラー", err);
+        logger.error("画像送信エラー", err);
       })
       .finally(() => {
         setUploading(false);

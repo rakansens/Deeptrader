@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Chat from '@/components/chat/Chat';
 import ChartToolbar from '@/components/chart/ChartToolbar';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { logger } from '@/lib/logger';
 import {
   TIMEFRAMES,
   SYMBOLS,
@@ -79,7 +80,7 @@ export default function Home() {
           [key]: typeof enable === 'boolean' ? enable : !currentIndicatorState,
         };
       }
-      console.warn(`Unknown indicator: ${indicatorName}`);
+      logger.warn(`Unknown indicator: ${indicatorName}`);
       return prevIndicators;
     });
   }, []);
