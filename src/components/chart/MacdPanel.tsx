@@ -93,7 +93,7 @@ export default function MacdPanel({
       signalRef.current = null;
       histRef.current = null;
     };
-  }, []);
+  }, [createIndicatorChart]);
 
   useEffect(() => {
     if (!macdRef.current) return;

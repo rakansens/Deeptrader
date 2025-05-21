@@ -1,5 +1,10 @@
 "use client";
 
+// [変更点]
+// ・シンボル(symbol)/時間枠(interval)切り替え時に旧データが残るバグを修正。
+//   - currentSymbol/currentInterval の useState を削除し、props を直接使用。
+//   - これによりチャートスケールとオーダーブックの不整合を解消。
+
 import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo } from "react";
 import ChartSkeleton from "./chart-skeleton";
@@ -75,6 +80,10 @@ export default function CandlestickChart({
 }: CandlestickChartProps) {
   const themeColors = useChartTheme();
   const [showOrderBook, setShowOrderBook] = useState(true);
+  // props の値をそのまま使用し、シンボル/時間枠変更時のラグをなくす
+  const currentSymbol = initialSymbol;
+  const currentInterval = initialInterval;
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
@@ -86,6 +95,8 @@ export default function CandlestickChart({
     mode,
     eraserSize,
     showSidebar,
+    strokeWidth,
+    opacity,
     setEraserSize,
     handleModeChange,
     handleClearDrawing,
@@ -112,6 +123,7 @@ export default function CandlestickChart({
 
   const isDrawingEnabled = true;
 
+  // 更新したsymbolとintervalを使用
   const {
     candles,
     volumes,
@@ -125,8 +137,8 @@ export default function CandlestickChart({
     loading,
     error,
   }: UseCandlestickDataResult = useCandlestickData(
-    initialSymbol,
-    initialInterval,
+    currentSymbol,
+    currentInterval,
     indicatorSettings,
   );
 
@@ -209,109 +221,71 @@ export default function CandlestickChart({
   const { backgroundColor: countdownBgColor, textColor: countdownTextColor } =
     useCountdownColor(candles, themeColors);
 
-  useEffect(() => {
-    logger.debug("描画モード変更:", mode);
-  }, [mode]);
+  const subHeight = 100;
 
-  useEffect(() => {
-    logger.debug("描画有効状態変更:", drawingEnabled);
-    if (!drawingEnabled && drawingRef.current) {
-      drawingRef.current.clear();
-    }
-  }, [drawingEnabled, drawingRef]);
-
-  if (loading && useApi)
-    return <ChartSkeleton className="w-full h-[300px]" />;
-  if (error && useApi)
-    return (
-      <div data-testid="error" className="text-center text-sm text-red-500">
-        {error}
-      </div>
-    );
-
-  const subHeight = chartHeight * 0.25;
-
-  // オーダーブック表示トグル時の処理
   const handleOrderBookToggle = useCallback(() => {
     setShowOrderBook((prev) => !prev);
-    // setTimeout で非同期処理するとUIが更新された後にリサイズが実行される
-    setTimeout(() => {
-      window.dispatchEvent(new Event("resize"));
-    }, 5);
-  }, []);
+    requestAnimationFrame(() => {
+      if (chartRef.current && containerRef.current) {
+        chartRef.current.resize(
+          containerRef.current.clientWidth,
+          chartHeight,
+        );
+      }
+    });
+  }, [chartHeight]);
 
-  // メインチャートパネル用のプロパティ（メモ化）
-  const chartPanelProps = useMemo<MainChartPanelProps>(
-    () => ({
-      containerRef,
-      chartHeight,
-      candles,
-      loading,
-      error,
-      initialInterval,
-      crosshairInfo,
-      showSidebar,
-      mode,
-      drawingRef,
-      countdownBgColor,
-      countdownTextColor,
-      eraserSize,
-      handleWheel,
-      toggleSidebar,
-      handleModeChange,
-      handleClearDrawing,
-      registerShortcuts: memoizedRegisterShortcuts,
-      unregisterShortcuts,
-      setEraserSize,
-      drawingColor,
-      onDrawingColorChange,
-      indicators,
-      handleToggleIndicator,
-      chartRef,
-      rsi,
-      macd,
-      signal,
-      histogram,
-      subHeight,
-      indicatorSettings,
-    }),
-    [
-      containerRef,
-      chartHeight,
-      candles,
-      loading,
-      error,
-      initialInterval,
-      crosshairInfo,
-      showSidebar,
-      mode,
-      drawingRef,
-      countdownBgColor,
-      countdownTextColor,
-      eraserSize,
-      handleWheel,
-      toggleSidebar,
-      handleModeChange,
-      handleClearDrawing,
-      memoizedRegisterShortcuts,
-      unregisterShortcuts,
-      setEraserSize,
-      drawingColor,
-      onDrawingColorChange,
-      indicators,
-      handleToggleIndicator,
-      chartRef,
-      rsi,
-      macd,
-      signal,
-      histogram,
-      subHeight,
-      indicatorSettings,
-    ],
+  // Loading
+  if (loading && candles.length === 0) {
+    return <ChartSkeleton style={{ height: chartHeight }} />;
+  }
+
+  // Error
+  if (error && candles.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-destructive">
+          データの取得に失敗しました: {error}
+        </div>
+      </div>
+    );
+  }
+
+  const mainChartPanel = (
+    <MainChartPanel
+      containerRef={containerRef}
+      chartHeight={chartHeight}
+      candles={candles}
+      loading={loading}
+      error={error}
+      initialInterval={currentInterval}
+      crosshairInfo={crosshairInfo}
+      showSidebar={showSidebar}
+      mode={mode}
+      drawingRef={drawingRef}
+      countdownBgColor={countdownBgColor}
+      countdownTextColor={countdownTextColor}
+      eraserSize={eraserSize}
+      handleWheel={handleWheel}
+      toggleSidebar={toggleSidebar}
+      handleModeChange={handleModeChange}
+      handleClearDrawing={handleClearDrawing}
+      registerShortcuts={memoizedRegisterShortcuts}
+      unregisterShortcuts={unregisterShortcuts}
+      setEraserSize={setEraserSize}
+      drawingColor={drawingColor}
+      onDrawingColorChange={onDrawingColorChange}
+      indicators={indicators}
+      handleToggleIndicator={handleToggleIndicator}
+      chartRef={chartRef}
+      rsi={rsi}
+      macd={macd}
+      signal={signal}
+      histogram={histogram}
+      subHeight={subHeight}
+      indicatorSettings={indicatorSettings}
+    />
   );
-
-  // メインチャートパネル（メモ化コンポーネント使用）
-  const mainChartPanel = <MainChartPanel {...chartPanelProps} />;
 
   return (
     <div className={className} id="chart-panel">
@@ -334,7 +308,7 @@ export default function CandlestickChart({
           <ResizableHandle withHandle />
           <ResizablePanel minSize={20} defaultSize={25}>
             <OrderBookPanel
-              symbol={initialSymbol}
+              symbol={currentSymbol}
               height={chartHeight}
               currentPrice={currentPrice}
               className="w-[250px] flex-shrink-0"

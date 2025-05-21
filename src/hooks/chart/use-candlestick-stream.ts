@@ -57,6 +57,30 @@ export function useCandlestickStream(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // シンボルまたは時間枠が変更された際にキャッシュを再読み込み
+  useEffect(() => {
+    const c = safeLoadJson<CandlestickData<UTCTimestamp>[]>(
+      `candles_${symbol}_${interval}`,
+      'cached candles',
+    );
+    const v = safeLoadJson<HistogramData<UTCTimestamp>[]>(
+      `volumes_${symbol}_${interval}`,
+      'cached volumes',
+    );
+    setCandles(
+      Array.isArray(c) &&
+        (c.length === 0 || (c[0] && typeof c[0].time === 'number'))
+        ? (c as CandlestickData<UTCTimestamp>[])
+        : [],
+    );
+    setVolumes(
+      Array.isArray(v) &&
+        (v.length === 0 || (v[0] && typeof v[0].time === 'number'))
+        ? (v as HistogramData<UTCTimestamp>[])
+        : [],
+    );
+  }, [symbol, interval]);
+
   const lastSaveRef = useRef(0);
   const SAVE_INTERVAL = 5000; // 5秒おきに保存
 

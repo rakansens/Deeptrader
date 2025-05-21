@@ -108,7 +108,7 @@ export default function RsiPanel({
       overSoldRef.current = null;
       overBoughtRef.current = null;
     };
-  }, []);
+  }, [createIndicatorChart]);
 
   useEffect(() => {
     if (!seriesRef.current) return;

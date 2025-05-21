@@ -20,6 +20,8 @@ export function useDrawingControls({
   const drawingRef = useRef<DrawingCanvasHandle>(null);
   const [mode, setMode] = useState<DrawingMode | null>(null);
   const [eraserSize, setEraserSize] = useState(30);
+  const [strokeWidth, setStrokeWidth] = useState(2);
+  const [opacity, setOpacity] = useState(1);
   const [showSidebar, setShowSidebar] = useState(false);
 
   const toggleSidebar = useCallback(() => {
@@ -100,8 +102,12 @@ export function useDrawingControls({
     drawingRef,
     mode,
     eraserSize,
+    strokeWidth,
+    opacity,
     showSidebar,
     setEraserSize,
+    setStrokeWidth,
+    setOpacity,
     handleModeChange,
     handleClearDrawing,
     toggleSidebar,

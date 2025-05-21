@@ -63,4 +63,32 @@ describe('RsiPanel', () => {
       ])
     )
   })
+
+  it('recreates chart when chart prop changes', async () => {
+    const { createChart } = require('lightweight-charts')
+    ;(createChart as jest.Mock).mockClear()
+    const chart1 = {
+      timeScale: () => ({
+        setVisibleLogicalRange: jest.fn(),
+        subscribeVisibleLogicalRangeChange: jest.fn(),
+        unsubscribeVisibleLogicalRangeChange: jest.fn(),
+      }),
+    }
+    const { rerender } = render(
+      <RsiPanel data={[]} chart={chart1 as any} height={100} />
+    )
+    await waitFor(() => expect(createChart).toHaveBeenCalledTimes(1))
+
+    const chart2 = {
+      timeScale: () => ({
+        setVisibleLogicalRange: jest.fn(),
+        subscribeVisibleLogicalRangeChange: jest.fn(),
+        unsubscribeVisibleLogicalRangeChange: jest.fn(),
+      }),
+    }
+
+    rerender(<RsiPanel data={[]} chart={chart2 as any} height={100} />)
+
+    await waitFor(() => expect(createChart).toHaveBeenCalledTimes(2))
+  })
 })
