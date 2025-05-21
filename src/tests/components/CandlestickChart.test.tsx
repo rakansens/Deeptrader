@@ -66,7 +66,7 @@ describe('CandlestickChart', () => {
     jest.clearAllMocks()
   })
 
-  it.skip('APIモード: ローディング中はスケルトンを表示する', async () => {
+  it('APIモード: ローディング中はスケルトンを表示する', async () => {
     let resolveFetch: (value: Response | PromiseLike<Response>) => void
     const fetchPromise = new Promise<Response>(r => {
       resolveFetch = r
@@ -83,11 +83,17 @@ describe('CandlestickChart', () => {
     expect(screen.getByTestId('loading')).toBeInTheDocument()
     resolveFetch!({ ok: true, json: async () => [] } as Response)
     // スケルトンが消えるまで待機
-    await waitFor(() => {})
+    await waitFor(() =>
+      expect(screen.queryByTestId('loading')).toBeNull()
+    )
+    expect(screen.getByTestId('chart-container')).toBeInTheDocument()
   })
 
-  it.skip('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false } as Response)
+  it('APIモード: 取得失敗時にエラーメッセージとトーストを表示する', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 500, statusText: 'server' } as Response)
+
     render(
       <CandlestickChart
         symbol={SYMBOLS[0].value}
@@ -96,8 +102,11 @@ describe('CandlestickChart', () => {
         indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
-    await waitFor(() => {})
-    expect(true).toBe(true)
+
+    await waitFor(() =>
+      expect(screen.getByTestId('error')).toBeInTheDocument()
+    )
+    expect(toast).toHaveBeenCalled()
   })
 
   it('直接モード: チャートコンテナが表示される', async () => {
@@ -187,7 +196,7 @@ describe('CandlestickChart', () => {
     expect(screen.getByTestId('macd-panel')).toBeInTheDocument()
   })
 
-  it.skip('メインチャートの範囲変更でインジケータ範囲が更新される', async () => {
+  it('メインチャートの範囲変更でインジケータ範囲が更新される', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
