@@ -34,5 +34,6 @@ process.env = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",
   NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+  NEXT_PUBLIC_BINANCE_WS_BASE_URL: "wss://stream.binance.com:9443",
   SUPABASE_SERVICE_ROLE_KEY: "service_role",
 };

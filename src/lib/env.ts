@@ -16,6 +16,7 @@
 export {
   NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_BINANCE_WS_BASE_URL,
 } from './env.client';
 
 // サーバーサイドの環境変数

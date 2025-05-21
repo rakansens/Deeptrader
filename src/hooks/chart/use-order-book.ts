@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import useBinanceSocket from "./use-binance-socket";
 import { fetchOrderBook } from "@/infrastructure/exchange/binance-service";
+import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from "@/lib/env";
 import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 
 export interface UseOrderBookResult {
@@ -60,7 +61,7 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   );
 
   const { status } = useBinanceSocket<BinanceDepthMessage>({
-    url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`,
+    url: `${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/ws/${symbol.toLowerCase()}@depth`,
     onMessage: handleMessage,
     pingInterval: 0,
   });

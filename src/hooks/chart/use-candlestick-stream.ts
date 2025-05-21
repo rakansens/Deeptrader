@@ -7,6 +7,7 @@ import {
 import useBinanceSocket from "./use-binance-socket";
 import { safeLoadJson, safeSaveJson } from "@/lib/utils";
 import { upsertSeries } from "@/lib/candlestick-utils";
+import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from "@/lib/env";
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
 
@@ -153,7 +154,7 @@ export function useCandlestickStream(
   );
 
   const { status } = useBinanceSocket<BinanceKlineMessage>({
-    url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`,
+    url: `${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/ws/${symbol.toLowerCase()}@kline_${interval}`,
     onMessage: handleMessage,
     enabled: !loading && !error,
     pingInterval: 0,
