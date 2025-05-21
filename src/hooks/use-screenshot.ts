@@ -52,4 +52,4 @@ export function useScreenshot({ onCapture }: UseScreenshotOptions = {}) {
   return { captureScreenshot };
 }
 
-export default useScreenshot; 
+export default useScreenshot;

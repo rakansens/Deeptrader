@@ -2,15 +2,7 @@
 import { logger } from '@/lib/logger';
 import { SENTIMENT_API_KEY, SENTIMENT_API_URL } from '@/lib/env';
 import { fetchWithTimeout } from '@/lib/fetch';
-
-export interface SentimentMetrics {
-  /** 数値化されたセンチメントスコア (0-100) */
-  score: number;
-  /** APIが提供する追加情報 */
-  valueText?: string;
-  /** データ取得時刻 */
-  timestamp: string;
-}
+import type { SentimentMetrics } from "@/types";
 
 const BASE_URL = SENTIMENT_API_URL;
 const API_KEY = SENTIMENT_API_KEY;

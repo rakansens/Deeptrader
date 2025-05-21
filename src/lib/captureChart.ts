@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas'
 import { IChartApi } from 'lightweight-charts'
 import { logger } from '@/lib/logger'
+import { getActiveChartInstanceForCapture, getActiveChartElementForCapture } from '@/lib/chart-capture-service'
 
 // 型定義は専用ファイルに移動済み（src/types/lightweight-charts.d.ts）
 
@@ -10,12 +11,20 @@ import { logger } from '@/lib/logger'
  */
 async function getChartCanvasWithPriceScale(): Promise<HTMLElement | null> {
   try {
+    // まず新しいAPIでチャート要素を取得
+    const chartElement = getActiveChartElementForCapture();
+    if (chartElement) {
+      logger.debug('Found chart container element via capture service');
+      return chartElement;
+    }
+    
+    // 後方互換性のため、古い方法も試す
     // DOMからチャート要素を直接取得
     const getChartElement = window.__getChartElement;
     if (typeof getChartElement === 'function') {
       const chartElement = getChartElement();
       if (chartElement) {
-        logger.debug('Found chart container element');
+        logger.debug('Found chart container element via legacy method');
         // チャートのコンテナ要素全体を返す（価格スケールを含む）
         return chartElement;
       }
@@ -119,12 +128,18 @@ export async function captureChart(): Promise<string | null> {
   try {
     logger.debug('Chart screenshot requested');
     
-    // チャートインスタンスの取得を試みる
-    const chartInstance = window.__chartInstance;
+    // 新しいAPIでチャートインスタンスを取得
+    const chartInstance = getActiveChartInstanceForCapture();
+    
+    // 後方互換性のために古い参照方法も確認
+    const legacyChartInstance = window.__chartInstance;
+    
+    // 使用するチャートインスタンス
+    const activeChart = chartInstance || legacyChartInstance;
     
     // チャートインスタンスのデバッグ情報
-    if (chartInstance) {
-      logger.debug('Chart instance found:', !!chartInstance);
+    if (activeChart) {
+      logger.debug('Chart instance found:', !!activeChart);
     } else {
       logger.warn('Chart instance not found, cannot use native screenshot');
     }
@@ -150,7 +165,7 @@ export async function captureChart(): Promise<string | null> {
     }
     
     // 方法1: Lightweight Charts のネイティブスクリーンショット機能を使用
-    if (chartInstance) {
+    if (activeChart) {
       logger.debug('Using Lightweight Charts native screenshot API');
 
       try {
@@ -158,12 +173,12 @@ export async function captureChart(): Promise<string | null> {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // チャートコンテナがまだDOMに存在するか確認
-        const el = (window as any).__getChartElement?.();
+        const el = getActiveChartElementForCapture() || (window as any).__getChartElement?.();
         if (!el || !document.contains(el)) {
           logger.warn('Chart container not attached; skipping native screenshot');
-        } else if (typeof chartInstance.takeScreenshot === 'function') {
+        } else if (typeof activeChart.takeScreenshot === 'function') {
           // チャートスクリーンショットをPNG画像としてエクスポート
-          const canvas = await chartInstance.takeScreenshot();
+          const canvas = await activeChart.takeScreenshot();
           logger.debug('Chart screenshot successful via native API');
 
           // 高品質なPNG画像を生成（品質1.0、最高画質）

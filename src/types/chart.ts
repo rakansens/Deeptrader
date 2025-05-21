@@ -78,4 +78,12 @@ export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
 
 export type IndicatorsChangeHandler = (value: IndicatorOptions) => void;
 
-export type { ChartTheme } from "../hooks/use-chart-theme";
+export interface ChartTheme {
+  background: string;
+  text: string;
+  grid: string;
+  crosshair: string;
+  upColor: string;
+  downColor: string;
+  volume: string;
+}

@@ -1,4 +1,4 @@
-import type { Json, OrderSide, OrderType } from "@/types";
+import type { OrderRequest, Ticker } from "@/types";
 import { BITGET_API_KEY, BITGET_BASE_URL } from '@/lib/env';
 import { fetchWithTimeout } from '@/lib/fetch';
 
@@ -6,20 +6,6 @@ import { fetchWithTimeout } from '@/lib/fetch';
  * Bitget APIの基本URL
  */
 const BASE_URL = BITGET_BASE_URL;
-
-/**
- * ティッカー情報
- */
-export interface Ticker {
-  symbol: string;
-  high24h: string;
-  low24h: string;
-  last: string;
-  bidPrice: string;
-  askPrice: string;
-  volume24h: string;
-  timestamp: string;
-}
 
 /**
  * Bitgetからティッカー情報を取得
@@ -48,15 +34,6 @@ export async function getTicker(symbol: string): Promise<Ticker> {
   };
 }
 
-export interface OrderRequest {
-  symbol: string;
-  side: OrderSide;
-  type: OrderType;
-  quantity: number;
-  price?: number;
-  clientOrderId?: string;
-  extraParams?: Json;
-}
 
 /**
  * Bitgetへ注文を送信

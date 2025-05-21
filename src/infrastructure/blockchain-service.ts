@@ -1,9 +1,4 @@
-export interface AddressInfo {
-  address: string;
-  balance: string;
-  txCount: number;
-  nonce: number;
-}
+import type { AddressInfo } from "@/types";
 
 import {
   BLOCKCHAIR_API_KEY,

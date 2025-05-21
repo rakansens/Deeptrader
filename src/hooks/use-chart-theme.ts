@@ -1,15 +1,6 @@
 import { useTheme } from 'next-themes'
 import { useMemo } from 'react'
-
-export interface ChartTheme {
-  background: string
-  text: string
-  grid: string
-  crosshair: string
-  upColor: string
-  downColor: string
-  volume: string
-}
+import type { ChartTheme } from '@/types'
 
 /**
  * チャートのテーマカラーを返すフック

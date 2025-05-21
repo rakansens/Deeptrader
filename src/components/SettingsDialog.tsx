@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -14,8 +14,14 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Settings } from 'lucide-react';
+import { Settings, Upload, Image, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
 
 export function SettingsDialog() {
   const [open, setOpen] = useState(false);
@@ -36,6 +42,76 @@ export function SettingsDialog() {
   const [localSpeechEnabled, setLocalSpeechEnabled] = useState(speechSynthesisEnabled);
   const [localUserAvatar, setLocalUserAvatar] = useState(userAvatar ?? "");
   const [localAssistantAvatar, setLocalAssistantAvatar] = useState(assistantAvatar ?? "");
+  
+  // アップロード中状態の管理
+  const [userAvatarUploading, setUserAvatarUploading] = useState(false);
+  const [assistantAvatarUploading, setAssistantAvatarUploading] = useState(false);
+  
+  // ファイル入力用の参照
+  const userAvatarInputRef = useRef<HTMLInputElement>(null);
+  const assistantAvatarInputRef = useRef<HTMLInputElement>(null);
+  
+  // 画像ファイルをアップロード
+  const uploadAvatar = async (file: File, isUser: boolean) => {
+    try {
+      if (isUser) {
+        setUserAvatarUploading(true);
+      } else {
+        setAssistantAvatarUploading(true);
+      }
+      
+      // ファイル名を生成
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `avatar_${isUser ? 'user' : 'assistant'}_${Date.now()}.${ext}`;
+      
+      // Supabaseにアップロード
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+        
+      if (uploadError) {
+        throw new Error(`アップロードエラー: ${uploadError.message}`);
+      }
+      
+      // 公開URLを取得
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+        
+      // 状態を更新
+      if (isUser) {
+        setLocalUserAvatar(urlData.publicUrl);
+      } else {
+        setLocalAssistantAvatar(urlData.publicUrl);
+      }
+      
+      toast({
+        title: "アップロード完了",
+        description: "画像が正常にアップロードされました",
+      });
+    } catch (error) {
+      console.error('アバターアップロードエラー:', error);
+      toast({
+        title: "アップロードエラー",
+        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      if (isUser) {
+        setUserAvatarUploading(false);
+      } else {
+        setAssistantAvatarUploading(false);
+      }
+    }
+  };
+  
+  // ファイル選択ハンドラー
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, isUser: boolean) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadAvatar(file, isUser);
+    }
+  };
   
   // 設定を適用（保存）
   const applySettings = () => {
@@ -166,23 +242,93 @@ export function SettingsDialog() {
           </div>
 
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="user-avatar" className="font-medium">あなたのアイコンURL</Label>
-            <Input
-              id="user-avatar"
-              value={localUserAvatar}
-              onChange={(e) => setLocalUserAvatar(e.target.value)}
-              placeholder="https://example.com/me.png"
-            />
+            <Label htmlFor="user-avatar" className="font-medium">あなたのアイコン</Label>
+            <div className="flex items-center space-x-2">
+              <div className="flex-shrink-0">
+                <Avatar className="h-10 w-10 ring-2 ring-border">
+                  {localUserAvatar && <AvatarImage src={localUserAvatar} />}
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="flex-1 space-y-2">
+                <Input
+                  id="user-avatar"
+                  value={localUserAvatar}
+                  onChange={(e) => setLocalUserAvatar(e.target.value)}
+                  placeholder="https://example.com/me.png"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={userAvatarInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, true)}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={userAvatarUploading}
+                    onClick={() => userAvatarInputRef.current?.click()}
+                  >
+                    {userAvatarUploading ? (
+                      <>アップロード中...</>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        画像をアップロード
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="assistant-avatar" className="font-medium">AIのアイコンURL</Label>
-            <Input
-              id="assistant-avatar"
-              value={localAssistantAvatar}
-              onChange={(e) => setLocalAssistantAvatar(e.target.value)}
-              placeholder="https://example.com/ai.png"
-            />
+            <Label htmlFor="assistant-avatar" className="font-medium">AIのアイコン</Label>
+            <div className="flex items-center space-x-2">
+              <div className="flex-shrink-0">
+                <Avatar className="h-10 w-10 ring-2 ring-border">
+                  {localAssistantAvatar && <AvatarImage src={localAssistantAvatar} />}
+                  <AvatarFallback>AI</AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="flex-1 space-y-2">
+                <Input
+                  id="assistant-avatar"
+                  value={localAssistantAvatar}
+                  onChange={(e) => setLocalAssistantAvatar(e.target.value)}
+                  placeholder="https://example.com/ai.png"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={assistantAvatarInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, false)}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={assistantAvatarUploading}
+                    onClick={() => assistantAvatarInputRef.current?.click()}
+                  >
+                    {assistantAvatarUploading ? (
+                      <>アップロード中...</>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        画像をアップロード
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <DialogFooter>

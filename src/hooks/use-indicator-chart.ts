@@ -7,7 +7,7 @@ import {
   LineSeriesPartialOptions,
   LogicalRange
 } from 'lightweight-charts'
-import type { ChartTheme } from './use-chart-theme'
+import type { ChartTheme } from '@/types'
 
 export interface UseIndicatorChartParams {
   height: number

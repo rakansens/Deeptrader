@@ -1,12 +1,6 @@
 import { COINGLASS_BASE_URL, COINGLASS_API_KEY } from '@/lib/env';
 import { fetchWithTimeout } from '@/lib/fetch';
-
-export interface OpenInterestData {
-  symbol: string;
-  price: number;
-  sumOpenInterestValue: number;
-  timestamp: string;
-}
+import type { OpenInterestData } from "@/types";
 
 /**
  * Coinglass APIからオープンインタレストを取得

@@ -1,11 +1,6 @@
 import { NEWS_API_KEY, NEWS_API_URL } from '@/lib/env';
 import { fetchWithTimeout } from '@/lib/fetch';
-
-export interface NewsArticle {
-  headline: string;
-  summary: string;
-  url: string;
-}
+import type { NewsArticle } from "@/types";
 
 /**
  * 外部ニュースAPIから記事を取得し、要約を返す

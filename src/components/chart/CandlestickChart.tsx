@@ -176,9 +176,6 @@ export default function CandlestickChart({
     logger.debug("描画モード変更:", mode);
   }, [mode]);
 
-  // The useEffect hook that previously saved chartRef.current to window.__chartInstance
-  // has been removed as this functionality is now centralized in useChartInstance.ts
-
   useEffect(() => {
     logger.debug("描画有効状態変更:", drawingEnabled);
     if (!drawingEnabled && drawingRef.current) {
