@@ -49,6 +49,8 @@ pnpm install
 # 環境変数の設定
 cp .env.example .env.local
 # `.env.local` に Supabase の接続情報と各種 API キーを設定
+# Supabase CLI を使う場合は `SUPABASE_ACCESS_TOKEN` も追加してください
+# `supabase/config.toml` の `project_id` 等も実際の値に書き換えます
 
 ### AIモデル設定
 
