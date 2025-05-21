@@ -1,5 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+
+beforeAll(() => {
+  // Radix Select relies on hasPointerCapture which jsdom lacks
+  // @ts-ignore
+  HTMLElement.prototype.hasPointerCapture = () => false
+  // Scroll APIs are also missing in jsdom
+  HTMLElement.prototype.scrollIntoView = () => {}
+})
 import ChartToolbar from '@/components/chart/ChartToolbar'
 import { TIMEFRAMES } from '@/constants/chart'
 
@@ -27,13 +35,17 @@ describe('ChartToolbar', () => {
       />
     )
 
-    await user.click(screen.getByTestId('timeframe-trigger'))
-    await user.click(
-      screen.getByRole('option', { name: `Timeframe ${TIMEFRAMES[1]}` })
-    )
+    const tfTrigger = screen.getByTestId('timeframe-trigger')
+    fireEvent.keyDown(tfTrigger, { key: 'Enter' })
+    const option = await screen.findByRole('option', {
+      name: `Timeframe ${TIMEFRAMES[1]}`,
+    })
+    await user.click(option)
     expect(onTf).toHaveBeenCalledWith(TIMEFRAMES[1])
 
-    await user.click(screen.getByLabelText('MA'))
+    await user.click(
+      screen.getByRole('menuitemcheckbox', { name: /MA/ })
+    )
     expect(onInd).toHaveBeenLastCalledWith({ ma: true, rsi: false, macd: false, boll: false })
   })
 
@@ -88,7 +100,8 @@ describe('ChartToolbar', () => {
 
     const toolbar = screen.getByTestId('chart-toolbar')
     expect(toolbar.className).toContain('flex-col')
-    const tfGroup = screen.getByRole('group')
+    const tfTrigger = screen.getByTestId('timeframe-trigger')
+    const tfGroup = tfTrigger.parentElement as HTMLElement
     expect(tfGroup.className).toContain('flex-wrap')
   })
 })
