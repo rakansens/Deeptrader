@@ -51,6 +51,31 @@ describe("AuthForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("validates required fields", async () => {
+    const user = userEvent.setup();
+    render(<AuthForm />);
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
+    expect(
+      await screen.findByText("メールアドレスを入力してください"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("パスワードを入力してください"),
+    ).toBeInTheDocument();
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("validates email format", async () => {
+    const user = userEvent.setup();
+    render(<AuthForm />);
+    await user.type(screen.getByLabelText("メールアドレス"), "invalid");
+    await user.type(screen.getByLabelText("パスワード"), "abcdef");
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
+    expect(
+      await screen.findByText("正しいメールアドレスを入力してください"),
+    ).toBeInTheDocument();
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
   it("renders forgot password link", () => {
     render(<AuthForm />);
     const link = screen.getByRole("link", { name: "パスワードを忘れた場合" });

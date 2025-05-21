@@ -4,22 +4,41 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, signUp } from "@/infrastructure/supabase/auth-service";
+
+const schema = z.object({
+  email: z
+    .string({ required_error: "メールアドレスを入力してください" })
+    .email("正しいメールアドレスを入力してください"),
+  password: z
+    .string({ required_error: "パスワードを入力してください" })
+    .min(6, "パスワードは6文字以上で入力してください"),
+});
+
+type FormData = z.infer<typeof schema>;
 
 interface AuthFormProps {
   redirectTo?: string;
 }
 
 export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup">("login");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async ({ email, password }: FormData) => {
     setIsLoading(true);
     setError(null);
     setMessage(null);
@@ -66,7 +85,7 @@ export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label
             htmlFor="email"
@@ -77,11 +96,13 @@ export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
           <input
             id="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+            {...register("email")}
+            aria-invalid={errors.email ? "true" : undefined}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          )}
         </div>
 
         <div>
@@ -94,11 +115,13 @@ export default function AuthForm({ redirectTo = "/dashboard" }: AuthFormProps) {
           <input
             id="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            {...register("password")}
+            aria-invalid={errors.password ? "true" : undefined}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+          )}
           <div className="text-right mt-1">
             <a
               href="/forgot-password"
