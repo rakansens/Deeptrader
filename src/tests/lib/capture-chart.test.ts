@@ -5,7 +5,7 @@ jest.mock('html2canvas', () => ({
   default: jest.fn(() => Promise.resolve(document.createElement('canvas')))
 }))
 
-import { captureChart } from '@/lib/captureChart'
+import { captureChart } from '@/lib/capture-chart'
 
 const mockedHtml2canvas = require('html2canvas').default as jest.Mock
 

@@ -24,7 +24,7 @@ import MessageBubble from "./message-bubble";
 import ConversationSidebar from "./conversation-sidebar";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
-import { captureChart } from "@/lib/captureChart";
+import { captureChart } from "@/lib/capture-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { useVoiceInput } from "@/hooks/use-voice-input";

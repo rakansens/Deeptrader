@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { captureChart } from "@/lib/captureChart";
+import { captureChart } from "@/lib/capture-chart";
 import { useToast } from "@/hooks/use-toast";
 
 interface UseScreenshotOptions {
