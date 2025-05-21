@@ -11,6 +11,9 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
+import { useSettings } from "@/hooks/use-settings";
+import { speakText, stopSpeech } from "@/lib/speech-utils";
+import { Volume2, VolumeX } from "lucide-react";
 
 export interface MessageBubbleProps {
   role: ChatRole;
@@ -47,6 +50,10 @@ export function MessageBubble({
     timeStyle: "short",
   }).format(date);
 
+  // 読み上げ状態管理
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { speechSynthesisEnabled } = useSettings();
+
   // 画像メッセージ用の表示処理
   const isImage =
     type === 'image' &&
@@ -56,6 +63,28 @@ export function MessageBubble({
   const [imageExpanded, setImageExpanded] = useState(false);
   const handleImageClick = () => {
     setImageExpanded(!imageExpanded);
+  };
+
+  // テキスト読み上げ処理
+  const handleSpeakMessage = () => {
+    if (typeof children !== 'string' || isImage) return;
+    
+    if (isSpeaking) {
+      stopSpeech();
+      setIsSpeaking(false);
+      return;
+    }
+    
+    const utterance = speakText(children);
+    setIsSpeaking(true);
+    
+    utterance?.addEventListener('end', () => {
+      setIsSpeaking(false);
+    });
+    
+    utterance?.addEventListener('error', () => {
+      setIsSpeaking(false);
+    });
   };
 
   // テキスト部分のエスケープ
@@ -86,7 +115,7 @@ export function MessageBubble({
           </div>
         </div>
       );
-          }
+    }
     
     // テキストの場合
     if (typeof children === 'string') {
@@ -132,34 +161,59 @@ export function MessageBubble({
       <div
         className={cn(
           "flex flex-col max-w-[90%] sm:max-w-[75%]",
-          role === "user" ? "items-end" : "items-start"
+          role === "user" ? "items-end" : "items-start",
+          !isImage && "group"
         )}
       >
-        <div
-          className={cn(
-            // 画像メッセージは背景・余白を除去してネイティブな見た目に
-            isImage ? "p-0" : "px-4 py-2",
-            !isImage &&
-              (role === "user"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground"),
-            "rounded-lg h-fit",
-            typing && "animate-pulse"
-          )}
-        >
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="max-w-full break-words text-pretty"
+        <div className={cn("relative", isImage ? "" : "")}>
+          <div
+            className={cn(
+              // 画像メッセージは背景・余白を除去してネイティブな見た目に
+              isImage ? "p-0" : "px-4 py-2",
+              !isImage &&
+                (role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground"),
+              "rounded-lg h-fit",
+              typing && "animate-pulse"
+            )}
           >
-            {renderContent()}
-          </motion.div>
-      </div>
-        
-        <div className="text-xs text-muted-foreground mt-1">
-          {formattedDate}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-full break-words text-pretty"
+            >
+              {renderContent()}
+            </motion.div>
           </div>
+          
+        </div>
+        
+        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+          {formattedDate}
+          
+          {/* 読み上げボタン - アシスタントメッセージかつテキストの場合のみ表示 */}
+          {speechSynthesisEnabled && role === "assistant" && !isImage && !typing && typeof children === 'string' && (
+            <button
+              onClick={handleSpeakMessage}
+              className={cn(
+                "p-1 rounded ml-auto",
+                "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                isSpeaking 
+                  ? "opacity-100" // 読み上げ中は常に表示
+                  : "opacity-0 group-hover:opacity-100", // 読み上げ中でない場合はホバー時のみ表示
+                "transition-opacity",
+                "flex items-center text-xs gap-1"
+              )}
+              aria-label={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
+              title={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
+            >
+              {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+              <span>{isSpeaking ? "停止" : "読み上げ"}</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
