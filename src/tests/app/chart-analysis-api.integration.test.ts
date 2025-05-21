@@ -1,6 +1,7 @@
 import { POST } from "@/app/api/chart-analysis/route";
 import { chartAnalysisTool } from "@/mastra/tools/chartAnalysisTool";
 
+// chartAnalysisToolのモックを型安全に定義
 jest.mock("@/mastra/tools/chartAnalysisTool", () => ({
   chartAnalysisTool: {
     inputSchema: { parse: jest.fn() },
@@ -8,12 +9,24 @@ jest.mock("@/mastra/tools/chartAnalysisTool", () => ({
   },
 }));
 
+// TypeScriptインターフェースを定義
+interface MockedChartAnalysisTool {
+  inputSchema: { 
+    parse: jest.Mock 
+  };
+  execute: jest.Mock;
+}
+
 test("chart analysis API returns execution result", async () => {
-  (chartAnalysisTool.inputSchema.parse as jest.Mock).mockReturnValue({
+  // 型アサーションを使用
+  const mockedTool = chartAnalysisTool as unknown as MockedChartAnalysisTool;
+  
+  // モックの設定
+  mockedTool.inputSchema.parse.mockReturnValue({
     symbol: "BTCUSDT",
     timeframe: "1h",
   });
-  (chartAnalysisTool.execute as jest.Mock).mockResolvedValue({ ok: true });
+  mockedTool.execute.mockResolvedValue({ ok: true });
 
   const req = new Request("http://localhost/api/chart-analysis", {
     method: "POST",
@@ -22,11 +35,11 @@ test("chart analysis API returns execution result", async () => {
   const res = await POST(req);
   const data = await res.json();
 
-  expect(chartAnalysisTool.inputSchema.parse).toHaveBeenCalledWith({
+  expect(mockedTool.inputSchema.parse).toHaveBeenCalledWith({
     symbol: "BTCUSDT",
     timeframe: "1h",
   });
-  expect(chartAnalysisTool.execute).toHaveBeenCalledWith({
+  expect(mockedTool.execute).toHaveBeenCalledWith({
     context: { symbol: "BTCUSDT", timeframe: "1h" },
   });
   expect(data).toEqual({ ok: true });
