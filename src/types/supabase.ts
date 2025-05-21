@@ -6,187 +6,608 @@
  * スキーマから自動生成する場合は、以下のコマンドを使用:
  * npx supabase gen types typescript --project-id <プロジェクトID> --schema public > src/types/supabase.ts
  */
-import type { OrderSide } from "./order";
 
-export type Database = {
-  public: {
-    Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          username: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id: string;
-          username?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          username?: string | null;
-          created_at?: string;
-        };
-      };
-      conversations: {
-        Row: {
-          id: string;
-          user_id: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          created_at?: string;
-        };
-      };
-      messages: {
-        Row: {
-          id: number;
-          conversation_id: string;
-          sender: string;
-          content: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: number;
-          conversation_id: string;
-          sender: string;
-          content: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: number;
-          conversation_id?: string;
-          sender?: string;
-          content?: string;
-          created_at?: string;
-        };
-      };
-      users: {
-        Row: {
-          id: string;
-          email: string;
-          created_at: string;
-          updated_at: string;
-          full_name: string | null;
-          avatar_url: string | null;
-        };
-        Insert: {
-          id?: string;
-          email: string;
-          created_at?: string;
-          updated_at?: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-        };
-        Update: {
-          id?: string;
-          email?: string;
-          created_at?: string;
-          updated_at?: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-        };
-      };
+import type { OrderSide } from './order'
 
-      trading_strategies: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          description: string | null;
-          created_at: string;
-          updated_at: string;
-          is_active: boolean;
-          config: Json;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          name: string;
-          description?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          is_active?: boolean;
-          config: Json;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          name?: string;
-          description?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          is_active?: boolean;
-          config?: Json;
-        };
-      };
-
-      trading_history: {
-        Row: {
-          id: string;
-          user_id: string;
-          strategy_id: string | null;
-          symbol: string;
-          type: OrderSide;
-          quantity: number;
-          price: number;
-          timestamp: string;
-          status: "pending" | "completed" | "cancelled" | "failed";
-          metadata: Json | null;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          strategy_id?: string | null;
-          symbol: string;
-          type: OrderSide;
-          quantity: number;
-          price: number;
-          timestamp?: string;
-          status?: "pending" | "completed" | "cancelled" | "failed";
-          metadata?: Json | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          strategy_id?: string | null;
-          symbol?: string;
-          type?: OrderSide;
-          quantity?: number;
-          price?: number;
-          timestamp?: string;
-          status?: "pending" | "completed" | "cancelled" | "failed";
-          metadata?: Json | null;
-        };
-      };
-    };
-
-    Views: {
-      [_ in never]: never;
-    };
-
-    Functions: {
-      [_ in never]: never;
-    };
-
-    Enums: {
-      [_ in never]: never;
-    };
-  };
-};
-
-// JSON型の定義
 export type Json =
   | string
   | number
   | boolean
   | null
   | { [key: string]: Json }
-  | Json[];
+  | Json[]
+
+export type Database = {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          full_name: string | null
+          avatar_url: string | null
+          is_admin: boolean | null
+          created_at: string | null
+          updated_at: string | null
+          settings: Json | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          full_name?: string | null
+          avatar_url?: string | null
+          is_admin?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          settings?: Json | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          is_admin?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          settings?: Json | null
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          user_id: string
+          username: string | null
+          display_name: string | null
+          bio: string | null
+          metadata: Json | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          username?: string | null
+          display_name?: string | null
+          bio?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          username?: string | null
+          display_name?: string | null
+          bio?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      conversations: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          system_prompt: string | null
+          is_archived: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title?: string
+          system_prompt?: string | null
+          is_archived?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          system_prompt?: string | null
+          is_archived?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      chat_images: {
+        Row: {
+          id: string
+          user_id: string
+          image_data: string | null
+          image_caption: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          image_data?: string | null
+          image_caption?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          image_data?: string | null
+          image_caption?: string | null
+          created_at?: string | null
+        }
+      }
+      chat_messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          user_id: string
+          role: 'user' | 'assistant'
+          content: string
+          type: 'text' | 'image'
+          prompt: string | null
+          image_url: string | null
+          image_id: string | null
+          is_proposal: boolean | null
+          is_public: boolean | null
+          proposal_type: 'buy' | 'sell' | null
+          price: number | null
+          take_profit: number | null
+          stop_loss: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          user_id: string
+          role: 'user' | 'assistant'
+          content: string
+          type?: 'text' | 'image'
+          prompt?: string | null
+          image_url?: string | null
+          image_id?: string | null
+          is_proposal?: boolean | null
+          is_public?: boolean | null
+          proposal_type?: 'buy' | 'sell' | null
+          price?: number | null
+          take_profit?: number | null
+          stop_loss?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          user_id?: string
+          role?: 'user' | 'assistant'
+          content?: string
+          type?: 'text' | 'image'
+          prompt?: string | null
+          image_url?: string | null
+          image_id?: string | null
+          is_proposal?: boolean | null
+          is_public?: boolean | null
+          proposal_type?: 'buy' | 'sell' | null
+          price?: number | null
+          take_profit?: number | null
+          stop_loss?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      entries: {
+        Row: {
+          id: string
+          user_id: string
+          side: 'buy' | 'sell'
+          symbol: string
+          price: number
+          quantity: number
+          time: string
+          take_profit: number | null
+          stop_loss: number | null
+          status: 'open' | 'closed' | 'canceled'
+          is_public: boolean | null
+          exit_price: number | null
+          exit_time: string | null
+          profit: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          side: 'buy' | 'sell'
+          symbol: string
+          price: number
+          quantity?: number
+          time: string
+          take_profit?: number | null
+          stop_loss?: number | null
+          status?: 'open' | 'closed' | 'canceled'
+          is_public?: boolean | null
+          exit_price?: number | null
+          exit_time?: string | null
+          profit?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          side?: 'buy' | 'sell'
+          symbol?: string
+          price?: number
+          quantity?: number
+          time?: string
+          take_profit?: number | null
+          stop_loss?: number | null
+          status?: 'open' | 'closed' | 'canceled'
+          is_public?: boolean | null
+          exit_price?: number | null
+          exit_time?: string | null
+          profit?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      trading_strategies: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          is_active: boolean | null
+          config: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          is_active?: boolean | null
+          config: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean | null
+          config?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      trading_history: {
+        Row: {
+          id: string
+          user_id: string
+          strategy_id: string | null
+          symbol: string
+          type: OrderSide
+          quantity: number
+          price: number
+          timestamp: string | null
+          status: 'pending' | 'completed' | 'cancelled' | 'failed'
+          metadata: Json | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          strategy_id?: string | null
+          symbol: string
+          type: OrderSide
+          quantity: number
+          price: number
+          timestamp?: string | null
+          status?: 'pending' | 'completed' | 'cancelled' | 'failed'
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          strategy_id?: string | null
+          symbol?: string
+          type?: OrderSide
+          quantity?: number
+          price?: number
+          timestamp?: string | null
+          status?: 'pending' | 'completed' | 'cancelled' | 'failed'
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      symbol_settings: {
+        Row: {
+          id: string
+          user_id: string
+          symbol: string
+          is_favorite: boolean | null
+          display_order: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          symbol: string
+          is_favorite?: boolean | null
+          display_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          symbol?: string
+          is_favorite?: boolean | null
+          display_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      chart_settings: {
+        Row: {
+          id: string
+          user_id: string
+          timeframe: string
+          chart_type: string
+          show_volume: boolean | null
+          show_grid: boolean | null
+          show_legend: boolean | null
+          theme: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          timeframe: string
+          chart_type: string
+          show_volume?: boolean | null
+          show_grid?: boolean | null
+          show_legend?: boolean | null
+          theme?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          timeframe?: string
+          chart_type?: string
+          show_volume?: boolean | null
+          show_grid?: boolean | null
+          show_legend?: boolean | null
+          theme?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      indicator_settings: {
+        Row: {
+          id: string
+          user_id: string
+          chart_settings_id: string
+          type: string
+          params: Json
+          color: string | null
+          visible: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          chart_settings_id: string
+          type: string
+          params?: Json
+          color?: string | null
+          visible?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          chart_settings_id?: string
+          type?: string
+          params?: Json
+          color?: string | null
+          visible?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      cached_data: {
+        Row: {
+          id: string
+          data_type: string
+          symbol: string
+          timeframe: string | null
+          data: Json
+          expires_at: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          data_type: string
+          symbol: string
+          timeframe?: string | null
+          data: Json
+          expires_at: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          data_type?: string
+          symbol?: string
+          timeframe?: string | null
+          data?: Json
+          expires_at?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      user_relations: {
+        Row: {
+          id: string
+          follower_id: string
+          following_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          follower_id: string
+          following_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          follower_id?: string
+          following_id?: string
+          created_at?: string | null
+        }
+      }
+      backtest_data: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          symbol: string
+          timeframe: string
+          start_date: string
+          end_date: string
+          strategy: Json
+          results: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          symbol: string
+          timeframe: string
+          start_date: string
+          end_date: string
+          strategy: Json
+          results: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          symbol?: string
+          timeframe?: string
+          start_date?: string
+          end_date?: string
+          strategy?: Json
+          results?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      memories: {
+        Row: {
+          id: string
+          user_id: string
+          content: string
+          embedding: unknown | null
+          metadata: Json | null
+          external_id: string | null
+          is_synced: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          content: string
+          embedding?: unknown | null
+          metadata?: Json | null
+          external_id?: string | null
+          is_synced?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          content?: string
+          embedding?: unknown | null
+          metadata?: Json | null
+          external_id?: string | null
+          is_synced?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+    }
+    Views: {
+      admin_users: {
+        Row: {
+          id: string
+        }
+      }
+    }
+    Functions: {
+      update_updated_at_column: {
+        Args: Record<string, never>
+        Returns: unknown
+      }
+      match_documents: {
+        Args: {
+          query_embedding: unknown
+          match_threshold: number
+          match_count: number
+          user_id: string
+        }
+        Returns: {
+          id: string
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
+      get_conversation_messages: {
+        Args: {
+          conversation_uuid: string
+          message_limit?: number
+          message_offset?: number
+        }
+        Returns: {
+          id: string
+          role: string
+          content: string
+          type: string
+          image_url: string | null
+          created_at: string
+        }[]
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
+}

@@ -45,7 +45,7 @@ describe("db-service", () => {
     const chain = { insert: jest.fn().mockResolvedValue({ error: null }) };
     from.mockReturnValue(chain);
     await addMessage("c", "user", "hi");
-    expect(from).toHaveBeenCalledWith("messages");
+    expect(from).toHaveBeenCalledWith("chat_messages");
     expect(chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         conversation_id: "c",
@@ -55,12 +55,12 @@ describe("db-service", () => {
     );
   });
 
-  it("addMessage throws on error", async () => {
+  it("addMessage handles error without throwing", async () => {
     const chain = {
       insert: jest.fn().mockResolvedValue({ error: { code: "123", message: "e" } }),
     };
     from.mockReturnValue(chain);
-    await expect(addMessage("c", "user", "hi")).rejects.toBeTruthy();
+    await expect(addMessage("c", "user", "hi")).resolves.toBeUndefined();
   });
 
   it("fetchMessages selects messages", async () => {

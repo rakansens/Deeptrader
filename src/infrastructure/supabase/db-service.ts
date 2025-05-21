@@ -41,7 +41,7 @@ export async function addMessage(
 ) {
   try {
     const { error } = await supabase
-      .from("messages")
+      .from("chat_messages")
       .insert({
         conversation_id: conversationId,
         sender,
@@ -54,7 +54,7 @@ export async function addMessage(
     if (error) {
       // テーブルが存在しない場合は静かに失敗
       if (error.code === '42P01') { // relation does not exist
-        logger.warn('messages テーブルが存在しません。メッセージは保存されません。');
+        logger.warn('chat_messages テーブルが存在しません。メッセージは保存されません。');
         return;
       }
       throw error;
@@ -71,7 +71,7 @@ export async function addMessage(
 export async function fetchMessages(conversationId: string) {
   try {
     const { data, error } = await supabase
-      .from("messages")
+      .from("chat_messages")
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
@@ -79,7 +79,7 @@ export async function fetchMessages(conversationId: string) {
     if (error) {
       // テーブルが存在しない場合は空の配列を返す
       if (error.code === '42P01') { // relation does not exist
-        logger.warn('messages テーブルが存在しません。空の配列を返します。');
+        logger.warn('chat_messages テーブルが存在しません。空の配列を返します。');
         return [];
       }
       throw error;
