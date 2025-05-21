@@ -46,8 +46,20 @@ export default function Home() {
   const [symbol, setSymbol] = useState<SymbolValue>(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   const [settings, setSettings] = useState<IndicatorSettings>(DEFAULT_INDICATOR_SETTINGS);
-  const [drawingColor, setDrawingColor] = useState(DRAWING_COLORS[0].value);
+  const [drawingColor, setDrawingColor] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('drawingColor') ?? DRAWING_COLORS[0].value;
+    }
+    return DRAWING_COLORS[0].value;
+  });
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  const handleDrawingColorChange = (value: string) => {
+    setDrawingColor(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('drawingColor', value);
+    }
+  };
 
   // 型安全なハンドラー関数を定義
   const handleTimeframeChange = (tf: Timeframe) => setTimeframe(tf);
@@ -164,9 +176,11 @@ export default function Home() {
                       <button
                         key={c.value}
                         title={c.label}
-                        onClick={() => setDrawingColor(c.value)}
+                        onClick={() => handleDrawingColorChange(c.value)}
                         className={`w-6 h-6 rounded-full ${c.class} border border-border transition-all ${
-                          drawingColor === c.value ? 'ring-2 ring-offset-1 ring-primary' : 'opacity-70 hover:opacity-100'
+                          drawingColor === c.value
+                            ? 'ring-2 ring-offset-1 ring-primary'
+                            : 'opacity-70 hover:opacity-100'
                         }`}
                         aria-label={`色を${c.label}に変更`}
                       />
