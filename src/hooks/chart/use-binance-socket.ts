@@ -73,11 +73,10 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
     if (!mountedRef.current || !enabled) return;
 
     // 既存の接続をクリーンアップ
+    cleanupResources();
     if (wsRef.current && wsRef.current.readyState !== 3) { // 3 = WebSocket.CLOSED
       wsRef.current.close(1000, "reconnect");
     }
-    
-    cleanupResources();
 
     // 再接続試行回数の確認
     if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
@@ -192,6 +191,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
     }
     return () => {
       mountedRef.current = false;
+      cleanupResources();
       if (wsRef.current) {
         try {
           wsRef.current.close(1000, "unmount");
@@ -199,7 +199,6 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
           logger.error("WebSocketクローズエラー", e);
         }
       }
-      cleanupResources();
     };
   }, [connect, enabled, cleanupResources]);
 
