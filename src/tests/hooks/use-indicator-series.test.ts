@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react'
-import useIndicatorSeries from '@/hooks/use-indicator-series'
-import useLineSeries from '@/hooks/use-line-series'
+import useIndicatorSeries from '@/hooks/chart/use-indicator-series'
+import useLineSeries from '@/hooks/chart/use-line-series'
 
-jest.mock('@/hooks/use-line-series')
+jest.mock('@/hooks/chart/use-line-series')
 const mockUseLineSeries = useLineSeries as jest.Mock
 
 describe('useIndicatorSeries', () => {

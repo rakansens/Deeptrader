@@ -13,7 +13,8 @@
   /chart    # チャート関連フック
   /chat     # チャット関連フック
   /drawing  # 描画機能フック
-  use-chat.ts
+  /chat
+    use-chat.ts
   ...
 ```
 
@@ -24,9 +25,9 @@
 各フックファイルでは、フック関数を**名前付き**と**デフォルト**の双方でエクスポートしています。以下のようにどちらの形式でもインポート可能です。
 
 ```ts
-import useChat from '@/hooks/use-chat'
+import useChat from '@/hooks/chat/use-chat'
 // または
-import { useChat } from '@/hooks/use-chat'
+import { useChat } from '@/hooks/chat/use-chat'
 ```
 
 プロジェクトでは`@/hooks`エイリアスが設定されているため、上記のようにパスを簡潔に記述できます。原則として関数名と同名のファイルにフックを実装し、ファイル末尾で`export default`を宣言する構成としています。

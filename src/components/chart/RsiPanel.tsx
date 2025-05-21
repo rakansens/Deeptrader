@@ -8,8 +8,8 @@ import {
   LineSeriesPartialOptions,
 } from "lightweight-charts";
 import IndicatorPanel from "./IndicatorPanel";
-import { useIndicatorChart } from "@/hooks/use-indicator-chart";
-import useChartTheme from "@/hooks/use-chart-theme";
+import { useIndicatorChart } from "@/hooks/chart/use-indicator-chart";
+import useChartTheme from "@/hooks/chart/use-chart-theme";
 import { preprocessLineData, toNumericTime } from "@/lib/chart-utils";
 
 interface RsiPanelProps {

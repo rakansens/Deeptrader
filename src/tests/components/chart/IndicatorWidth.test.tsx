@@ -4,7 +4,7 @@ import MacdPanel from '@/components/chart/MacdPanel'
 
 const createFn = jest.fn(() => ({ chart: {}, series: {}, cleanup: jest.fn() }))
 
-jest.mock('@/hooks/use-indicator-chart', () => ({
+jest.mock('@/hooks/chart/use-indicator-chart', () => ({
   useIndicatorChart: () => createFn,
 }))
 

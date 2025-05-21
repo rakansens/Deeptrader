@@ -21,7 +21,7 @@ jest.mock('ai/react', () => {
 global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder
 global.ReadableStream = ReadableStream as any
 global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder
-import { useChat } from '@/hooks/use-chat'
+import { useChat } from '@/hooks/chat/use-chat'
 
 describe('useChat', () => {
   const originalFetch = global.fetch

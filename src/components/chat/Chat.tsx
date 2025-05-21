@@ -5,15 +5,15 @@ import { flushSync } from "react-dom";
 
 import ConversationSidebar from "./conversation-sidebar";
 import ChatMessages from "./chat-messages";
-import { useChat } from "@/hooks/use-chat";
+import { useChat } from "@/hooks/chat/use-chat";
 import { cn } from "@/lib/utils";
 import { captureChart } from "@/lib/capture-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { logger } from "@/lib/logger";
-import { useVoiceInput } from "@/hooks/use-voice-input";
+import { useVoiceInput } from "@/hooks/chat/use-voice-input";
 import { useSettings } from "@/hooks/use-settings";
-import { useChatHotkeys } from "@/hooks/use-chat-hotkeys";
+import { useChatHotkeys } from "@/hooks/chat/use-chat-hotkeys";
 import {
   Tooltip,
   TooltipContent,

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import useSidebar from '@/hooks/use-sidebar'
+import useSidebar from '@/hooks/chat/use-sidebar'
 
 describe('useSidebar', () => {
   it('toggles sidebar state', () => {

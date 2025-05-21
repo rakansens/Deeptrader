@@ -1,8 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useCandlestickData from '@/hooks/use-candlestick-data'
-import useBinanceSocket from '@/hooks/use-binance-socket'
+import useCandlestickData from '@/hooks/chart/use-candlestick-data'
+import useBinanceSocket from '@/hooks/chart/use-binance-socket'
 
-jest.mock('@/hooks/use-binance-socket')
+jest.mock('@/hooks/chart/use-binance-socket')
 const mockUseBinanceSocket = useBinanceSocket as jest.Mock
 
 const sampleKline = [[0, '1', '2', '0', '1', '100']]

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import { useVoiceInput } from '@/hooks/use-voice-input'
+import { useVoiceInput } from '@/hooks/chat/use-voice-input'
 
 class MockSpeechRecognition {
   static instances: MockSpeechRecognition[] = []

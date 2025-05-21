@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import React from "react";
-import useDrawingControls from "@/hooks/use-drawing-controls";
+import useDrawingControls from "@/hooks/chart/use-drawing-controls";
 
 describe("useDrawingControls", () => {
   it("changes mode when shortcut keys are pressed", () => {

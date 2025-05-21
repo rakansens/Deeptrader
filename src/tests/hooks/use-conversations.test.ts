@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import { useConversations } from '@/hooks/use-conversations'
+import { useConversations } from '@/hooks/chat/use-conversations'
 
 describe('useConversations', () => {
   it('renames and removes conversations', () => {

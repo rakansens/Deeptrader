@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react'
-import useChartTheme from '@/hooks/use-chart-theme'
+import useChartTheme from '@/hooks/chart/use-chart-theme'
 import { useTheme } from 'next-themes'
 
 jest.mock('next-themes', () => ({

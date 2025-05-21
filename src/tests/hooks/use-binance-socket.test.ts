@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react'
-import useBinanceSocket from '@/hooks/use-binance-socket'
+import useBinanceSocket from '@/hooks/chart/use-binance-socket'
 
 class MockWebSocket {
   static instances: MockWebSocket[] = []

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import useIndicatorChart from '@/hooks/use-indicator-chart'
+import useIndicatorChart from '@/hooks/chart/use-indicator-chart'
 import { createChart } from 'lightweight-charts'
 
 jest.mock('lightweight-charts', () => ({

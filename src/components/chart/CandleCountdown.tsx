@@ -1,7 +1,7 @@
 "use client"
 
 import type { Timeframe } from '@/constants/chart'
-import useCandleCountdown from '@/hooks/use-candle-countdown'
+import useCandleCountdown from '@/hooks/chart/use-candle-countdown'
 
 interface CandleCountdownProps {
   interval: Timeframe

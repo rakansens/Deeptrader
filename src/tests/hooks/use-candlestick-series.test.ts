@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react'
-import { useCandlestickSeries } from '@/hooks/use-candlestick-series'
+import { useCandlestickSeries } from '@/hooks/chart/use-candlestick-series'
 import type { IChartApi, ISeriesApi, CandlestickData, HistogramData } from 'lightweight-charts'
 import { processTimeSeriesData } from '@/lib/chart-utils'
 

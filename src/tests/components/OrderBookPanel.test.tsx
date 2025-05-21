@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import OrderBookPanel from '@/components/chart/OrderBookPanel'
-import useOrderBook from '@/hooks/use-order-book'
+import useOrderBook from '@/hooks/chart/use-order-book'
 
-jest.mock('@/hooks/use-order-book')
+jest.mock('@/hooks/chart/use-order-book')
 const mockUseOrderBook = useOrderBook as jest.Mock
 
 describe('OrderBookPanel', () => {

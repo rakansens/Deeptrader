@@ -14,7 +14,7 @@ jest.mock('@/components/ui/resizable', () => ({
   ResizableHandle: jest.fn(() => <div data-testid="resizable-handle" />),
 }));
 
-jest.mock('@/hooks/use-order-book', () => ({
+jest.mock('@/hooks/chart/use-order-book', () => ({
   __esModule: true,
   default: jest.fn(() => ({ bids: [], asks: [], connected: true })),
 }));

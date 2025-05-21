@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { TextEncoder, TextDecoder } from "util";
 import { ReadableStream } from "stream/web";
-import { useChat } from "@/hooks/use-chat";
+import { useChat } from "@/hooks/chat/use-chat";
 import {
   fetchMessages,
   addMessage,

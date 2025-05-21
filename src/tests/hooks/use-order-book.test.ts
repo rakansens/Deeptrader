@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useOrderBook from '@/hooks/use-order-book'
-import useBinanceSocket from '@/hooks/use-binance-socket'
+import useOrderBook from '@/hooks/chart/use-order-book'
+import useBinanceSocket from '@/hooks/chart/use-binance-socket'
 import { fetchOrderBook } from '@/infrastructure/exchange/binance-service'
 
-jest.mock('@/hooks/use-binance-socket')
+jest.mock('@/hooks/chart/use-binance-socket')
 jest.mock('@/infrastructure/exchange/binance-service')
 
 const mockSocket = useBinanceSocket as jest.Mock

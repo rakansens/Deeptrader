@@ -1,6 +1,6 @@
 "use client";
 import IndicatorPanel from "./IndicatorPanel";
-import useOrderBook from "@/hooks/use-order-book";
+import useOrderBook from "@/hooks/chart/use-order-book";
 import { cn } from "@/lib/utils";
 import type { SymbolValue } from "@/constants/chart";
 

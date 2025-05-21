@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react'
-import { useLineSeries } from '@/hooks/use-line-series'
+import { useLineSeries } from '@/hooks/chart/use-line-series'
 import { preprocessLineData } from '@/lib/chart-utils'
 import type { IChartApi, ISeriesApi, LineData, UTCTimestamp } from 'lightweight-charts'
 

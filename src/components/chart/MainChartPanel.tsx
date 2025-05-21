@@ -18,7 +18,7 @@ import type {
   CrosshairInfo
 } from "@/types/chart";
 import type { IndicatorSettings, Timeframe } from "@/constants/chart";
-import type { UseCandlestickDataResult } from "@/hooks/use-candlestick-data";
+import type { UseCandlestickDataResult } from "@/hooks/chart/use-candlestick-data";
 import type { MutableRefObject } from "react";
 
 export interface MainChartPanelProps {

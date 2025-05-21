@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import useCandleCountdown from '@/hooks/use-candle-countdown'
+import useCandleCountdown from '@/hooks/chart/use-candle-countdown'
 
 describe('useCandleCountdown', () => {
   it('counts down each second', () => {

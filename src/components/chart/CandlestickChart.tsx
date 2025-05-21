@@ -3,17 +3,17 @@
 import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo } from "react";
 import ChartSkeleton from "./chart-skeleton";
-import useChartTheme from "@/hooks/use-chart-theme";
+import useChartTheme from "@/hooks/chart/use-chart-theme";
 import useCandlestickData, {
   type UseCandlestickDataResult,
-} from "@/hooks/use-candlestick-data";
-import useCandlestickSeries from "@/hooks/use-candlestick-series";
-import useIndicatorSeries from "@/hooks/use-indicator-series";
-import useChartInstance from "@/hooks/use-chart-instance";
+} from "@/hooks/chart/use-candlestick-data";
+import useCandlestickSeries from "@/hooks/chart/use-candlestick-series";
+import useIndicatorSeries from "@/hooks/chart/use-indicator-series";
+import useChartInstance from "@/hooks/chart/use-chart-instance";
 import useWindowSize from "@/hooks/use-window-size";
-import useDrawingControls from "@/hooks/use-drawing-controls";
-import useCrosshairInfo from "@/hooks/use-crosshair-info";
-import useCountdownColor from "@/hooks/use-countdown-color";
+import useDrawingControls from "@/hooks/chart/use-drawing-controls";
+import useCrosshairInfo from "@/hooks/chart/use-crosshair-info";
+import useCountdownColor from "@/hooks/chart/use-countdown-color";
 import OrderBookPanel from "./OrderBookPanel";
 import OrderBookToggleButton from "./orderbook-toggle-button";
 import {

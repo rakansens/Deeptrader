@@ -17,7 +17,7 @@ jest.mock("@/hooks/use-settings", () => ({
 
 test("screenshot flow fetches analysis and includes it in prompt", async () => {
   const sendImageMessage = jest.fn();
-  jest.spyOn(require("@/hooks/use-chat"), "useChat").mockReturnValue({
+  jest.spyOn(require("@/hooks/chat/use-chat"), "useChat").mockReturnValue({
     messages: [],
     input: "",
     setInput: jest.fn(),

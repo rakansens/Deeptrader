@@ -1,5 +1,5 @@
 import { render, fireEvent } from '@testing-library/react'
-import { useChatHotkeys } from '@/hooks/use-chat-hotkeys'
+import { useChatHotkeys } from '@/hooks/chat/use-chat-hotkeys'
 
 function TestComponent(props: Parameters<typeof useChatHotkeys>[0]) {
   useChatHotkeys(props)

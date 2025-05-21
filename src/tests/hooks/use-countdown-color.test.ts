@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import useCountdownColor from '@/hooks/use-countdown-color'
+import useCountdownColor from '@/hooks/chart/use-countdown-color'
 import type { CandlestickData } from 'lightweight-charts'
 import type { ChartTheme } from '@/types'
 

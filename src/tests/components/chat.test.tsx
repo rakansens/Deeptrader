@@ -331,7 +331,7 @@ describe("Chat", () => {
   });
 
   it("renders image message", () => {
-    jest.spyOn(require("@/hooks/use-chat"), "useChat").mockReturnValue({
+    jest.spyOn(require("@/hooks/chat/use-chat"), "useChat").mockReturnValue({
       messages: [
         {
           id: "1",
@@ -364,7 +364,7 @@ describe("Chat", () => {
   it("uploads image and sends message", async () => {
     const user = userEvent.setup();
     const sendMessageMock = jest.fn().mockResolvedValue(undefined);
-    jest.spyOn(require("@/hooks/use-chat"), "useChat").mockReturnValue({
+    jest.spyOn(require("@/hooks/chat/use-chat"), "useChat").mockReturnValue({
       messages: [],
       input: "",
       setInput: jest.fn(),

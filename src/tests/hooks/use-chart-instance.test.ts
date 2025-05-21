@@ -1,13 +1,13 @@
 import { renderHook } from '@testing-library/react'
-import useChartInstance from '@/hooks/use-chart-instance'
+import useChartInstance from '@/hooks/chart/use-chart-instance'
 import { createChart } from 'lightweight-charts'
-import useChartTheme from '@/hooks/use-chart-theme'
+import useChartTheme from '@/hooks/chart/use-chart-theme'
 
 jest.mock('lightweight-charts', () => ({
   createChart: jest.fn(),
   CrosshairMode: { Normal: 0 }
 }))
-jest.mock('@/hooks/use-chart-theme', () => jest.fn(() => ({
+jest.mock('@/hooks/chart/use-chart-theme', () => jest.fn(() => ({
   background: '#000',
   text: '#fff',
   grid: '#333',
