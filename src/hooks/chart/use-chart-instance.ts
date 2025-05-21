@@ -81,7 +81,9 @@ export function useChartInstance({
       try {
         if (typeof (chart as ChartWithContainer).takeScreenshot !== 'function') {
           // canvasを取得する簡易スクリーンショット機能を実装
-          (chart as ChartWithContainer).takeScreenshot = async function() {
+          ;(chart as ChartWithContainer).takeScreenshot = async function (
+            this: IChartApi,
+          ): Promise<HTMLCanvasElement> {
             logger.debug('Using custom takeScreenshot implementation');
             const container = (chart as ChartWithContainer)._private__container;
             if (container) {

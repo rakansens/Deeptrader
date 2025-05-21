@@ -1,6 +1,11 @@
 import type { IChartApi } from 'lightweight-charts'
 import { getChartCardElement, captureViaHtml2Canvas, captureViaNativeApi } from '@/lib/capture-chart'
 
+interface WindowWithChart extends Window {
+  __getChartElement?: () => HTMLElement
+  __chartInstance?: IChartApi
+}
+
 jest.mock('html2canvas', () => ({
   __esModule: true,
   default: jest.fn(() =>
@@ -16,7 +21,8 @@ describe('capture-chart helpers', () => {
   afterEach(() => {
     jest.clearAllMocks()
     document.body.innerHTML = ''
-    delete (window as any).__getChartElement
+    const w = window as WindowWithChart
+    delete w.__getChartElement
   })
 
   describe('getChartCardElement', () => {
@@ -51,7 +57,8 @@ describe('capture-chart helpers', () => {
       const takeScreenshot = jest.fn(() => Promise.resolve(canvas))
       const chart = { takeScreenshot } as unknown as IChartApi
       const element = document.createElement('div')
-      ;(window as any).__getChartElement = jest.fn(() => element)
+      const w = window as WindowWithChart
+      w.__getChartElement = jest.fn(() => element)
       document.body.appendChild(element)
       const url = await captureViaNativeApi(chart)
       expect(takeScreenshot).toHaveBeenCalled()

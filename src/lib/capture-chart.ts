@@ -1,5 +1,10 @@
 import html2canvas from 'html2canvas'
 import type { IChartApi } from 'lightweight-charts'
+
+interface WindowWithChart extends Window {
+  __getChartElement?: () => HTMLElement
+  __chartInstance?: IChartApi
+}
 import { logger } from '@/lib/logger'
 import {
   getActiveChartInstanceForCapture,
@@ -68,12 +73,17 @@ export async function captureViaNativeApi(
   try {
     await new Promise(r => setTimeout(r, 200))
     const el =
-      getActiveChartElementForCapture() || (window as any).__getChartElement?.()
+      getActiveChartElementForCapture() ||
+      (window as WindowWithChart).__getChartElement?.()
     if (!el || !document.contains(el)) {
       logger.warn('Chart container not attached; skipping native screenshot')
       return null
     }
-    const takeScreenshot = (chart as any).takeScreenshot
+    const takeScreenshot = (
+      chart as IChartApi & {
+        takeScreenshot?: (this: IChartApi) => Promise<HTMLCanvasElement>
+      }
+    ).takeScreenshot
     if (typeof takeScreenshot === 'function') {
       const canvas = await takeScreenshot.call(chart)
       return canvas.toDataURL('image/png', 1.0)
@@ -96,7 +106,7 @@ export async function captureChart(): Promise<string | null> {
   }
 
   const chart =
-    getActiveChartInstanceForCapture() || (window as any).__chartInstance
+    getActiveChartInstanceForCapture() || (window as WindowWithChart).__chartInstance
   const native = await captureViaNativeApi(chart)
   if (native) return native
 
