@@ -220,13 +220,19 @@ export default function Chat() {
         <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2" aria-live="polite">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-              <p className="mb-4">質問や指示を入力してください</p>
+              <div className="text-center">
+                <p className="text-lg font-semibold mb-2">DeepTrader AIへようこそ！</p>
+                <p className="mb-1">あなたのパーソナル取引アシスタントです。</p>
+                <p className="mb-4">下のように、市場分析、チャート操作、一般的な質問など、何でも聞いてみてくださいね。</p>
+              </div>
               <div className="flex flex-col gap-2 mx-auto w-full max-w-sm">
                 {[
-                  "ビットコインの現在のトレンドは？",
-                  "RSIが示す売買シグナルは？",
-                  "ボリンジャーバンドの使い方を教えて",
-                  "現在の市場リスクを分析して",
+                  "今日のビットコインはどう？",
+                  "イーサリアムの価格を教えて",
+                  "RSIインジケーターを表示して",
+                  "移動平均線（MA）を非表示にして",
+                  "このチャート、どう思う？ (まずチャート画像を送信してください)",
+                  "初心者向けの投資戦略を教えて",
                 ].map((suggestion) => (
                   <Button
                     key={suggestion}
