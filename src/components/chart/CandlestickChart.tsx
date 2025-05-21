@@ -1,7 +1,7 @@
 "use client";
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
-import { useEffect, useRef, useCallback, useState, CSSProperties } from "react";
+import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import useChartTheme from "@/hooks/use-chart-theme";
 import useCandlestickData from "@/hooks/use-candlestick-data";
@@ -172,35 +172,6 @@ export default function CandlestickChart({
     volumeSeries: volumeRef.current,
   });
 
-  const currentPrice = candles.length > 0 ? candles[candles.length - 1].close : undefined;
-
-  const [countdownBgColor, setCountdownBgColor] = useState<string | undefined>();
-  const [countdownTextColor, setCountdownTextColor] = useState<string>("#ffffff");
-
-  useEffect(() => {
-    if (candles.length > 0 && themeColors) {
-      const latestCandle = candles[candles.length - 1];
-      if (!latestCandle) return;
-
-      setCountdownBgColor(
-        latestCandle.close >= latestCandle.open
-          ? themeColors.upColor
-          : themeColors.downColor
-      );
-    }
-  }, [candles, themeColors]);
-
-  useEffect(() => {
-    logger.debug("描画モード変更:", mode);
-  }, [mode]);
-
-  useEffect(() => {
-    logger.debug("描画有効状態変更:", drawingEnabled);
-    if (!drawingEnabled && drawingRef.current) {
-      drawingRef.current.clear();
-    }
-  }, [drawingEnabled]);
-
   // インジケーターのトグル処理を最適化
   const handleToggleIndicator = useCallback(
     (key: keyof typeof indicators, value: boolean) => {
@@ -214,6 +185,48 @@ export default function CandlestickChart({
     },
     [indicators, onIndicatorsChange],
   );
+
+  // ローソク足データとテーマ変更のみトラッキングし、必要なときだけCountdownの背景色を更新
+  const latestCandle = useMemo(() => 
+    candles.length > 0 ? candles[candles.length - 1] : null, 
+    [candles]
+  );
+  
+  const currentPrice = useMemo(() => 
+    latestCandle ? latestCandle.close : undefined, 
+    [latestCandle]
+  );
+
+  const [countdownBgColor, setCountdownBgColor] = useState<string | undefined>();
+  const [countdownTextColor, setCountdownTextColor] = useState<string>("#ffffff");
+
+  useEffect(() => {
+    if (candles.length > 0 && themeColors) {
+      const latestCandle = candles[candles.length - 1];
+      if (!latestCandle) return;
+
+      const newColor = latestCandle.close >= latestCandle.open
+        ? themeColors.upColor
+        : themeColors.downColor;
+      
+      // 前の値と異なる場合のみ更新
+      setCountdownBgColor(prevColor => {
+        if (prevColor !== newColor) return newColor;
+        return prevColor;
+      });
+    }
+  }, [candles, themeColors]);
+
+  useEffect(() => {
+    logger.debug("描画モード変更:", mode);
+  }, [mode]);
+
+  useEffect(() => {
+    logger.debug("描画有効状態変更:", drawingEnabled);
+    if (!drawingEnabled && drawingRef.current) {
+      drawingRef.current.clear();
+    }
+  }, [drawingEnabled]);
 
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;

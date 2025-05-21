@@ -298,7 +298,21 @@ export function useCandlestickData(
         low: parseFloat(k.l),
         close: parseFloat(k.c),
       };
+      
+      // 最適化: 状態更新前にチェックを行う
       setChartData((prev) => {
+        // 既存のローソク足データに同じ時間のデータがあるか確認し、
+        // 値が同じであれば更新しない
+        const existingCandle = prev.candles.find(c => c.time === time);
+        if (existingCandle && 
+            existingCandle.open === candle.open && 
+            existingCandle.high === candle.high && 
+            existingCandle.low === candle.low && 
+            existingCandle.close === candle.close) {
+          // データが同じなら状態を更新しない
+          return prev;
+        }
+        
         const updatedCandles = upsertSeries(prev.candles, candle, 500);
         try {
           localStorage.setItem(
@@ -322,15 +336,9 @@ export function useCandlestickData(
         } catch (e) {
           console.warn(`Failed to save volumes to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
         }
-        // pricesRef is no longer used for indicator calculation.
-        // If it was used for something else, that needs to be reviewed.
-        // For now, assume it's removed or handled elsewhere if still needed.
         
         const currentPrice = parseFloat(k.c);
-        // The calculator refs (smaCalcRef.current, etc.) are updated by fetchInitialData
-        // when settings change, or they hold the latest state from previous updates.
-        // So, we directly use them here.
-
+        
         const smaResult = smaCalcRef.current.update(currentPrice);
         const rsiResult = rsiCalcRef.current.update(currentPrice);
         const macdResult = macdCalcRef.current.update(currentPrice);
@@ -374,7 +382,7 @@ export function useCandlestickData(
         };
       });
     },
-    [symbol, interval], // settings dependency removed as calculators are now in refs and updated via useEffect/fetchInitialData
+    [symbol, interval],
   );
 
   const { status } = useBinanceSocket<BinanceKlineMessage>({
