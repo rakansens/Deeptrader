@@ -100,6 +100,7 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
                 );
                 pongTimeoutRef.current = setTimeout(() => {
                   if (ws.readyState === 1) { // 1 = WebSocket.OPEN
+                    cleanupResources();
                     ws.close();
                   }
                 }, PONG_TIMEOUT);
@@ -109,6 +110,7 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
                   clearTimeout(pongTimeoutRef.current);
                   pongTimeoutRef.current = null;
                 }
+                cleanupResources();
                 if (ws.readyState !== 3) { // 3 = WebSocket.CLOSED
                   ws.close();
                 }
