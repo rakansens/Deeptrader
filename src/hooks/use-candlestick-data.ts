@@ -19,6 +19,7 @@ import {
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import type { IndicatorSettings } from "@/constants/chart";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
+import { safeLoadJson, safeSaveJson } from "@/lib/utils";
 
 export interface UseCandlestickDataResult {
   candles: CandlestickData<UTCTimestamp>[];
@@ -61,50 +62,36 @@ export function useCandlestickData(
     let initialCandles: CandlestickData<UTCTimestamp>[] = [];
     let initialVolumes: HistogramData<UTCTimestamp>[] = [];
 
-    try {
-      const storedCandles = localStorage.getItem(`candles_${symbol}_${interval}`);
-      if (storedCandles) {
-        try {
-          const parsedCandles = JSON.parse(storedCandles);
-          // Basic validation: check if it's an array and if the first element has a 'time' property (if not empty)
-          if (Array.isArray(parsedCandles) && (parsedCandles.length === 0 || (parsedCandles[0] && typeof parsedCandles[0].time === 'number'))) {
-            initialCandles = parsedCandles as CandlestickData<UTCTimestamp>[];
-          } else {
-            logger.warn(`Invalid format for cached candles (symbol: ${symbol}, interval: ${interval}). Expected array of CandlestickData.`);
-            initialCandles = []; // Fallback to empty array
-          }
-        } catch (parseError) {
-          logger.warn(`Failed to parse cached candles (symbol: ${symbol}, interval: ${interval}):`, parseError);
-          initialCandles = []; // Fallback to empty array on parse error
-        }
-      }
-    } catch (e) {
-      // This catches errors from localStorage.getItem itself (e.g., security restrictions)
-      logger.warn(`Error accessing cached candles (symbol: ${symbol}, interval: ${interval}) from localStorage:`, e);
-      initialCandles = []; // Default to empty array on any localStorage access error
+    const storedCandles = safeLoadJson<CandlestickData<UTCTimestamp>[]>(
+      `candles_${symbol}_${interval}`,
+      'cached candles'
+    );
+    if (
+      Array.isArray(storedCandles) &&
+      (storedCandles.length === 0 ||
+        (storedCandles[0] && typeof storedCandles[0].time === 'number'))
+    ) {
+      initialCandles = storedCandles as CandlestickData<UTCTimestamp>[];
+    } else if (storedCandles) {
+      logger.warn(
+        `Invalid format for cached candles (symbol: ${symbol}, interval: ${interval}). Expected array of CandlestickData.`
+      );
     }
 
-    try {
-      const storedVolumes = localStorage.getItem(`volumes_${symbol}_${interval}`);
-      if (storedVolumes) {
-        try {
-          const parsedVolumes = JSON.parse(storedVolumes);
-          // Basic validation: check if it's an array and if the first element has a 'time' property (if not empty)
-          if (Array.isArray(parsedVolumes) && (parsedVolumes.length === 0 || (parsedVolumes[0] && typeof parsedVolumes[0].time === 'number'))) {
-            initialVolumes = parsedVolumes as HistogramData<UTCTimestamp>[];
-          } else {
-            logger.warn(`Invalid format for cached volumes (symbol: ${symbol}, interval: ${interval}). Expected array of HistogramData.`);
-            initialVolumes = []; // Fallback to empty array
-          }
-        } catch (parseError) {
-          logger.warn(`Failed to parse cached volumes (symbol: ${symbol}, interval: ${interval}):`, parseError);
-          initialVolumes = []; // Fallback to empty array on parse error
-        }
-      }
-    } catch (e) {
-      // This catches errors from localStorage.getItem itself
-      logger.warn(`Error accessing cached volumes (symbol: ${symbol}, interval: ${interval}) from localStorage:`, e);
-      initialVolumes = []; // Default to empty array on any localStorage access error
+    const storedVolumes = safeLoadJson<HistogramData<UTCTimestamp>[]>(
+      `volumes_${symbol}_${interval}`,
+      'cached volumes'
+    );
+    if (
+      Array.isArray(storedVolumes) &&
+      (storedVolumes.length === 0 ||
+        (storedVolumes[0] && typeof storedVolumes[0].time === 'number'))
+    ) {
+      initialVolumes = storedVolumes as HistogramData<UTCTimestamp>[];
+    } else if (storedVolumes) {
+      logger.warn(
+        `Invalid format for cached volumes (symbol: ${symbol}, interval: ${interval}). Expected array of HistogramData.`
+      );
     }
 
     return {
@@ -258,22 +245,16 @@ export function useCandlestickData(
         const initialData = await fetchInitialData(symbol, interval, settings, controller.signal);
         if (!controller.signal.aborted) {
           setChartData(initialData); // This will set all data including candles and volumes from fetch
-          try {
-            localStorage.setItem(
-              `candles_${symbol}_${interval}`, // Use current symbol/interval from hook params for storage keys
-              JSON.stringify(initialData.candles),
-            );
-          } catch (e) {
-            logger.warn(`Failed to save candles to localStorage (symbol: ${symbol}, interval: ${interval}):`, e);
-          }
-          try {
-            localStorage.setItem(
-              `volumes_${symbol}_${interval}`, // Use current symbol/interval from hook params for storage keys
-              JSON.stringify(initialData.volumes),
-            );
-          } catch (e) {
-            logger.warn(`Failed to save volumes to localStorage (symbol: ${symbol}, interval: ${interval}):`, e);
-          }
+          safeSaveJson(
+            `candles_${symbol}_${interval}`,
+            initialData.candles,
+            'candles'
+          );
+          safeSaveJson(
+            `volumes_${symbol}_${interval}`,
+            initialData.volumes,
+            'volumes'
+          );
         }
       } catch (e) {
         if (!controller.signal.aborted) {
@@ -316,28 +297,22 @@ export function useCandlestickData(
         }
         
         const updatedCandles = upsertSeries(prev.candles, candle, 500);
-        try {
-          localStorage.setItem(
-            `candles_${symbol}_${interval}`,
-            JSON.stringify(updatedCandles),
-          );
-        } catch (e) {
-          logger.warn(`Failed to save candles to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
-        }
+        safeSaveJson(
+          `candles_${symbol}_${interval}`,
+          updatedCandles,
+          'candles'
+        );
         const volume: HistogramData<UTCTimestamp> = {
           time,
           value: parseFloat(k.v),
           color: parseFloat(k.c) >= parseFloat(k.o) ? "#26a69a" : "#ef5350",
         };
         const updatedVolumes = upsertSeries(prev.volumes, volume, 500);
-        try {
-          localStorage.setItem(
-            `volumes_${symbol}_${interval}`,
-            JSON.stringify(updatedVolumes),
-          );
-        } catch (e) {
-          logger.warn(`Failed to save volumes to localStorage during WebSocket update (symbol: ${symbol}, interval: ${interval}):`, e);
-        }
+        safeSaveJson(
+          `volumes_${symbol}_${interval}`,
+          updatedVolumes,
+          'volumes'
+        );
         
         const currentPrice = parseFloat(k.c);
         
