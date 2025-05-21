@@ -38,13 +38,15 @@ describe('useDrawingCanvas text mode', () => {
     Object.defineProperty(canvas, 'width', { value: 100, writable: true })
     Object.defineProperty(canvas, 'height', { value: 100, writable: true })
     // getContext が常に同じモックインスタンスを返すようにする
-    jest.spyOn(canvas, 'getContext').mockReturnValue(mockCtx as any)
+    jest
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(mockCtx as any)
 
     act(() => {
       // canvasRef にモックcanvasを割り当て
       (result.current.canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = canvas
       // pointer down でテキスト入力開始
-      result.current.handlePointerDown({
+      result.current.pointerHandlers.onPointerDown({
         currentTarget: canvas,
         clientX: 10,
         clientY: 20,
@@ -84,15 +86,15 @@ describe('useDrawingCanvas text mode', () => {
     const canvas = document.createElement('canvas');
     (result.current.canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = canvas;
     
-    const mockInputRef = { current: { focus: jest.fn() } };
-    (result.current.textInputRef as React.MutableRefObject<HTMLInputElement | null>) = mockInputRef as any;
+    const mockInputRef = { focus: jest.fn() };
+    (result.current.textInputRef as React.MutableRefObject<HTMLInputElement | null>).current = mockInputRef as any;
 
     // 初期状態では textInput は null
     expect(result.current.textInput).toBeNull();
 
     // テキスト入力モードを開始
     act(() => {
-      result.current.handlePointerDown({
+      result.current.pointerHandlers.onPointerDown({
         currentTarget: canvas,
         clientX: 50,
         clientY: 50,
@@ -104,7 +106,7 @@ describe('useDrawingCanvas text mode', () => {
     rerender({ mode: 'text', enabled: true });
 
     // focus が呼ばれたことを確認
-    expect(mockInputRef.current.focus).toHaveBeenCalled();
+    expect(mockInputRef.focus).toHaveBeenCalled();
   });
 
 }); 

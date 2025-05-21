@@ -25,11 +25,7 @@ function DrawingCanvas(
     isDrawing,
     getCursorStyle,
     getEraserCursorStyle,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handlePointerEnter,
-    handlePointerLeave,
+    pointerHandlers,
     handleContainerMouseMove,
     handleTextChange,
     handleTextSubmit,
@@ -147,11 +143,11 @@ function DrawingCanvas(
               : "none",
           ...getEraserCursorStyle(),
         }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
+        onPointerDown={pointerHandlers.onPointerDown}
+        onPointerMove={pointerHandlers.onPointerMove}
+        onPointerUp={pointerHandlers.onPointerUp}
+        onPointerEnter={pointerHandlers.onPointerEnter}
+        onPointerLeave={pointerHandlers.onPointerLeave}
         onWheel={onWheel}
         data-testid="drawing-canvas"
       />

@@ -19,7 +19,7 @@ describe("useDrawingCanvas", () => {
         result.current
           .canvasRef as React.MutableRefObject<HTMLCanvasElement | null>
       ).current = canvas;
-      result.current.handlePointerEnter({
+      result.current.pointerHandlers.onPointerEnter({
         currentTarget: canvas,
         clientX: 10,
         clientY: 20,
