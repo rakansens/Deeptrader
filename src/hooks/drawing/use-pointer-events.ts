@@ -47,7 +47,7 @@ export function usePointerEvents({
 
   const actualMode = mode === null ? DRAWING_MODES.FREEHAND : mode;
 
-  const getContext = () => canvasRef.current?.getContext('2d');
+  const getContext = (): CanvasRenderingContext2D | null => canvasRef.current?.getContext('2d') || null;
 
   const clearPreview = () => {
     const canvas = canvasRef.current;
