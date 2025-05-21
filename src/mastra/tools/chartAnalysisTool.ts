@@ -5,8 +5,7 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeBollinger, computeMACD } from '@/lib/indicators';
-import { TIMEFRAMES } from '@/constants/chart';
-import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/types/chart';
+import { TIMEFRAMES, DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart';
 import type { BinanceKlineObject } from '@/types/binance';
 import type { IndicatorResult } from '@/types';
 
@@ -36,7 +35,7 @@ export const chartAnalysisTool = createTool({
 
   inputSchema: z.object({
     symbol: z.string().describe('分析する暗号資産のシンボル (例: BTCUSDT)'),
-    timeframe: z.enum(TIMEFRAMES).describe(
+    timeframe: z.enum(['1m','3m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w','1M']).describe(
       '時間枠 (例: 1m, 5m, 15m, 1h, 4h, 1d)',
     ),
     indicators: z
@@ -56,7 +55,12 @@ export const chartAnalysisTool = createTool({
             signal: z.number().optional(),
           })
           .optional(),
-        boll: z.number().optional(),
+        boll: z
+          .object({
+            period: z.number().optional(),
+            stdDev: z.number().optional(),
+          })
+          .optional(),
       })
       .optional()
       .describe('各インジケーターの計算期間設定'),
@@ -77,6 +81,10 @@ export const chartAnalysisTool = createTool({
       ...DEFAULT_INDICATOR_SETTINGS,
       ...settings,
       macd: { ...DEFAULT_INDICATOR_SETTINGS.macd, ...settings.macd },
+      boll: {
+        period: settings.boll?.period ?? DEFAULT_INDICATOR_SETTINGS.boll.period,
+        stdDev: settings.boll?.stdDev ?? DEFAULT_INDICATOR_SETTINGS.boll.stdDev
+      }
     };
 
     let klines: BinanceKlineObject[];
@@ -108,7 +116,7 @@ export const chartAnalysisTool = createTool({
           results.push({ name: 'MACD', macd: macd.macd, signal: macd.signal, histogram: macd.histogram });
         }
       } else if (name === 'BOLLINGER' || name === 'BOLLINGERBANDS' || name === 'BOLLINGER_BANDS') {
-        const band = computeBollinger(closes, mergedSettings.boll);
+        const band = computeBollinger(closes, mergedSettings.boll.period);
         if (band) results.push({ name: 'Bollinger', upper: band.upper, lower: band.lower });
       }
     }

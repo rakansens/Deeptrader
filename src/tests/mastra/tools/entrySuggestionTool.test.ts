@@ -39,7 +39,9 @@ describe('entrySuggestionTool', () => {
   it('suggests buy when RSI is low', async () => {
     const closes = Array.from({ length: 50 }, (_, i) => 100 - i);
     (fetchKlines as jest.Mock).mockResolvedValue(toKlines(closes));
-    const result = await entrySuggestionTool.execute({
+    // executeメソッドが存在することを保証
+    const execute = entrySuggestionTool.execute as (params: any) => Promise<any>;
+    const result = await execute({
       context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[0] }
     } as any);
     const expectedRsi = computeRSI(closes, 14)!;
@@ -49,7 +51,9 @@ describe('entrySuggestionTool', () => {
   it('suggests sell when RSI is high', async () => {
     const closes = Array.from({ length: 50 }, (_, i) => i + 1);
     (fetchKlines as jest.Mock).mockResolvedValue(toKlines(closes));
-    const result = await entrySuggestionTool.execute({
+    // executeメソッドが存在することを保証
+    const execute = entrySuggestionTool.execute as (params: any) => Promise<any>;
+    const result = await execute({
       context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[0] }
     } as any);
     const expectedRsi = computeRSI(closes, 14)!;
@@ -59,7 +63,9 @@ describe('entrySuggestionTool', () => {
   it('returns wait when not enough data', async () => {
     const closes = Array.from({ length: 10 }, (_, i) => i + 1);
     (fetchKlines as jest.Mock).mockResolvedValue(toKlines(closes));
-    const result = await entrySuggestionTool.execute({
+    // executeメソッドが存在することを保証
+    const execute = entrySuggestionTool.execute as (params: any) => Promise<any>;
+    const result = await execute({
       context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[0] }
     } as any);
     expect(result).toEqual({ action: 'wait', entry: closes[closes.length - 1], rsi: null });
@@ -67,8 +73,10 @@ describe('entrySuggestionTool', () => {
 
   it('throws error when fetch fails', async () => {
     (fetchKlines as jest.Mock).mockRejectedValue(new Error('fail'));
+    // executeメソッドが存在することを保証
+    const execute = entrySuggestionTool.execute as (params: any) => Promise<any>;
     await expect(
-      entrySuggestionTool.execute({ context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[0] } } as any)
+      execute({ context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[0] } } as any)
     ).rejects.toThrow('エントリー提案に失敗しました');
   });
 });

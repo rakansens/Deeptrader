@@ -43,7 +43,9 @@ describe('chartAnalysisTool', () => {
 
   it('computes indicators from fetched data', async () => {
     (fetchKlines as jest.Mock).mockResolvedValue(sample);
-    const result = (await chartAnalysisTool.execute({
+    // executeメソッドが存在することを保証
+    const execute = chartAnalysisTool.execute as (params: any) => Promise<any>;
+    const result = (await execute({
       context: {
         symbol: SYMBOLS[0].value,
         timeframe: TIMEFRAMES[3],
@@ -80,8 +82,10 @@ describe('chartAnalysisTool', () => {
 
   it('throws error when fetch fails', async () => {
     (fetchKlines as jest.Mock).mockRejectedValue(new Error('fail'));
+    // executeメソッドが存在することを保証
+    const execute = chartAnalysisTool.execute as (params: any) => Promise<any>;
     await expect(
-      chartAnalysisTool.execute({
+      execute({
         context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[3] }
       } as any)
     ).rejects.toThrow('ローソク足データの取得に失敗しました');

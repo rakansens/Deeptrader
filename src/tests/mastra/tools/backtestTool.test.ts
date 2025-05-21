@@ -48,7 +48,9 @@ describe('backtestTool', () => {
 
   it('runs backtest and returns result', async () => {
     (fetchKlines as jest.Mock).mockResolvedValue(sample);
-    const result = await backtestTool.execute({
+    // executeメソッドが存在することを保証
+    const execute = backtestTool.execute as (params: any) => Promise<any>;
+    const result = await execute({
       context: {
         symbol: SYMBOLS[0].value,
         timeframe: TIMEFRAMES[0],
@@ -71,8 +73,10 @@ describe('backtestTool', () => {
 
   it('throws error when fetch fails', async () => {
     (fetchKlines as jest.Mock).mockRejectedValue(new Error('fail'));
+    // executeメソッドが存在することを保証
+    const execute = backtestTool.execute as (params: any) => Promise<any>;
     await expect(
-      backtestTool.execute({
+      execute({
         context: { symbol: SYMBOLS[0].value, timeframe: TIMEFRAMES[0] }
       } as any)
     ).rejects.toThrow('ローソク足データの取得に失敗しました');

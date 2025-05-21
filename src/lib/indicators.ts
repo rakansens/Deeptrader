@@ -49,6 +49,8 @@ export class SMACalculator {
   getAverage(): number | null {
     return this.avg;
   }
+
+  getResult(): number | null { return this.getAverage(); }
 }
 
 /**
@@ -124,6 +126,8 @@ export class BollingerBandsCalculator {
       lower: this.lowerBand
     };
   }
+
+  getResult() { return this.getBands(); }
 }
 
 /**
@@ -179,6 +183,8 @@ export class EMACalculator {
   getValue(): number | null {
     return this.value;
   }
+
+  getResult(): number | null { return this.getValue(); }
 }
 
 /**
@@ -267,6 +273,8 @@ export class RsiCalculator {
   getValue(): number | null {
     return this.rsi;
   }
+
+  getResult(): number | null { return this.getValue(); }
 }
 
 /**
@@ -365,6 +373,8 @@ export class MACDCalculator {
       histogram: this.histogram
     };
   }
+
+  getResult() { return this.getValues(); }
 }
 
 /**
@@ -414,3 +424,20 @@ export function computeBollinger(
   return { upper: mean + 2 * sd, lower: mean - 2 * sd };
 }
 
+export function computeSMA(data:number[], period=14): number | null {
+  const calc = new SMACalculator(period);
+  calc.seed(data);
+  return calc.getResult();
+}
+
+export function computeEMA(data:number[], period=14): number | null {
+  const calc = new EMACalculator(period);
+  calc.seed(data);
+  return calc.getResult();
+}
+
+export function computeRSI(data:number[], period=14): number | null {
+  const calc = new RsiCalculator(period);
+  calc.seed(data);
+  return calc.getResult();
+}

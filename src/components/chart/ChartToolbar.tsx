@@ -34,15 +34,15 @@ import {
 import type {
   IndicatorOptions,
   IndicatorsChangeHandler,
-  IndicatorSettings,
 } from '@/types/chart'
 import {
   TIMEFRAMES,
   SYMBOLS,
+  DEFAULT_INDICATOR_SETTINGS,
+  type IndicatorSettings,
   type Timeframe,
   type SymbolValue,
 } from '@/constants/chart'
-import { DEFAULT_INDICATOR_SETTINGS } from '@/types/chart'
 
 interface ChartToolbarProps {
   timeframe: Timeframe
@@ -457,7 +457,7 @@ export default function ChartToolbar({
                       Bollinger Bands
                     </span>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>期間: {settings.boll}</span>
+                      <span>期間: {settings.boll.period}</span>
                       <span>太さ: {settings.lineWidth.boll}px</span>
                        <span 
                         className="w-3 h-3 rounded-full border"
@@ -472,12 +472,15 @@ export default function ChartToolbar({
                     <input
                       type="number"
                       className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-                      value={settings.boll}
+                      value={settings.boll.period}
                       min={1}
                       onChange={(e) =>
                         onSettingsChange({
                           ...settings,
-                          boll: Number(e.target.value),
+                          boll: {
+                            ...settings.boll,
+                            period: Number(e.target.value)
+                          },
                         })
                       }
                     />

@@ -1,40 +1,32 @@
 import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
-import { RsiCalculator } from "@/lib/indicators";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
+import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 
 describe("candlestick-utils", () => {
   describe("calculateIndicators", () => {
-    it("returns indicator values when enough data with RsiCalculator", () => {
+    it("returns indicator values when enough data", () => {
       const prices = Array.from({ length: 50 }, (_, i) => i + 1);
-      const rsiCalc = new RsiCalculator(14);
-      prices.forEach((p) => rsiCalc.update(p));
-      const res = calculateIndicators(prices, 1 as UTCTimestamp, rsiCalc);
-      expect(res.ma).toBeDefined();
+      const res = calculateIndicators(prices);
+      expect(res.sma).toBeDefined();
       expect(res.rsi).toBeDefined();
       expect(res.macd).toBeDefined();
-      expect(res.signal).toBeDefined();
-      expect(res.histogram).toBeDefined();
-      expect(res.bollUpper).toBeDefined();
-      expect(res.bollLower).toBeDefined();
+      expect(res.bollinger).toBeDefined();
     });
 
-    it("returns indicator values when enough data with settings", () => {
+    it("returns indicator values with custom settings", () => {
       const prices = Array.from({ length: 50 }, (_, i) => i + 1);
-      const res = calculateIndicators(prices, 1 as UTCTimestamp, {
+      const res = calculateIndicators(prices, {
         sma: 10,
         rsi: 10,
         macd: { short: 5, long: 8, signal: 3 },
-        boll: 10,
+        boll: { period: 10, stdDev: 2 },
         lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
         colors: { ma: '#FF0000', rsi: '#00FF00', macd: '#0000FF', boll: '#FFFF00' }
       });
-      expect(res.ma).toBeDefined();
+      expect(res.sma).toBeDefined();
       expect(res.rsi).toBeDefined();
       expect(res.macd).toBeDefined();
-      expect(res.signal).toBeDefined();
-      expect(res.histogram).toBeDefined();
-      expect(res.bollUpper).toBeDefined();
-      expect(res.bollLower).toBeDefined();
+      expect(res.bollinger).toBeDefined();
     });
   });
 

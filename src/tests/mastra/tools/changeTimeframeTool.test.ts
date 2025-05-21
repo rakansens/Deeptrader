@@ -15,7 +15,9 @@ describe('changeTimeframeTool', () => {
   it('calls global function and returns success', async () => {
     const mockFn = jest.fn();
     (global as any).window = { changeTimeframe: mockFn } as any;
-    const result = await changeTimeframeTool.execute({ context: { timeframe: TIMEFRAMES[1] } } as any);
+    // executeメソッドが存在することを保証
+    const execute = changeTimeframeTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context: { timeframe: TIMEFRAMES[1] } } as any);
     expect(mockFn).toHaveBeenCalledWith(TIMEFRAMES[1]);
     expect(result).toEqual({ success: true });
   });

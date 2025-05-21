@@ -21,7 +21,9 @@ describe('openInterestTool', () => {
       timestamp: '2024-01-01T00:00:00Z'
     };
     (fetchOpenInterest as jest.Mock).mockResolvedValue(mockData);
-    const result = await openInterestTool.execute({ context: { symbol: SYMBOLS[0].value } } as any);
+    // executeメソッドが存在することを保証
+    const execute = openInterestTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context: { symbol: SYMBOLS[0].value } } as any);
     expect(fetchOpenInterest).toHaveBeenCalledWith(SYMBOLS[0].value);
     expect(result).toEqual(mockData);
   });

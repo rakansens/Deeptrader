@@ -1,8 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import CandlestickChart from '@/components/chart/CandlestickChart'
 import { toast } from '@/hooks/use-toast'
-import { SYMBOLS, TIMEFRAMES } from '@/constants/chart'
-import { DEFAULT_INDICATOR_SETTINGS } from '@/types/chart'
+import { SYMBOLS, TIMEFRAMES, DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart'
 
 jest.mock('@/hooks/use-toast', () => ({
   toast: jest.fn(),

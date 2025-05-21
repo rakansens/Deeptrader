@@ -11,8 +11,8 @@ const getMockChartApi = (): IChartApi => {
     // Mock only the methods/properties that might be relevant if the service did more,
     // but for current service, the instance itself is opaque.
     // Adding a dummy property to make it a unique object.
-    _id: Math.random().toString(),
-  } as IChartApi;
+    _id: crypto.randomUUID(),
+  } as unknown as IChartApi;
 };
 
 const getMockChartElement = (): HTMLElement => {

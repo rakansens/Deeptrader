@@ -16,7 +16,7 @@ export const entrySuggestionTool = createTool({
   description: 'RSIを利用してエントリー候補を提示します',
   inputSchema: z.object({
     symbol: z.string().describe('例: BTCUSDT'),
-    timeframe: z.enum(TIMEFRAMES).describe('時間枠'),
+    timeframe: z.enum(['1m','3m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w','1M']).describe('時間枠'),
     period: z.number().optional().describe('取得するバー数'),
   }),
   execute: async ({ context }) => {

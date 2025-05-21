@@ -18,7 +18,9 @@ describe('newsAnalysisTool', () => {
       summary: 'summary',
       url: 'https://example.com'
     });
-    const result = await newsAnalysisTool.execute({ context: { query: 'bitcoin' } } as any);
+    // executeメソッドが存在することを保証
+    const execute = newsAnalysisTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context: { query: 'bitcoin' } } as any);
     expect(fetchNewsSummary).toHaveBeenCalledWith('bitcoin');
     expect(result).toEqual({
       headline: 'Example',

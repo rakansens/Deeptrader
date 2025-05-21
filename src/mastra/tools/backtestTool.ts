@@ -16,7 +16,7 @@ export const backtestTool = createTool({
   description: '過去データを用いてSMAクロスオーバーの簡易バックテストを実行します',
   inputSchema: z.object({
     symbol: z.string().describe('例: BTCUSDT'),
-    timeframe: z.enum(TIMEFRAMES).describe('時間枠'),
+    timeframe: z.enum(['1m','3m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w','1M']).describe('時間枠'),
     shortPeriod: z.number().default(5).describe('短期SMA期間'),
     longPeriod: z.number().default(20).describe('長期SMA期間'),
     initialBalance: z.number().default(1000).describe('初期資金'),

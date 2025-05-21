@@ -14,7 +14,9 @@ describe('evaluationTool', () => {
   it('returns quality score', async () => {
     const context = { query: 'hello', result: 'hello world' };
     const expectedQuality = context.result.length / (context.query.length + context.result.length);
-    const result = await evaluationTool.execute({ context } as any);
+    // executeメソッドが存在することを保証
+    const execute = evaluationTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context } as any);
     expect(result).toEqual({ quality: expectedQuality });
   });
 });

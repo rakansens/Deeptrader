@@ -111,9 +111,7 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
                   pongTimeoutRef.current = null;
                 }
                 cleanupResources();
-                if (ws.readyState !== 3) { // 3 = WebSocket.CLOSED
-                  ws.close();
-                }
+                ws.close();
               }
             }
           }, pingInterval);
@@ -175,9 +173,7 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
       mountedRef.current = false;
       if (wsRef.current) {
         try {
-          if (wsRef.current.readyState !== 3) { // 3 = WebSocket.CLOSED
-            wsRef.current.close();
-          }
+          wsRef.current.close();
         } catch (e) {
           logger.error("WebSocketクローズエラー", e);
         }

@@ -17,7 +17,9 @@ describe('marketSentimentTool', () => {
 
   it('fetches sentiment and returns score', async () => {
     (fetchSentiment as jest.Mock).mockResolvedValue({ score: 70, timestamp: '2024-01-01T00:00:00Z' });
-    const result = await marketSentimentTool.execute({ context: { symbol: SYMBOLS[0].value } } as any);
+    // executeメソッドが存在することを保証
+    const execute = marketSentimentTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context: { symbol: SYMBOLS[0].value } } as any);
     expect(fetchSentiment).toHaveBeenCalledWith(SYMBOLS[0].value);
     expect(result).toEqual({ symbol: SYMBOLS[0].value, score: 70, sentiment: 'bullish' });
   });

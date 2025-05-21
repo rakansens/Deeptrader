@@ -30,7 +30,9 @@ describe('tradingExecutionTool', () => {
       quantity: 1,
       price: 100
     };
-    const result = await tradingExecutionTool.execute({ context } as any);
+    // executeメソッドが存在することを保証
+    const execute = tradingExecutionTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context } as any);
     expect(placeOrder).toHaveBeenCalledWith(context);
     expect(result).toEqual({ success: true });
   });

@@ -18,7 +18,7 @@ describe('ChartToolbar', () => {
           sma: 14,
           rsi: 14,
           macd: { short: 12, long: 26, signal: 9 },
-          boll: 20,
+          boll: { period: 20, stdDev: 2 },
           lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
         }}
         onSettingsChange={jest.fn()}
@@ -47,7 +47,7 @@ describe('ChartToolbar', () => {
           sma: 14,
           rsi: 14,
           macd: { short: 12, long: 26, signal: 9 },
-          boll: 20,
+          boll: { period: 20, stdDev: 2 },
           lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
         }}
         onSettingsChange={onSettings}
@@ -72,7 +72,7 @@ describe('ChartToolbar', () => {
           sma: 14,
           rsi: 14,
           macd: { short: 12, long: 26, signal: 9 },
-          boll: 20,
+          boll: { period: 20, stdDev: 2 },
           lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
         }}
         onSettingsChange={() => {}}

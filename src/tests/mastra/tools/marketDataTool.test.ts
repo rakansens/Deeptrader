@@ -27,7 +27,9 @@ describe('marketDataTool', () => {
       timestamp: ''
     };
     (getTicker as jest.Mock).mockResolvedValue(mockTicker);
-    const result = await marketDataTool.execute({ context: { symbol: SYMBOLS[0].value } } as any);
+    // executeメソッドが存在することを保証
+    const execute = marketDataTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context: { symbol: SYMBOLS[0].value } } as any);
     expect(getTicker).toHaveBeenCalledWith(SYMBOLS[0].value);
     expect(result).toEqual(mockTicker);
   });

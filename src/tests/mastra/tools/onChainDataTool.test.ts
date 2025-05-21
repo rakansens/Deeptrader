@@ -20,7 +20,9 @@ describe('onChainDataTool', () => {
       nonce: 2
     };
     (getAddressInfo as jest.Mock).mockResolvedValue(mockInfo);
-    const result = await onChainDataTool.execute({ context: { address: '0xabc' } } as any);
+    // executeメソッドが存在することを保証
+    const execute = onChainDataTool.execute as (params: any) => Promise<any>;
+    const result = await execute({ context: { address: '0xabc' } } as any);
     expect(getAddressInfo).toHaveBeenCalledWith('0xabc');
     expect(result).toEqual(mockInfo);
   });

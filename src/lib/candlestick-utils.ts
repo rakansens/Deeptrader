@@ -1,20 +1,12 @@
 import type { UTCTimestamp } from "lightweight-charts";
-// Unused imports related to calculateIndicators have been removed:
-// import type { LineData } from "lightweight-charts";
-// import type { IndicatorSettings } from "@/types/chart";
-// import { DEFAULT_INDICATOR_SETTINGS } from "@/types/chart";
-// import {
-//   computeBollinger,
-//   computeMACD,
-//   computeRSI,
-//   computeSMA,
-//   RsiCalculator, // This was the old RsiCalculator
-// } from "./indicators";
-
-// The IndicatorSeries interface is no longer needed as calculateIndicators is removed.
-
-// The calculateIndicators function has been removed as its logic is now
-// handled directly within use-candlestick-data.ts using the new calculator classes.
+import type { IndicatorSettings } from "@/constants/chart";
+import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
+import {
+  computeBollinger,
+  computeMACD,
+  computeRSI,
+  computeSMA,
+} from "./indicators";
 
 /**
  * 時系列データ配列に新しいデータを追加または既存のデータを更新します。
@@ -54,4 +46,21 @@ export function upsertSeries<T extends { time: UTCTimestamp }>(
 
   // Return a new array of values from the map, sorted by timestamp
   return Array.from(map.values()).sort((a, b) => a.time - b.time);
+}
+
+export function calculateIndicators(
+  closes:number[],
+  settings:IndicatorSettings = DEFAULT_INDICATOR_SETTINGS
+) {
+  return {
+    sma: computeSMA(closes, settings.sma),
+    rsi: computeRSI(closes, settings.rsi),
+    macd: computeMACD(
+      closes,
+      settings.macd.short,
+      settings.macd.long,
+      settings.macd.signal
+    ),
+    bollinger: computeBollinger(closes, settings.boll.period),
+  };
 }
