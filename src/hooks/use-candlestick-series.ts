@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { IChartApi, ISeriesApi, CandlestickData, HistogramData } from 'lightweight-charts'
 import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 
@@ -28,6 +28,15 @@ export function useCandlestickSeries({
   volumes,
   colors,
 }: UseCandlestickSeriesParams) {
+  const processedCandles = useMemo(
+    () => processTimeSeriesData<CandlestickData>(candles, toNumericTime),
+    [candles]
+  )
+  const processedVolumes = useMemo(
+    () => processTimeSeriesData<HistogramData>(volumes, toNumericTime),
+    [volumes]
+  )
+
   // シリーズの生成と破棄
   useEffect(() => {
     if (!chart) return
@@ -86,17 +95,13 @@ export function useCandlestickSeries({
 
   // データ更新
   useEffect(() => {
-    if (candleRef.current && candles.length > 0) {
-      candleRef.current.setData(
-        processTimeSeriesData<CandlestickData>(candles, toNumericTime)
-      )
+    if (candleRef.current && processedCandles.length > 0) {
+      candleRef.current.setData(processedCandles)
     }
-    if (volumeRef.current && volumes.length > 0) {
-      volumeRef.current.setData(
-        processTimeSeriesData<HistogramData>(volumes, toNumericTime)
-      )
+    if (volumeRef.current && processedVolumes.length > 0) {
+      volumeRef.current.setData(processedVolumes)
     }
-  }, [candleRef, volumeRef, candles, volumes])
+  }, [candleRef, volumeRef, processedCandles, processedVolumes])
 }
 
 export default useCandlestickSeries

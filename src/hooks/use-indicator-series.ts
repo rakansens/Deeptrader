@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import type { IChartApi, ISeriesApi, LineData, DeepPartial, LineWidth } from "lightweight-charts";
 import useLineSeries from "./use-line-series";
+import { preprocessLineData } from '@/lib/chart-utils';
 
 interface UseIndicatorSeriesParams {
   chart: IChartApi | null;
@@ -37,6 +39,10 @@ export function useIndicatorSeries({
   lineWidth,
   colors,
 }: UseIndicatorSeriesParams) {
+  const processedMa = useMemo(() => preprocessLineData(ma), [ma]);
+  const processedBollUpper = useMemo(() => preprocessLineData(bollUpper), [bollUpper]);
+  const processedBollLower = useMemo(() => preprocessLineData(bollLower), [bollLower]);
+
   useLineSeries({
     chart,
     ref: maRef,
@@ -46,7 +52,7 @@ export function useIndicatorSeries({
       lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
-    data: ma,
+    data: processedMa,
   });
 
   useLineSeries({
@@ -58,7 +64,7 @@ export function useIndicatorSeries({
       lineWidth: lineWidth.boll as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
-    data: bollUpper,
+    data: processedBollUpper,
   });
 
   useLineSeries({
@@ -70,7 +76,7 @@ export function useIndicatorSeries({
       lineWidth: lineWidth.boll as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
-    data: bollLower,
+    data: processedBollLower,
   });
 }
 
