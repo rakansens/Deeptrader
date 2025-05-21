@@ -205,6 +205,7 @@ export default function Home() {
                     {/* 描画色選択はサイドバーに移動 */}
                     <div className="w-full relative">
                       <CandlestickChart
+                        key={`${symbol}-${timeframe}`}
                         height={600}
                         indicators={indicators}
                         interval={timeframe}
