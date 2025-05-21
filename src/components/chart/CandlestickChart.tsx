@@ -1,7 +1,7 @@
 "use client";
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
-import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo } from "react";
+import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo, memo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import useChartTheme from "@/hooks/use-chart-theme";
 import useCandlestickData from "@/hooks/use-candlestick-data";
@@ -15,6 +15,12 @@ import CrosshairTooltip from "./CrosshairTooltip";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
 import OrderBookPanel from "./OrderBookPanel";
+import OrderBookToggleButton from "./orderbook-toggle-button";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import DrawingCanvas from "./drawing-canvas";
 import type {
   DrawingCanvasHandle,
@@ -26,7 +32,6 @@ import { DRAWING_MODES } from "@/types/chart";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import type { IndicatorSettings } from "@/constants/chart";
 import ChartSidebar from "./ChartSidebar";
-const SHOW_ORDER_BOOK = true;
 import SidebarToggleButton from "./sidebar-toggle-button";
 import EraserSizeControl from "./eraser-size-control";
 import CandleCountdown from "./CandleCountdown";
@@ -37,6 +42,152 @@ import {
   type SymbolValue,
   type Timeframe,
 } from "@/constants/chart";
+
+// メインチャートパネルを分離したコンポーネント
+const MainChartPanel = memo(function MainChartPanel({
+  containerRef,
+  chartHeight,
+  candles,
+  loading,
+  error,
+  initialInterval,
+  crosshairInfo,
+  showSidebar,
+  mode,
+  drawingRef,
+  countdownBgColor,
+  countdownTextColor,
+  eraserSize,
+  handleWheel,
+  toggleSidebar,
+  handleModeChange,
+  handleClearDrawing,
+  registerShortcuts,
+  unregisterShortcuts,
+  setEraserSize,
+  drawingColor,
+  indicators,
+  handleToggleIndicator,
+  chartRef,
+  rsi,
+  macd,
+  signal,
+  histogram,
+  subHeight,
+  indicatorSettings,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  chartHeight: number;
+  candles: any[];
+  loading: boolean;
+  error: string | null;
+  initialInterval: Timeframe;
+  crosshairInfo: any;
+  showSidebar: boolean;
+  mode: DrawingMode;
+  drawingRef: React.RefObject<DrawingCanvasHandle>;
+  countdownBgColor?: string;
+  countdownTextColor: string;
+  eraserSize: number;
+  handleWheel: (e: React.WheelEvent<any>) => void;
+  toggleSidebar: () => void;
+  handleModeChange: (mode: DrawingMode) => void;
+  handleClearDrawing: () => void;
+  registerShortcuts: () => void;
+  unregisterShortcuts: () => void;
+  setEraserSize: (size: number) => void;
+  drawingColor: string;
+  indicators: IndicatorOptions;
+  handleToggleIndicator: (key: keyof IndicatorOptions, value: boolean) => void;
+  chartRef: React.MutableRefObject<IChartApi | null>;
+  rsi: any[];
+  macd: any[];
+  signal: any[];
+  histogram: any[];
+  subHeight: number;
+  indicatorSettings: IndicatorSettings;
+}) {
+  return (
+    <div className="flex flex-col flex-1 space-y-4">
+      <div className="relative w-full h-full">
+        <div
+          ref={containerRef}
+          className="w-full rounded-md overflow-hidden border border-border"
+          style={{ height: chartHeight }}
+          data-testid="chart-container"
+        />
+
+        {!loading && !error && candles.length > 0 && (
+          <CandleCountdown
+            interval={initialInterval}
+            backgroundColor={countdownBgColor}
+            textColor={countdownTextColor}
+            className="absolute top-2 right-16 z-20"
+          />
+        )}
+
+        <CrosshairTooltip info={crosshairInfo} />
+
+        <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
+        {showSidebar && (
+          <ChartSidebar
+            mode={mode}
+            onModeChange={handleModeChange}
+            onClear={handleClearDrawing}
+            registerShortcuts={registerShortcuts}
+            unregisterShortcuts={unregisterShortcuts}
+            className="absolute top-12 left-2 z-20"
+          />
+        )}
+        {mode === DRAWING_MODES.ERASER && (
+          <EraserSizeControl
+            size={eraserSize}
+            onChange={setEraserSize}
+            className="absolute top-2 right-2 z-30 w-[180px]"
+          />
+        )}
+        <div
+          className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? "pointer-events-none" : ""}`}
+          onWheel={handleWheel}
+        >
+          <DrawingCanvas
+            ref={drawingRef}
+            enabled={true}
+            className="w-full h-full"
+            color={drawingColor}
+            strokeWidth={2}
+            mode={mode}
+            eraserSize={eraserSize}
+          />
+        </div>
+      </div>
+      {indicators.rsi && (
+        <RsiPanel
+          data={rsi}
+          chart={chartRef.current}
+          height={subHeight}
+          lineWidth={indicatorSettings.lineWidth.rsi}
+          color={indicatorSettings.colors?.rsi}
+          rsiUpper={indicatorSettings.rsiUpper}
+          rsiLower={indicatorSettings.rsiLower}
+          onClose={() => handleToggleIndicator("rsi", false)}
+        />
+      )}
+      {indicators.macd && (
+        <MacdPanel
+          macd={macd}
+          signal={signal}
+          histogram={histogram}
+          chart={chartRef.current}
+          height={subHeight}
+          lineWidth={indicatorSettings.lineWidth.macd}
+          macdColor={indicatorSettings.colors?.macd}
+          onClose={() => handleToggleIndicator("macd", false)}
+        />
+      )}
+    </div>
+  );
+});
 
 interface CandlestickChartProps {
   className?: string;
@@ -70,6 +221,7 @@ export default function CandlestickChart({
   drawingColor = "#ef4444",
 }: CandlestickChartProps) {
   const themeColors = useChartTheme();
+  const [showOrderBook, setShowOrderBook] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
@@ -90,38 +242,22 @@ export default function CandlestickChart({
     unregisterShortcuts,
   } = useDrawingControls({ containerRef, drawingEnabled });
 
-  // registerShortcutsをメモ化して毎回新しい関数を作らないようにする
   const memoizedRegisterShortcuts = useCallback(() => {
     registerDrawingShortcuts();
   }, [registerDrawingShortcuts]);
 
   useEffect(() => {
-    // コンポーネントのアンマウント時にのみクリーンアップ
     return () => {
       unregisterShortcuts();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 依存配列を空にして一度だけ登録
+  }, [unregisterShortcuts]);
 
   const { width } = useWindowSize();
 
-  // 画面幅に応じて高さを調整する
   const chartHeight =
     width > 0 && width < 768 ? Math.floor(width * 0.6) : height;
 
-  /*
-   * 選択モード以外でもマウスホイールでチャートのズームを行えるように、
-   * wheel イベントをチャート本体へ転送するユーティリティ。
-   *
-   * 1. 描画モード中  : オーバーレイ(div)がイベントを取得するため転送が必要
-   * 2. 選択モード(null): オーバーレイ自体を pointer-events:none にするので転送不要
-   */
-
-  // 描画キャンバスは常に有効にして内容を保持する
   const isDrawingEnabled = true;
-
-  // Global chart instance exposure for screenshots is now handled by
-  // useChartInstance.ts and src/lib/chart-capture-service.ts
 
   const {
     candles = [],
@@ -141,6 +277,17 @@ export default function CandlestickChart({
     container: containerRef.current,
     height: chartHeight,
   });
+
+  // チャートインスタンスが変わった時にデータを再設定
+  useEffect(() => {
+    // チャートを最適化して再描画
+    if (chartRef.current) {
+      chartRef.current.resize(
+        containerRef.current?.clientWidth || 0,
+        chartHeight
+      );
+    }
+  }, [chartRef.current, chartHeight]);
 
   useIndicatorSeries({
     chart: chartRef.current,
@@ -181,12 +328,9 @@ export default function CandlestickChart({
     volumeSeries: volumeRef.current,
   });
 
-  // インジケーターのトグル処理を最適化
   const handleToggleIndicator = useCallback(
     (key: keyof typeof indicators, value: boolean) => {
       if (onIndicatorsChange) {
-        // パネルの追加/削除時にチャートのリサイズをデバウンスするため
-        // requestAnimationFrameを使用して次のフレームで更新
         requestAnimationFrame(() => {
           onIndicatorsChange?.({ ...indicators, [key]: value });
         });
@@ -195,7 +339,6 @@ export default function CandlestickChart({
     [indicators, onIndicatorsChange],
   );
 
-  // ローソク足データとテーマ変更のみトラッキングし、必要なときだけCountdownの背景色を更新
   const latestCandle = useMemo(() => 
     candles.length > 0 ? candles[candles.length - 1] : null, 
     [candles]
@@ -218,7 +361,6 @@ export default function CandlestickChart({
         ? themeColors.upColor
         : themeColors.downColor;
       
-      // 前の値と異なる場合のみ更新
       setCountdownBgColor(prevColor => {
         if (prevColor !== newColor) return newColor;
         return prevColor;
@@ -235,7 +377,7 @@ export default function CandlestickChart({
     if (!drawingEnabled && drawingRef.current) {
       drawingRef.current.clear();
     }
-  }, [drawingEnabled]);
+  }, [drawingEnabled, drawingRef]);
 
   if (loading && useApi)
     return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
@@ -248,96 +390,100 @@ export default function CandlestickChart({
 
   const subHeight = chartHeight * 0.25;
 
+  // オーダーブック表示トグル時の処理
+  const handleOrderBookToggle = useCallback(() => {
+    setShowOrderBook(prev => !prev);
+    // setTimeout で非同期処理するとUIが更新された後にリサイズが実行される
+    setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 5);
+  }, []);
+
+  // メインチャートパネル用のプロパティ（メモ化）
+  const chartPanelProps = useMemo(() => ({
+    containerRef,
+    chartHeight,
+    candles,
+    loading,
+    error,
+    initialInterval,
+    crosshairInfo,
+    showSidebar,
+    mode,
+    drawingRef,
+    countdownBgColor,
+    countdownTextColor,
+    eraserSize,
+    handleWheel,
+    toggleSidebar,
+    handleModeChange,
+    handleClearDrawing,
+    registerShortcuts: memoizedRegisterShortcuts,
+    unregisterShortcuts,
+    setEraserSize,
+    drawingColor,
+    indicators,
+    handleToggleIndicator,
+    chartRef,
+    rsi,
+    macd,
+    signal,
+    histogram,
+    subHeight,
+    indicatorSettings,
+  }), [
+    containerRef, chartHeight, candles, loading, error, initialInterval,
+    crosshairInfo, showSidebar, mode, drawingRef, countdownBgColor,
+    countdownTextColor, eraserSize, handleWheel, toggleSidebar,
+    handleModeChange, handleClearDrawing, memoizedRegisterShortcuts,
+    unregisterShortcuts, setEraserSize, drawingColor, indicators,
+    handleToggleIndicator, chartRef, rsi, macd, signal, histogram,
+    subHeight, indicatorSettings
+  ]);
+
+  // メインチャートパネル（メモ化コンポーネント使用）
+  const mainChartPanel = <MainChartPanel {...chartPanelProps} />;
+
   return (
     <div className={className} id="chart-panel">
-      <div className="flex w-full gap-4">
-        <div className="flex flex-col flex-1 space-y-4">
-          <div className="relative w-full h-full">
-            <div
-              ref={containerRef}
-              className="w-full rounded-md overflow-hidden border border-border"
-              style={{ height: chartHeight }}
-              data-testid="chart-container"
+      {showOrderBook ? (
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="w-full gap-4"
+          onLayout={() => {
+            window.dispatchEvent(new Event("resize"));
+            // リサイズ時に明示的にチャートを再描画
+            if (chartRef.current && containerRef.current) {
+              chartRef.current.resize(
+                containerRef.current.clientWidth,
+                chartHeight
+              );
+            }
+          }}
+        >
+          <ResizablePanel minSize={60} defaultSize={75}>
+            {mainChartPanel}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel minSize={20} defaultSize={25}>
+            <OrderBookPanel
+              symbol={initialSymbol}
+              height={chartHeight}
+              currentPrice={currentPrice}
+              className="w-[250px] flex-shrink-0"
+              onClose={handleOrderBookToggle}
             />
-            
-            {!loading && !error && candles.length > 0 && (
-              <CandleCountdown
-                interval={initialInterval}
-                backgroundColor={countdownBgColor}
-                textColor={countdownTextColor}
-                className="absolute top-2 right-16 z-20"
-              />
-            )}
-            
-            <CrosshairTooltip info={crosshairInfo} />
-            
-            <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
-            {showSidebar && (
-              <ChartSidebar
-                mode={mode}
-                onModeChange={handleModeChange}
-                onClear={handleClearDrawing}
-                registerShortcuts={memoizedRegisterShortcuts}
-                unregisterShortcuts={unregisterShortcuts}
-                className="absolute top-12 left-2 z-20"
-              />
-            )}
-            {mode === DRAWING_MODES.ERASER && (
-              <EraserSizeControl
-                size={eraserSize}
-                onChange={setEraserSize}
-                className="absolute top-2 right-2 z-30 w-[180px]"
-              />
-            )}
-            <div
-              className={`absolute inset-0 z-10 overflow-hidden ${mode === null ? "pointer-events-none" : ""}`}
-              onWheel={handleWheel}
-            >
-              <DrawingCanvas
-                ref={drawingRef}
-                enabled={isDrawingEnabled}
-                className="w-full h-full"
-                color={drawingColor}
-                strokeWidth={2}
-                mode={mode}
-                eraserSize={eraserSize}
-              />
-            </div>
-          </div>
-          {indicators.rsi && (
-            <RsiPanel
-              data={rsi}
-              chart={chartRef.current}
-              height={subHeight}
-              lineWidth={indicatorSettings.lineWidth.rsi}
-              color={indicatorSettings.colors?.rsi}
-              rsiUpper={indicatorSettings.rsiUpper}
-              rsiLower={indicatorSettings.rsiLower}
-              onClose={() => handleToggleIndicator("rsi", false)}
-            />
-          )}
-          {indicators.macd && (
-            <MacdPanel
-              macd={macd}
-              signal={signal}
-              histogram={histogram}
-              chart={chartRef.current}
-              height={subHeight}
-              lineWidth={indicatorSettings.lineWidth.macd}
-              macdColor={indicatorSettings.colors?.macd}
-              onClose={() => handleToggleIndicator("macd", false)}
-            />
-          )}
-        </div>
-        {SHOW_ORDER_BOOK && (
-          <OrderBookPanel
-            symbol={initialSymbol}
-            height={chartHeight}
-            currentPrice={currentPrice}
-            className="w-[250px] flex-shrink-0"
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        <div className="relative">
+          {mainChartPanel}
+          <OrderBookToggleButton 
+            onToggle={handleOrderBookToggle} 
+            className="absolute top-2 right-2 z-30"
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
