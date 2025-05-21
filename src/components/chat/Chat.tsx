@@ -63,14 +63,15 @@ export default function Chat() {
   const isSendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  
+
   // 音声入力フックを使用
-  const { isListening, startListening, stopListening, toggleListening } = useVoiceInput({
-    onResult: (text) => {
-      setInput(text);
-    },
-    lang: "ja-JP"
-  });
+  const { isListening, startListening, stopListening, toggleListening } =
+    useVoiceInput({
+      onResult: (text) => {
+        setInput(text);
+      },
+      lang: "ja-JP",
+    });
 
   const { captureScreenshot } = useScreenshot({
     onCapture: async (url: string) => {
@@ -81,16 +82,16 @@ export default function Chat() {
   // メッセージ送信の共通ロジック
   const handleSendMessage = () => {
     stopListening(); // 音声入力を停止
-    
+
     if (!input.trim()) return;
-    
-    const text = input;  // 現在の入力を保存
-    
+
+    const text = input; // 現在の入力を保存
+
     // 入力欄をクリア（同期的に実行）
     flushSync(() => {
       setInput("");
     });
-    
+
     // メッセージを送信（非同期処理を次のイベントループに遅延させる）
     isSendingRef.current = true;
     setTimeout(() => {
@@ -113,11 +114,11 @@ export default function Chat() {
     setUploading(true);
     sendMessage(text, file)
       .catch((err) => {
-        console.error('画像送信エラー', err);
+        console.error("画像送信エラー", err);
       })
       .finally(() => {
         setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = "";
       });
   };
 
@@ -129,16 +130,16 @@ export default function Chat() {
     assistantAvatar,
   } = useSettings();
 
-  const exportConversation = (format: 'json' | 'txt') => {
+  const exportConversation = (format: "json" | "txt") => {
     const data =
-      format === 'json'
+      format === "json"
         ? JSON.stringify(messages, null, 2)
-        : messages.map((m) => `${m.role}: ${m.content}`).join('\n');
+        : messages.map((m) => `${m.role}: ${m.content}`).join("\n");
     const blob = new Blob([data], {
-      type: format === 'json' ? 'application/json' : 'text/plain',
+      type: format === "json" ? "application/json" : "text/plain",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `conversation_${selectedId}.${format}`;
     a.click();
@@ -156,7 +157,6 @@ export default function Chat() {
   useEffect(() => {
     // この関数では何もしないように変更
     // 読み上げはメッセージバブルの個別ボタンから行うため
-    
     // 以下の処理を無効化
   }, [messages, loading, speechSynthesisEnabled]); // 依存配列はそのまま残す
 
@@ -176,15 +176,46 @@ export default function Chat() {
   useEffect(() => {
     // コンポーネントのマウント時に一度読み込む
     refreshSettings();
-    
+
     // 3秒ごとに設定を更新
     const interval = setInterval(() => {
       refreshSettings();
     }, 3000);
-    
+
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 依存配列を空にして、マウント時のみ実行されるようにする
+
+  // キーボードショートカットを登録
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      // 入力中はショートカットを無効化
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        return;
+      }
+
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        captureScreenshot();
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        toggleListening();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown);
+    return () => {
+      window.removeEventListener("keydown", handleKeydown);
+    };
+  }, [captureScreenshot, toggleSidebar, toggleListening]);
 
   return (
     <div className="flex h-full relative">
@@ -192,8 +223,8 @@ export default function Chat() {
         id="conversationSidebar"
         aria-hidden={!sidebarOpen}
         className={cn(
-          'relative overflow-hidden transition-all duration-300',
-          sidebarOpen ? 'w-full md:w-56' : 'w-0'
+          "relative overflow-hidden transition-all duration-300",
+          sidebarOpen ? "w-full md:w-56" : "w-0",
         )}
       >
         <ConversationSidebar
@@ -203,11 +234,15 @@ export default function Chat() {
           onRename={renameConversation}
           onRemove={removeConversation}
           className={cn(
-            'absolute inset-0 w-full md:w-56 md:relative md:block border-r bg-background flex flex-col transition-transform duration-300',
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            "absolute inset-0 w-full md:w-56 md:relative md:block border-r bg-background flex flex-col transition-transform duration-300",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
           footer={
-            <Button variant="outline" className="w-full" onClick={newConversation}>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={newConversation}
+            >
               新しいチャット
             </Button>
           }
@@ -219,7 +254,11 @@ export default function Chat() {
           toggleSidebar={toggleSidebar}
           exportConversation={exportConversation}
         />
-        <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2" aria-live="polite">
+        <div
+          ref={listRef}
+          className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2"
+          aria-live="polite"
+        >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
               <div className="text-center">
