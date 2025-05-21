@@ -110,15 +110,6 @@ export default function Home() {
     [],
   );
 
-  // グローバル Window オブジェクトへ関数を登録
-  useEffect(() => {
-    window.toggleIndicator = toggleIndicator;
-    window.changeTimeframe = handleTimeframeChange;
-    return () => {
-      delete window.toggleIndicator;
-      delete window.changeTimeframe;
-    };
-  }, [toggleIndicator, handleTimeframeChange]);
 
   useEffect(() => {
     const hasSeenModal = localStorage.getItem("hasSeenWelcomeModal");

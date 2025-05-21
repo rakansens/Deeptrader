@@ -3,6 +3,8 @@ jest.mock('@mastra/core/tools', () => ({
 }), { virtual: true });
 
 import React from 'react';
+import { render } from '@testing-library/react';
+import { UiControlProvider } from '@/contexts/UiControlContext';
 import { toggleIndicatorTool } from '@/mastra/tools/toggleIndicatorTool';
 
 describe('toggleIndicatorTool', () => {
@@ -12,15 +14,17 @@ describe('toggleIndicatorTool', () => {
     ).not.toThrow();
   });
 
-  it('uses window function and returns success', async () => {
+  it('uses context function and returns success', async () => {
     const mockFn = jest.fn();
-    window.toggleIndicator = mockFn;
+    render(
+      <UiControlProvider value={{ toggleIndicator: mockFn, changeTimeframe: jest.fn() }}>
+        <div />
+      </UiControlProvider>
+    );
 
     const execute = toggleIndicatorTool.execute as (params: any) => Promise<any>;
     const result = await execute({ context: { indicator: 'rsi', enabled: false } } as any);
     expect(mockFn).toHaveBeenCalledWith('rsi', false);
     expect(result).toEqual({ success: true });
-
-    delete window.toggleIndicator;
   });
-}); 
+});

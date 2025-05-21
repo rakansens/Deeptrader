@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { getUiControl } from '@/contexts/UiControlContext';
 
 /**
  * チャートインジケーターの表示を切り替えるツール
@@ -13,9 +14,9 @@ export const toggleIndicatorTool = createTool({
     enabled: z.boolean().optional().describe('有効にするかどうか'),
   }),
   execute: async ({ context }) => {
-    const fn = window.toggleIndicator;
-    if (fn) {
-      fn(context.indicator, context.enabled);
+    const { toggleIndicator } = getUiControl();
+    if (toggleIndicator) {
+      toggleIndicator(context.indicator, context.enabled);
       return { success: true };
     }
     throw new Error('toggleIndicator 関数が定義されていません');

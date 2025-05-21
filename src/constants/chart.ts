@@ -1,4 +1,3 @@
-
 export type Timeframe =
   | '1m' | '3m' | '5m' | '15m' | '30m'
   | '1h' | '2h' | '4h' | '6h' | '8h'
@@ -90,3 +89,15 @@ export const TIMEFRAME_TO_MS: Record<Timeframe, number> = {
   '1w': 604_800_000,
   '1M': 2_592_000_000,
 } as const;
+
+/**
+ * チャート上の描画色オプション
+ */
+export const DRAWING_COLORS = [
+  { label: '赤', value: '#FF0000' },
+  { label: '青', value: '#0000FF' },
+  { label: '緑', value: '#00FF00' },
+  { label: '黄', value: '#FFFF00' },
+  { label: '黒', value: '#000000' },
+  { label: '白', value: '#FFFFFF' },
+] as const;

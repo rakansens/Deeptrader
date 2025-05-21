@@ -33,11 +33,25 @@ export async function captureViaHtml2Canvas(
     const canvas = await html2canvas(element, {
       allowTaint: true,
       useCORS: true,
-      scale: 2,
+      scale: 1.5,
       logging: false,
       backgroundColor: null
     })
-    return canvas.toDataURL('image/png', 1.0)
+    
+    const MAX_WIDTH = 800
+    if (canvas.width > MAX_WIDTH) {
+      const scaledCanvas = document.createElement('canvas')
+      const ratio = MAX_WIDTH / canvas.width
+      scaledCanvas.width = MAX_WIDTH
+      scaledCanvas.height = canvas.height * ratio
+      const ctx = scaledCanvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, scaledCanvas.width, scaledCanvas.height)
+        return scaledCanvas.toDataURL('image/png', 0.9)
+      }
+    }
+    
+    return canvas.toDataURL('image/png', 0.9)
   } catch (e) {
     logger.error('html2canvas capture failed:', e)
     return null

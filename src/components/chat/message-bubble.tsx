@@ -100,7 +100,7 @@ export function MessageBubble({
             alt={prompt || "チャートイメージ"}
             className={cn(
               "rounded-md border border-border max-w-full",
-              imageExpanded ? "w-auto max-h-[80vh]" : "w-60 sm:w-80 max-h-60"
+              imageExpanded ? "w-auto max-h-[80vh]" : "w-48 sm:w-64 max-h-48 object-cover"
             )}
             onClick={handleImageClick}
             style={{ cursor: 'pointer' }}
@@ -166,7 +166,7 @@ export function MessageBubble({
 
       <div
         className={cn(
-          "flex flex-col max-w-[90%] sm:max-w-[75%]",
+          "flex flex-col max-w-[90%] sm:max-w-[75%] md:max-w-[65%]",
           role === "user" ? "items-end" : "items-start",
           !isImage && "group"
         )}

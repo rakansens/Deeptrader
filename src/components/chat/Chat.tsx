@@ -227,15 +227,19 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
           toggleSidebar={toggleSidebar}
           exportConversation={exportConversation}
         />
-        <ChatMessages
-          messages={messages}
-          loading={loading}
-          error={error}
-          listRef={listRef}
-          userAvatar={userAvatar}
-          assistantAvatar={assistantAvatar}
-          setInput={setInput}
-        />
+        <div className="relative flex-1 overflow-hidden">
+          <div className="absolute inset-0 max-w-full overflow-auto">
+            <ChatMessages
+              messages={messages}
+              loading={loading}
+              error={error}
+              listRef={listRef}
+              userAvatar={userAvatar}
+              assistantAvatar={assistantAvatar}
+              setInput={setInput}
+            />
+          </div>
+        </div>
         <ChatInput
           input={input}
           setInput={setInput}

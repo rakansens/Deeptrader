@@ -41,6 +41,7 @@ test("chart analysis API returns execution result", async () => {
   });
   expect(mockedTool.execute).toHaveBeenCalledWith({
     context: { symbol: "BTCUSDT", timeframe: "1h" },
+    suspend: expect.any(Function),
   });
   expect(data).toEqual({ ok: true });
 });
