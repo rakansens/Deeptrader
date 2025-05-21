@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { UiControlProvider } from '@/contexts/UiControlContext';
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,26 +46,30 @@ export default function Home() {
   const [symbol, setSymbol] = useState<SymbolValue>(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{ ma: boolean; rsi: boolean; macd?: boolean; boll?: boolean }>({ ma: true, rsi: false, macd: false, boll: false });
   const [settings, setSettings] = useState<IndicatorSettings>(DEFAULT_INDICATOR_SETTINGS);
-  const [drawingColor, setDrawingColor] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('drawingColor') ?? DRAWING_COLORS[0].value;
-    }
-    return DRAWING_COLORS[0].value;
-  });
+  const [drawingColor, setDrawingColor] = useState<string>(DRAWING_COLORS[0].value);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  const handleDrawingColorChange = (value: string) => {
+  // クライアントサイドでのみ実行する初期化
+  useEffect(() => {
+    // ローカルストレージからの読み込みはクライアントサイドでのみ行う
+    const savedColor = localStorage.getItem('drawingColor');
+    if (savedColor) {
+      setDrawingColor(savedColor);
+    }
+  }, []);
+
+  const handleDrawingColorChange = useCallback((value: string) => {
     setDrawingColor(value);
     if (typeof window !== 'undefined') {
       localStorage.setItem('drawingColor', value);
     }
-  };
+  }, []);
 
   // 型安全なハンドラー関数を定義
-  const handleTimeframeChange = (tf: Timeframe) => setTimeframe(tf);
-  const handleSymbolChange = (sym: SymbolValue) => setSymbol(sym);
+  const handleTimeframeChange = useCallback((tf: Timeframe) => setTimeframe(tf), []);
+  const handleSymbolChange = useCallback((sym: SymbolValue) => setSymbol(sym), []);
 
-  const toggleIndicator = (indicatorName: string, enable?: boolean) => {
+  const toggleIndicator = useCallback((indicatorName: string, enable?: boolean) => {
     setIndicators(prevIndicators => {
       const key = indicatorName.toLowerCase() as keyof typeof prevIndicators;
       if (key === 'ma' || key === 'rsi' || key === 'macd' || key === 'boll') {
@@ -78,8 +82,7 @@ export default function Home() {
       console.warn(`Unknown indicator: ${indicatorName}`);
       return prevIndicators;
     });
-  };
-
+  }, []);
 
   useEffect(() => {
     const hasSeenModal = localStorage.getItem('hasSeenWelcomeModal');
@@ -183,6 +186,7 @@ export default function Home() {
                             : 'opacity-70 hover:opacity-100'
                         }`}
                         aria-label={`色を${c.label}に変更`}
+                        suppressHydrationWarning
                       />
                     ))}
                   </div>

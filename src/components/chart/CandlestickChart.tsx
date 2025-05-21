@@ -86,15 +86,23 @@ export default function CandlestickChart({
     handleClearDrawing,
     toggleSidebar,
     handleWheel,
-    registerShortcuts,
+    registerShortcuts: registerDrawingShortcuts,
     unregisterShortcuts,
   } = useDrawingControls({ containerRef, drawingEnabled });
 
+  // registerShortcutsをメモ化して毎回新しい関数を作らないようにする
+  const memoizedRegisterShortcuts = useCallback(() => {
+    registerDrawingShortcuts();
+  }, [registerDrawingShortcuts]);
+
   useEffect(() => {
+    // コンポーネントのアンマウント時にのみクリーンアップ
     return () => {
       unregisterShortcuts();
     };
-  }, [unregisterShortcuts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 依存配列を空にして一度だけ登録
+
   const { width } = useWindowSize();
 
   // 画面幅に応じて高さを調整する
@@ -269,7 +277,7 @@ export default function CandlestickChart({
                 mode={mode}
                 onModeChange={handleModeChange}
                 onClear={handleClearDrawing}
-                registerShortcuts={registerShortcuts}
+                registerShortcuts={memoizedRegisterShortcuts}
                 unregisterShortcuts={unregisterShortcuts}
                 className="absolute top-12 left-2 z-20"
               />

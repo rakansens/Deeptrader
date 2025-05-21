@@ -34,22 +34,33 @@ export function useDrawingControls({
     drawingRef.current?.clear();
   }, []);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+  const handleKeyDownRef = useRef((e: KeyboardEvent) => {
     if (!e.altKey) return;
     const key = e.key.toLowerCase();
     if (SHORTCUT_MAP[key]) {
       e.preventDefault();
       setMode(SHORTCUT_MAP[key]);
     }
+  });
+
+  useEffect(() => {
+    handleKeyDownRef.current = (e: KeyboardEvent) => {
+      if (!e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (SHORTCUT_MAP[key]) {
+        e.preventDefault();
+        setMode(SHORTCUT_MAP[key]);
+      }
+    };
   }, []);
 
   const registerShortcuts = useCallback(() => {
-    window.addEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener("keydown", handleKeyDownRef.current);
+  }, []);
 
   const unregisterShortcuts = useCallback(() => {
-    window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    window.removeEventListener("keydown", handleKeyDownRef.current);
+  }, []);
 
   useEffect(() => {
     if (!drawingEnabled) {

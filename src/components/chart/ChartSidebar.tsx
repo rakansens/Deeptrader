@@ -69,11 +69,14 @@ export default function ChartSidebar({
   };
 
   useEffect(() => {
+    // マウント時に一度だけショートカットを登録
     registerShortcuts?.();
     return () => {
+      // アンマウント時にクリーンアップ
       unregisterShortcuts?.();
     };
-  }, [registerShortcuts, unregisterShortcuts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 依存配列を空にしてマウント/アンマウント時のみ実行
 
   // アクティブかどうかを判定するヘルパー関数
   const isActive = (toolMode: DrawingMode | null) => mode === toolMode;
