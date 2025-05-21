@@ -9,11 +9,31 @@ const conversations = [
 
 describe('ConversationSidebar', () => {
   it('calls onSelect when item clicked', async () => {
+  const user = userEvent.setup()
+  const onSelect = jest.fn()
+  render(<ConversationSidebar conversations={conversations} onSelect={onSelect} />)
+  await user.click(screen.getByRole('button', { name: 'Two' }))
+  expect(onSelect).toHaveBeenCalledWith('2')
+  })
+
+  it('filters conversations by title', async () => {
     const user = userEvent.setup()
-    const onSelect = jest.fn()
-    render(<ConversationSidebar conversations={conversations} onSelect={onSelect} />)
-    await user.click(screen.getByRole('button', { name: 'Two' }))
-    expect(onSelect).toHaveBeenCalledWith('2')
+    render(
+      <ConversationSidebar conversations={conversations} onSelect={() => {}} />
+    )
+    const input = screen.getByPlaceholderText('会話を検索...')
+    await user.type(input, 'Tw')
+    expect(screen.queryByText('One')).not.toBeInTheDocument()
+    expect(screen.getByText('Two')).toBeInTheDocument()
+  })
+
+  it('filter input is focusable via tab', async () => {
+    const user = userEvent.setup()
+    render(
+      <ConversationSidebar conversations={conversations} onSelect={() => {}} />
+    )
+    await user.tab()
+    expect(screen.getByPlaceholderText('会話を検索...')).toHaveFocus()
   })
 
   it('renames conversation', async () => {

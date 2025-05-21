@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import MessageBubble from '@/components/chat/message-bubble'
 
 describe('MessageBubble', () => {
@@ -62,5 +63,17 @@ describe('MessageBubble', () => {
     )
     const img = screen.getByRole('img')
     expect(img).toHaveAttribute('src', 'http://example.com/img.png')
+  })
+
+  it('copies text when copy button clicked', async () => {
+    const user = userEvent.setup()
+    const writeMock = jest.fn()
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeMock },
+      configurable: true,
+    })
+    render(<MessageBubble role="user">copy text</MessageBubble>)
+    await user.click(screen.getByLabelText('メッセージをコピー'))
+    expect(writeMock).toHaveBeenCalledWith('copy text')
   })
 })

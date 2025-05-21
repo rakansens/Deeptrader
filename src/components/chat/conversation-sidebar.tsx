@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { ReactNode } from "react";
 import { PenLine, Trash2 } from "lucide-react";
 import {
@@ -49,6 +49,15 @@ export function ConversationSidebar({
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [targetId, setTargetId] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
+
+  const filtered = useMemo(
+    () =>
+      conversations.filter((c) =>
+        c.title.toLowerCase().includes(filter.toLowerCase()),
+      ),
+    [conversations, filter],
+  );
 
   const startRename = (id: string, title: string) => {
     setTargetId(id);
@@ -66,8 +75,15 @@ export function ConversationSidebar({
   return (
     <>
       <aside className={cn("w-56 border-r h-full flex flex-col", className)}>
+      <div className="p-2 border-b">
+        <Input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="会話を検索..."
+        />
+      </div>
       <ul className="flex-1 overflow-y-auto p-2 space-y-2">
-        {conversations.map((c) => (
+        {filtered.map((c) => (
           <li key={c.id} className="flex items-center group">
             <button
               type="button"

@@ -18,6 +18,7 @@ import type { LucideIcon } from "lucide-react";
 import type { DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
 import DrawingColorPicker from "./drawing-color-picker";
+import EraserSizeControl from "./eraser-size-control";
 
 interface ChartSidebarProps {
   mode: DrawingMode | null;
@@ -28,6 +29,9 @@ interface ChartSidebarProps {
   registerShortcuts?: () => void;
   unregisterShortcuts?: () => void;
   className?: string;
+  // 消しゴムサイズ管理用のプロパティを追加
+  eraserSize?: number;
+  setEraserSize?: (size: number) => void;
 }
 
 interface ToolInfo {
@@ -62,6 +66,8 @@ export default function ChartSidebar({
   registerShortcuts,
   unregisterShortcuts,
   className,
+  eraserSize = 30,
+  setEraserSize = () => {},
 }: ChartSidebarProps) {
   // ツールをクリックした時のハンドラー
   const handleToolClick = (clickedMode: DrawingMode | null) => {
@@ -110,6 +116,15 @@ export default function ChartSidebar({
           <Icon className="h-4 w-4" />
         </button>
       ))}
+
+      {/* 消しゴムツールが選択されている場合にサイズ調整スライダーを表示 */}
+      {mode === "eraser" && (
+        <EraserSizeControl
+          size={eraserSize}
+          onChange={setEraserSize}
+          className="mt-1 w-full"
+        />
+      )}
 
       <DrawingColorPicker
         value={drawingColor}

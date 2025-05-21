@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
 import { useSettings } from "@/hooks/use-settings";
 import { speakText, stopSpeech } from "@/lib/speech-utils";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Copy as CopyIcon } from "lucide-react";
 import TypingIndicator from "./typing-indicator";
 
 export interface MessageBubbleProps {
@@ -86,6 +86,16 @@ export function MessageBubble({
     utterance?.addEventListener('error', () => {
       setIsSpeaking(false);
     });
+  };
+
+  /** クリップボードにテキストをコピー */
+  const handleCopyMessage = async () => {
+    if (typeof children !== 'string' || isImage) return;
+    try {
+      await navigator.clipboard.writeText(children);
+    } catch (e) {
+      console.warn('[MessageBubble] Failed to copy message:', e);
+    }
   };
 
   // テキスト部分のエスケープ
@@ -193,27 +203,44 @@ export function MessageBubble({
         
         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
           {formattedDate}
-          
-          {/* 読み上げボタン - アシスタントメッセージかつテキストの場合のみ表示 */}
-          {speechSynthesisEnabled && role === "assistant" && !isImage && !typing && typeof children === 'string' && (
-            <button
-              onClick={handleSpeakMessage}
-              className={cn(
-                "p-1 rounded ml-auto",
-                "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                isSpeaking 
-                  ? "opacity-100" // 読み上げ中は常に表示
-                  : "opacity-0 group-hover:opacity-100", // 読み上げ中でない場合はホバー時のみ表示
-                "transition-opacity",
-                "flex items-center text-xs gap-1"
-              )}
-              aria-label={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
-              title={isSpeaking ? "読み上げを停止" : "メッセージを読み上げ"}
-            >
-              {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-              <span>{isSpeaking ? "停止" : "読み上げ"}</span>
-            </button>
-          )}
+
+          <div className="ml-auto flex gap-1">
+            {/* コピーボタン - テキストメッセージのみ表示 */}
+            {!isImage && !typing && typeof children === 'string' && (
+              <button
+                onClick={handleCopyMessage}
+                className={cn(
+                  'p-1 rounded',
+                  'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                  'opacity-0 group-hover:opacity-100',
+                  'transition-opacity'
+                )}
+                aria-label="メッセージをコピー"
+                title="メッセージをコピー"
+              >
+                <CopyIcon className="h-3 w-3" />
+              </button>
+            )}
+
+            {/* 読み上げボタン - アシスタントメッセージかつテキストの場合のみ表示 */}
+            {speechSynthesisEnabled && role === 'assistant' && !isImage && !typing && typeof children === 'string' && (
+              <button
+                onClick={handleSpeakMessage}
+                className={cn(
+                  'p-1 rounded',
+                  'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                  isSpeaking ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                  'transition-opacity',
+                  'flex items-center text-xs gap-1'
+                )}
+                aria-label={isSpeaking ? '読み上げを停止' : 'メッセージを読み上げ'}
+                title={isSpeaking ? '読み上げを停止' : 'メッセージを読み上げ'}
+              >
+                {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+                <span>{isSpeaking ? '停止' : '読み上げ'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

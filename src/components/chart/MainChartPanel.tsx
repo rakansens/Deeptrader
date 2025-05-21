@@ -118,14 +118,9 @@ function MainChartPanelComponent({
             onColorChange={onDrawingColorChange}
             registerShortcuts={registerShortcuts}
             unregisterShortcuts={unregisterShortcuts}
+            eraserSize={eraserSize}
+            setEraserSize={setEraserSize}
             className="absolute top-12 left-2 z-20"
-          />
-        )}
-        {mode === DRAWING_MODES.ERASER && (
-          <EraserSizeControl
-            size={eraserSize}
-            onChange={setEraserSize}
-            className="absolute top-2 right-2 z-30 w-[180px]"
           />
         )}
         <div
