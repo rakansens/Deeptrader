@@ -258,8 +258,6 @@ export default function CandlestickChart({
       setEraserSize,
       drawingColor,
       onDrawingColorChange,
-      onDrawingColorChange,
-      onDrawingColorChange,
       indicators,
       handleToggleIndicator,
       chartRef,

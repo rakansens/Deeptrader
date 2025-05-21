@@ -100,4 +100,4 @@ export const DRAWING_COLORS = [
   { label: '黄', value: '#FFFF00' },
   { label: '黒', value: '#000000' },
   { label: '白', value: '#FFFFFF' },
-] as const;
+];
