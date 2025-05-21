@@ -18,6 +18,8 @@ describe("candlestick-utils", () => {
       const res = calculateIndicators(prices, {
         sma: 10,
         rsi: 10,
+        rsiUpper: 70,
+        rsiLower: 30,
         macd: { short: 5, long: 8, signal: 3 },
         boll: { period: 10, stdDev: 2 },
         lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },

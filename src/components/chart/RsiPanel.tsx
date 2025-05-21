@@ -19,6 +19,8 @@ interface RsiPanelProps {
   onClose?: () => void;
   lineWidth?: number;
   color?: string;
+  rsiUpper?: number;
+  rsiLower?: number;
 }
 
 /**
@@ -31,9 +33,13 @@ export default function RsiPanel({
   lineWidth = 2,
   color = "#2962FF",
   onClose,
+  rsiUpper = 70,
+  rsiLower = 30,
 }: RsiPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const overSoldRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const overBoughtRef = useRef<ISeriesApi<"Line"> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const colors = useChartTheme();
   const createIndicatorChart = useIndicatorChart({
@@ -82,19 +88,25 @@ export default function RsiPanel({
 
     const timeFrom = toNumericTime(Date.now()) - 60 * 60 * 24 * 30;
     const timeTo = toNumericTime(Date.now()) + 60 * 60 * 24;
+    
+    overSoldRef.current = overSoldLine;
+    overBoughtRef.current = overBoughtLine;
+
     overSoldLine.setData([
-      { time: timeFrom as UTCTimestamp, value: 30 },
-      { time: timeTo as UTCTimestamp, value: 30 },
+      { time: timeFrom as UTCTimestamp, value: rsiLower },
+      { time: timeTo as UTCTimestamp, value: rsiLower },
     ]);
     overBoughtLine.setData([
-      { time: timeFrom as UTCTimestamp, value: 70 },
-      { time: timeTo as UTCTimestamp, value: 70 },
+      { time: timeFrom as UTCTimestamp, value: rsiUpper },
+      { time: timeTo as UTCTimestamp, value: rsiUpper },
     ]);
 
     return () => {
       cleanup();
       chartRef.current = null;
       seriesRef.current = null;
+      overSoldRef.current = null;
+      overBoughtRef.current = null;
     };
   }, []);
 
@@ -108,6 +120,20 @@ export default function RsiPanel({
       ]);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (!overSoldRef.current || !overBoughtRef.current) return;
+    const timeFrom = toNumericTime(Date.now()) - 60 * 60 * 24 * 30;
+    const timeTo = toNumericTime(Date.now()) + 60 * 60 * 24;
+    overSoldRef.current.setData([
+      { time: timeFrom as UTCTimestamp, value: rsiLower },
+      { time: timeTo as UTCTimestamp, value: rsiLower },
+    ]);
+    overBoughtRef.current.setData([
+      { time: timeFrom as UTCTimestamp, value: rsiUpper },
+      { time: timeTo as UTCTimestamp, value: rsiUpper },
+    ]);
+  }, [rsiUpper, rsiLower]);
 
   return (
     <IndicatorPanel

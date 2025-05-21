@@ -38,6 +38,10 @@ export interface IndicatorSettings {
   sma: number;
   /** RSIの期間 */
   rsi: number;
+  /** RSIの買われすぎ水準 */
+  rsiUpper: number;
+  /** RSIの売られすぎ水準 */
+  rsiLower: number;
   /** MACDの短期・長期・シグナル期間 */
   macd: {
     short: number;
@@ -65,6 +69,8 @@ export interface IndicatorSettings {
 export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   sma: 14,
   rsi: 14,
+  rsiUpper: 70,
+  rsiLower: 30,
   macd: { short: 12, long: 26, signal: 9 },
   boll: 20,
   lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },

@@ -281,6 +281,38 @@ export default function ChartToolbar({
                       }
                     />
                   </label>
+                  <label className="flex items-center justify-between text-sm">
+                    <span>Overbought</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.rsiUpper}
+                      min={1}
+                      max={100}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          rsiUpper: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="flex items-center justify-between text-sm">
+                    <span>Oversold</span>
+                    <input
+                      type="number"
+                      className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
+                      value={settings.rsiLower}
+                      min={1}
+                      max={100}
+                      onChange={(e) =>
+                        onSettingsChange({
+                          ...settings,
+                          rsiLower: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
                   <div className="pt-2 border-t border-border/50">
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span>RSI Width</span>

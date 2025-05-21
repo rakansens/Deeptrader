@@ -10,6 +10,8 @@ import useIndicatorSeries from "@/hooks/use-indicator-series";
 import useChartInstance from "@/hooks/use-chart-instance";
 import useWindowSize from "@/hooks/use-window-size";
 import useDrawingControls from "@/hooks/use-drawing-controls";
+import useCrosshairInfo from "@/hooks/use-crosshair-info";
+import CrosshairTooltip from "./CrosshairTooltip";
 import RsiPanel from "./RsiPanel";
 import MacdPanel from "./MacdPanel";
 import OrderBookPanel from "./OrderBookPanel";
@@ -156,6 +158,12 @@ export default function CandlestickChart({
     },
   });
 
+  const crosshairInfo = useCrosshairInfo({
+    chart: chartRef.current,
+    candleSeries: candleRef.current,
+    volumeSeries: volumeRef.current,
+  });
+
   const [countdownBgColor, setCountdownBgColor] = useState<string | undefined>();
   const [countdownTextColor, setCountdownTextColor] = useState<string>("#ffffff");
 
@@ -229,6 +237,8 @@ export default function CandlestickChart({
               />
             )}
             
+            <CrosshairTooltip info={crosshairInfo} />
+            
             <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
             {showSidebar && (
               <ChartSidebar
@@ -267,6 +277,8 @@ export default function CandlestickChart({
               height={subHeight}
               lineWidth={indicatorSettings.lineWidth.rsi}
               color={indicatorSettings.colors?.rsi}
+              rsiUpper={indicatorSettings.rsiUpper}
+              rsiLower={indicatorSettings.rsiLower}
               onClose={() => handleToggleIndicator("rsi", false)}
             />
           )}

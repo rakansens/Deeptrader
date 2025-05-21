@@ -22,6 +22,8 @@ export type SymbolValue = string;
 export interface IndicatorSettings {
   sma: number;
   rsi: number;
+  rsiUpper: number;
+  rsiLower: number;
   macd: { short:number; long:number; signal:number };
   boll: { period:number; stdDev:number };
   /** ライン幅設定 */
@@ -42,6 +44,8 @@ export interface IndicatorSettings {
 export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   sma: 14,
   rsi: 14,
+  rsiUpper: 70,
+  rsiLower: 30,
   macd: { short:12, long:26, signal:9 },
   boll: { period:20, stdDev:2 },
   lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
