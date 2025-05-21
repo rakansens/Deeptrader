@@ -29,6 +29,7 @@ import { tradingAgent } from '@/mastra/agents/tradingAgent';
 import { chartAnalysisTool } from '@/mastra/tools/chartAnalysisTool';
 import { marketDataTool } from '@/mastra/tools/marketDataTool';
 import { tradingExecutionTool } from '@/mastra/tools/tradingExecutionTool';
+import { marketAnalysisSchema, tradingStrategySchema } from '@/mastra/agents/tradingAgent';
 
 describe('tradingAgent', () => {
   it('is configured correctly', () => {
@@ -37,5 +38,29 @@ describe('tradingAgent', () => {
     expect(tradingAgent.tools.marketDataTool).toBe(marketDataTool);
     expect(tradingAgent.tools.tradingExecutionTool).toBe(tradingExecutionTool);
     expect(tradingAgent.getMemory()).toBeDefined();
+  });
+
+  it('rejects invalid timeframe in marketAnalysisSchema', () => {
+    expect(() =>
+      marketAnalysisSchema.parse({
+        trend: 'bullish',
+        supportLevels: [],
+        resistanceLevels: [],
+        keyPatterns: [],
+        riskLevel: 'low',
+        timeframe: '1year',
+        summary: ''
+      })
+    ).toThrow();
+  });
+
+  it('rejects invalid timeframe in tradingStrategySchema', () => {
+    expect(() =>
+      tradingStrategySchema.parse({
+        action: 'buy',
+        timeframe: '2h',
+        reasoning: '',
+      })
+    ).toThrow();
   });
 });
