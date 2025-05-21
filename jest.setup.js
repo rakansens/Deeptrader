@@ -6,6 +6,16 @@ if (typeof crypto.randomUUID !== "function") {
   crypto.randomUUID = () => Math.random().toString(36).slice(2);
 }
 
+// Polyfill ResizeObserver for jsdom
+if (typeof window.ResizeObserver === "undefined") {
+  window.ResizeObserver = class {
+    constructor() {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 // グローバルなモックの設定
 jest.mock("next/router", () => ({
   useRouter: () => ({

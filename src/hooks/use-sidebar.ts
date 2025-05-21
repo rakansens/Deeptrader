@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 export interface UseSidebar {
   sidebarOpen: boolean;
@@ -16,11 +16,6 @@ export function useSidebar(initial = true): UseSidebar {
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
-
-  useEffect(() => {
-    // 状態が変わった後にリサイズイベントを通知
-    window.dispatchEvent(new Event("resize"));
-  }, [sidebarOpen]);
 
   return { sidebarOpen, toggleSidebar };
 }

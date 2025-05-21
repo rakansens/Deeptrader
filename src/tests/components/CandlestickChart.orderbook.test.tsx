@@ -59,7 +59,6 @@ jest.useFakeTimers();
 describe('CandlestickChart order book', () => {
   beforeEach(() => {
     jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ clearRect: jest.fn() } as any);
-    jest.spyOn(window, 'dispatchEvent');
   });
 
   afterEach(() => {
@@ -94,7 +93,7 @@ describe('CandlestickChart order book', () => {
     expect(screen.getByTestId('orderbook-panel')).toBeInTheDocument();
   });
 
-  it('dispatches resize and resizes chart on layout change', async () => {
+  it('resizes chart on layout change', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => [] } as Response);
     global.WebSocket = jest.fn(() => ({ close: jest.fn(), onmessage: null })) as any;
     render(
@@ -105,12 +104,9 @@ describe('CandlestickChart order book', () => {
         indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />,
     );
-    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
     const { createChart } = require('lightweight-charts');
     const mockCharts = createChart.mockCharts;
     onLayoutHandlers.forEach(h => h && h());
-    expect(dispatchSpy).toHaveBeenCalledWith(expect.any(Event));
-    expect((dispatchSpy.mock.calls[0][0] as Event).type).toBe('resize');
     jest.advanceTimersByTime(0);
     const lastChart = mockCharts[mockCharts.length - 1];
     expect(lastChart.resize).toHaveBeenCalled();

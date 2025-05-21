@@ -308,8 +308,6 @@ export default function CandlestickChart({
           direction="horizontal"
           className="w-full gap-4"
           onLayout={() => {
-            window.dispatchEvent(new Event("resize"));
-            // リサイズ時に明示的にチャートを再描画
             if (chartRef.current && containerRef.current) {
               chartRef.current.resize(
                 containerRef.current.clientWidth,

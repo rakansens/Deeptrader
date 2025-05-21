@@ -112,10 +112,21 @@ export function useChartInstance({
         chartRef.current.resize(container.clientWidth, height);
       }
     };
-    window.addEventListener("resize", handleResize);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(handleResize);
+      observer.observe(container);
+    } else {
+      window.addEventListener("resize", handleResize);
+    }
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      if (observer) {
+        observer.disconnect();
+      } else {
+        window.removeEventListener("resize", handleResize);
+      }
       setActiveChartForCapture(null, null); // Unregister active chart
       logger.debug('Removing chart instance');
       chart.remove();

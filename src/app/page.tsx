@@ -175,7 +175,6 @@ export default function Home() {
         <ResizablePanelGroup
           direction="horizontal"
           className="flex-1 overflow-hidden"
-          onLayout={() => window.dispatchEvent(new Event("resize"))}
         >
           <ResizablePanel defaultSize={40} minSize={20} className="border-r">
             <div className="flex flex-col h-[calc(100vh-3.5rem)]">
