@@ -59,10 +59,8 @@ DeepTraderはクライアントサーバーアーキテクチャを採用し、�
     /memory                   # メモリ設定
     /mcp                      # MCPサーバー/クライアント設定
     index.ts                  # Mastraエクスポート
-  /domain                     # ドメイン駆動設計の実装
-    /trading                  # トレーディングドメイン
-    /market                   # 市場データドメイン
-    /user                     # ユーザードメイン
+  /constants                  # 定数定義
+  /contexts                   # Reactコンテキスト
   /infrastructure             # 外部サービス連携
     /api                      # API接続
     /supabase                 # Supabase連携

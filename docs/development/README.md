@@ -128,6 +128,8 @@ DDDの原則に従い、ビジネスドメインを中心にコードを構築�
 /src                          # ソースコードのルート
   /app                        # Next.js App Router
   /components                 # UIコンポーネント
+  /constants                  # 定数定義
+  /contexts                   # Reactコンテキスト
   /hooks                      # カスタムフック
   /lib                        # ユーティリティ関数
   /mastra                     # Mastra AIエージェント
@@ -136,13 +138,10 @@ DDDの原則に従い、ビジネスドメインを中心にコードを構築�
     /workflows                # ワークフロー
     /memory                   # メモリ管理
     /mcp                      # MCPサーバー/クライアント
-  /domain                     # ドメインロジック
-    /trading                  # トレーディングドメイン
-    /market                   # 市場データドメイン
-    /user                     # ユーザードメイン
   /infrastructure             # 外部サービス連携
   /types                      # 型定義
   /tests                      # テストファイル
+  middleware.ts               # ミドルウェア
 ```
 
 ## 6. Git ワークフロー
