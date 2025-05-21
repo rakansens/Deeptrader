@@ -4,6 +4,21 @@ import { useRef, useEffect, useImperativeHandle, useState } from "react";
 import { logger } from "@/lib/logger";
 import type { DrawingCanvasHandle, DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
+import { drawFreehand } from "@/hooks/use-freehand-tool";
+import {
+  previewTrendline,
+  drawTrendline,
+} from "@/hooks/use-trendline-tool";
+import {
+  previewFibonacci,
+  drawFibonacci,
+} from "@/hooks/use-fibonacci-tool";
+import {
+  previewHorizontalLine,
+  drawHorizontalLine,
+} from "@/hooks/use-horizontal-line-tool";
+import { previewBox, drawBox } from "@/hooks/use-box-tool";
+import { previewArrow, drawArrow } from "@/hooks/use-arrow-tool";
 
 const {
   FREEHAND,
@@ -244,131 +259,7 @@ export function useDrawingCanvas(
     }
   };
 
-  // トレンドラインをプレビュー描画する関数
-  const drawTrendlinePreview = (endX: number, endY: number) => {
-    const ctx = getContext();
-    if (!ctx || !startPoint.current) return;
-
-    clearPreview();
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = "round";
-
-    ctx.beginPath();
-    ctx.moveTo(startPoint.current.x, startPoint.current.y);
-    ctx.lineTo(endX, endY);
-    ctx.stroke();
-  };
-
-  // フィボナッチリトレースメントをプレビュー描画する関数
-  const drawFibonacciPreview = (endX: number, endY: number) => {
-    const ctx = getContext();
-    if (!ctx || !startPoint.current) return;
-
-    clearPreview();
-
-    const left = Math.min(startPoint.current.x, endX);
-    const right = Math.max(startPoint.current.x, endX);
-    const top = Math.min(startPoint.current.y, endY);
-    const bottom = Math.max(startPoint.current.y, endY);
-    const diff = bottom - top;
-    const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = "round";
-
-    // 垂直ラインの描画を削除
-
-    // フィボナッチレベルを描画（水平線のみ）
-    levels.forEach((lv) => {
-      const y = bottom - diff * lv;
-      ctx.beginPath();
-      ctx.moveTo(left, y);
-      ctx.lineTo(right, y);
-      ctx.stroke();
-
-      // レベル値をラベル表示
-      ctx.fillStyle = color;
-      ctx.font = "10px Arial";
-      ctx.fillText(`${lv * 100}%`, right + 5, y);
-    });
-  };
-
-  // 水平線のプレビューを描画する関数
-  const drawHorizontalLinePreview = (y: number) => {
-    const ctx = getContext();
-    const canvas = canvasRef.current;
-    if (!ctx || !canvas) return;
-
-    clearPreview();
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = strokeWidth;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  };
-
-  // ボックス描画のプレビュー
-  const drawBoxPreview = (endX: number, endY: number) => {
-    const ctx = getContext();
-    if (!ctx || !startPoint.current) return;
-
-    clearPreview();
-
-    const left = Math.min(startPoint.current.x, endX);
-    const top = Math.min(startPoint.current.y, endY);
-    const width = Math.abs(endX - startPoint.current.x);
-    const height = Math.abs(endY - startPoint.current.y);
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = strokeWidth;
-    ctx.beginPath();
-    ctx.rect(left, top, width, height);
-    ctx.stroke();
-  };
-
-  // 矢印マーカーのプレビュー
-  const drawArrowPreview = (endX: number, endY: number) => {
-    const ctx = getContext();
-    if (!ctx || !startPoint.current) return;
-
-    clearPreview();
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = "round";
-
-    ctx.beginPath();
-    ctx.moveTo(startPoint.current.x, startPoint.current.y);
-    ctx.lineTo(endX, endY);
-    ctx.stroke();
-
-    // 矢印の先端を描画
-    const angle = Math.atan2(
-      endY - startPoint.current.y,
-      endX - startPoint.current.x,
-    );
-    const len = 10;
-    const theta = Math.PI / 6;
-
-    ctx.beginPath();
-    ctx.moveTo(endX, endY);
-    ctx.lineTo(
-      endX - len * Math.cos(angle - theta),
-      endY - len * Math.sin(angle - theta),
-    );
-    ctx.lineTo(
-      endX - len * Math.cos(angle + theta),
-      endY - len * Math.sin(angle + theta),
-    );
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-  };
+  // ここで描画ツールごとのプレビュー/描画ロジックは各フックに委譲する
 
   // ルーラーのプレビュー
   const drawRulerPreview = (endX: number, endY: number) => {
@@ -437,17 +328,9 @@ export function useDrawingCanvas(
     }
 
     if (actualMode === FREEHAND && drawing.current) {
-      // フリーハンド描画処理（従来通り）
       const ctx = getContext();
-      const canvas = canvasRef.current;
-      if (!ctx || !canvas || !lastPoint.current) return;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = strokeWidth;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
-      ctx.lineTo(x, y);
-      ctx.stroke();
+      if (!ctx || !lastPoint.current) return;
+      drawFreehand(ctx, lastPoint.current, x, y, color, strokeWidth);
       lastPoint.current = { x, y };
     } else if (actualMode === ERASER && drawing.current) {
       // 消しゴム処理
@@ -455,16 +338,24 @@ export function useDrawingCanvas(
       lastPoint.current = { x, y };
     } else if (startPoint.current) {
       // 各モードのリアルタイムプレビュー
+      const ctx = getContext();
+      if (!ctx) return; // コンテキストがない場合は処理を終了
+      
       if (actualMode === TRENDLINE) {
-        drawTrendlinePreview(x, y);
+        clearPreview();
+        previewTrendline(ctx, startPoint.current, x, y, color, strokeWidth);
       } else if (actualMode === FIBONACCI) {
-        drawFibonacciPreview(x, y);
+        clearPreview();
+        previewFibonacci(ctx, startPoint.current, x, y, color, strokeWidth);
       } else if (actualMode === HORIZONTAL_LINE) {
-        drawHorizontalLinePreview(y);
+        clearPreview();
+        previewHorizontalLine(ctx, canvasRef.current, y, color, strokeWidth);
       } else if (actualMode === BOX) {
-        drawBoxPreview(x, y);
+        clearPreview();
+        previewBox(ctx, startPoint.current, x, y, color, strokeWidth);
       } else if (actualMode === ARROW) {
-        drawArrowPreview(x, y);
+        clearPreview();
+        previewArrow(ctx, startPoint.current, x, y, color, strokeWidth);
       } else if (actualMode === RULER) {
         drawRulerPreview(x, y);
       }
@@ -513,15 +404,15 @@ export function useDrawingCanvas(
 
       // 最終的な描画処理
       if (actualMode === TRENDLINE) {
-        drawTrendlinePreview(end.x, end.y);
+        drawTrendline(ctx, startPoint.current, end.x, end.y, color, strokeWidth);
       } else if (actualMode === FIBONACCI) {
-        drawFibonacciPreview(end.x, end.y);
+        drawFibonacci(ctx, startPoint.current, end.x, end.y, color, strokeWidth);
       } else if (actualMode === HORIZONTAL_LINE) {
-        drawHorizontalLinePreview(end.y);
+        drawHorizontalLine(ctx, canvasRef.current, end.y, color, strokeWidth);
       } else if (actualMode === BOX) {
-        drawBoxPreview(end.x, end.y);
+        drawBox(ctx, startPoint.current, end.x, end.y, color, strokeWidth);
       } else if (actualMode === ARROW) {
-        drawArrowPreview(end.x, end.y);
+        drawArrow(ctx, startPoint.current, end.x, end.y, color, strokeWidth);
       } else if (actualMode === RULER) {
         drawRulerPreview(end.x, end.y);
       }
