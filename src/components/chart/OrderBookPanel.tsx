@@ -25,7 +25,11 @@ export default function OrderBookPanel({ symbol, height, onClose, className }: O
           </thead>
           <tbody>
             {bids.map((b, i) => (
-              <tr key={i}>
+              <tr
+                key={i}
+                className="text-green-700 dark:text-green-400"
+                data-testid="bid-row"
+              >
                 <td className="text-left">{b.price}</td>
                 <td className="text-right">{b.quantity}</td>
               </tr>
@@ -41,7 +45,11 @@ export default function OrderBookPanel({ symbol, height, onClose, className }: O
           </thead>
           <tbody>
             {asks.map((a, i) => (
-              <tr key={i}>
+              <tr
+                key={i}
+                className="text-red-700 dark:text-red-400"
+                data-testid="ask-row"
+              >
                 <td className="text-left">{a.price}</td>
                 <td className="text-right">{a.quantity}</td>
               </tr>

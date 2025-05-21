@@ -15,6 +15,10 @@ describe('OrderBookPanel', () => {
     })
     render(<OrderBookPanel symbol="BTCUSDT" height={100} />)
     expect(screen.getByTestId('orderbook-panel')).toBeInTheDocument()
+    const bidRow = screen.getAllByTestId('bid-row')[0]
+    const askRow = screen.getAllByTestId('ask-row')[0]
+    expect(bidRow).toHaveClass('text-green-700')
+    expect(askRow).toHaveClass('text-red-700')
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.getByText('1.1')).toBeInTheDocument()
   })
