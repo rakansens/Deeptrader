@@ -1,9 +1,11 @@
 'use client'
 
 import { BarChart3 } from 'lucide-react'
-import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart'
 import IndicatorWidthControl from './indicator-width-control'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface MacdSettingsProps {
   settings: IndicatorSettings
@@ -11,81 +13,121 @@ interface MacdSettingsProps {
 }
 
 export default function MacdSettings({ settings, onChange }: MacdSettingsProps) {
+  const handleShortChange = (value: number) => {
+    onChange({
+      ...settings,
+      macd: {
+        ...settings.macd,
+        short: value,
+      },
+    })
+  }
+
+  const handleLongChange = (value: number) => {
+    onChange({
+      ...settings,
+      macd: {
+        ...settings.macd,
+        long: value,
+      },
+    })
+  }
+
+  const handleSignalChange = (value: number) => {
+    onChange({
+      ...settings,
+      macd: {
+        ...settings.macd,
+        signal: value,
+      },
+    })
+  }
+
   return (
-    <AccordionItem value="macd-settings">
-      <AccordionTrigger onSelect={(e) => e.preventDefault()}>
-        <div className="flex items-center justify-between w-full pr-2">
-          <span className="flex items-center">
-            <BarChart3 className="h-4 w-4 mr-2 text-muted-foreground" />
-            MACD
-          </span>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>S:{settings.macd.short} L:{settings.macd.long} Si:{settings.macd.signal}</span>
-            <span>太さ: {settings.lineWidth.macd}px</span>
-            <span
-              className="w-3 h-3 rounded-full border"
-              style={{ backgroundColor: settings.colors?.macd || DEFAULT_INDICATOR_SETTINGS.colors!.macd }}
-            ></span>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              短期線
+            </Label>
+            <div className="flex items-center">
+              <Input
+                type="number"
+                className="w-16 h-8 text-sm"
+                value={settings.macd.short}
+                min={1}
+                max={100}
+                onChange={(e) => handleShortChange(Number(e.target.value))}
+              />
+            </div>
           </div>
+          <Slider
+            value={[settings.macd.short]}
+            min={1}
+            max={30}
+            step={1}
+            onValueChange={(values) => handleShortChange(values[0])}
+            className="py-2"
+          />
         </div>
-      </AccordionTrigger>
-      <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
-        <label className="flex items-center justify-between text-sm">
-          <span>Short</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.macd.short}
-            min={1}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                macd: {
-                  ...settings.macd,
-                  short: Number(e.target.value),
-                },
-              })
-            }
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              長期線
+            </Label>
+            <div className="flex items-center">
+              <Input
+                type="number"
+                className="w-16 h-8 text-sm"
+                value={settings.macd.long}
+                min={1}
+                max={200}
+                onChange={(e) => handleLongChange(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <Slider
+            value={[settings.macd.long]}
+            min={5}
+            max={50}
+            step={1}
+            onValueChange={(values) => handleLongChange(values[0])}
+            className="py-2"
           />
-        </label>
-        <label className="flex items-center justify-between text-sm">
-          <span>Long</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.macd.long}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              シグナル線
+            </Label>
+            <div className="flex items-center">
+              <Input
+                type="number"
+                className="w-16 h-8 text-sm"
+                value={settings.macd.signal}
+                min={1}
+                max={50}
+                onChange={(e) => handleSignalChange(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <Slider
+            value={[settings.macd.signal]}
             min={1}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                macd: {
-                  ...settings.macd,
-                  long: Number(e.target.value),
-                },
-              })
-            }
+            max={20}
+            step={1}
+            onValueChange={(values) => handleSignalChange(values[0])}
+            className="py-2"
           />
-        </label>
-        <label className="flex items-center justify-between text-sm">
-          <span>Signal</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.macd.signal}
-            min={1}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                macd: {
-                  ...settings.macd,
-                  signal: Number(e.target.value),
-                },
-              })
-            }
-          />
-        </label>
+        </div>
+      </div>
+
+      <div className="pt-3 border-t">
         <IndicatorWidthControl
-          label="MACD Width"
+          label="線の太さとカラー"
           width={settings.lineWidth.macd}
           color={(settings.colors?.macd ?? DEFAULT_INDICATOR_SETTINGS.colors!.macd) as string}
           onWidthChange={(w) =>
@@ -101,7 +143,7 @@ export default function MacdSettings({ settings, onChange }: MacdSettingsProps) 
             })
           }
         />
-      </AccordionContent>
-    </AccordionItem>
+      </div>
+    </div>
   )
 }

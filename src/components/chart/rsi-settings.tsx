@@ -1,9 +1,11 @@
 'use client'
 
 import { Activity } from 'lucide-react'
-import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart'
 import IndicatorWidthControl from './indicator-width-control'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface RsiSettingsProps {
   settings: IndicatorSettings
@@ -11,74 +13,106 @@ interface RsiSettingsProps {
 }
 
 export default function RsiSettings({ settings, onChange }: RsiSettingsProps) {
+  const handlePeriodChange = (value: number) => {
+    onChange({
+      ...settings,
+      rsi: value,
+    })
+  }
+
+  const handleUpperChange = (value: number) => {
+    onChange({
+      ...settings,
+      rsiUpper: value,
+    })
+  }
+
+  const handleLowerChange = (value: number) => {
+    onChange({
+      ...settings,
+      rsiLower: value,
+    })
+  }
+
   return (
-    <AccordionItem value="rsi-settings">
-      <AccordionTrigger onSelect={(e) => e.preventDefault()}>
-        <div className="flex items-center justify-between w-full pr-2">
-          <span className="flex items-center">
-            <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
-            RSI
-          </span>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>期間: {settings.rsi}</span>
-            <span>太さ: {settings.lineWidth.rsi}px</span>
-            <span
-              className="w-3 h-3 rounded-full border"
-              style={{ backgroundColor: settings.colors?.rsi || DEFAULT_INDICATOR_SETTINGS.colors!.rsi }}
-            ></span>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">
+            RSI 期間
+          </Label>
+          <div className="flex items-center">
+            <Input
+              type="number"
+              className="w-16 h-8 text-sm"
+              value={settings.rsi}
+              min={1}
+              max={100}
+              onChange={(e) => handlePeriodChange(Number(e.target.value))}
+            />
           </div>
         </div>
-      </AccordionTrigger>
-      <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
-        <label className="flex items-center justify-between text-sm">
-          <span>期間</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.rsi}
-            min={1}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                rsi: Number(e.target.value),
-              })
-            }
+        <Slider
+          value={[settings.rsi]}
+          min={1}
+          max={30}
+          step={1}
+          onValueChange={(values) => handlePeriodChange(values[0])}
+          className="py-2"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              買われすぎ
+            </Label>
+            <Input
+              type="number"
+              className="w-16 h-8 text-sm"
+              value={settings.rsiUpper}
+              min={50}
+              max={100}
+              onChange={(e) => handleUpperChange(Number(e.target.value))}
+            />
+          </div>
+          <Slider
+            value={[settings.rsiUpper]}
+            min={50}
+            max={90}
+            step={1}
+            onValueChange={(values) => handleUpperChange(values[0])}
           />
-        </label>
-        <label className="flex items-center justify-between text-sm">
-          <span>Overbought</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.rsiUpper}
-            min={1}
-            max={100}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                rsiUpper: Number(e.target.value),
-              })
-            }
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              売られすぎ
+            </Label>
+            <Input
+              type="number"
+              className="w-16 h-8 text-sm"
+              value={settings.rsiLower}
+              min={10}
+              max={50}
+              onChange={(e) => handleLowerChange(Number(e.target.value))}
+            />
+          </div>
+          <Slider
+            value={[settings.rsiLower]}
+            min={10}
+            max={50}
+            step={1}
+            onValueChange={(values) => handleLowerChange(values[0])}
           />
-        </label>
-        <label className="flex items-center justify-between text-sm">
-          <span>Oversold</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.rsiLower}
-            min={1}
-            max={100}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                rsiLower: Number(e.target.value),
-              })
-            }
-          />
-        </label>
+        </div>
+      </div>
+
+      <div className="pt-3 border-t">
         <IndicatorWidthControl
-          label="RSI Width"
+          label="線の太さとカラー"
           width={settings.lineWidth.rsi}
           color={(settings.colors?.rsi ?? DEFAULT_INDICATOR_SETTINGS.colors!.rsi) as string}
           onWidthChange={(w) =>
@@ -94,7 +128,7 @@ export default function RsiSettings({ settings, onChange }: RsiSettingsProps) {
             })
           }
         />
-      </AccordionContent>
-    </AccordionItem>
+      </div>
+    </div>
   )
 }

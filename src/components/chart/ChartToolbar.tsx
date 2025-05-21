@@ -31,6 +31,7 @@ import MaSettings from './ma-settings'
 import RsiSettings from './rsi-settings'
 import MacdSettings from './macd-settings'
 import BollSettings from './boll-settings'
+import IndicatorSettingsModal from './IndicatorSettingsModal'
 
 interface ChartToolbarProps {
   timeframe: Timeframe
@@ -140,22 +141,7 @@ export default function ChartToolbar({
         </div>
 
         <ThemeToggle />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-1 rounded hover:bg-accent" aria-label="Indicator settings">
-              <Settings className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80 p-4">
-            <h3 className="text-lg font-medium mb-2">指標設定</h3>
-            <Accordion type="single" collapsible className="w-full space-y-1">
-              <MaSettings settings={settings} onChange={onSettingsChange} />
-              <RsiSettings settings={settings} onChange={onSettingsChange} />
-              <MacdSettings settings={settings} onChange={onSettingsChange} />
-              <BollSettings settings={settings} onChange={onSettingsChange} />
-            </Accordion>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <IndicatorSettingsModal settings={settings} onSettingsChange={onSettingsChange} />
       </div>
     </div>
   )

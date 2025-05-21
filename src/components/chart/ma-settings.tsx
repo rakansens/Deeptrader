@@ -1,9 +1,11 @@
 'use client'
 
 import { TrendingUp } from 'lucide-react'
-import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart'
 import IndicatorWidthControl from './indicator-width-control'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface MaSettingsProps {
   settings: IndicatorSettings
@@ -11,42 +13,44 @@ interface MaSettingsProps {
 }
 
 export default function MaSettings({ settings, onChange }: MaSettingsProps) {
+  const handlePeriodChange = (value: number) => {
+    onChange({
+      ...settings,
+      sma: value,
+    })
+  }
+
   return (
-    <AccordionItem value="ma-settings">
-      <AccordionTrigger onSelect={(e) => e.preventDefault()}>
-        <div className="flex items-center justify-between w-full pr-2">
-          <span className="flex items-center">
-            <TrendingUp className="h-4 w-4 mr-2 text-muted-foreground" />
-            移動平均線 (MA)
-          </span>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>期間: {settings.sma}</span>
-            <span>太さ: {settings.lineWidth.ma}px</span>
-            <span
-              className="w-3 h-3 rounded-full border"
-              style={{ backgroundColor: settings.colors?.ma || DEFAULT_INDICATOR_SETTINGS.colors!.ma }}
-            ></span>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">
+            期間 (SMA)
+          </Label>
+          <div className="flex items-center">
+            <Input
+              type="number"
+              className="w-16 h-8 text-sm"
+              value={settings.sma}
+              min={1}
+              max={200}
+              onChange={(e) => handlePeriodChange(Number(e.target.value))}
+            />
           </div>
         </div>
-      </AccordionTrigger>
-      <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
-        <label className="flex items-center justify-between text-sm">
-          <span>期間 (SMA)</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.sma}
-            min={1}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                sma: Number(e.target.value),
-              })
-            }
-          />
-        </label>
+        <Slider
+          value={[settings.sma]}
+          min={1}
+          max={50}
+          step={1}
+          onValueChange={(values) => handlePeriodChange(values[0])}
+          className="py-2"
+        />
+      </div>
+
+      <div className="pt-3 border-t">
         <IndicatorWidthControl
-          label="MA Width"
+          label="線の太さとカラー"
           width={settings.lineWidth.ma}
           color={(settings.colors?.ma ?? DEFAULT_INDICATOR_SETTINGS.colors!.ma) as string}
           onWidthChange={(w) =>
@@ -62,7 +66,7 @@ export default function MaSettings({ settings, onChange }: MaSettingsProps) {
             })
           }
         />
-      </AccordionContent>
-    </AccordionItem>
+      </div>
+    </div>
   )
 }

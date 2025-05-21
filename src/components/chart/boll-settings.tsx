@@ -1,9 +1,11 @@
 'use client'
 
 import { Waves } from 'lucide-react'
-import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart'
 import IndicatorWidthControl from './indicator-width-control'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface BollSettingsProps {
   settings: IndicatorSettings
@@ -11,45 +13,84 @@ interface BollSettingsProps {
 }
 
 export default function BollSettings({ settings, onChange }: BollSettingsProps) {
+  const handlePeriodChange = (value: number) => {
+    onChange({
+      ...settings,
+      boll: {
+        ...settings.boll,
+        period: value,
+      },
+    })
+  }
+
+  const handleStdDevChange = (value: number) => {
+    onChange({
+      ...settings,
+      boll: {
+        ...settings.boll,
+        stdDev: value,
+      },
+    })
+  }
+
   return (
-    <AccordionItem value="boll-settings">
-      <AccordionTrigger onSelect={(e) => e.preventDefault()}>
-        <div className="flex items-center justify-between w-full pr-2">
-          <span className="flex items-center">
-            <Waves className="h-4 w-4 mr-2 text-muted-foreground" />
-            Bollinger Bands
-          </span>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>期間: {settings.boll.period}</span>
-            <span>太さ: {settings.lineWidth.boll}px</span>
-            <span
-              className="w-3 h-3 rounded-full border"
-              style={{ backgroundColor: settings.colors?.boll || DEFAULT_INDICATOR_SETTINGS.colors!.boll }}
-            ></span>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">
+            期間
+          </Label>
+          <div className="flex items-center">
+            <Input
+              type="number"
+              className="w-16 h-8 text-sm"
+              value={settings.boll.period}
+              min={1}
+              max={100}
+              onChange={(e) => handlePeriodChange(Number(e.target.value))}
+            />
           </div>
         </div>
-      </AccordionTrigger>
-      <AccordionContent className="pt-2 pb-3 space-y-3 overflow-hidden transition-all duration-300 ease-in-out data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-[var(--radix-accordion-content-height)] data-[state=open]:opacity-100">
-        <label className="flex items-center justify-between text-sm">
-          <span>期間</span>
-          <input
-            type="number"
-            className="w-20 border rounded px-1 py-0.5 bg-background text-sm"
-            value={settings.boll.period}
-            min={1}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                boll: {
-                  ...settings.boll,
-                  period: Number(e.target.value),
-                },
-              })
-            }
-          />
-        </label>
+        <Slider
+          value={[settings.boll.period]}
+          min={5}
+          max={50}
+          step={1}
+          onValueChange={(values) => handlePeriodChange(values[0])}
+          className="py-2"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">
+            標準偏差
+          </Label>
+          <div className="flex items-center">
+            <Input
+              type="number"
+              className="w-16 h-8 text-sm"
+              value={settings.boll.stdDev || 2}
+              min={0.5}
+              max={5}
+              step={0.1}
+              onChange={(e) => handleStdDevChange(Number(e.target.value))}
+            />
+          </div>
+        </div>
+        <Slider
+          value={[settings.boll.stdDev || 2]}
+          min={0.5}
+          max={5}
+          step={0.1}
+          onValueChange={(values) => handleStdDevChange(values[0])}
+          className="py-2"
+        />
+      </div>
+
+      <div className="pt-3 border-t">
         <IndicatorWidthControl
-          label="BOLL Width"
+          label="線の太さとカラー"
           width={settings.lineWidth.boll}
           color={(settings.colors?.boll ?? DEFAULT_INDICATOR_SETTINGS.colors!.boll) as string}
           onWidthChange={(w) =>
@@ -65,7 +106,7 @@ export default function BollSettings({ settings, onChange }: BollSettingsProps) 
             })
           }
         />
-      </AccordionContent>
-    </AccordionItem>
+      </div>
+    </div>
   )
 }
