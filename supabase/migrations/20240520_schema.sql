@@ -1,3 +1,4 @@
+-- migrate:up
 -- 00_schema.sql
 -- 基本的なスキーマ定義（拡張機能の追加など）
 -- 作成日: 2025/5/20
@@ -31,4 +32,17 @@ COMMENT ON SCHEMA public IS 'Deeptraderアプリケーションのデータを�
 -- COMMENT ON SCHEMA storage IS 'Deeptraderアプリケーションのストレージ関連データを格納するスキーマ';
 
 -- トランザクション終了
+COMMIT;
+-- migrate:down
+-- スキーマを削除（別トランザクションで実行）
+BEGIN;
+-- DROP SCHEMA IF EXISTS storage CASCADE; -- storageスキーマの所有権問題のため一時的にコメントアウト
+COMMIT;
+
+-- 拡張機能を削除（別トランザクションで実行）
+BEGIN;
+-- DROP EXTENSION IF EXISTS "uuid-ossp"; -- 依存関係エラー回避のため一時的にコメントアウト
+-- DROP EXTENSION IF EXISTS "pgcrypto"; -- 依存関係エラー回避のため一時的にコメントアウト
+-- DROP EXTENSION IF EXISTS "pg_net"; -- 依存関係エラー回避のため一時的にコメントアウト
+-- DROP EXTENSION IF EXISTS "vector"; -- 依存関係エラー回避のため一時的にコメントアウト
 COMMIT;

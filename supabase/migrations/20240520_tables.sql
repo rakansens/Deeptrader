@@ -1,3 +1,4 @@
+-- migrate:up
 -- 01_tables.sql
 -- 全てのテーブル定義
 -- 作成日: 2025/5/20
@@ -221,4 +222,29 @@ CREATE OR REPLACE VIEW admin_users AS
 SELECT id FROM users WHERE is_admin = true;
 
 -- トランザクション終了
+COMMIT;
+-- migrate:down
+BEGIN;
+DROP VIEW IF EXISTS admin_users;
+COMMIT;
+
+-- テーブルを削除（依存関係の逆順、別トランザクションで実行）
+BEGIN;
+DROP TABLE IF EXISTS indicator_settings CASCADE;
+DROP TABLE IF EXISTS chart_settings CASCADE;
+DROP TABLE IF EXISTS symbol_settings CASCADE;
+DROP TABLE IF EXISTS backtest_data CASCADE;
+DROP TABLE IF EXISTS cached_data CASCADE;
+DROP TABLE IF EXISTS user_relations CASCADE;
+DROP TABLE IF EXISTS trading_history CASCADE;
+DROP TABLE IF EXISTS trading_strategies CASCADE;
+DROP TABLE IF EXISTS entries CASCADE;
+DROP TABLE IF EXISTS chat_messages CASCADE;
+DROP TABLE IF EXISTS chat_images CASCADE;
+DROP TABLE IF EXISTS memories CASCADE;
+DROP TABLE IF EXISTS conversations CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+-- DROP TABLE IF EXISTS storage.objects CASCADE; -- Supabaseサービスエラー回避のため一時的にコメントアウト
+-- DROP TABLE IF EXISTS storage.buckets CASCADE; -- Supabaseサービスエラー回避のため一時的にコメントアウト
 COMMIT;

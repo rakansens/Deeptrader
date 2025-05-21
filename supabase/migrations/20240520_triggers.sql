@@ -1,3 +1,4 @@
+-- migrate:up
 -- 04_triggers.sql
 -- トリガー定義
 -- 作成日: 2025/5/20
@@ -87,3 +88,20 @@ COMMIT;
 -- ANALYZE memories;
 -- ANALYZE chat_messages;
 -- COMMIT;
+-- migrate:down
+-- トリガーを削除（別トランザクションで実行）
+BEGIN;
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
+DROP TRIGGER IF EXISTS update_conversations_updated_at ON conversations;
+DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages;
+DROP TRIGGER IF EXISTS update_entries_updated_at ON entries;
+DROP TRIGGER IF EXISTS update_trading_strategies_updated_at ON trading_strategies;
+DROP TRIGGER IF EXISTS update_trading_history_updated_at ON trading_history;
+DROP TRIGGER IF EXISTS update_symbol_settings_updated_at ON symbol_settings;
+DROP TRIGGER IF EXISTS update_chart_settings_updated_at ON chart_settings;
+DROP TRIGGER IF EXISTS update_indicator_settings_updated_at ON indicator_settings;
+DROP TRIGGER IF EXISTS update_cached_data_updated_at ON cached_data;
+DROP TRIGGER IF EXISTS update_backtest_data_updated_at ON backtest_data;
+DROP TRIGGER IF EXISTS update_memories_updated_at ON memories;
+COMMIT;

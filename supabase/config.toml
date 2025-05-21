@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+api_url = "https://your-project.supabase.co"
+db_url = "postgresql://postgres:PASSWORD@db.your-project.supabase.co:5432/postgres"
+studio_url = "https://studio.supabase.io/project/your-project-id"
+anon_key = "public-anon-key"
+service_role_key = "service-role-key"
+

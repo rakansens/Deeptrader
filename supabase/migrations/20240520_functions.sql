@@ -1,3 +1,4 @@
+-- migrate:up
 -- 03_functions.sql
 -- 関数定義（ベクトル検索関数など）
 -- 作成日: 2025/5/20
@@ -123,4 +124,12 @@ END;
 $$;
 
 -- トランザクション終了
+COMMIT;
+-- migrate:down
+-- 関数を削除（別トランザクションで実行）
+BEGIN;
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS match_documents CASCADE;
+DROP FUNCTION IF EXISTS is_admin CASCADE;
+DROP FUNCTION IF EXISTS get_conversation_messages CASCADE;
 COMMIT;

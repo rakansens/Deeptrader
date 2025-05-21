@@ -1,3 +1,4 @@
+-- migrate:up
 -- 02_indexes_and_constraints.sql
 -- インデックスと制約を追加するスクリプト
 -- 作成日: 2025/5/20
@@ -124,3 +125,83 @@ COMMIT;
 
 -- 注意: インデックスの作成はテーブルのサイズによっては時間がかかる場合があります。
 -- 大規模なデータベースでは、オフピーク時に実行することをお勧めします。
+-- migrate:down
+BEGIN;
+-- ユーザー関連
+DROP INDEX IF EXISTS idx_users_email;
+DROP INDEX IF EXISTS idx_users_is_admin;
+DROP INDEX IF EXISTS idx_profiles_user_id;
+
+-- 会話関連
+DROP INDEX IF EXISTS idx_conversations_user_id;
+DROP INDEX IF EXISTS idx_conversations_created_at;
+DROP INDEX IF EXISTS idx_conversations_is_archived;
+DROP INDEX IF EXISTS idx_conversations_user_archived;
+
+-- チャットメッセージ関連
+DROP INDEX IF EXISTS idx_chat_messages_conversation_id;
+DROP INDEX IF EXISTS idx_chat_messages_user_id;
+DROP INDEX IF EXISTS idx_chat_messages_created_at;
+DROP INDEX IF EXISTS idx_chat_messages_role;
+DROP INDEX IF EXISTS idx_chat_messages_type;
+DROP INDEX IF EXISTS idx_chat_messages_conversation_created;
+DROP INDEX IF EXISTS idx_chat_messages_user_conversation;
+
+-- 画像関連
+DROP INDEX IF EXISTS idx_chat_images_user_id;
+
+-- トレード関連
+DROP INDEX IF EXISTS idx_entries_user_id;
+DROP INDEX IF EXISTS idx_entries_symbol;
+DROP INDEX IF EXISTS idx_entries_status;
+DROP INDEX IF EXISTS idx_entries_time;
+DROP INDEX IF EXISTS idx_entries_is_public;
+DROP INDEX IF EXISTS idx_entries_user_symbol;
+DROP INDEX IF EXISTS idx_entries_user_status;
+
+-- トレード戦略関連
+DROP INDEX IF EXISTS idx_trading_strategies_user_id;
+DROP INDEX IF EXISTS idx_trading_strategies_is_active;
+
+-- 取引履歴関連
+DROP INDEX IF EXISTS idx_trading_history_user_id;
+DROP INDEX IF EXISTS idx_trading_history_strategy_id;
+DROP INDEX IF EXISTS idx_trading_history_symbol;
+DROP INDEX IF EXISTS idx_trading_history_timestamp;
+DROP INDEX IF EXISTS idx_trading_history_status;
+DROP INDEX IF EXISTS idx_trading_history_user_symbol;
+DROP INDEX IF EXISTS idx_trading_history_user_strategy;
+
+-- 設定関連
+DROP INDEX IF EXISTS idx_symbol_settings_user_id;
+DROP INDEX IF EXISTS idx_symbol_settings_symbol;
+DROP INDEX IF EXISTS idx_chart_settings_user_id;
+DROP INDEX IF EXISTS idx_indicator_settings_user_id;
+DROP INDEX IF EXISTS idx_indicator_settings_chart_settings_id;
+
+-- キャッシュデータ関連
+DROP INDEX IF EXISTS idx_cached_data_data_type;
+DROP INDEX IF EXISTS idx_cached_data_symbol;
+DROP INDEX IF EXISTS idx_cached_data_expires_at;
+DROP INDEX IF EXISTS idx_cached_data_type_symbol;
+
+-- ユーザー関係関連
+DROP INDEX IF EXISTS idx_user_relations_follower_id;
+DROP INDEX IF EXISTS idx_user_relations_following_id;
+
+-- バックテストデータ関連
+DROP INDEX IF EXISTS idx_backtest_data_user_id;
+DROP INDEX IF EXISTS idx_backtest_data_symbol;
+DROP INDEX IF EXISTS idx_backtest_data_timeframe;
+
+-- メモリ関連
+DROP INDEX IF EXISTS idx_memories_user_id;
+DROP INDEX IF EXISTS idx_memories_external_id;
+DROP INDEX IF EXISTS idx_memories_embedding;
+
+-- ストレージ関連
+DROP INDEX IF EXISTS idx_storage_objects_bucket_id;
+DROP INDEX IF EXISTS idx_storage_objects_name;
+DROP INDEX IF EXISTS idx_storage_objects_owner;
+DROP INDEX IF EXISTS idx_storage_objects_path;
+COMMIT;

@@ -1,3 +1,4 @@
+-- migrate:up
 -- 05_rls_policies.sql
 -- RLSポリシー定義
 -- 作成日: 2025/5/20
@@ -242,3 +243,77 @@ COMMIT;
 
 -- 注意: RLSポリシーの変更は既存のデータへのアクセスに影響を与える可能性があります。
 -- 実行前に影響範囲を確認してください。
+-- migrate:down
+-- RLSポリシーを削除
+-- ユーザー関連
+DROP POLICY IF EXISTS "ユーザーは自分のデータのみ読み取り可能" ON users;
+DROP POLICY IF EXISTS "ユーザーは自分のデータのみ更新可能" ON users;
+DROP POLICY IF EXISTS "管理者はすべてのユーザーデータにアクセス可能" ON users;
+
+-- プロフィール関連
+DROP POLICY IF EXISTS "ユーザーは自分のプロフィールのみ読み取り可能" ON profiles;
+DROP POLICY IF EXISTS "ユーザーは自分のプロフィールのみ更新可能" ON profiles;
+DROP POLICY IF EXISTS "ユーザーは自分のプロフィールのみ削除可能" ON profiles;
+DROP POLICY IF EXISTS "ユーザーは自分のプロフィールのみ挿入可能" ON profiles;
+DROP POLICY IF EXISTS "管理者はすべてのプロフィールデータにアクセス可能" ON profiles;
+
+-- 会話関連
+DROP POLICY IF EXISTS "ユーザーは自分の会話のみアクセス可能" ON conversations;
+DROP POLICY IF EXISTS "管理者はすべての会話にアクセス可能" ON conversations;
+
+-- チャットメッセージ関連
+DROP POLICY IF EXISTS "ユーザーは自分のメッセージのみアクセス可能" ON chat_messages;
+DROP POLICY IF EXISTS "公開メッセージは誰でも読み取り可能" ON chat_messages;
+DROP POLICY IF EXISTS "管理者はすべてのメッセージにアクセス可能" ON chat_messages;
+
+-- チャット画像関連
+DROP POLICY IF EXISTS "ユーザーは自分の画像のみアクセス可能" ON chat_images;
+DROP POLICY IF EXISTS "管理者はすべての画像にアクセス可能" ON chat_images;
+
+-- エントリー関連
+DROP POLICY IF EXISTS "ユーザーは自分のエントリーのみアクセス可能" ON entries;
+DROP POLICY IF EXISTS "公開エントリーは誰でも読み取り可能" ON entries;
+DROP POLICY IF EXISTS "管理者はすべてのエントリーにアクセス可能" ON entries;
+
+-- トレード戦略関連
+DROP POLICY IF EXISTS "ユーザーは自分の戦略のみアクセス可能" ON trading_strategies;
+DROP POLICY IF EXISTS "管理者はすべての戦略にアクセス可能" ON trading_strategies;
+
+-- 取引履歴関連
+DROP POLICY IF EXISTS "ユーザーは自分の取引履歴のみアクセス可能" ON trading_history;
+DROP POLICY IF EXISTS "管理者はすべての取引履歴にアクセス可能" ON trading_history;
+
+-- 設定関連
+DROP POLICY IF EXISTS "ユーザーは自分のシンボル設定のみアクセス可能" ON symbol_settings;
+DROP POLICY IF EXISTS "管理者はすべてのシンボル設定にアクセス可能" ON symbol_settings;
+DROP POLICY IF EXISTS "ユーザーは自分のチャート設定のみアクセス可能" ON chart_settings;
+DROP POLICY IF EXISTS "管理者はすべてのチャート設定にアクセス可能" ON chart_settings;
+DROP POLICY IF EXISTS "ユーザーは自分のインジケーター設定のみアクセス可能" ON indicator_settings;
+DROP POLICY IF EXISTS "管理者はすべてのインジケーター設定にアクセス可能" ON indicator_settings;
+
+-- キャッシュデータ関連
+DROP POLICY IF EXISTS "すべてのユーザーがキャッシュデータを読み取り可能" ON cached_data;
+DROP POLICY IF EXISTS "管理者のみがキャッシュデータを変更可能" ON cached_data;
+
+-- ユーザー関係関連
+DROP POLICY IF EXISTS "ユーザーは自分のフォロー関係のみアクセス可能" ON user_relations;
+DROP POLICY IF EXISTS "ユーザーは自分をフォローしている関係を読み取り可能" ON user_relations;
+DROP POLICY IF EXISTS "管理者はすべてのユーザー関係にアクセス可能" ON user_relations;
+
+-- バックテストデータ関連
+DROP POLICY IF EXISTS "ユーザーは自分のバックテストデータのみアクセス可能" ON backtest_data;
+DROP POLICY IF EXISTS "管理者はすべてのバックテストデータにアクセス可能" ON backtest_data;
+
+-- メモリ関連
+DROP POLICY IF EXISTS "ユーザーは自分のメモリのみアクセス可能" ON memories;
+DROP POLICY IF EXISTS "管理者はすべてのメモリにアクセス可能" ON memories;
+
+-- ストレージ関連
+DROP POLICY IF EXISTS "認証済みユーザーは公開バケットを読み取り可能" ON storage.buckets;
+DROP POLICY IF EXISTS "管理者はすべてのバケットにアクセス可能" ON storage.buckets;
+DROP POLICY IF EXISTS "ユーザーは自分のオブジェクトのみアクセス可能" ON storage.objects;
+DROP POLICY IF EXISTS "認証済みユーザーは公開バケット内のオブジェクトを読み取り可能" ON storage.objects;
+DROP POLICY IF EXISTS "管理者はすべてのオブジェクトにアクセス可能" ON storage.objects;
+
+-- トランザクション終了
+COMMIT;

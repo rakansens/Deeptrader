@@ -28,11 +28,38 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 ## 3. テーブル定義
 
-`supabase/schema.sql` にユーザー認証と会話履歴保存用のテーブル定義を用意しています。Supabase の SQL Editor から実行してテーブルを作成してください。
+テーブル定義や RLS ポリシーは `supabase/migrations` ディレクトリにまとめています。Supabase CLI をインストール後、以下のコマンドでデータベースに反映できます。
+
+```bash
+supabase db push
+```
 
 - `profiles`: `auth.users` と紐付くユーザー情報
 - `conversations`: ユーザーごとの会話セッション
 - `messages`: 各会話のメッセージ履歴
 
+データベースを初期状態に戻したい場合は、次のコマンドを使用します。
+
+```bash
+supabase db reset
+```
+
 テーブル作成後、Row Level Security (RLS) ポリシーを設定して適切にアクセス制御を行ってください。
 
+
+## 4. Supabase CLI の設定
+
+ローカル開発やマイグレーションの管理には Supabase CLI を使用します。
+`supabase/config.toml` にプロジェクトIDやデータベースURLなどの設定を記述してください。
+
+```toml
+project_id = "your-project-id"
+api_url = "https://your-project.supabase.co"
+db_url = "postgresql://postgres:PASSWORD@db.your-project.supabase.co:5432/postgres"
+```
+
+CLI を利用する際は以下の環境変数を設定する必要があります。
+
+- `SUPABASE_ACCESS_TOKEN`: Supabase のパーソナルアクセストークン
+
+その他の設定値が必要な場合は `.env.local` に追記してください。
