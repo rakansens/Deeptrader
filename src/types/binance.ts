@@ -102,3 +102,27 @@ export interface BinanceKlineMessage {
   /** リクエストID */
   id?: number;
 }
+
+/**
+ * Binance WebSocketの板情報更新メッセージ
+ */
+export interface BinanceDepthMessage {
+  /** イベントタイプ */
+  e: 'depthUpdate';
+  /** イベントタイム */
+  E: number;
+  /** シンボル */
+  s: string;
+  /** 初期更新ID */
+  U: number;
+  /** 更新ID */
+  u: number;
+  /** ビッドレベル */
+  b?: [string, string][];
+  /** アスクレベル */
+  a?: [string, string][];
+  /** PING/PONGやSUBSCRIBE時の応答 */
+  result?: unknown;
+  /** リクエストID */
+  id?: number;
+}

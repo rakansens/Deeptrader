@@ -5,6 +5,12 @@ import { logger } from "@/lib/logger";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
+// BinanceからのPINGレスポンス型を定義
+interface BinancePingResponse {
+  result: null;
+  id: number;
+}
+
 interface UseBinanceSocketOptions<T> {
   url: string
   reconnectInterval?: number
@@ -26,7 +32,7 @@ const PONG_TIMEOUT = 10 * 1000
  * @param options - 接続オプション
  * @returns 接続ステータス
  */
-export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T>) {
+export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
   const {
     url,
     reconnectInterval = 3000,
@@ -124,14 +130,26 @@ export function useBinanceSocket<T = unknown>(options: UseBinanceSocketOptions<T
       ws.onmessage = (ev) => {
         try {
           const data = JSON.parse(ev.data);
-          if (data.result === null && typeof data.id === "number") {
+          
+          // PING応答かどうかをチェック
+          if (
+            typeof data === 'object' && 
+            data !== null && 
+            'result' in data && 
+            data.result === null && 
+            'id' in data && 
+            typeof data.id === 'number'
+          ) {
+            // PINGレスポンスの処理
             if (data.id === pingIdRef.current && pongTimeoutRef.current) {
               clearTimeout(pongTimeoutRef.current);
               pongTimeoutRef.current = null;
             }
             return;
           }
-          onMessage?.(data);
+          
+          // 通常のメッセージの処理
+          onMessage?.(data as T);
         } catch (e) {
           logger.error("Failed to parse websocket message", e);
         }

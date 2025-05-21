@@ -12,9 +12,7 @@ import useIndicatorSeries from "@/hooks/use-indicator-series";
 import useChartInstance from "@/hooks/use-chart-instance";
 import useWindowSize from "@/hooks/use-window-size";
 import useDrawingControls from "@/hooks/use-drawing-controls";
-import useCrosshairInfo, {
-  type CrosshairInfo,
-} from "@/hooks/use-crosshair-info";
+import useCrosshairInfo from "@/hooks/use-crosshair-info";
 import useCountdownColor from "@/hooks/use-countdown-color";
 import OrderBookPanel from "./OrderBookPanel";
 import OrderBookToggleButton from "./orderbook-toggle-button";
@@ -28,6 +26,7 @@ import type {
   DrawingMode,
   IndicatorOptions,
   IndicatorsChangeHandler,
+  CrosshairInfo,
 } from "@/types/chart";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import type { IndicatorSettings } from "@/constants/chart";

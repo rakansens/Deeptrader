@@ -36,7 +36,7 @@ describe('useBinanceSocket', () => {
 
   it('reconnects on close', () => {
     jest.useFakeTimers()
-    renderHook(() => useBinanceSocket({ url: 'wss://test' }))
+    renderHook(() => useBinanceSocket<unknown>({ url: 'wss://test' }))
     const ws1 = MockWebSocket.instances[0]
     ws1.onclose?.()
     jest.advanceTimersByTime(3000)
@@ -46,7 +46,7 @@ describe('useBinanceSocket', () => {
 
   it('does not send ping when interval is 0', () => {
     jest.useFakeTimers()
-    renderHook(() => useBinanceSocket({ url: 'wss://test' }))
+    renderHook(() => useBinanceSocket<unknown>({ url: 'wss://test' }))
     const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1]
     ws.onopen?.()
     jest.advanceTimersByTime(5000)
@@ -57,7 +57,7 @@ describe('useBinanceSocket', () => {
   it('sends ping at interval', () => {
     jest.useFakeTimers()
     renderHook(() =>
-      useBinanceSocket({ url: 'wss://test', pingInterval: 1000 })
+      useBinanceSocket<unknown>({ url: 'wss://test', pingInterval: 1000 })
     )
     const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1]
     ws.onopen?.()

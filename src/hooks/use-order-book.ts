@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import useBinanceSocket from "./use-binance-socket";
 import { fetchOrderBook } from "@/infrastructure/exchange/binance-service";
-import type { OrderBookEntry } from "@/types";
+import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 
 export interface UseOrderBookResult {
   bids: OrderBookEntry[];
@@ -46,7 +46,7 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   }, [loadSnapshot]);
 
   const handleMessage = useCallback(
-    (msg: { b?: [string, string][]; a?: [string, string][] }) => {
+    (msg: BinanceDepthMessage) => {
       if (msg.b) {
         const u = msg.b.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
         setBids((prev) => updateLevels(prev, u, true, depth));
@@ -59,7 +59,7 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
     [depth],
   );
 
-  const { status } = useBinanceSocket({
+  const { status } = useBinanceSocket<BinanceDepthMessage>({
     url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`,
     onMessage: handleMessage,
     pingInterval: 0,

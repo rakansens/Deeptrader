@@ -5,10 +5,10 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeSMA, computeRSI, computeBollinger, computeMACD } from '@/lib/indicators';
-import { TIMEFRAMES, DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart';
+import { DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart';
 import type { IndicatorSettings } from '@/constants/chart';
 import type { BinanceKlineObject } from '@/types/binance';
-import type { IndicatorResult } from '@/types';
+import type { IndicatorResult, ChartAnalysisResult } from '@/types';
 
 /** 価格配列からダブルトップを検出 */
 function detectDoubleTop(prices: number[]): boolean {
@@ -67,7 +67,7 @@ export const chartAnalysisTool = createTool({
       .describe('各インジケーターの計算期間設定'),
   }),
 
-  execute: async ({ context }) => {
+  execute: async ({ context }): Promise<ChartAnalysisResult> => {
     logger.debug('チャート分析ツール実行:', context);
     const {
       symbol,
@@ -135,6 +135,6 @@ export const chartAnalysisTool = createTool({
       period: closes.length,
       indicators: results,
       patterns,
-    };
+    } satisfies ChartAnalysisResult;
   },
 });
