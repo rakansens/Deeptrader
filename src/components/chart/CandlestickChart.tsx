@@ -2,7 +2,7 @@
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo, memo } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import ChartSkeleton from "./chart-skeleton";
 import useChartTheme from "@/hooks/use-chart-theme";
 import useCandlestickData from "@/hooks/use-candlestick-data";
 import useCandlestickSeries from "@/hooks/use-candlestick-series";
@@ -380,7 +380,7 @@ export default function CandlestickChart({
   }, [drawingEnabled, drawingRef]);
 
   if (loading && useApi)
-    return <Skeleton data-testid="loading" className="w-full h-[300px]" />;
+    return <ChartSkeleton className="w-full h-[300px]" />;
   if (error && useApi)
     return (
       <div data-testid="error" className="text-center text-sm text-red-500">

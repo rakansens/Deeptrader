@@ -121,7 +121,7 @@ export function ChatInput({
           className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary"
         >
           {uploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
           ) : (
             <ImagePlus className="h-5 w-5" />
           )}

@@ -14,6 +14,7 @@ import type { ChatRole } from "@/types";
 import { useSettings } from "@/hooks/use-settings";
 import { speakText, stopSpeech } from "@/lib/speech-utils";
 import { Volume2, VolumeX } from "lucide-react";
+import TypingIndicator from "./typing-indicator";
 
 export interface MessageBubbleProps {
   role: ChatRole;
@@ -134,10 +135,15 @@ export function MessageBubble({
   };
   
   return (
-    <div
+    <motion.div
+      data-testid="message-bubble"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
       className={cn(
-        "flex gap-3 w-full max-w-full",
-        role === "user" ? "flex-row-reverse" : ""
+        "flex gap-3 w-full max-w-full motion-safe:transition-opacity motion-safe:transition-transform",
+        role === "user" ? "flex-row-reverse" : "",
+        className
       )}
     >
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -175,17 +181,12 @@ export function MessageBubble({
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-foreground"),
               "rounded-lg h-fit",
-              typing && "animate-pulse"
+              typing && "motion-safe:animate-pulse"
             )}
           >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="max-w-full break-words text-pretty"
-            >
-              {renderContent()}
-            </motion.div>
+            <div className="max-w-full break-words text-pretty">
+              {typing ? <TypingIndicator /> : renderContent()}
+            </div>
           </div>
           
         </div>
@@ -215,7 +216,7 @@ export function MessageBubble({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

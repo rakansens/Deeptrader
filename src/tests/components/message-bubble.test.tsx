@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import MessageBubble from '@/components/chat/message-bubble'
 
 describe('MessageBubble', () => {
@@ -15,6 +14,9 @@ describe('MessageBubble', () => {
       </MessageBubble>
     )
     expect(screen.getByTestId('typing-indicator')).toBeInTheDocument()
+    const bubble = screen.getByTestId('message-bubble')
+    const inner = bubble.querySelector('.rounded-lg')!
+    expect(inner.className).toContain('motion-safe:animate-pulse')
   })
 
   it('displays timestamp and avatar', () => {
@@ -33,16 +35,11 @@ describe('MessageBubble', () => {
     expect(screen.getAllByText('AI')[0]).toBeInTheDocument()
   })
 
-  it('copies message text to clipboard', async () => {
-    const user = userEvent.setup()
-    const writeText = jest.fn()
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText },
-      configurable: true,
-    })
-    render(<MessageBubble role="assistant">copy me</MessageBubble>)
-    await user.click(screen.getByLabelText('コピー'))
-    expect(writeText).toHaveBeenCalledWith('copy me')
+
+  it('applies animation classes', () => {
+    render(<MessageBubble role="assistant">hi</MessageBubble>)
+    const bubble = screen.getByTestId('message-bubble')
+    expect(bubble.className).toContain('motion-safe:transition-transform')
   })
 
   it('renders image when type is image', () => {

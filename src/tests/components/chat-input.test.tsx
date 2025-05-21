@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import ChatInput from '@/components/chat/chat-input'
 
 const baseProps = {
@@ -26,9 +27,30 @@ describe('ChatInput drag and drop', () => {
     render(<ChatInput {...baseProps} onUploadImage={onUploadImage} />)
     const container = screen.getByTestId('chat-input')
     const file = new File(['data'], 'test.png', { type: 'image/png' })
-    const data = new DataTransfer()
-    data.items.add(file)
+    const data = { files: [file], items: { add: jest.fn() } } as DataTransfer
     await fireEvent.drop(container, { dataTransfer: data })
     await waitFor(() => expect(onUploadImage).toHaveBeenCalledWith(file))
+  })
+
+  it('shows spinner with motion-safe class while uploading', async () => {
+    const user = userEvent.setup()
+    let resolve: () => void
+    const onUploadImage = jest.fn(
+      () =>
+        new Promise<void>(r => {
+          resolve = r
+        })
+    )
+    render(<ChatInput {...baseProps} onUploadImage={onUploadImage} />)
+    const input = screen.getByTestId('image-input') as HTMLInputElement
+    const file = new File(['data'], 'test.png', { type: 'image/png' })
+    await user.upload(input, file)
+    const uploadButton = screen.getByLabelText('画像をアップロード')
+    await waitFor(() => {
+      const svg = uploadButton.querySelector('svg')!
+      expect(svg.getAttribute('class')).toContain('motion-safe:animate-spin')
+    })
+    resolve!
+    await waitFor(() => expect(onUploadImage).toHaveBeenCalled())
   })
 })

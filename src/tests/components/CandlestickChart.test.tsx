@@ -80,11 +80,11 @@ describe('CandlestickChart', () => {
         indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
-    expect(screen.getByTestId('loading')).toBeInTheDocument()
+    expect(screen.getByTestId('chart-skeleton')).toBeInTheDocument()
     resolveFetch!({ ok: true, json: async () => [] } as Response)
     // スケルトンが消えるまで待機
     await waitFor(() =>
-      expect(screen.queryByTestId('loading')).toBeNull()
+      expect(screen.queryByTestId('chart-skeleton')).toBeNull()
     )
     expect(screen.getByTestId('chart-container')).toBeInTheDocument()
   })
