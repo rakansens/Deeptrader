@@ -1,27 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { flushSync } from "react-dom";
-import {
-  ArrowUpIcon,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Mic,
-  MicOff,
-  TrendingUp,
-  ImagePlus,
-  Loader2,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import MessageBubble from "./message-bubble";
+
 import ConversationSidebar from "./conversation-sidebar";
+import ChatMessages from "./chat-messages";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
 import { captureChart } from "@/lib/capture-chart";
@@ -30,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { logger } from "@/lib/logger";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { useSettings } from "@/hooks/use-settings";
+import { useChatHotkeys } from "@/hooks/use-chat-hotkeys";
 import {
   Tooltip,
   TooltipContent,
@@ -175,13 +159,6 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     URL.revokeObjectURL(url);
   };
 
-  // 新しいメッセージや読み込み状態の変化でスクロールを最下部に移動
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
-  }, [messages, loading]);
-
   // アシスタントのメッセージを読み上げ - 自動読み上げを無効化
   useEffect(() => {
     // この関数では何もしないように変更
@@ -201,50 +178,17 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     // 設定変更の監視は必要に応じて実装
   }, [voiceInputEnabled]);
 
-  // 設定変更を監視して定期的に最新の設定を読み込む
+  // 設定変更を監視 - localStorageの変更イベントで更新
   useEffect(() => {
-    // コンポーネントのマウント時に一度読み込む
     refreshSettings();
-
-    // 3秒ごとに設定を更新
-    const interval = setInterval(() => {
-      refreshSettings();
-    }, 3000);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 依存配列を空にして、マウント時のみ実行されるようにする
+  }, [refreshSettings]);
 
   // キーボードショートカットを登録
-  useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      // 入力中はショートカットを無効化
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
-        return;
-      }
-
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        captureScreenshot();
-      }
-
-      if (e.ctrlKey && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        toggleSidebar();
-      }
-
-      if (e.ctrlKey && e.key.toLowerCase() === "m") {
-        e.preventDefault();
-        toggleListening();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeydown);
-    return () => {
-      window.removeEventListener("keydown", handleKeydown);
-    };
-  }, [captureScreenshot, toggleSidebar, toggleListening]);
+  useChatHotkeys({
+    onScreenshot: captureScreenshot,
+    onToggleSidebar: toggleSidebar,
+    onToggleVoice: toggleListening,
+  });
 
   return (
     <div className="flex h-full relative">
@@ -283,70 +227,15 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
           toggleSidebar={toggleSidebar}
           exportConversation={exportConversation}
         />
-        <div
-          ref={listRef}
-          className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2"
-          aria-live="polite"
-        >
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-              <div className="text-center">
-                <p className="text-lg font-semibold mb-2">
-                  DeepTrader AIへようこそ！
-                </p>
-                <p className="mb-1">あなたのパーソナル取引アシスタントです。</p>
-                <p className="mb-4">
-                  下のように、市場分析、チャート操作、一般的な質問など、何でも聞いてみてくださいね。
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 mx-auto w-full max-w-sm">
-                {[
-                  "今日のビットコインはどう？",
-                  "イーサリアムの価格を教えて",
-                  "RSIインジケーターを表示して",
-                  "移動平均線（MA）を非表示にして",
-                  "このチャート、どう思う？ (まずチャート画像を送信してください)",
-                  "初心者向けの投資戦略を教えて",
-                ].map((suggestion) => (
-                  <Button
-                    key={suggestion}
-                    variant="outline"
-                    className="text-sm h-auto py-2 px-3 justify-start text-left w-full"
-                    onClick={() => {
-                      setInput(suggestion);
-                    }}
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            messages.map((m, idx) => (
-              <MessageBubble
-                key={idx}
-                role={m.role}
-                timestamp={m.timestamp}
-                avatar={m.role === "user" ? userAvatar : assistantAvatar}
-                type={m.type}
-                prompt={m.prompt}
-                imageUrl={m.imageUrl}
-              >
-                {m.content}
-              </MessageBubble>
-            ))
-          )}
-          {loading && messages[messages.length - 1]?.role !== "assistant" && (
-            <MessageBubble role="assistant" typing>
-              <span className="text-sm">考え中...</span>
-            </MessageBubble>
-          )}
-          {error && !loading && (
-            <MessageBubble role="assistant">
-              <div className="text-red-700 dark:text-red-400">{error}</div>
-            </MessageBubble>
-          )}
-        </div>
+        <ChatMessages
+          messages={messages}
+          loading={loading}
+          error={error}
+          listRef={listRef}
+          userAvatar={userAvatar}
+          assistantAvatar={assistantAvatar}
+          setInput={setInput}
+        />
         <ChatInput
           input={input}
           setInput={setInput}

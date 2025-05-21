@@ -19,10 +19,16 @@ export interface UseSettings {
  * 音声入力と読み上げ設定を管理するフック
  */
 export function useSettings(): UseSettings {
-  const [voiceInputEnabled, setVoiceInputEnabledState] = useState<boolean>(false);
-  const [speechSynthesisEnabled, setSpeechSynthesisEnabledState] = useState<boolean>(false);
-  const [userAvatar, setUserAvatarState] = useState<string | undefined>(undefined);
-  const [assistantAvatar, setAssistantAvatarState] = useState<string | undefined>(undefined);
+  const [voiceInputEnabled, setVoiceInputEnabledState] =
+    useState<boolean>(false);
+  const [speechSynthesisEnabled, setSpeechSynthesisEnabledState] =
+    useState<boolean>(false);
+  const [userAvatar, setUserAvatarState] = useState<string | undefined>(
+    undefined,
+  );
+  const [assistantAvatar, setAssistantAvatarState] = useState<
+    string | undefined
+  >(undefined);
   const [initialized, setInitialized] = useState<boolean>(false);
 
   // LocalStorageから設定を読み込む
@@ -32,13 +38,13 @@ export function useSettings(): UseSettings {
       const speechValue = localStorage.getItem("speechSynthesisEnabled");
       const userAvatarValue = localStorage.getItem("userAvatar");
       const assistantAvatarValue = localStorage.getItem("assistantAvatar");
-      
+
       // 明示的に変換して型安全性を確保
       if (voiceValue !== null) {
         const parsedVoice = voiceValue === "true";
         setVoiceInputEnabledState(parsedVoice);
       }
-      
+
       if (speechValue !== null) {
         const parsedSpeech = speechValue === "true";
         setSpeechSynthesisEnabledState(parsedSpeech);
@@ -51,7 +57,6 @@ export function useSettings(): UseSettings {
       if (assistantAvatarValue !== null) {
         setAssistantAvatarState(assistantAvatarValue || undefined);
       }
-      
     } catch (error) {
       logger.error("[useSettings] 設定読み込みエラー:", error);
     }
@@ -61,7 +66,7 @@ export function useSettings(): UseSettings {
   // 依存配列を空にして、再レンダリングの原因にならないようにする
   const refreshSettings = useCallback(() => {
     loadSettings();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 初期化時に一度だけ実行
@@ -71,6 +76,15 @@ export function useSettings(): UseSettings {
       setInitialized(true);
     }
   }, [initialized, loadSettings]);
+
+  // storageイベントに反応して設定を更新
+  useEffect(() => {
+    const handleStorage = () => {
+      loadSettings();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [loadSettings]);
 
   // 設定変更ハンドラ - localStorageに直接保存し、状態も更新
   const setVoiceInputEnabled = useCallback((value: boolean) => {
