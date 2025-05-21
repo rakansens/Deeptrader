@@ -12,16 +12,63 @@ interface OrderBookPanelProps {
   className?: string;
 }
 
-export default function OrderBookPanel({ symbol, height, currentPrice, onClose, className }: OrderBookPanelProps) {
+export default function OrderBookPanel({
+  symbol,
+  height,
+  currentPrice,
+  onClose,
+  className,
+}: OrderBookPanelProps) {
   const { bids, asks } = useOrderBook(symbol);
 
   const isCurrent = (price: number) =>
     currentPrice !== undefined && Math.abs(price - currentPrice) < 1e-6;
 
+  const reversedAsks = [...asks].reverse();
+
   return (
-    <IndicatorPanel title="OrderBook" height={height} onClose={onClose} className={className}>
-      <div className="flex text-xs h-full overflow-auto">
-        <table className="flex-1 mr-2" data-testid="bids-table">
+    <IndicatorPanel
+      title="OrderBook"
+      height={height}
+      onClose={onClose}
+      className={className}
+    >
+      <div
+        className="text-xs h-full overflow-auto flex flex-col"
+        data-testid="orderbook-panel"
+      >
+        <table className="w-full mb-1" data-testid="asks-table">
+          <thead>
+            <tr>
+              <th className="text-left">Ask</th>
+              <th className="text-right">Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reversedAsks.map((a, i) => (
+              <tr
+                key={i}
+                className={cn(
+                  "text-red-700 dark:text-red-400",
+                  isCurrent(a.price) && "bg-accent/50 font-bold"
+                )}
+                data-testid={isCurrent(a.price) ? "current-price-row" : "ask-row"}
+              >
+                <td className="text-left">{a.price}</td>
+                <td className="text-right">{a.quantity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {currentPrice !== undefined && (
+          <div
+            className="py-1 text-center font-bold bg-accent/50"
+            data-testid="current-price-row"
+          >
+            {currentPrice}
+          </div>
+        )}
+        <table className="w-full mt-1" data-testid="bids-table">
           <thead>
             <tr>
               <th className="text-left">Bid</th>
@@ -40,29 +87,6 @@ export default function OrderBookPanel({ symbol, height, currentPrice, onClose, 
               >
                 <td className="text-left">{b.price}</td>
                 <td className="text-right">{b.quantity}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <table className="flex-1" data-testid="asks-table">
-          <thead>
-            <tr>
-              <th className="text-left">Ask</th>
-              <th className="text-right">Qty</th>
-            </tr>
-          </thead>
-          <tbody>
-            {asks.map((a, i) => (
-              <tr
-                key={i}
-                className={cn(
-                  "text-red-700 dark:text-red-400",
-                  isCurrent(a.price) && "bg-accent/50 font-bold"
-                )}
-                data-testid={isCurrent(a.price) ? "current-price-row" : "ask-row"}
-              >
-                <td className="text-left">{a.price}</td>
-                <td className="text-right">{a.quantity}</td>
               </tr>
             ))}
           </tbody>
