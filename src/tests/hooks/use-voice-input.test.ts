@@ -28,6 +28,7 @@ class MockSpeechRecognition {
 }
 
 ;(global as any).SpeechRecognition = MockSpeechRecognition as any
+;(window as any).SpeechRecognition = MockSpeechRecognition as any
 
 describe('useVoiceInput', () => {
   afterEach(() => {

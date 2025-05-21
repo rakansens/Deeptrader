@@ -66,7 +66,7 @@ export default function Home() {
   }, []);
 
   // 型安全なハンドラー関数を定義
-  const handleTimeframeChange = useCallback((tf: Timeframe) => setTimeframe(tf), []);
+  const handleTimeframeChange = useCallback((timeframe: Timeframe) => setTimeframe(timeframe), []);
   const handleSymbolChange = useCallback((sym: SymbolValue) => setSymbol(sym), []);
 
   const toggleIndicator = useCallback((indicatorName: string, enable?: boolean) => {
@@ -83,6 +83,16 @@ export default function Home() {
       return prevIndicators;
     });
   }, []);
+
+  // グローバル Window オブジェクトへ関数を登録
+  useEffect(() => {
+    window.toggleIndicator = toggleIndicator;
+    window.changeTimeframe = handleTimeframeChange;
+    return () => {
+      delete window.toggleIndicator;
+      delete window.changeTimeframe;
+    };
+  }, [toggleIndicator, handleTimeframeChange]);
 
   useEffect(() => {
     const hasSeenModal = localStorage.getItem('hasSeenWelcomeModal');

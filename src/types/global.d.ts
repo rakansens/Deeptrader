@@ -1,4 +1,5 @@
 import type { IChartApi } from 'lightweight-charts'
+import type { Timeframe } from '@/constants/chart'
 
 export {}
 
@@ -51,6 +52,6 @@ declare global {
     __chartInstance?: IChartApi | null
     __getChartElement?: () => HTMLElement | null
     toggleIndicator?: (name: string, enabled?: boolean) => void
-    changeTimeframe?: (tf: string) => void
+    changeTimeframe?: (timeframe: Timeframe) => void
   }
 }

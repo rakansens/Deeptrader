@@ -75,8 +75,7 @@ export function useVoiceInput({
     }
 
     const SpeechRecognitionCtor =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     
     // ブラウザが音声認識をサポートしていない場合
     if (!SpeechRecognitionCtor) {
