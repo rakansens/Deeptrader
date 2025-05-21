@@ -27,6 +27,7 @@ describe('useCandlestickData', () => {
     )
 
     await waitFor(() => mockUseBinanceSocket.mock.calls.length > 0)
+    expect(mockUseBinanceSocket.mock.calls[0][0].pingInterval).toBe(0)
     expect(global.fetch).toHaveBeenCalled()
 
     const msg = { k: { t: 60000, o: '1', h: '2', l: '0', c: '1', v: '50' } }

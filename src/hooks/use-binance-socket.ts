@@ -17,7 +17,8 @@ interface UseBinanceSocketOptions<T> {
   onMessage?: (data: T) => void
 }
 
-const DEFAULT_PING_INTERVAL = 3 * 60 * 1000
+// デフォルトではPINGを送信しない
+const DEFAULT_PING_INTERVAL = 0
 const PONG_TIMEOUT = 10 * 1000
 
 /**

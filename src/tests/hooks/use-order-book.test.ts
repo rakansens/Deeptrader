@@ -23,6 +23,7 @@ describe('useOrderBook', () => {
     const { result } = renderHook(() => useOrderBook('BTCUSDT'))
 
     await waitFor(() => mockFetch.mock.calls.length > 0)
+    expect(mockSocket.mock.calls[0][0].pingInterval).toBe(0)
     expect(result.current.bids.length).toBe(1)
     expect(result.current.connected).toBe(true)
 

@@ -44,6 +44,16 @@ describe('useBinanceSocket', () => {
     jest.useRealTimers()
   })
 
+  it('does not send ping when interval is 0', () => {
+    jest.useFakeTimers()
+    renderHook(() => useBinanceSocket({ url: 'wss://test' }))
+    const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1]
+    ws.onopen?.()
+    jest.advanceTimersByTime(5000)
+    expect(ws.sent.length).toBe(0)
+    jest.useRealTimers()
+  })
+
   it('sends ping at interval', () => {
     jest.useFakeTimers()
     renderHook(() =>

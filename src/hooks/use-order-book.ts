@@ -62,6 +62,7 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   const { status } = useBinanceSocket({
     url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`,
     onMessage: handleMessage,
+    pingInterval: 0,
   });
 
   useEffect(() => {

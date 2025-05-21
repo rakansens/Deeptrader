@@ -366,6 +366,7 @@ export function useCandlestickData(
     url: `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`,
     onMessage: handleMessage,
     enabled: !loading && !error,
+    pingInterval: 0,
   });
 
   return {
