@@ -8,7 +8,7 @@ const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
 import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 import { z } from "zod";
-import { TIMEFRAMES } from "@/constants/chart";
+import { TIMEFRAMES, type Timeframe } from "@/constants/chart";
 
 // ツールのインポート
 import { chartAnalysisTool } from "../tools/chartAnalysisTool";
@@ -29,6 +29,9 @@ const memory = new Memory({
   },
 }) as unknown as MastraMemory;
 
+// TIMEFRAMESをZodのenumで使用できるように変換
+const timeframeEnum = z.enum(TIMEFRAMES as [Timeframe, ...Timeframe[]]);
+
 // 市場分析結果のスキーマ定義
 export const marketAnalysisSchema = z.object({
   trend: z.enum(["bullish", "bearish", "neutral", "uncertain"]),
@@ -36,7 +39,7 @@ export const marketAnalysisSchema = z.object({
   resistanceLevels: z.array(z.number()),
   keyPatterns: z.array(z.string()),
   riskLevel: z.enum(["low", "medium", "high", "extreme"]),
-  timeframe: z.enum(TIMEFRAMES),
+  timeframe: timeframeEnum,
   summary: z.string(),
 });
 
@@ -46,7 +49,7 @@ export const tradingStrategySchema = z.object({
   entryPoints: z.array(z.number()).optional(),
   stopLoss: z.number().optional(),
   takeProfit: z.array(z.number()).optional(),
-  timeframe: z.enum(TIMEFRAMES),
+  timeframe: timeframeEnum,
   reasoning: z.string(),
   alternativeScenarios: z.array(z.string()).optional(),
 });
