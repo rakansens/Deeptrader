@@ -3,6 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { DrawingMode, DrawingCanvasHandle } from "@/types/chart";
 
+const SHORTCUT_MAP: Record<string, DrawingMode> = {
+  t: "trendline",
+  f: "fibonacci",
+};
+
 export interface UseDrawingControlsOptions {
   containerRef: React.RefObject<HTMLDivElement>;
   drawingEnabled?: boolean;
@@ -28,6 +33,23 @@ export function useDrawingControls({
   const handleClearDrawing = useCallback(() => {
     drawingRef.current?.clear();
   }, []);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!e.altKey) return;
+    const key = e.key.toLowerCase();
+    if (SHORTCUT_MAP[key]) {
+      e.preventDefault();
+      setMode(SHORTCUT_MAP[key]);
+    }
+  }, []);
+
+  const registerShortcuts = useCallback(() => {
+    window.addEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  const unregisterShortcuts = useCallback(() => {
+    window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (!drawingEnabled) {
@@ -57,6 +79,12 @@ export function useDrawingControls({
     [containerRef],
   );
 
+  useEffect(() => {
+    return () => {
+      unregisterShortcuts();
+    };
+  }, [unregisterShortcuts]);
+
   return {
     drawingRef,
     mode,
@@ -67,6 +95,8 @@ export function useDrawingControls({
     handleClearDrawing,
     toggleSidebar,
     handleWheel,
+    registerShortcuts,
+    unregisterShortcuts,
   };
 }
 

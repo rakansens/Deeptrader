@@ -5,16 +5,17 @@ import { logger } from "@/lib/logger";
 import type { DrawingCanvasHandle, DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
 
-const [
+const {
   FREEHAND,
   TRENDLINE,
   FIBONACCI,
   HORIZONTAL_LINE,
   BOX,
   ARROW,
+  TEXT,
   RULER,
   ERASER,
-] = DRAWING_MODES;
+} = DRAWING_MODES;
 
 /**
  * チャート上に手描きできるキャンバスコンポーネント
@@ -37,7 +38,7 @@ export function useDrawingCanvas(
     enabled = true,
     color = "#ef4444",
     strokeWidth = 2,
-    mode = DRAWING_MODES[0],
+    mode = DRAWING_MODES.FREEHAND,
     eraserSize = 30,
   }: UseDrawingCanvasProps,
   ref: React.Ref<DrawingCanvasHandle>,
@@ -63,7 +64,7 @@ export function useDrawingCanvas(
   const textInputRef = useRef<HTMLInputElement>(null);
 
   // モードがnullの場合、デフォルトのフリーハンドとして扱う
-  const actualMode = mode === null ? DRAWING_MODES[0] : mode;
+  const actualMode = mode === null ? DRAWING_MODES.FREEHAND : mode;
 
   useEffect(() => {
     logger.debug(`[useDrawingCanvas] mode prop: ${mode}, actualMode: ${actualMode}`);
@@ -222,7 +223,7 @@ export function useDrawingCanvas(
       );
     }
 
-    if (actualMode === "text") {
+    if (actualMode === TEXT) {
       logger.debug(`テキストモードでクリックされました。位置: x=${point.x}, y=${point.y}`);
       // 直接クリック位置を使用
       setTextInput({ x: point.x, y: point.y, text: "" });
@@ -408,7 +409,7 @@ export function useDrawingCanvas(
         return "cursor-pointer"; // フリーハンド (Tailwindにcursor-pencilがないため)
       case ERASER:
         return "cursor-not-allowed"; // 消しゴム
-      case "text":
+      case TEXT:
         return "cursor-text"; // テキストモード用のカーソル
       default:
         return "cursor-crosshair"; // その他の描画ツール
@@ -475,7 +476,7 @@ export function useDrawingCanvas(
 
     logger.debug("描画終了");
 
-    if (actualMode === "text") { // テキストモードでは何もしない
+    if (actualMode === TEXT) { // テキストモードでは何もしない
       // textInput があれば、ここで確定する代わりに blur イベントで処理される
       return;
     }

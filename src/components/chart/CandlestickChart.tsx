@@ -85,7 +85,15 @@ export default function CandlestickChart({
     handleClearDrawing,
     toggleSidebar,
     handleWheel,
+    registerShortcuts,
+    unregisterShortcuts,
   } = useDrawingControls({ containerRef, drawingEnabled });
+
+  useEffect(() => {
+    return () => {
+      unregisterShortcuts();
+    };
+  }, [unregisterShortcuts]);
   const { width } = useWindowSize();
 
   // 画面幅に応じて高さを調整する
@@ -245,10 +253,12 @@ export default function CandlestickChart({
                 mode={mode}
                 onModeChange={handleModeChange}
                 onClear={handleClearDrawing}
+                registerShortcuts={registerShortcuts}
+                unregisterShortcuts={unregisterShortcuts}
                 className="absolute top-12 left-2 z-20"
               />
             )}
-            {mode === DRAWING_MODES[6] && (
+            {mode === DRAWING_MODES.ERASER && (
               <EraserSizeControl
                 size={eraserSize}
                 onChange={setEraserSize}

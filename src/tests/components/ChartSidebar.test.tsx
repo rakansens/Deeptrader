@@ -9,13 +9,13 @@ describe("ChartSidebar", () => {
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
     await user.click(screen.getByTitle("トレンドライン"));
-    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[1]);
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES.TRENDLINE);
   });
 
   it("deactivates tool when clicked twice", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(<ChartSidebar mode={DRAWING_MODES[1]} onModeChange={onChange} />);
+    render(<ChartSidebar mode={DRAWING_MODES.TRENDLINE} onModeChange={onChange} />);
     await user.click(screen.getByTitle("トレンドライン"));
     expect(onChange).toHaveBeenCalledWith(null);
   });
@@ -23,9 +23,9 @@ describe("ChartSidebar", () => {
   it("switches between tools", async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(<ChartSidebar mode={DRAWING_MODES[0]} onModeChange={onChange} />);
+    render(<ChartSidebar mode={DRAWING_MODES.FREEHAND} onModeChange={onChange} />);
     await user.click(screen.getByTitle("フィボナッチリトレースメント"));
-    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[2]);
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES.FIBONACCI);
   });
 
   it("selects horizontal line tool", async () => {
@@ -33,7 +33,7 @@ describe("ChartSidebar", () => {
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
     await user.click(screen.getByTitle("水平線"));
-    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[3]);
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES.HORIZONTAL_LINE);
   });
 
   it("selects ruler tool", async () => {
@@ -41,7 +41,7 @@ describe("ChartSidebar", () => {
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
     await user.click(screen.getByTitle("ルーラー"));
-    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[6]);
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES.RULER);
   });
 
   it("selects eraser tool", async () => {
@@ -49,7 +49,7 @@ describe("ChartSidebar", () => {
     const onChange = jest.fn();
     render(<ChartSidebar mode={null} onModeChange={onChange} />);
     await user.click(screen.getByTitle("消しゴム"));
-    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES[7]);
+    expect(onChange).toHaveBeenCalledWith(DRAWING_MODES.ERASER);
   });
 
   it("calls onClear when clear button clicked", async () => {
@@ -77,5 +77,20 @@ describe("ChartSidebar", () => {
     render(<ChartSidebar mode={null} onModeChange={() => {}} />);
     const sidebar = screen.getByTestId("chart-sidebar");
     expect(sidebar.className).toContain("flex-col");
+  });
+it("registers shortcuts when mounted", () => {
+    const registerShortcuts = jest.fn();
+    const unregisterShortcuts = jest.fn();
+    const { unmount } = render(
+      <ChartSidebar 
+        mode={null} 
+        onModeChange={() => {}} 
+        registerShortcuts={registerShortcuts}
+        unregisterShortcuts={unregisterShortcuts}
+      />
+    );
+    expect(registerShortcuts).toHaveBeenCalled();
+    unmount();
+    expect(unregisterShortcuts).toHaveBeenCalled();
   });
 });

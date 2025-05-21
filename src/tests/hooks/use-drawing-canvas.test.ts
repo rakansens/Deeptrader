@@ -8,7 +8,7 @@ describe("useDrawingCanvas", () => {
     const ref = React.createRef<any>();
     const { result, rerender } = renderHook(
       (props: any) => useDrawingCanvas(props, ref),
-      { initialProps: { mode: DRAWING_MODES[7] as DrawingMode, enabled: true } },
+      { initialProps: { mode: DRAWING_MODES.ERASER as DrawingMode, enabled: true } },
     );
 
     const canvas = document.createElement("canvas");
@@ -29,7 +29,7 @@ describe("useDrawingCanvas", () => {
     expect(result.current.eraserPosition).toEqual({ x: 10, y: 20 });
 
     act(() => {
-      rerender({ mode: DRAWING_MODES[0] as DrawingMode, enabled: true });
+      rerender({ mode: DRAWING_MODES.FREEHAND as DrawingMode, enabled: true });
     });
     expect(result.current.eraserPosition).toBeNull();
   });

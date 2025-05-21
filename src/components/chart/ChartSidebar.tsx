@@ -13,6 +13,7 @@ import {
   Trash2,
   Eraser,
 } from "lucide-react";
+import { useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
@@ -21,6 +22,8 @@ interface ChartSidebarProps {
   mode: DrawingMode | null;
   onModeChange: (mode: DrawingMode | null) => void;
   onClear?: () => void;
+  registerShortcuts?: () => void;
+  unregisterShortcuts?: () => void;
   className?: string;
 }
 
@@ -51,6 +54,8 @@ export default function ChartSidebar({
   mode,
   onModeChange,
   onClear,
+  registerShortcuts,
+  unregisterShortcuts,
   className,
 }: ChartSidebarProps) {
   // ツールをクリックした時のハンドラー
@@ -62,6 +67,13 @@ export default function ChartSidebar({
       onModeChange(clickedMode);
     }
   };
+
+  useEffect(() => {
+    registerShortcuts?.();
+    return () => {
+      unregisterShortcuts?.();
+    };
+  }, [registerShortcuts, unregisterShortcuts]);
 
   // アクティブかどうかを判定するヘルパー関数
   const isActive = (toolMode: DrawingMode | null) => mode === toolMode;

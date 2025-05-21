@@ -1,25 +1,15 @@
-export const DRAWING_MODES = [
-  "freehand",
-  "trendline",
-  "fibonacci",
-  "horizontal-line",
-  "box",
-  "arrow",
-  "ruler",
-  "eraser",
-  "text",
-] as const;
-export type DrawingMode =
-  | 'freehand'
-  | 'trendline'
-  | 'fibonacci'
-  | 'horizontal-line'
-  | 'box'
-  | 'arrow'
-  | 'ruler'
-  | 'text'
-  | 'eraser'
-  | null;
+export const DRAWING_MODES = {
+  FREEHAND: "freehand",
+  TRENDLINE: "trendline",
+  FIBONACCI: "fibonacci",
+  HORIZONTAL_LINE: "horizontal-line",
+  BOX: "box",
+  ARROW: "arrow",
+  RULER: "ruler",
+  TEXT: "text",
+  ERASER: "eraser",
+} as const;
+export type DrawingMode = typeof DRAWING_MODES[keyof typeof DRAWING_MODES] | null;
 
 export interface DrawingCanvasHandle {
   clear: () => void;

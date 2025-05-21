@@ -34,7 +34,7 @@ function DrawingCanvas(
     handleTextChange,
     handleTextSubmit,
   } = useDrawingCanvas(options, ref);
-  const { mode = DRAWING_MODES[0], enabled = true, eraserSize = 30 } = options;
+  const { mode = DRAWING_MODES.FREEHAND, enabled = true, eraserSize = 30 } = options;
 
   return (
     <div
@@ -42,7 +42,7 @@ function DrawingCanvas(
       className="relative w-full h-full"
       onMouseMove={handleContainerMouseMove}
     >
-      {mode === DRAWING_MODES[7] && eraserPosition && (
+      {mode === DRAWING_MODES.ERASER && eraserPosition && (
         <div
           className="absolute pointer-events-none rounded-full z-50"
           style={{
