@@ -2,9 +2,10 @@
 // トレーディングアドバイザーエージェントの定義
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
+import { AI_MODEL } from "@/lib/env";
 
-// 使用するAIモデルを環境変数から取得。未指定の場合は gpt-4o
-const aiModel = process.env.AI_MODEL ?? 'gpt-4o';
+// 使用するAIモデルを環境変数から取得
+const aiModel = AI_MODEL;
 import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 import { z } from "zod";

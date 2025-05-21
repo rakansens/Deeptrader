@@ -3,52 +3,59 @@
 
 /**
  * アプリケーションで使用する環境変数を管理するモジュール
- * 必須変数が存在しない場合、明確なエラーを投げる
- * 
- * 注意: このファイルは直接使用せず、各サービスファイルで環境変数を直接参照することを推奨
+ * Zod で定義したスキーマを用いて検証を行う
  */
 
-// 環境変数を安全に取得する関数
-// サーバーサイドでは存在しない場合にエラーをスロー
-// クライアントサイドでは警告を出力して空文字列を返す
-function getEnv(name: string, isRequired: boolean = true): string {
-  const value = process.env[name];
-  if (!value && isRequired) {
-    // クライアントサイドでのエラーを防ぐため、コンソールエラーを出力するだけにする
-    if (typeof window !== 'undefined') {
-      console.warn(`Environment variable ${name} is not defined`);
-      return '';
-    } else {
-      throw new Error(`Environment variable ${name} is not defined`);
-    }
-  }
-  return value || '';
-}
+import { z } from "zod";
 
-// Supabaseクライアントなどで使用する環境変数
+// 環境変数スキーマ
+const envSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string(),
+  OPENAI_API_KEY: z.string().optional(),
+  AI_MODEL: z.string().default("gpt-4o"),
 
-// クライアントサイドで使用する環境変数
-export const NEXT_PUBLIC_SUPABASE_URL = getEnv("NEXT_PUBLIC_SUPABASE_URL", false);
-export const NEXT_PUBLIC_SUPABASE_ANON_KEY = getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", false);
+  BINANCE_BASE_URL: z.string().url().default("https://api.binance.com"),
+  BITGET_BASE_URL: z.string().url().default("https://api.bitget.com"),
+  BITGET_API_KEY: z.string().optional(),
+  BLOCKCHAIR_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.blockchair.com/ethereum"),
+  BLOCKCHAIR_API_KEY: z.string().optional(),
+  SENTIMENT_API_URL: z
+    .string()
+    .url()
+    .default("https://api.alternative.me/fng/"),
+  SENTIMENT_API_KEY: z.string().optional(),
+  NEWS_API_URL: z.string().url().default("https://newsapi.org/v2/everything"),
+  NEWS_API_KEY: z.string().optional(),
+  COINGLASS_BASE_URL: z
+    .string()
+    .url()
+    .default("https://open-api.coinglass.com/public/v2"),
+  COINGLASS_API_KEY: z.string().optional(),
+});
 
-// サーバーサイドでのみ使用する環境変数
-export const SUPABASE_SERVICE_ROLE_KEY = typeof window === 'undefined' 
-  ? getEnv("SUPABASE_SERVICE_ROLE_KEY") 
-  : '';
+// スキーマに基づいて環境変数を検証
+const env = envSchema.parse(process.env);
 
-export const BINANCE_BASE_URL = process.env.BINANCE_BASE_URL ?? "https://api.binance.com";
-export const BITGET_BASE_URL = process.env.BITGET_BASE_URL ?? "https://api.bitget.com";
-export const BITGET_API_KEY = process.env.BITGET_API_KEY ?? "";
-export const BLOCKCHAIR_BASE_URL = process.env.BLOCKCHAIR_BASE_URL ?? "https://api.blockchair.com/ethereum";
-export const BLOCKCHAIR_API_KEY = process.env.BLOCKCHAIR_API_KEY ?? "";
-export const SENTIMENT_API_URL = process.env.SENTIMENT_API_URL ?? "https://api.alternative.me/fng/";
-export const SENTIMENT_API_KEY = process.env.SENTIMENT_API_KEY ?? "";
+// 変数のエクスポート
+export const NEXT_PUBLIC_SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
+export const NEXT_PUBLIC_SUPABASE_ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+export const OPENAI_API_KEY = env.OPENAI_API_KEY ?? "";
+export const AI_MODEL = env.AI_MODEL;
 
-export const NEWS_API_URL = process.env.NEWS_API_URL ?? "https://newsapi.org/v2/everything";
-export const NEWS_API_KEY = process.env.NEWS_API_KEY ?? "";
-
-export const COINGLASS_BASE_URL = process.env.COINGLASS_BASE_URL ??
-  "https://open-api.coinglass.com/public/v2";
-export const COINGLASS_API_KEY = process.env.COINGLASS_API_KEY ?? "";
-
-
+export const BINANCE_BASE_URL = env.BINANCE_BASE_URL;
+export const BITGET_BASE_URL = env.BITGET_BASE_URL;
+export const BITGET_API_KEY = env.BITGET_API_KEY ?? "";
+export const BLOCKCHAIR_BASE_URL = env.BLOCKCHAIR_BASE_URL;
+export const BLOCKCHAIR_API_KEY = env.BLOCKCHAIR_API_KEY ?? "";
+export const SENTIMENT_API_URL = env.SENTIMENT_API_URL;
+export const SENTIMENT_API_KEY = env.SENTIMENT_API_KEY ?? "";
+export const NEWS_API_URL = env.NEWS_API_URL;
+export const NEWS_API_KEY = env.NEWS_API_KEY ?? "";
+export const COINGLASS_BASE_URL = env.COINGLASS_BASE_URL;
+export const COINGLASS_API_KEY = env.COINGLASS_API_KEY ?? "";

@@ -6,6 +6,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { Database } from "@/types";
 import { logger } from "@/lib/logger";
+import {
+  NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY,
+} from "@/lib/env";
 
 /**
  * 認証状態を確認するミドルウェア
@@ -17,10 +21,7 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.next();
 
     // 環境変数チェック - Supabase接続情報がない場合は処理をスキップ
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
+    if (!NEXT_PUBLIC_SUPABASE_URL || !NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       logger.warn(
         "Supabase環境変数が設定されていません。認証機能は動作しません。",
       );
