@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import CrosshairTooltip from '@/components/chart/CrosshairTooltip'
-import type { CrosshairInfo } from '@/hooks/use-crosshair-info'
+import type { CrosshairInfo } from '@/types'
 
 describe('CrosshairTooltip', () => {
   it('renders OHLC and change info', () => {

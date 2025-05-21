@@ -7,17 +7,7 @@ import type {
   UTCTimestamp,
   MouseEventParams,
 } from "lightweight-charts";
-
-export interface CrosshairInfo {
-  time: UTCTimestamp;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
-  change: number;
-  changePercent: number;
-}
+import type { CrosshairInfo } from "@/types";
 
 interface UseCrosshairInfoParams {
   chart: IChartApi | null;

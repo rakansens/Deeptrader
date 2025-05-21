@@ -15,15 +15,16 @@ import type {
   DrawingCanvasHandle,
   DrawingMode,
   IndicatorOptions,
+  CrosshairInfo
 } from "@/types/chart";
 import type { IndicatorSettings, Timeframe } from "@/constants/chart";
-import type { CrosshairInfo } from "@/hooks/use-crosshair-info";
+import type { UseCandlestickDataResult } from "@/hooks/use-candlestick-data";
 import type { MutableRefObject } from "react";
 
 export interface MainChartPanelProps {
   containerRef: React.RefObject<HTMLDivElement>;
   chartHeight: number;
-  candles: any[];
+  candles: UseCandlestickDataResult["candles"];
   loading: boolean;
   error: string | null;
   initialInterval: Timeframe;
@@ -34,7 +35,7 @@ export interface MainChartPanelProps {
   countdownBgColor?: string;
   countdownTextColor: string;
   eraserSize: number;
-  handleWheel: (e: React.WheelEvent<any>) => void;
+  handleWheel: (e: React.WheelEvent<HTMLDivElement>) => void;
   toggleSidebar: () => void;
   handleModeChange: (mode: DrawingMode) => void;
   handleClearDrawing: () => void;
@@ -46,10 +47,10 @@ export interface MainChartPanelProps {
   indicators: IndicatorOptions;
   handleToggleIndicator: (key: keyof IndicatorOptions, value: boolean) => void;
   chartRef: MutableRefObject<IChartApi | null>;
-  rsi: any[];
-  macd: any[];
-  signal: any[];
-  histogram: any[];
+  rsi: UseCandlestickDataResult["rsi"];
+  macd: UseCandlestickDataResult["macd"];
+  signal: UseCandlestickDataResult["signal"];
+  histogram: UseCandlestickDataResult["histogram"];
   subHeight: number;
   indicatorSettings: IndicatorSettings;
 }

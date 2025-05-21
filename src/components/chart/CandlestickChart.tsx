@@ -4,13 +4,17 @@ import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo } from "react";
 import ChartSkeleton from "./chart-skeleton";
 import useChartTheme from "@/hooks/use-chart-theme";
-import useCandlestickData from "@/hooks/use-candlestick-data";
+import useCandlestickData, {
+  type UseCandlestickDataResult,
+} from "@/hooks/use-candlestick-data";
 import useCandlestickSeries from "@/hooks/use-candlestick-series";
 import useIndicatorSeries from "@/hooks/use-indicator-series";
 import useChartInstance from "@/hooks/use-chart-instance";
 import useWindowSize from "@/hooks/use-window-size";
 import useDrawingControls from "@/hooks/use-drawing-controls";
-import useCrosshairInfo from "@/hooks/use-crosshair-info";
+import useCrosshairInfo, {
+  type CrosshairInfo,
+} from "@/hooks/use-crosshair-info";
 import useCountdownColor from "@/hooks/use-countdown-color";
 import OrderBookPanel from "./OrderBookPanel";
 import OrderBookToggleButton from "./orderbook-toggle-button";
@@ -110,18 +114,22 @@ export default function CandlestickChart({
   const isDrawingEnabled = true;
 
   const {
-    candles = [],
-    volumes = [],
-    ma = [],
-    rsi = [],
-    macd = [],
-    signal = [],
-    histogram = [],
-    bollUpper = [],
-    bollLower = [],
+    candles,
+    volumes,
+    ma,
+    rsi,
+    macd,
+    signal,
+    histogram,
+    bollUpper,
+    bollLower,
     loading,
     error,
-  } = useCandlestickData(initialSymbol, initialInterval, indicatorSettings);
+  }: UseCandlestickDataResult = useCandlestickData(
+    initialSymbol,
+    initialInterval,
+    indicatorSettings,
+  );
 
   const chartRef = useChartInstance({
     container: containerRef.current,
@@ -172,7 +180,7 @@ export default function CandlestickChart({
     },
   });
 
-  const crosshairInfo = useCrosshairInfo({
+  const crosshairInfo: CrosshairInfo | null = useCrosshairInfo({
     chart: chartRef.current,
     candleSeries: candleRef.current,
     volumeSeries: volumeRef.current,

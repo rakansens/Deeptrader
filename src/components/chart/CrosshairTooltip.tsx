@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from '@/lib/utils'
-import type { CrosshairInfo } from '@/hooks/use-crosshair-info'
+import type { CrosshairInfo } from '@/types'
 
 interface CrosshairTooltipProps {
   info: CrosshairInfo | null

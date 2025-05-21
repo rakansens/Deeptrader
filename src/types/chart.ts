@@ -1,3 +1,5 @@
+import type { UTCTimestamp } from 'lightweight-charts'
+
 export const DRAWING_MODES = {
   FREEHAND: "freehand",
   TRENDLINE: "trendline",
@@ -31,4 +33,15 @@ export interface ChartTheme {
   upColor: string;
   downColor: string;
   volume: string;
+}
+
+export interface CrosshairInfo {
+  time: UTCTimestamp;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+  change: number;
+  changePercent: number;
 }
