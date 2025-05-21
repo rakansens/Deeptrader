@@ -4,7 +4,6 @@ import type {
   ISeriesApi,
   CandlestickData,
   HistogramData,
-  CrosshairMoveEvent,
   UTCTimestamp,
 } from 'lightweight-charts'
 
@@ -38,7 +37,7 @@ export function useCrosshairInfo({
   useEffect(() => {
     if (!chart || !candleSeries) return
 
-    const handler = (param: CrosshairMoveEvent) => {
+    const handler = (param: any) => {
       if (!param.time) {
         setInfo(null)
         return

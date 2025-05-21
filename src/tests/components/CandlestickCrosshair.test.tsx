@@ -1,7 +1,6 @@
 import { render, screen, waitFor, act } from '@testing-library/react'
 import CandlestickChart from '@/components/chart/CandlestickChart'
-import { SYMBOLS, TIMEFRAMES } from '@/constants/chart'
-import { DEFAULT_INDICATOR_SETTINGS } from '@/types/chart'
+import { SYMBOLS, TIMEFRAMES, DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart'
 
 jest.mock('lightweight-charts', () => {
   const timeScaleMocks: any[] = []
