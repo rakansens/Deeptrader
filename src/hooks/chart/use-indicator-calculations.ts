@@ -14,7 +14,9 @@ import {
 import type { IndicatorSettings } from "@/constants/chart";
 
 export interface IndicatorSeriesState {
-  ma: LineData<UTCTimestamp>[];
+  ma1: LineData<UTCTimestamp>[];
+  ma2: LineData<UTCTimestamp>[];
+  ma3: LineData<UTCTimestamp>[];
   rsi: LineData<UTCTimestamp>[];
   macd: LineData<UTCTimestamp>[];
   signal: LineData<UTCTimestamp>[];
@@ -31,7 +33,9 @@ export function useIndicatorCalculations(
   settings: IndicatorSettings,
 ): IndicatorSeriesState {
   const [series, setSeries] = useState<IndicatorSeriesState>(() => ({
-    ma: [],
+    ma1: [],
+    ma2: [],
+    ma3: [],
     rsi: [],
     macd: [],
     signal: [],
@@ -44,7 +48,11 @@ export function useIndicatorCalculations(
     const closes = candles.map((c) => c.close);
     const times = candles.map((c) => c.time);
 
-    const sma = new SMACalculator(settings.sma);
+    // 複数のSMAを計算
+    const sma1 = new SMACalculator(settings.ma.ma1);
+    const sma2 = new SMACalculator(settings.ma.ma2);
+    const sma3 = new SMACalculator(settings.ma.ma3);
+    
     const rsi = new RsiCalculator(settings.rsi);
     const macd = new MACDCalculator(
       settings.macd.short,
@@ -56,7 +64,9 @@ export function useIndicatorCalculations(
       settings.boll.stdDev,
     );
 
-    const ma: LineData<UTCTimestamp>[] = [];
+    const ma1: LineData<UTCTimestamp>[] = [];
+    const ma2: LineData<UTCTimestamp>[] = [];
+    const ma3: LineData<UTCTimestamp>[] = [];
     const rsiArr: LineData<UTCTimestamp>[] = [];
     const macdArr: LineData<UTCTimestamp>[] = [];
     const signalArr: LineData<UTCTimestamp>[] = [];
@@ -67,8 +77,17 @@ export function useIndicatorCalculations(
     for (let i = 0; i < closes.length; i++) {
       const price = closes[i];
       const time = times[i];
-      const smaVal = sma.update(price);
-      if (smaVal !== null) ma.push({ time, value: smaVal });
+      
+      // 複数のSMAを更新
+      const sma1Val = sma1.update(price);
+      if (sma1Val !== null) ma1.push({ time, value: sma1Val });
+      
+      const sma2Val = sma2.update(price);
+      if (sma2Val !== null) ma2.push({ time, value: sma2Val });
+      
+      const sma3Val = sma3.update(price);
+      if (sma3Val !== null) ma3.push({ time, value: sma3Val });
+      
       const rsiVal = rsi.update(price);
       if (rsiVal !== null) rsiArr.push({ time, value: rsiVal });
       const macdVal = macd.update(price);
@@ -85,7 +104,9 @@ export function useIndicatorCalculations(
     }
 
     setSeries({
-      ma,
+      ma1,
+      ma2,
+      ma3,
       rsi: rsiArr,
       macd: macdArr,
       signal: signalArr,

@@ -53,7 +53,7 @@ export function calculateIndicators(
   settings:IndicatorSettings = DEFAULT_INDICATOR_SETTINGS
 ) {
   return {
-    sma: computeSMA(closes, settings.sma),
+    sma: computeSMA(closes, settings.ma.ma1),
     rsi: computeRSI(closes, settings.rsi),
     macd: computeMACD(
       closes,

@@ -22,8 +22,12 @@ export type SymbolValue = string;
  * インジケーター計算に使用する期間設定
  */
 export interface IndicatorSettings {
-  /** 単純移動平均の期間 */
-  sma: number;
+  /** 複数の移動平均線の期間 */
+  ma: {
+    ma1: number;  // 短期
+    ma2: number;  // 中期
+    ma3: number;  // 長期
+  };
   /** RSIの期間 */
   rsi: number;
   /** RSIの買われすぎ水準 */
@@ -46,7 +50,9 @@ export interface IndicatorSettings {
     boll: number;
   };
   colors?: {
-    ma?: string;
+    ma1?: string; // 短期MA
+    ma2?: string; // 中期MA
+    ma3?: string; // 長期MA
     rsi?: string;
     macd?: string;
     boll?: string;
@@ -56,7 +62,11 @@ export interface IndicatorSettings {
 /** indicator run-time knobs used across hooks & tools */
 
 export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
-  sma: 14,
+  ma: {
+    ma1: 7,   // 7日移動平均
+    ma2: 25,  // 25日移動平均
+    ma3: 99,  // 99日移動平均
+  },
   rsi: 14,
   rsiUpper: 70,
   rsiLower: 30,
@@ -64,7 +74,9 @@ export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   boll: { period:20, stdDev:2 },
   lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
   colors: {
-    ma: '#FF6347',
+    ma1: '#F0E68C', // 黄色（短期）
+    ma2: '#FF69B4', // ピンク（中期）
+    ma3: '#1E90FF', // 青（長期）
     rsi: '#4682B4',
     macd: '#32CD32',
     boll: '#FFD700',

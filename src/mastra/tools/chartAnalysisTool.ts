@@ -47,7 +47,13 @@ export const chartAnalysisTool = createTool({
     period: z.number().optional().describe('分析する期間（バー数）'),
     settings: z
       .object({
-        sma: z.number().optional(),
+        ma: z
+          .object({
+            ma1: z.number().optional(),
+            ma2: z.number().optional(),
+            ma3: z.number().optional(),
+          })
+          .optional(),
         rsi: z.number().optional(),
         macd: z
           .object({
@@ -81,7 +87,11 @@ export const chartAnalysisTool = createTool({
     const mergedSettings: IndicatorSettings = {
       ...DEFAULT_INDICATOR_SETTINGS,
       ...settings,
-      macd: { ...DEFAULT_INDICATOR_SETTINGS.macd, ...settings.macd },
+      ma: { 
+        ...DEFAULT_INDICATOR_SETTINGS.ma,
+        ...(settings.ma || {})
+      },
+      macd: { ...DEFAULT_INDICATOR_SETTINGS.macd, ...(settings.macd || {}) },
       boll: {
         period: settings.boll?.period ?? DEFAULT_INDICATOR_SETTINGS.boll.period,
         stdDev: settings.boll?.stdDev ?? DEFAULT_INDICATOR_SETTINGS.boll.stdDev
@@ -101,7 +111,7 @@ export const chartAnalysisTool = createTool({
     for (const ind of indicators) {
       const name = ind.toUpperCase();
       if (name === 'SMA') {
-        const value = computeSMA(closes, mergedSettings.sma);
+        const value = computeSMA(closes, mergedSettings.ma.ma1);
         if (value !== null) results.push({ name: 'SMA', value });
       } else if (name === 'RSI') {
         const value = computeRSI(closes, mergedSettings.rsi);

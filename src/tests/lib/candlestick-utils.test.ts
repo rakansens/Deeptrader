@@ -16,14 +16,14 @@ describe("candlestick-utils", () => {
     it("returns indicator values with custom settings", () => {
       const prices = Array.from({ length: 50 }, (_, i) => i + 1);
       const res = calculateIndicators(prices, {
-        sma: 10,
+        ma: { ma1: 10, ma2: 20, ma3: 50 },
         rsi: 10,
         rsiUpper: 70,
         rsiLower: 30,
         macd: { short: 5, long: 8, signal: 3 },
         boll: { period: 10, stdDev: 2 },
         lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
-        colors: { ma: '#FF0000', rsi: '#00FF00', macd: '#0000FF', boll: '#FFFF00' }
+        colors: { ma1: '#F0E68C', ma2: '#FF69B4', ma3: '#1E90FF', rsi: '#00FF00', macd: '#0000FF', boll: '#FFFF00' }
       });
       expect(res.sma).toBeDefined();
       expect(res.rsi).toBeDefined();

@@ -57,6 +57,18 @@ interface ChartToolbarProps {
   priceChangePercent?: number;
   showOrderBook?: boolean;
   onOrderBookToggle?: () => void;
+  ohlc?: {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    time: string;
+  };
+  maValues?: {
+    ma7?: number;
+    ma25?: number;
+    ma99?: number;
+  };
 }
 
 // 利用可能なすべてのタイムフレーム
@@ -78,6 +90,8 @@ export default function ChartToolbar({
   priceChangePercent = 0,
   showOrderBook = false,
   onOrderBookToggle = () => {},
+  ohlc,
+  maValues,
 }: ChartToolbarProps) {
   const [displayTimeframes, setDisplayTimeframes] = useState<string[]>(DEFAULT_DISPLAY_TIMEFRAMES);
   const isPriceUp = priceChange >= 0;
@@ -153,6 +167,74 @@ export default function ChartToolbar({
               }
             </div>
           </div>
+        )}
+      </div>
+
+      {/* OHLC情報表示セクション */}
+      {ohlc && (
+        <div className="flex items-center text-xs border-b border-border pb-1 space-x-3 overflow-x-auto">
+          <div className="flex items-center">
+            <span className="opacity-70 mr-1">{ohlc.time}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="opacity-70 mr-1">始値:</span>
+            <span className="font-medium">{ohlc.open.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+          </div>
+          <div className="flex items-center text-green-500">
+            <span className="opacity-70 mr-1">高値:</span> 
+            <span className="font-medium">{ohlc.high.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+          </div>
+          <div className="flex items-center text-red-500">
+            <span className="opacity-70 mr-1">安値:</span>
+            <span className="font-medium">{ohlc.low.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="opacity-70 mr-1">終値:</span>
+            <span className="font-medium">{ohlc.close.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="opacity-70 mr-1">変動率:</span>
+            <span className={`font-medium ${isPriceUp ? 'text-green-500' : 'text-red-500'}`}>
+              {isPriceUp ? '+' : ''}{priceChangePercent.toFixed(2)}%
+            </span>
+          </div>
+          {/* アンプリチュード (高値と安値の差の割合) */}
+          <div className="flex items-center">
+            <span className="opacity-70 mr-1">アンプリチュード:</span>
+            <span className="font-medium">
+              {((ohlc.high - ohlc.low) / ohlc.low * 100).toFixed(2)}%
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* インジケーター情報表示セクション */}
+      <div className="flex items-center text-xs mb-1 space-x-3 overflow-x-auto">
+        {/* 移動平均線情報表示 */}
+        {maValues && indicators.ma && (
+          <>
+            <span className="opacity-80">
+              MA(7): <span className="text-yellow-400 font-medium">{maValues.ma7?.toFixed(2) || '—'}</span>
+            </span>
+            <span className="opacity-80">
+              MA(25): <span className="text-pink-400 font-medium">{maValues.ma25?.toFixed(2) || '—'}</span>
+            </span>
+            <span className="opacity-80">
+              MA(99): <span className="text-blue-400 font-medium">{maValues.ma99?.toFixed(2) || '—'}</span>
+            </span>
+          </>
+        )}
+        
+        {/* ボリンジャーバンド情報表示 - 有効な場合のみ表示 */}
+        {indicators.boll && ohlc && (
+          <>
+            <span className="opacity-80 ml-2 pl-2 border-l border-border">
+              ボリバン: <span className="text-purple-400 font-medium">期間 {settings.boll?.period || 20}</span>
+            </span>
+            <span className="opacity-80">
+              標準偏差: <span className="text-purple-400 font-medium">{settings.boll?.stdDev || 2}</span>
+            </span>
+          </>
         )}
       </div>
       

@@ -58,6 +58,18 @@ interface CandlestickChartProps {
     currentPrice?: number;
     priceChange?: number;
     priceChangePercent?: number;
+    ohlc?: {
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      time: string;
+    };
+    maValues?: {
+      ma7?: number;
+      ma25?: number;
+      ma99?: number;
+    };
   }) => void;
   /** オーダーブックの表示状態 */
   showOrderBook?: boolean;
@@ -92,7 +104,9 @@ export default function CandlestickChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
-  const maRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma1Ref = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma2Ref = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma3Ref = useRef<ISeriesApi<"Line"> | null>(null);
   const bollUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
   const bollLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const {
@@ -132,7 +146,9 @@ export default function CandlestickChart({
   const {
     candles,
     volumes,
-    ma,
+    ma1,
+    ma2,
+    ma3,
     rsi,
     macd,
     signal,
@@ -165,10 +181,14 @@ export default function CandlestickChart({
 
   useIndicatorSeries({
     chart: chartRef.current,
-    maRef,
+    ma1Ref,
+    ma2Ref,
+    ma3Ref,
     bollUpperRef,
     bollLowerRef,
-    ma,
+    ma1,
+    ma2,
+    ma3,
     bollUpper,
     bollLower,
     enabledMa: indicators.ma,
@@ -178,7 +198,9 @@ export default function CandlestickChart({
       boll: indicatorSettings.lineWidth.boll,
     },
     colors: {
-      ma: indicatorSettings.colors?.ma,
+      ma1: indicatorSettings.colors?.ma1,
+      ma2: indicatorSettings.colors?.ma2,
+      ma3: indicatorSettings.colors?.ma3,
       boll: indicatorSettings.colors?.boll,
     },
   });
@@ -243,12 +265,35 @@ export default function CandlestickChart({
 
   // 価格情報が変更されたときに親コンポーネントに通知
   useEffect(() => {
+    // 最新のローソク足とMA値を計算
+    const latestCandle = candles.length > 0 ? candles[candles.length - 1] : null;
+    const latestTime = latestCandle ? new Date(latestCandle.time * 1000) : null;
+    const formattedTime = latestTime ? 
+      `${latestTime.getFullYear()}/${String(latestTime.getMonth() + 1).padStart(2, '0')}/${String(latestTime.getDate()).padStart(2, '0')} ${String(latestTime.getHours()).padStart(2, '0')}:${String(latestTime.getMinutes()).padStart(2, '0')}` 
+      : '';
+    
+    // MA値を計算
+    // 各期間のMA値を取得
+    const maValues = {
+      ma7: ma1.length > 0 ? ma1[ma1.length - 1]?.value : undefined,
+      ma25: ma2.length > 0 ? ma2[ma2.length - 1]?.value : undefined,
+      ma99: ma3.length > 0 ? ma3[ma3.length - 1]?.value : undefined
+    };
+
     onPriceInfoUpdate({
       currentPrice: currentPrice,
       priceChange: priceChange,
-      priceChangePercent: priceChangePercent
+      priceChangePercent: priceChangePercent,
+      ohlc: latestCandle ? {
+        open: latestCandle.open,
+        high: latestCandle.high,
+        low: latestCandle.low,
+        close: latestCandle.close,
+        time: formattedTime
+      } : undefined,
+      maValues
     });
-  }, [currentPrice, priceChange, priceChangePercent, onPriceInfoUpdate]);
+  }, [candles, currentPrice, priceChange, priceChangePercent, ma1, ma2, ma3, onPriceInfoUpdate]);
 
   // Loading
   if (loading && candles.length === 0) {

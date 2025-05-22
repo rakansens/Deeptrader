@@ -5,10 +5,14 @@ import { preprocessLineData } from '@/lib/chart-utils';
 
 interface UseIndicatorSeriesParams {
   chart: IChartApi | null;
-  maRef: React.MutableRefObject<ISeriesApi<"Line"> | null>;
+  ma1Ref: React.MutableRefObject<ISeriesApi<"Line"> | null>;
+  ma2Ref: React.MutableRefObject<ISeriesApi<"Line"> | null>;
+  ma3Ref: React.MutableRefObject<ISeriesApi<"Line"> | null>;
   bollUpperRef: React.MutableRefObject<ISeriesApi<"Line"> | null>;
   bollLowerRef: React.MutableRefObject<ISeriesApi<"Line"> | null>;
-  ma: LineData[];
+  ma1: LineData[];
+  ma2: LineData[];
+  ma3: LineData[];
   bollUpper: LineData[];
   bollLower: LineData[];
   enabledMa: boolean;
@@ -18,7 +22,9 @@ interface UseIndicatorSeriesParams {
     boll: number;
   };
   colors: {
-    ma?: string;
+    ma1?: string;
+    ma2?: string;
+    ma3?: string;
     boll?: string;
   };
 }
@@ -28,10 +34,14 @@ interface UseIndicatorSeriesParams {
  */
 export function useIndicatorSeries({
   chart,
-  maRef,
+  ma1Ref,
+  ma2Ref,
+  ma3Ref,
   bollUpperRef,
   bollLowerRef,
-  ma,
+  ma1,
+  ma2,
+  ma3,
   bollUpper,
   bollLower,
   enabledMa,
@@ -39,20 +49,49 @@ export function useIndicatorSeries({
   lineWidth,
   colors,
 }: UseIndicatorSeriesParams) {
-  const processedMa = useMemo(() => preprocessLineData(ma), [ma]);
+  const processedMa1 = useMemo(() => preprocessLineData(ma1), [ma1]);
+  const processedMa2 = useMemo(() => preprocessLineData(ma2), [ma2]);
+  const processedMa3 = useMemo(() => preprocessLineData(ma3), [ma3]);
   const processedBollUpper = useMemo(() => preprocessLineData(bollUpper), [bollUpper]);
   const processedBollLower = useMemo(() => preprocessLineData(bollLower), [bollLower]);
 
+  // MA1（短期移動平均線）
   useLineSeries({
     chart,
-    ref: maRef,
+    ref: ma1Ref,
     enabled: enabledMa,
     options: { 
-      color: colors?.ma,
+      color: colors?.ma1,
       lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
-    data: processedMa,
+    data: processedMa1,
+  });
+
+  // MA2（中期移動平均線）
+  useLineSeries({
+    chart,
+    ref: ma2Ref,
+    enabled: enabledMa,
+    options: { 
+      color: colors?.ma2,
+      lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
+      priceLineVisible: false
+    },
+    data: processedMa2,
+  });
+
+  // MA3（長期移動平均線）
+  useLineSeries({
+    chart,
+    ref: ma3Ref,
+    enabled: enabledMa,
+    options: { 
+      color: colors?.ma3,
+      lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
+      priceLineVisible: false
+    },
+    data: processedMa3,
   });
 
   useLineSeries({

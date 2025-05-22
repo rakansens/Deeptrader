@@ -71,6 +71,18 @@ export default function Home() {
     currentPrice?: number;
     priceChange?: number;
     priceChangePercent?: number;
+    ohlc?: {
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      time: string;
+    };
+    maValues?: {
+      ma7?: number;
+      ma25?: number;
+      ma99?: number;
+    };
   }>({});
 
   // クライアントサイドでのみ実行する初期化
@@ -208,6 +220,8 @@ export default function Home() {
                       priceChangePercent={priceInfo.priceChangePercent}
                       showOrderBook={showOrderBook}
                       onOrderBookToggle={handleOrderBookToggle}
+                      ohlc={priceInfo.ohlc}
+                      maValues={priceInfo.maValues}
                     />
                   </CardHeader>
                   <CardContent>

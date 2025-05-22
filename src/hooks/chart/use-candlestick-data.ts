@@ -12,7 +12,9 @@ import useIndicatorCalculations from "./use-indicator-calculations";
 export interface UseCandlestickDataResult {
   candles: CandlestickData<UTCTimestamp>[];
   volumes: HistogramData<UTCTimestamp>[];
-  ma: LineData<UTCTimestamp>[];
+  ma1: LineData<UTCTimestamp>[];
+  ma2: LineData<UTCTimestamp>[];
+  ma3: LineData<UTCTimestamp>[];
   rsi: LineData<UTCTimestamp>[];
   macd: LineData<UTCTimestamp>[];
   signal: LineData<UTCTimestamp>[];
@@ -38,7 +40,9 @@ export function useCandlestickData(
   return {
     candles: stream.candles,
     volumes: stream.volumes,
-    ma: indicators.ma,
+    ma1: indicators.ma1,
+    ma2: indicators.ma2,
+    ma3: indicators.ma3,
     rsi: indicators.rsi,
     macd: indicators.macd,
     signal: indicators.signal,

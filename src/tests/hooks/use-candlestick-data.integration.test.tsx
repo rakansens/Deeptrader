@@ -58,7 +58,7 @@ describe('useCandlestickData (integration)', () => {
     });
 
     expect(result.current.candles.length).toBeGreaterThan(0);
-    expect(result.current.ma.length).toBeGreaterThan(0);
+    expect(result.current.ma1.length).toBeGreaterThan(0);
   });
 });
 

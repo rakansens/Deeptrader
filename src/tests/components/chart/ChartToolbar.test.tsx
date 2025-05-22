@@ -26,7 +26,7 @@ describe('ChartToolbar', () => {
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={onInd}
         settings={{
-          sma: 14,
+          ma: { ma1: 7, ma2: 25, ma3: 99 },
           rsi: 14,
           rsiUpper: 70,
           rsiLower: 30,
@@ -64,7 +64,7 @@ describe('ChartToolbar', () => {
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={() => {}}
         settings={{
-          sma: 14,
+          ma: { ma1: 7, ma2: 25, ma3: 99 },
           rsi: 14,
           rsiUpper: 70,
           rsiLower: 30,
@@ -93,7 +93,7 @@ describe('ChartToolbar', () => {
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={() => {}}
         settings={{
-          sma: 14,
+          ma: { ma1: 7, ma2: 25, ma3: 99 },
           rsi: 14,
           rsiUpper: 70,
           rsiLower: 30,

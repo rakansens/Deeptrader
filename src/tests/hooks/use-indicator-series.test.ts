@@ -11,25 +11,29 @@ describe('useIndicatorSeries', () => {
     renderHook(() =>
       useIndicatorSeries({
         chart: null,
-        maRef: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
+        ma1Ref: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
+        ma2Ref: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
+        ma3Ref: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
         bollUpperRef: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
         bollLowerRef: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
-        ma: [],
+        ma1: [],
+        ma2: [],
+        ma3: [],
         bollUpper: [],
         bollLower: [],
         enabledMa: true,
         enabledBoll: false,
         lineWidth: { ma: 3, boll: 1 },
-        colors: { ma: '#FF0000', boll: '#0000FF' }
+        colors: { ma1: '#F0E68C', ma2: '#FF69B4', ma3: '#1E90FF', boll: '#0000FF' }
       })
     )
 
-    expect(mockUseLineSeries).toHaveBeenCalledTimes(3)
+    expect(mockUseLineSeries).toHaveBeenCalledTimes(5)
     expect(mockUseLineSeries.mock.calls[0][0]).toMatchObject({
       enabled: true,
       options: expect.objectContaining({ lineWidth: 3 })
     })
-    expect(mockUseLineSeries.mock.calls[1][0]).toMatchObject({
+    expect(mockUseLineSeries.mock.calls[3][0]).toMatchObject({
       enabled: false,
       options: expect.objectContaining({ lineWidth: 1 })
     })
