@@ -1,5 +1,7 @@
 import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from './env'
 
+const RECONNECT_DELAY = 1000; // ms – wait 1 s before trying to reconnect
+
 export type Listener = (data: unknown) => void
 
 interface StreamInfo {
@@ -7,6 +9,7 @@ interface StreamInfo {
   listeners: Set<Listener>
   refs: number
   keepAlive?: NodeJS.Timeout
+  reconnectTimer?: NodeJS.Timeout
 }
 
 export class BinanceSocketManager {
@@ -27,24 +30,73 @@ export class BinanceSocketManager {
   }
 
   private create(stream: string): StreamInfo {
-    const ws = new WebSocket(`${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/stream?streams=${stream}`)
-    const info: StreamInfo = { ws, listeners: new Set(), refs: 0 }
-    ws.addEventListener('open', () => {
-      info.keepAlive = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          try { ws.send('{}') } catch { /* ignore */ }
+    // prepare the record first so inner helpers can refer to it
+    const info: StreamInfo = {
+      // a temporary dummy – will be overwritten by connect()
+      // @ts-expect-error overwrite later
+      ws: null,
+      listeners: new Set(),
+      refs: 0
+    }
+
+    const connect = () => {
+      // clear any pending timer before a fresh connect
+      if (info.reconnectTimer) {
+        clearTimeout(info.reconnectTimer)
+        info.reconnectTimer = undefined
+      }
+
+      const ws = new WebSocket(`${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/stream?streams=${stream}`)
+      info.ws = ws
+
+      // start / stop keep‑alive
+      const startKeepAlive = () => {
+        info.keepAlive = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.send('{}')
+            } catch {
+              /* ignore */
+            }
+          }
+        }, 25_000)
+      }
+      const stopKeepAlive = () => {
+        if (info.keepAlive) {
+          clearInterval(info.keepAlive)
+          info.keepAlive = undefined
         }
-      }, 25000)
-    })
-    ws.addEventListener('close', () => {
-      if (info.keepAlive) clearInterval(info.keepAlive)
-      this.streams.delete(stream)
-    })
-    ws.addEventListener('message', ev => {
-      let data: unknown
-      try { data = JSON.parse(ev.data) } catch { data = ev.data }
-      info.listeners.forEach(l => l(data))
-    })
+      }
+
+      ws.addEventListener('open', startKeepAlive)
+
+      ws.addEventListener('message', ev => {
+        let data: unknown
+        try {
+          data = JSON.parse(ev.data)
+        } catch {
+          data = ev.data
+        }
+        info.listeners.forEach(l => l(data))
+      })
+
+      const handleCloseOrError = () => {
+        stopKeepAlive()
+
+        // if still used somewhere, reconnect, otherwise flush completely
+        if (info.refs > 0) {
+          info.reconnectTimer = setTimeout(connect, RECONNECT_DELAY)
+        } else {
+          this.streams.delete(stream)
+        }
+      }
+
+      ws.addEventListener('close', handleCloseOrError)
+      ws.addEventListener('error', handleCloseOrError)
+    }
+
+    // do the first connect immediately
+    connect()
     return info
   }
 
@@ -53,6 +105,11 @@ export class BinanceSocketManager {
     if (!info) return
     info.listeners.delete(cb)
     info.refs -= 1
+    // if no one is listening, ensure pending reconnects/keep‑alives are cleared
+    if (info.refs <= 0 && info.reconnectTimer) {
+      clearTimeout(info.reconnectTimer)
+      info.reconnectTimer = undefined
+    }
     if (info.refs <= 0) {
       if (info.keepAlive) clearInterval(info.keepAlive)
       info.ws.close()
@@ -62,4 +119,3 @@ export class BinanceSocketManager {
 }
 
 export const socketHub = new BinanceSocketManager()
-
