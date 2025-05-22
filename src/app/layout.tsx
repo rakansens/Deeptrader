@@ -23,9 +23,9 @@ export default function RootLayout({
         <ReactQueryProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="dark"
             disableTransitionOnChange
+            forcedTheme="dark"
           >
             <PageTransition>{children}</PageTransition>
           </ThemeProvider>

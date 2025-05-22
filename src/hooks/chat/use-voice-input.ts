@@ -14,6 +14,9 @@ interface UseVoiceInput {
   startListening: () => void;
   stopListening: () => void;
   toggleListening: () => void;
+  transcript: string;
+  resetTranscript: () => void;
+  error: Error | null;
 }
 
 /**
@@ -26,10 +29,16 @@ export function useVoiceInput({
 }: UseVoiceInputOptions = {}): UseVoiceInput {
   const [isListening, setIsListening] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [transcript, setTranscript] = useState("");
+  const [error, setError] = useState<Error | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isSendingRef = useRef(false);
   const startTimeRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
+
+  const resetTranscript = () => {
+    setTranscript("");
+  };
 
   const beep = () => {
     try {
@@ -83,6 +92,7 @@ export function useVoiceInput({
     
     // ブラウザが音声認識をサポートしていない場合
     if (!SpeechRecognitionCtor) {
+      setError(new Error("このブラウザは音声認識をサポートしていません"));
       return;
     }
 
@@ -98,6 +108,9 @@ export function useVoiceInput({
         .map((r) => r[0].transcript)
         .join("");
       
+      // 書き起こし結果をステートに保存
+      setTranscript(text);
+      
       if (onResult) {
         onResult(text);
       }
@@ -109,9 +122,10 @@ export function useVoiceInput({
       clearTimer();
       setIsListening(false);
     };
-    rec.onerror = () => {
+    rec.onerror = (event) => {
       clearTimer();
       setIsListening(false);
+      setError(new Error((event as any).error || "音声認識エラー"));
     };
     rec.start();
     startTimeRef.current = Date.now();
@@ -139,6 +153,9 @@ export function useVoiceInput({
     startListening,
     stopListening,
     toggleListening,
+    transcript,
+    resetTranscript,
+    error,
   };
 }
 

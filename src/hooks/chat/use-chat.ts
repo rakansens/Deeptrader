@@ -100,23 +100,22 @@ export function useChat(): UseChat {
         let messagePrompt: string | undefined = undefined;
         let messageImageUrl: string | undefined = undefined;
 
+        // メッセージコンテンツの処理
         if (typeof em.content === 'string') {
           messageContentStr = em.content;
         } else if (Array.isArray(em.content)) { 
           const textItem = em.content.find((item): item is Extract<OpenAIContent, {type: 'text'}> => item.type === 'text');
           const imageItem = em.content.find((item): item is Extract<OpenAIContent, {type: 'image_url'}> => item.type === 'image_url');
 
+          // テキストコンテンツの取得
           messageContentStr = textItem?.text || "";
 
+          // 画像コンテンツの処理
           if (imageItem) {
             messageType = 'image';
             messageImageUrl = imageItem.image_url.url;
             messagePrompt = textItem?.text;
           }
-          if (em.type === 'image') messageType = 'image';
-          if (em.prompt) messagePrompt = em.prompt;
-          if (em.imageUrl) messageImageUrl = em.imageUrl;
-
         } else if (typeof em.content === 'object' && em.content !== null) {
           try {
             messageContentStr = JSON.stringify(em.content);
@@ -125,11 +124,40 @@ export function useChat(): UseChat {
           }
         }
         
+        // 追加属性の処理
+        if (em.type === 'image') messageType = 'image';
+        if (em.prompt) messagePrompt = em.prompt;
+        if (em.imageUrl) messageImageUrl = em.imageUrl;
+
+        // 既存のメッセージ情報を保持
         const prevMsg = prev[i];
         const id = (m as AIMessage).id ?? prevMsg?.id ?? crypto.randomUUID();
 
+        // 画像メッセージの場合、以前のコンテンツを保持
         if (messageType === 'image' && prevMsg?.type === 'image' && prevMsg?.content.startsWith('data:image/')) {
           messageContentStr = prevMsg.content;
+        }
+
+        // チャート分析テキストが途切れないようにする処理
+        // 1. 前のメッセージが同じIDを持ち、現在のメッセージより短い場合は前のメッセージを使用
+        if (prevMsg?.id === id && 
+            typeof prevMsg?.content === 'string' && 
+            typeof messageContentStr === 'string' &&
+            messageContentStr.length < prevMsg.content.length) {
+          messageContentStr = prevMsg.content;
+        }
+
+        // 2. AIのレスポンスが途中で切れている可能性がある場合は結合
+        if (m.role === 'assistant' && prevMsg?.role === 'assistant' && 
+            typeof messageContentStr === 'string' && 
+            typeof prevMsg?.content === 'string' &&
+            !messageContentStr.endsWith('.') && 
+            !messageContentStr.endsWith('。')) {
+          // 明らかに途中で切れている場合は結合して保持
+          if (prevMsg.content.startsWith(messageContentStr) && 
+              prevMsg.content.length > messageContentStr.length) {
+            messageContentStr = prevMsg.content;
+          }
         }
 
         return {
@@ -143,7 +171,7 @@ export function useChat(): UseChat {
         };
       })
     );
-  }, [aiMessages]);
+  }, [aiMessages, setMessages]);
 
 
   const sendMessage = async (textParam?: string, imageFile?: File) => {
@@ -235,10 +263,10 @@ export function useChat(): UseChat {
     const uiMessage: Message = {
       id: userMessageId,
       role: 'user',
-      content: dataUrl, 
+      content: promptText,
       type: 'image',
       prompt: promptText,
-      imageUrl: dataUrl, 
+      imageUrl: dataUrl,
       timestamp: Date.now(),
     };
 
@@ -248,6 +276,9 @@ export function useChat(): UseChat {
       await append({
         role: 'user',
         content: contentForAppend,
+        type: 'image',
+        prompt: promptText,
+        imageUrl: dataUrl,
       } as OpenAIChatMessage);
     } catch (err) {
       const message =

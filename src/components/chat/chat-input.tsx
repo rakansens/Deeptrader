@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,11 @@ export function ChatInput({
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
+  // デバッグ用：音声入力設定の状態をログ出力
+  useEffect(() => {
+    console.log('ChatInput - voiceInputEnabled:', voiceInputEnabled);
+  }, [voiceInputEnabled]);
+
   /**
    * ファイルをアップロードする共通処理
    * @param file - 画像ファイル
@@ -78,6 +83,9 @@ export function ChatInput({
     if (!file) return;
     await uploadFile(file);
   };
+
+  // 実際に表示するかどうかを決定する変数（フラグ）
+  const showVoiceInput = voiceInputEnabled === true;
 
   return (
     <div
@@ -135,7 +143,7 @@ export function ChatInput({
         className={cn(
           "min-h-[80px] resize-none pr-12",
           "focus-visible:ring-primary",
-          voiceInputEnabled ? "pl-20" : "pl-4"
+          showVoiceInput ? "pl-20" : "pl-4"
         )}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
@@ -145,7 +153,8 @@ export function ChatInput({
         }}
       />
 
-      {voiceInputEnabled && (
+      {/* 明示的にshowVoiceInputを評価して表示・非表示を制御 */}
+      {showVoiceInput && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

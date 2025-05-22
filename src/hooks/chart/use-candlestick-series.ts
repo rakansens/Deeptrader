@@ -64,40 +64,40 @@ export function useCandlestickSeries({
       const c = chart;
       if (!c) return;
       try {
-        if (
-          !candleRef.current &&
+    if (
+      !candleRef.current &&
           typeof (c as unknown as { addCandlestickSeries?: Function }).addCandlestickSeries ===
-            "function"
-        ) {
+        "function"
+    ) {
           candleRef.current = c.addCandlestickSeries({
-            upColor: colors.upColor,
-            downColor: colors.downColor,
-            wickUpColor: colors.upColor,
-            wickDownColor: colors.downColor,
-            borderVisible: false,
-          });
+        upColor: colors.upColor,
+        downColor: colors.downColor,
+        wickUpColor: colors.upColor,
+        wickDownColor: colors.downColor,
+        borderVisible: false,
+      });
           if (processedCandles.length > 0) {
             candleRef.current.setData(processedCandles);
             prevCandleLength.current = processedCandles.length;
             prevFirstTimeRef.current = (processedCandles[0]?.time as number) ?? null;
           }
-        }
+    }
 
-        if (
-          !volumeRef.current &&
+    if (
+      !volumeRef.current &&
           typeof (c as unknown as { addHistogramSeries?: Function }).addHistogramSeries ===
-            "function"
-        ) {
+        "function"
+    ) {
           volumeRef.current = c.addHistogramSeries({
             priceFormat: { 
               type: "volume",
               precision: 0, // 整数表示
               minMove: 0.01, // 最小変動幅
             },
-            priceScaleId: "vol",
+        priceScaleId: "vol",
             color: volumeColor,
             base: 0,
-          });
+      });
           
           // 出来高のプライススケール設定
           c.priceScale("vol").applyOptions({ 

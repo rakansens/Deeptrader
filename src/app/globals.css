@@ -120,3 +120,52 @@
     animation: none;
   }
 }
+
+/* チャート分析用のカスタムスタイル */
+.chart-analysis {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-bottom: 0.5rem;
+}
+
+.chart-analysis-text {
+  width: 100%;
+  overflow-x: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.chart-analysis-content {
+  display: block;
+  width: 100%;
+}
+
+/* チャート分析のセクションヘッダー */
+.chart-analysis-text strong,
+.chart-analysis-content strong {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+/* チャート分析のハッシュタグ装飾 */
+.chart-analysis-content:has(div):has(div) {
+  width: 100%;
+}
+
+/* 古いブラウザのための代替スタイル */
+.chart-analysis-content > div {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* セクション区切り */
+.chart-analysis-content h3,
+.chart-analysis-text h3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: hsl(var(--accent-blue));
+}

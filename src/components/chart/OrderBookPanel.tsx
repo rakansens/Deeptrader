@@ -341,12 +341,12 @@ export default function OrderBookPanel({
   };
 
   return (
-          <IndicatorPanel
+    <IndicatorPanel
         title="オーダーブック"
-        height={height}
-        onClose={onClose}
-        className={className}
-      >
+      height={height}
+      onClose={onClose}
+      className={className}
+    >
       <div className="flex items-center justify-between border-b border-border/40 py-1 px-2 text-xs bg-secondary">
         <div className="flex gap-1">
           <button
@@ -447,8 +447,8 @@ export default function OrderBookPanel({
                 
                 return (
                   <div
-                    key={i}
-                    className={cn(
+                key={i}
+                className={cn(
                       "grid grid-cols-3 py-[3px] px-2 border-b border-border/10 relative",
                       isCurrent(a.price) && "bg-accent/30"
                     )}
@@ -468,8 +468,8 @@ export default function OrderBookPanel({
             </div>
           )}
           
-          {currentPrice !== undefined && (
-            <div
+        {currentPrice !== undefined && (
+          <div
               className="py-1.5 flex items-center justify-between px-2 border-y border-primary/50 bg-primary/10"
             >
               <div className="flex items-center">
@@ -480,8 +480,8 @@ export default function OrderBookPanel({
                 <span className="font-medium text-[14px]">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                 <span className="text-[11px] ml-1 text-muted-foreground">USDT</span>
               </div>
-            </div>
-          )}
+          </div>
+        )}
           
           {(viewMode === "both" || viewMode === "bids") && (
             <div className="w-full">
@@ -491,8 +491,8 @@ export default function OrderBookPanel({
                 
                 return (
                   <div
-                    key={i}
-                    className={cn(
+                key={i}
+                className={cn(
                       "grid grid-cols-3 py-[3px] px-2 border-b border-border/10 relative",
                       isCurrent(b.price) && "bg-accent/30"
                     )}

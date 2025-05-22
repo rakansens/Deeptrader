@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
 import { useSettings } from "@/hooks/use-settings";
 import { speakText, stopSpeech } from "@/lib/speech-utils";
-import { Volume2, VolumeX, Copy as CopyIcon, CheckCircle } from "lucide-react";
+import { Volume2, VolumeX, Copy as CopyIcon, CheckCircle, Maximize2, Minimize2 } from "lucide-react";
 import TypingIndicator from "./typing-indicator";
 
 export interface MessageBubbleProps {
@@ -58,9 +58,7 @@ export function MessageBubble({
   const { speechSynthesisEnabled } = useSettings();
 
   // 画像メッセージ用の表示処理
-  const isImage =
-    type === 'image' &&
-    ((typeof children === 'string' && children.startsWith('data:image/')) || !!imageUrl);
+  const isImage = type === 'image';
   
   // 画像表示サイズの管理
   const [imageExpanded, setImageExpanded] = useState(false);
@@ -106,46 +104,74 @@ export function MessageBubble({
     }
   };
 
-  // テキスト部分のエスケープ
+  // コンテンツのレンダリング
   const renderContent = () => {
     // 画像の場合
     if (isImage) {
-      const src = imageUrl || (typeof children === 'string' ? children : '');
+      const imageSource = imageUrl || (typeof children === 'string' && children.startsWith('data:image/') ? children : '');
+      
+      if (!imageSource) {
+        // 画像ソースがない場合は代替テキストを表示
+        return <div className="text-sm italic">画像を表示できません</div>;
+      }
+
       return (
-        <div className="relative">
-          <img
-            src={src}
-            alt={prompt || "チャートイメージ"}
-            className={cn(
-              "rounded-md border border-border max-w-full",
-              imageExpanded ? "w-auto max-h-[80vh]" : "w-48 sm:w-64 max-h-48 object-cover"
-            )}
-            onClick={handleImageClick}
-            style={{ cursor: 'pointer' }}
-          />
-          <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between">
-            <span>{prompt || "チャートイメージ"}</span>
-            <button 
+        <div className="relative overflow-hidden flex flex-col items-center">
+          <div className={cn(
+            "relative w-full",
+            imageExpanded ? "max-w-full" : "max-w-md"
+          )}>
+            <img
+              src={imageSource}
+              alt={prompt || "チャートイメージ"}
+              className={cn(
+                "rounded-md border border-border", 
+                imageExpanded 
+                  ? "w-full max-h-[70vh]" 
+                  : "w-full max-h-[250px] object-contain"
+              )}
               onClick={handleImageClick}
-              className="text-xs text-primary hover:underline"
+              style={{ cursor: 'pointer' }}
+            />
+            <button
+              onClick={handleImageClick}
+              className="absolute top-2 right-2 p-1 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:bg-background"
+              aria-label={imageExpanded ? "縮小" : "拡大"}
+              title={imageExpanded ? "縮小" : "拡大"}
             >
-              {imageExpanded ? "縮小" : "クリックで拡大"}
+              {imageExpanded ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </button>
           </div>
+          {prompt && (
+            <div className="w-full text-sm mt-2 px-2 text-foreground">
+              {prompt}
+            </div>
+          )}
         </div>
       );
     }
     
     // テキストの場合
     if (typeof children === 'string') {
+      // テキストが長い場合にチャート分析かどうかを判断
+      const isChartAnalysis = children.includes('###') || children.includes('SMA') || children.includes('RSI') || children.includes('MACD');
+      
       // 改行をbrタグに変換
       const lines = children.split('\n');
-      return lines.map((line, i) => (
-        <React.Fragment key={i}>
-          {line}
-          {i < lines.length - 1 && <br />}
-        </React.Fragment>
-      ));
+      return (
+        <div className={isChartAnalysis ? "chart-analysis-content w-full" : ""}>
+          {lines.map((line, i) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < lines.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </div>
+      );
     }
     
     // その他の場合はそのまま返す
@@ -184,25 +210,43 @@ export function MessageBubble({
 
       <div
         className={cn(
-          "flex flex-col max-w-[95%] sm:max-w-[85%] md:max-w-[85%]",
+          "flex flex-col",
+          isImage ? "max-w-full" : "max-w-[95%] sm:max-w-[85%] md:max-w-[85%]",
           role === "user" ? "items-end" : "items-start",
-          !isImage && "group"
+          !typing && "group"
         )}
       >
-        <div className={cn("relative", isImage ? "" : "")}>
+        <div className={cn("relative", isImage ? "w-full" : "w-full")}>
           <div
             className={cn(
-              // 画像メッセージは背景・余白を除去してネイティブな見た目に
-              isImage ? "p-0" : "px-3 py-1.5",
-              !isImage &&
-                (role === "user"
-                  ? "bg-primary text-black font-medium"
-                  : "bg-muted text-foreground"),
               "rounded-lg h-fit",
-              typing && "motion-safe:animate-pulse"
+              // 画像メッセージは背景色を調整
+              isImage 
+                ? (role === "user" 
+                  ? "bg-primary/5 border border-primary/10" 
+                  : "bg-muted/80 border border-muted-foreground/10") 
+                : (role === "user"
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "bg-muted text-foreground"),
+              // パディングは画像の場合小さく
+              isImage ? "p-2" : "px-3 py-1.5",
+              typing && "motion-safe:animate-pulse",
+              // 最大幅の制約をここで設定
+              isImage ? "" : "w-full",
+              // チャート分析のテキストは幅を広げる
+              typeof children === 'string' && 
+                (children.includes('###') || children.includes('SMA') || children.includes('RSI')) 
+                ? "chart-analysis" : ""
             )}
           >
-            <div className="max-w-full break-words text-pretty">
+            <div className={cn(
+              "break-words whitespace-pre-wrap text-pretty",
+              isImage ? "flex justify-center" : "overflow-x-auto",
+              // チャート分析用のカスタムクラスを追加
+              typeof children === 'string' && 
+                (children.includes('###') || children.includes('SMA') || children.includes('RSI')) 
+                ? "chart-analysis-text" : ""
+            )}>
               {typing ? <TypingIndicator /> : renderContent()}
             </div>
           </div>

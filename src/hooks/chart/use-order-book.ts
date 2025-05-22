@@ -79,7 +79,7 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
     const streamName = `${symbol.toLowerCase()}@depth${depth}@100ms`;
 
     const { ws, unsubscribe } = socketHub.subscribe(streamName, (msg) => {
-      const payload = (msg as any).data ?? msg;
+        const payload = (msg as any).data ?? msg;
       handleMessage(payload);
     });
 

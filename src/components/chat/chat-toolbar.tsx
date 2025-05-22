@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import SettingsDialog from "@/components/SettingsDialog";
+import { SettingsDropdown } from "@/components/SettingsDropdown";
 import { Download, PanelLeft } from "lucide-react";
 
 interface ChatToolbarProps {
@@ -41,7 +41,7 @@ export function ChatToolbar({
           aria-expanded={sidebarOpen}
           aria-controls="conversationSidebar"
           onClick={toggleSidebar}
-          className="text-muted-foreground hover:text-foreground"
+          className="rounded-md bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <PanelLeft className={`h-4 w-4 ${!sidebarOpen ? "opacity-40" : ""}`} />
         </Button>
@@ -53,7 +53,7 @@ export function ChatToolbar({
       </div>
 
       <div className="flex items-center space-x-1">
-        <SettingsDialog />
+        <SettingsDropdown />
 
         <DropdownMenu>
           <TooltipProvider>
@@ -64,7 +64,7 @@ export function ChatToolbar({
                     variant="ghost"
                     size="icon"
                     aria-label="会話をエクスポート"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="rounded-md bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     <Download className="h-4 w-4" />
                   </Button>
@@ -75,7 +75,10 @@ export function ChatToolbar({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent 
+            align="end"
+            className="bg-background/95 backdrop-blur-sm border-border shadow-lg"
+          >
             <DropdownMenuItem onSelect={() => exportConversation("json")}> 
               JSONでダウンロード
             </DropdownMenuItem>

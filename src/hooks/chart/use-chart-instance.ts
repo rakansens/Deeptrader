@@ -207,7 +207,7 @@ export function useChartInstance({
       } else if (typeof ResizeObserver === "undefined") {
         // ResizeObserverが使えない環境でのフォールバックのクリーンアップ
         if (handleResize) {
-          window.removeEventListener("resize", handleResize);
+        window.removeEventListener("resize", handleResize);
         }
       }
       setActiveChartForCapture(null, null); // Unregister active chart

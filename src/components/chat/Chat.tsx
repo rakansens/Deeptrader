@@ -20,7 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import SettingsDialog from "@/components/SettingsDialog";
 import ChatToolbar from "./chat-toolbar";
 import ChatInput from "./chat-input";
 import { useScreenshot } from "@/hooks/use-screenshot";
@@ -73,22 +72,58 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     onCapture: async (url: string) => {
       let analysis = "";
       try {
+        // チャート分析APIを呼び出し
         const res = await fetch("/api/chart-analysis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol, timeframe }),
+          body: JSON.stringify({ 
+            symbol, 
+            timeframe
+            // タイムスタンプパラメータは削除（APIがサポートしていない可能性あり）
+          }),
         });
+        
+        // APIレスポンスを処理
         const data = await res.json();
-        if (res.ok) {
+        
+        if (res.ok && data) {
+          // 正常なレスポンスの場合はJSONを文字列化
           analysis = JSON.stringify(data);
         } else {
+          // APIエラーの場合はログに記録
           logger.error("Chart analysis API error", data);
+          // 最小限の情報を含める
+          analysis = JSON.stringify({
+            symbol,
+            timeframe,
+            timestamp: new Date().toISOString()
+          });
         }
       } catch (err) {
+        // ネットワークエラーなどの例外処理
         logger.error("Chart analysis request failed", err);
+        // エラー時は最低限の情報を送信
+        analysis = JSON.stringify({
+          symbol,
+          timeframe,
+          timestamp: new Date().toISOString()
+        });
       }
+      
+      // プロンプトを作成してチャートイメージとともに送信
       const prompt = `このチャートを分析してください\n${analysis}`;
-      await sendImageMessage(url, prompt);
+      
+      try {
+        // チャート画像と分析指示を送信
+        await sendImageMessage(url, prompt);
+      } catch (sendErr) {
+        logger.error("Failed to send chart image", sendErr);
+        toast({
+          title: "❌ 送信エラー", 
+          description: "チャート画像の送信に失敗しました",
+          variant: "destructive",
+        });
+      }
     },
   });
 

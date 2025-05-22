@@ -253,7 +253,7 @@ export default function ChartToolbar({
               onClick={() => onTimeframeChange(tf as Timeframe)}
             >
               {tf}
-            </Button>
+              </Button>
           ))}
           
           {/* 追加のタイムフレーム選択 */}
@@ -265,7 +265,7 @@ export default function ChartToolbar({
             allTimeframes={ALL_TIMEFRAMES as readonly string[]}
           />
         </div>
-        
+
         <div className="flex items-center space-x-1 relative">
           <TooltipProvider>
             <Tooltip>
