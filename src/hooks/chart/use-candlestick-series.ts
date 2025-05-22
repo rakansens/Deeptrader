@@ -3,6 +3,9 @@ import type { IChartApi, ISeriesApi, CandlestickData, HistogramData, UTCTimestam
 import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
 import { logger } from '@/lib/logger'
 
+// 🛠️ 2025-05-22: シリーズ生成時に破棄済みチャートへアクセスし例外が発生するケースを try/catch で吸収。
+//               OrderBook パネルの開閉に伴うチャート再生成時のクラッシュを防止。
+
 interface CandlestickSeriesColors {
   upColor: string
   downColor: string
@@ -46,34 +49,42 @@ export function useCandlestickSeries({
   useEffect(() => {
     if (!chart) return
 
-    if (
-      !candleRef.current &&
-      chart &&
-      typeof (chart as unknown as { addCandlestickSeries?: Function }).addCandlestickSeries ===
-        "function"
-    ) {
-      candleRef.current = chart.addCandlestickSeries({
-        upColor: colors.upColor,
-        downColor: colors.downColor,
-        wickUpColor: colors.upColor,
-        wickDownColor: colors.downColor,
-        borderVisible: false,
-      });
-    }
-    if (
-      !volumeRef.current &&
-      chart &&
-      typeof (chart as unknown as { addHistogramSeries?: Function }).addHistogramSeries ===
-        "function"
-    ) {
-      volumeRef.current = chart.addHistogramSeries({
-        priceFormat: { type: "volume" },
-        priceScaleId: "vol",
-        color: colors.volume,
-      });
-      chart
-        .priceScale("vol")
-        .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+    try {
+      if (
+        !candleRef.current &&
+        chart &&
+        typeof (chart as unknown as { addCandlestickSeries?: Function }).addCandlestickSeries ===
+          "function"
+      ) {
+        candleRef.current = chart.addCandlestickSeries({
+          upColor: colors.upColor,
+          downColor: colors.downColor,
+          wickUpColor: colors.upColor,
+          wickDownColor: colors.downColor,
+          borderVisible: false,
+        });
+      }
+
+      if (
+        !volumeRef.current &&
+        chart &&
+        typeof (chart as unknown as { addHistogramSeries?: Function }).addHistogramSeries ===
+          "function"
+      ) {
+        volumeRef.current = chart.addHistogramSeries({
+          priceFormat: { type: "volume" },
+          priceScaleId: "vol",
+          color: colors.volume,
+        });
+        chart
+          .priceScale("vol")
+          .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+      }
+    } catch (err) {
+      // 破棄済みチャートに対してシリーズ追加を試みた場合など、
+      // lightweight-charts の内部プロパティ参照で例外が発生することがある。
+      // その場合は無視して、次回チャート再生成後の effect で再試行する。
+      logger.warn('Skipped series creation due to chart state:', err)
     }
 
     return () => {
