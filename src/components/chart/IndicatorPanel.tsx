@@ -53,7 +53,12 @@ export default function IndicatorPanel({
           </button>
         )}
       </div>
-      <div ref={containerRef} className="flex-1 overflow-auto bg-card">{children}</div>
+      <div 
+        ref={containerRef} 
+        className="flex-1 overflow-hidden"
+      >
+        {children}
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   HoverCard,
   HoverCardContent,
@@ -24,6 +24,12 @@ export default function OrderBookHoverCard({
   showOrderBook,
   onOrderBookToggle
 }: OrderBookHoverCardProps) {
+  // スクロールイベントを明示的に処理し、伝播を止める
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // デフォルトの動作を防止せず、イベントが自然に処理されるようにする
+    e.stopPropagation();
+  }, []);
+
   return (
     <HoverCard openDelay={0} closeDelay={300}>
       <HoverCardTrigger asChild>
@@ -39,18 +45,23 @@ export default function OrderBookHoverCard({
         </Button>
       </HoverCardTrigger>
       <HoverCardContent 
-        className="w-[320px] p-0 max-h-[calc(100vh-120px)]" 
+        className="w-[320px] p-0 max-h-[calc(100vh-120px)] overflow-hidden" 
         align="end" 
         side="bottom" 
         avoidCollisions={true}
         sideOffset={5}
       >
-        <OrderBookPanel
-          symbol={symbol}
-          height="auto"
-          currentPrice={currentPrice}
-          className="border-none shadow-none max-h-[calc(100vh-120px)] overflow-hidden"
-        />
+        <div 
+          className="h-full overflow-hidden"
+          onWheel={handleWheel}
+        >
+          <OrderBookPanel
+            symbol={symbol}
+            height="auto"
+            currentPrice={currentPrice}
+            className="border-none shadow-none h-full"
+          />
+        </div>
       </HoverCardContent>
     </HoverCard>
   )

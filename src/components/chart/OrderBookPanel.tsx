@@ -5,9 +5,18 @@ import useOrderBook from "@/hooks/chart/use-order-book";
 import { cn } from "@/lib/utils";
 import type { SymbolValue } from "@/constants/chart";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // 表示モード
 type ViewMode = "both" | "bids" | "asks";
+
+// 精度の型定義
+type PricePrecision = 0.01 | 0.1 | 1 | 10;
 
 interface OrderBookPanelProps {
   symbol: SymbolValue;
@@ -26,18 +35,33 @@ export default function OrderBookPanel({
 }: OrderBookPanelProps) {
   const { bids, asks } = useOrderBook(symbol);
   const [viewMode, setViewMode] = useState<ViewMode>("both");
+  // 精度の状態を管理
+  const [precision, setPrecision] = useState<PricePrecision>(0.01);
 
   const isCurrent = (price: number) =>
     currentPrice !== undefined && Math.abs(price - currentPrice) < 1e-6;
 
-  // 表示数を最適化（15行まで表示）
-  const maxRows = 15;
+  // より多くのデータを表示（スクロールで閲覧可能）
+  const maxRows = 50; // データ量を増加
   const reversedAsks = [...asks].reverse().slice(0, maxRows);
   const limitedBids = bids.slice(0, maxRows);
 
   // 数値を適切にフォーマット
   const formatPrice = (price: number) => {
-    return price.toFixed(2);
+    // 精度に基づいて小数点以下の桁数を調整
+    const decimalPlaces = 
+      precision === 0.01 ? 2 : 
+      precision === 0.1 ? 1 : 
+      precision === 1 ? 0 : 
+      precision === 10 ? -1 : 2; // デフォルトは2桁
+      
+    // 10の場合は10単位に丸める
+    if (precision === 10) {
+      const roundedPrice = Math.round(price / 10) * 10;
+      return roundedPrice.toFixed(0);
+    }
+    
+    return price.toFixed(decimalPlaces);
   };
 
   const formatQuantity = (qty: number) => {
@@ -75,6 +99,34 @@ export default function OrderBookPanel({
     const opacity = Math.min(0.4, Math.max(0.05, quantity / maxQty * 0.5));
     return opacity;
   };
+
+  // 精度に基づいて注文をグループ化
+  const groupOrdersByPrecision = (orders: { price: number; quantity: number }[]) => {
+    if (precision <= 0.01) return orders; // 最小精度の場合はそのまま返す
+    
+    const groupedMap = new Map<number, number>();
+    
+    orders.forEach(order => {
+      // 精度に基づいて価格を丸める
+      const roundedPrice = Math.round(order.price / precision) * precision;
+      const existingQuantity = groupedMap.get(roundedPrice) || 0;
+      groupedMap.set(roundedPrice, existingQuantity + order.quantity);
+    });
+    
+    // Mapをオブジェクトの配列に変換
+    return Array.from(groupedMap.entries()).map(([price, quantity]) => ({
+      price,
+      quantity
+    })).sort((a, b) => a.price - b.price); // 価格でソート
+  };
+  
+  // 精度に基づいて注文をグループ化
+  const groupedAsks = precision > 0.01 ? groupOrdersByPrecision(asks) : asks;
+  const groupedBids = precision > 0.01 ? groupOrdersByPrecision(bids) : bids;
+  
+  // 表示用に処理
+  const displayAsks = [...groupedAsks].reverse().slice(0, maxRows);
+  const displayBids = groupedBids.slice(0, maxRows);
 
   return (
     <IndicatorPanel
@@ -116,10 +168,52 @@ export default function OrderBookPanel({
             <span className="font-medium text-[10px]">両方</span>
           </button>
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground text-[9px]">
-          <span>精度: 0.01</span>
-          <ChevronDown className="h-3 w-3" />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-1 text-muted-foreground text-[10px] cursor-pointer hover:text-foreground">
+              <span>精度: {precision}</span>
+              <ChevronDown className="h-3 w-3" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="min-w-0 w-auto p-1">
+            <DropdownMenuItem 
+              className={cn(
+                "text-[11px] px-2 py-1",
+                precision === 0.01 && "bg-accent text-accent-foreground"
+              )} 
+              onClick={() => setPrecision(0.01)}
+            >
+              0.01
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className={cn(
+                "text-[11px] px-2 py-1",
+                precision === 0.1 && "bg-accent text-accent-foreground"
+              )} 
+              onClick={() => setPrecision(0.1)}
+            >
+              0.1
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className={cn(
+                "text-[11px] px-2 py-1",
+                precision === 1 && "bg-accent text-accent-foreground"
+              )} 
+              onClick={() => setPrecision(1)}
+            >
+              1
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className={cn(
+                "text-[11px] px-2 py-1",
+                precision === 10 && "bg-accent text-accent-foreground"
+              )} 
+              onClick={() => setPrecision(10)}
+            >
+              10
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="flex flex-col h-full">
         {/* ヘッダー（固定） */}
@@ -129,11 +223,11 @@ export default function OrderBookPanel({
           <div className="text-right">合計</div>
         </div>
         
-        {/* スクロール可能なコンテンツエリア */}
-        <div className="overflow-auto flex-1 font-mono-trading text-[13px] overscroll-contain">
+        {/* スクロール可能なコンテンツエリア - スクロール機能を強化 */}
+        <div className="overflow-y-auto overflow-x-hidden flex-1 font-mono-trading text-[13px] overscroll-contain">
           {(viewMode === "both" || viewMode === "asks") && (
             <div className="w-full">
-              {reversedAsks.map((a, i) => {
+              {displayAsks.map((a, i) => {
                 const total = a.price * a.quantity;
                 const bgOpacity = getOpacity(a.quantity, true);
                 
@@ -177,7 +271,7 @@ export default function OrderBookPanel({
           
           {(viewMode === "both" || viewMode === "bids") && (
             <div className="w-full">
-              {limitedBids.map((b, i) => {
+              {displayBids.map((b, i) => {
                 const total = b.price * b.quantity;
                 const bgOpacity = getOpacity(b.quantity, false);
                 
