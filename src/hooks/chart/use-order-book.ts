@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import useBinanceSocket from "./use-binance-socket";
 import { fetchOrderBook } from "@/infrastructure/exchange/binance-service";
 import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from "@/lib/env";
@@ -32,19 +33,19 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   const [bids, setBids] = useState<OrderBookEntry[]>([]);
   const [asks, setAsks] = useState<OrderBookEntry[]>([]);
 
-  const loadSnapshot = useCallback(async () => {
-    try {
-      const data = await fetchOrderBook(symbol, depth);
-      setBids(data.bids);
-      setAsks(data.asks);
-    } catch {
-      /* ignore */
-    }
-  }, [symbol, depth]);
+  const { data, refetch } = useQuery({
+    queryKey: ["orderBook", symbol, depth],
+    queryFn: () => fetchOrderBook(symbol, depth),
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
-    loadSnapshot();
-  }, [loadSnapshot]);
+    if (data) {
+      setBids(data.bids);
+      setAsks(data.asks);
+    }
+  }, [data]);
 
   const handleMessage = useCallback(
     (msg: BinanceDepthMessage) => {
@@ -68,9 +69,11 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
 
   useEffect(() => {
     if (status === "disconnected") {
-      loadSnapshot();
+      refetch().catch(() => {
+        /* ignore */
+      });
     }
-  }, [status, loadSnapshot]);
+  }, [status, refetch]);
 
   return { bids, asks, connected: status === "connected" };
 }
