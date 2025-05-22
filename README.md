@@ -89,6 +89,7 @@ MACD=0.0012 (signal 0.0008, hist 0.0004)
 - [Mastra AIエージェント](./docs/mastra/README.md)
 - [開発ガイドライン](./docs/development/README.md)
 - [Supabase セットアップ](./docs/supabase/README.md)
+- [WebSocket スケーリング戦略](./docs/infrastructure/websocket-scaling.md)
 
 ## ライセンス
 
