@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
 import { useSettings } from "@/hooks/use-settings";
 import { speakText, stopSpeech } from "@/lib/speech-utils";
-import { Volume2, VolumeX, Copy as CopyIcon } from "lucide-react";
+import { Volume2, VolumeX, Copy as CopyIcon, CheckCircle } from "lucide-react";
 import TypingIndicator from "./typing-indicator";
 
 export interface MessageBubbleProps {
@@ -53,6 +53,8 @@ export function MessageBubble({
 
   // 読み上げ状態管理
   const [isSpeaking, setIsSpeaking] = useState(false);
+  // コピー状態管理
+  const [isCopied, setIsCopied] = useState(false);
   const { speechSynthesisEnabled } = useSettings();
 
   // 画像メッセージ用の表示処理
@@ -93,6 +95,12 @@ export function MessageBubble({
     if (typeof children !== 'string' || isImage) return;
     try {
       await navigator.clipboard.writeText(children);
+      // コピー成功状態をセット
+      setIsCopied(true);
+      // 2秒後に状態をリセット
+      setTimeout(() => {
+        setIsCopied(false);
+      }, 2000);
     } catch (e) {
       console.warn('[MessageBubble] Failed to copy message:', e);
     }
@@ -211,14 +219,27 @@ export function MessageBubble({
                 onClick={handleCopyMessage}
                 className={cn(
                   'p-1 rounded',
-                  'text-muted-foreground hover:text-foreground hover:bg-accent/50',
-                  'opacity-0 group-hover:opacity-100',
-                  'transition-opacity'
+                  isCopied 
+                    ? 'text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                  // コピー中は常に表示
+                  isCopied 
+                    ? 'opacity-100'
+                    : 'opacity-0 group-hover:opacity-100',
+                  'transition-all duration-200 ease-in-out',
+                  'flex items-center text-xs gap-1'
                 )}
-                aria-label="メッセージをコピー"
-                title="メッセージをコピー"
+                aria-label={isCopied ? "コピーしました" : "メッセージをコピー"}
+                title={isCopied ? "コピーしました" : "メッセージをコピー"}
               >
-                <CopyIcon className="h-3 w-3" />
+                {isCopied ? (
+                  <>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>コピーしました</span>
+                  </>
+                ) : (
+                  <CopyIcon className="h-3 w-3" />
+                )}
               </button>
             )}
 

@@ -13,6 +13,7 @@ interface ChatMessagesProps {
   userAvatar?: string;
   assistantAvatar?: string;
   setInput: (value: string) => void;
+  sendMessage: (text: string) => void;
 }
 
 const suggestions = [
@@ -35,6 +36,7 @@ export function ChatMessages({
   userAvatar,
   assistantAvatar,
   setInput,
+  sendMessage,
 }: ChatMessagesProps) {
   useEffect(() => {
     if (listRef.current) {
@@ -65,7 +67,7 @@ export function ChatMessages({
                 key={s}
                 variant="outline"
                 className="text-sm h-auto py-2 px-3 justify-start text-left w-full"
-                onClick={() => setInput(s)}
+                onClick={() => sendMessage(s)}
               >
                 {s}
               </Button>

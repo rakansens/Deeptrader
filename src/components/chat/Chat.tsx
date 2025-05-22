@@ -114,6 +114,28 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     }, 0);
   };
 
+  // サンプルメッセージを直接送信するための関数
+  const suggestMessage = (text: string) => {
+    if (!text.trim()) return;
+    
+    // 入力欄にテキストをセット（UIに反映するため）
+    setInput(text);
+    
+    // すぐにメッセージを送信
+    isSendingRef.current = true;
+    setTimeout(() => {
+      // 入力欄をクリア
+      flushSync(() => {
+        setInput("");
+      });
+      
+      // メッセージを送信
+      sendMessage(text).finally(() => {
+        isSendingRef.current = false;
+      });
+    }, 100);
+  };
+
   // 画像ファイル選択時の処理
   const handleFileChange = (file: File) => {
     if (!file) return;
@@ -239,6 +261,7 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
               userAvatar={userAvatar}
               assistantAvatar={assistantAvatar}
               setInput={setInput}
+              sendMessage={suggestMessage}
             />
           </div>
         </div>

@@ -79,7 +79,7 @@ export function useChat(): UseChat {
     }
   }, [aiError]);
 
-  const { sidebarOpen, toggleSidebar } = useSidebar(true);
+  const { sidebarOpen, toggleSidebar } = useSidebar(false);
 
   const newConversation = () => {
     const id = createConversation();
