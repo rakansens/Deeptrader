@@ -56,7 +56,7 @@ export default function Home() {
     rsi: boolean;
     macd?: boolean;
     boll?: boolean;
-  }>({ ma: true, rsi: false, macd: false, boll: false });
+  }>({ ma: true, rsi: true, macd: true, boll: false });
   const [settings, setSettings] = useState<IndicatorSettings>(
     DEFAULT_INDICATOR_SETTINGS,
   );
@@ -193,7 +193,7 @@ export default function Home() {
                     <div className="w-full relative">
                       <CandlestickChart
                         key={`${symbol}-${timeframe}`}
-                        height={700}
+                        height={800}
                         indicators={indicators}
                         interval={timeframe}
                         symbol={symbol}

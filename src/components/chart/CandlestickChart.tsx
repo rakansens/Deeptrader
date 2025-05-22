@@ -65,7 +65,7 @@ export default function CandlestickChart({
   symbol: initialSymbol = SYMBOLS[0].value,
   interval: initialInterval = TIMEFRAMES[0],
   useApi = false,
-  indicators = { ma: false, rsi: false, macd: false, boll: false },
+  indicators = { ma: false, rsi: true, macd: true, boll: false },
   onIndicatorsChange,
   indicatorSettings = DEFAULT_INDICATOR_SETTINGS,
   drawingEnabled = false,
@@ -73,7 +73,8 @@ export default function CandlestickChart({
   onDrawingColorChange = () => {},
 }: CandlestickChartProps) {
   const themeColors = useChartTheme();
-  const [showOrderBook, setShowOrderBook] = useState(true);
+  // オーダーブックはデフォルトで非表示（必要に応じて表示）
+  const [showOrderBook, setShowOrderBook] = useState(false);
   // props の値をそのまま使用し、シンボル/時間枠変更時のラグをなくす
   const currentSymbol = initialSymbol;
   const currentInterval = initialInterval;
@@ -215,7 +216,8 @@ export default function CandlestickChart({
   const { backgroundColor: countdownBgColor, textColor: countdownTextColor } =
     useCountdownColor(candles, themeColors);
 
-  const subHeight = 100;
+  // インジケーターの表示領域を広げる（RSIとMACDのパネル高さ）
+  const subHeight = 150;
 
   // オーダーブックのトグル処理（ResizeObserverが自動的にリサイズ）
   const handleOrderBookToggle = useCallback(() => {
