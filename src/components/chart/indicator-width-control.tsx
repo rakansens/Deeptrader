@@ -2,6 +2,7 @@
 
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import { cn } from '@/lib/utils'
 
 interface IndicatorWidthControlProps {
   label: string
@@ -9,6 +10,7 @@ interface IndicatorWidthControlProps {
   color: string
   onWidthChange: (w: number) => void
   onColorChange: (c: string) => void
+  className?: string
 }
 
 export default function IndicatorWidthControl({
@@ -17,25 +19,26 @@ export default function IndicatorWidthControl({
   color,
   onWidthChange,
   onColorChange,
+  className
 }: IndicatorWidthControlProps) {
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">{label}</Label>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{width}px</span>
-          <div className="relative">
+          <span className="text-xs text-muted-foreground min-w-8 text-right">{width}px</span>
+          <div className="relative group">
             <input
               type="color"
               value={color}
-              className="w-8 h-8 rounded-full border cursor-pointer opacity-0 absolute inset-0"
+              className="w-8 h-8 rounded-full border cursor-pointer opacity-0 absolute inset-0 z-10"
               onChange={(e) => {
                 console.log('色を変更:', e.target.value);
                 onColorChange(e.target.value);
               }}
             />
             <div 
-              className="w-8 h-8 rounded-full border-2 border-muted flex items-center justify-center overflow-hidden"
+              className="w-8 h-8 rounded-full border-2 border-muted flex items-center justify-center overflow-hidden transition-all duration-200 group-hover:scale-110 group-hover:border-border"
               style={{ backgroundColor: color }}
             >
               <div className="absolute inset-0 rounded-full shadow-inner"></div>
@@ -51,7 +54,7 @@ export default function IndicatorWidthControl({
         onValueChange={(values) => onWidthChange(values[0])}
         className="py-2"
       />
-      <div className="h-10 w-full bg-background border rounded-md flex items-center justify-center overflow-hidden p-1">
+      <div className="h-10 w-full bg-background/80 border rounded-md flex items-center justify-center overflow-hidden p-1 shadow-sm transition-all duration-200 hover:bg-background">
         <div
           style={{
             height: `${width}px`,
@@ -59,6 +62,7 @@ export default function IndicatorWidthControl({
             backgroundColor: color,
             borderRadius: '2px',
             boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+            transition: 'height 0.2s ease-in-out'
           }}
         ></div>
       </div>
