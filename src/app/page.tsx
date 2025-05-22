@@ -64,6 +64,8 @@ export default function Home() {
     DRAWING_COLORS[0].value,
   );
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  // オーダーブックの表示状態
+  const [showOrderBook, setShowOrderBook] = useState(false);
   // 価格情報を保持するための状態
   const [priceInfo, setPriceInfo] = useState<{
     currentPrice?: number;
@@ -137,6 +139,11 @@ export default function Home() {
     localStorage.setItem("hasSeenWelcomeModal", "true");
   };
 
+  // オーダーブックの表示/非表示を切り替える
+  const handleOrderBookToggle = useCallback(() => {
+    setShowOrderBook(prev => !prev);
+  }, []);
+
   return (
     <UiControlProvider
       value={{ toggleIndicator, changeTimeframe: handleTimeframeChange }}
@@ -199,6 +206,8 @@ export default function Home() {
                       latestPrice={priceInfo.currentPrice}
                       priceChange={priceInfo.priceChange}
                       priceChangePercent={priceInfo.priceChangePercent}
+                      showOrderBook={showOrderBook}
+                      onOrderBookToggle={handleOrderBookToggle}
                     />
                   </CardHeader>
                   <CardContent>
@@ -215,6 +224,8 @@ export default function Home() {
                         drawingColor={drawingColor}
                         onDrawingColorChange={handleDrawingColorChange}
                         onPriceInfoUpdate={handlePriceInfoUpdate}
+                        showOrderBook={showOrderBook}
+                        onOrderBookToggle={handleOrderBookToggle}
                       />
                     </div>
                   </CardContent>

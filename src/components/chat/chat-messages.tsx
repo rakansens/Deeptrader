@@ -53,11 +53,11 @@ export function ChatMessages({
       {messages.length === 0 ? (
         <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
           <div className="text-center">
-            <p className="text-lg font-semibold mb-2">
+            <p className="text-xl font-semibold mb-3">
               DeepTrader AIへようこそ！
             </p>
-            <p className="mb-1">あなたのパーソナル取引アシスタントです。</p>
-            <p className="mb-4">
+            <p className="mb-2 text-base">あなたのパーソナル取引アシスタントです。</p>
+            <p className="mb-5 text-base">
               下のように、市場分析、チャート操作、一般的な質問など、何でも聞いてみてくださいね。
             </p>
           </div>
@@ -66,7 +66,7 @@ export function ChatMessages({
               <Button
                 key={s}
                 variant="outline"
-                className="text-xs h-auto py-1.5 px-2 justify-start text-left w-full"
+                className="text-sm h-auto py-2.5 px-4 justify-start text-left w-full font-normal"
                 onClick={() => sendMessage(s)}
               >
                 {s}

@@ -95,25 +95,25 @@ export default function ChartSidebar({
   return (
     <div
       data-testid="chart-sidebar"
-      className={`flex flex-col gap-2 p-2 bg-background/80 backdrop-blur-sm rounded-md border ${className ?? ""}`}
+      className={`flex flex-col gap-1.5 p-1.5 bg-background/90 backdrop-blur-sm rounded-md border shadow-sm ${className ?? ""}`}
     >
       {DRAWING_TOOLS.map(({ mode: toolMode, icon: Icon, label }) => (
         <button
           key={label}
-          className={`w-full p-2 rounded-md flex items-center justify-center ${
+          className={`w-full p-1.5 rounded-md flex items-center justify-center transition-colors ${
             toolMode === "eraser"
               ? isActive(toolMode)
-                ? "bg-red-500 text-white"
-                : "bg-red-100 text-red-500 hover:bg-red-200"
+                ? "bg-red-500/90 text-white"
+                : "bg-red-100/80 text-red-500 hover:bg-red-200/90"
               : isActive(toolMode)
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary/90 text-primary-foreground"
+                : "bg-muted/80 text-muted-foreground hover:bg-muted"
           }`}
           onClick={() => handleToolClick(toolMode)}
           aria-label={label}
           title={label}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-3.5 w-3.5" />
         </button>
       ))}
 
@@ -129,17 +129,17 @@ export default function ChartSidebar({
       <DrawingColorPicker
         value={drawingColor}
         onChange={onColorChange}
-        className="mt-2"
+        className="mt-1"
       />
 
       {onClear && (
         <button
-          className="w-full p-2 mt-4 rounded-md flex items-center justify-center bg-muted text-muted-foreground hover:bg-red-100 hover:text-red-600"
+          className="w-full p-1.5 mt-2 rounded-md flex items-center justify-center bg-muted/80 text-muted-foreground hover:bg-red-100/80 hover:text-red-600 transition-colors"
           onClick={onClear}
           aria-label="全て消去"
           title="全て消去"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       )}
     </div>

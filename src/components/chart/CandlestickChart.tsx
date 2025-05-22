@@ -20,7 +20,6 @@ import useDrawingControls from "@/hooks/chart/use-drawing-controls";
 import useCrosshairInfo from "@/hooks/chart/use-crosshair-info";
 import useCountdownColor from "@/hooks/chart/use-countdown-color";
 import OrderBookPanel from "./OrderBookPanel";
-import OrderBookToggleButton from "./orderbook-toggle-button";
 import MainChartPanel, { MainChartPanelProps } from "./MainChartPanel";
 import {
   SYMBOLS,
@@ -60,6 +59,10 @@ interface CandlestickChartProps {
     priceChange?: number;
     priceChangePercent?: number;
   }) => void;
+  /** オーダーブックの表示状態 */
+  showOrderBook?: boolean;
+  /** オーダーブックの表示/非表示を切り替えるハンドラー */
+  onOrderBookToggle?: () => void;
 }
 
 /**
@@ -78,10 +81,10 @@ export default function CandlestickChart({
   drawingColor = "#ef4444",
   onDrawingColorChange = () => {},
   onPriceInfoUpdate = () => {},
+  showOrderBook = false,
+  onOrderBookToggle = () => {},
 }: CandlestickChartProps) {
   const themeColors = useChartTheme();
-  // オーダーブックはデフォルトで非表示（必要に応じて表示）
-  const [showOrderBook, setShowOrderBook] = useState(false);
   // props の値をそのまま使用し、シンボル/時間枠変更時のラグをなくす
   const currentSymbol = initialSymbol;
   const currentInterval = initialInterval;
@@ -247,12 +250,6 @@ export default function CandlestickChart({
     });
   }, [currentPrice, priceChange, priceChangePercent, onPriceInfoUpdate]);
 
-  // オーダーブックのトグル処理（ResizeObserverが自動的にリサイズ）
-  const handleOrderBookToggle = useCallback(() => {
-    setShowOrderBook((prev) => !prev);
-    // リサイズは改良されたResizeObserverが自動的に処理
-  }, []);
-
   // Loading
   if (loading && candles.length === 0) {
     return <ChartSkeleton style={{ height: chartHeight }} />;
@@ -329,15 +326,7 @@ export default function CandlestickChart({
           symbol={currentSymbol}
           height="auto"
           currentPrice={currentPrice}
-          onClose={handleOrderBookToggle}
-        />
-      </div>
-
-      {/* オーダーブック表示ボタン（表示/非表示用） */}
-      <div className={`absolute top-2 right-2 z-30 transition-opacity duration-300 ${showOrderBook ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <OrderBookToggleButton
-          onToggle={handleOrderBookToggle}
-          className=""
+          onClose={onOrderBookToggle}
         />
       </div>
     </div>

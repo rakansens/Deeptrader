@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 
 import IndicatorSettingsDropdown from "./IndicatorSettingsModal";
 import TimeframeDropdown from "./TimeframeDropdown";
+import OrderBookToggleButton from "./orderbook-toggle-button";
 import {
   SYMBOLS,
   TIMEFRAMES,
@@ -54,6 +55,8 @@ interface ChartToolbarProps {
   latestPrice?: number;
   priceChange?: number;
   priceChangePercent?: number;
+  showOrderBook?: boolean;
+  onOrderBookToggle?: () => void;
 }
 
 // 利用可能なすべてのタイムフレーム
@@ -73,6 +76,8 @@ export default function ChartToolbar({
   latestPrice,
   priceChange = 0,
   priceChangePercent = 0,
+  showOrderBook = false,
+  onOrderBookToggle = () => {},
 }: ChartToolbarProps) {
   const [displayTimeframes, setDisplayTimeframes] = useState<string[]>(DEFAULT_DISPLAY_TIMEFRAMES);
   const isPriceUp = priceChange >= 0;
@@ -210,6 +215,20 @@ export default function ChartToolbar({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs py-1 px-2">
                 <p>ボリンジャーバンド (BB)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <OrderBookToggleButton 
+                  onToggle={onOrderBookToggle}
+                  active={showOrderBook}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs py-1 px-2">
+                <p>オーダーブック</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

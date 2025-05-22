@@ -28,15 +28,15 @@ export default function DrawingColorPicker({
   const colorsToUse = DEFAULT_COLORS;
   
   return (
-    <div className={`flex flex-wrap gap-1 ${className ?? ""}`.trim()}>
+    <div className={`grid grid-cols-3 gap-1 mx-auto ${className ?? ""}`.trim()}>
       {colorsToUse.map((c) => (
         <button
           key={c.value}
           title={c.label}
           onClick={() => onChange(c.value)}
-          className={`w-6 h-6 rounded-full border border-border transition-all ${
+          className={`w-4 h-4 rounded-full border border-border/70 transition-all mx-auto ${
             value === c.value
-              ? "ring-2 ring-offset-1 ring-primary"
+              ? "ring-1 ring-offset-0.5 ring-primary"
               : "opacity-70 hover:opacity-100"
           }`}
           style={{ backgroundColor: c.value }}

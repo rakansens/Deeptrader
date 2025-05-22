@@ -16,10 +16,13 @@ describe('ChartToolbar', () => {
     const user = userEvent.setup()
     const onTf = jest.fn()
     const onInd = jest.fn()
+    const onSymbolChange = jest.fn()
     render(
       <ChartToolbar
         timeframe="1m"
         onTimeframeChange={onTf}
+        symbol="BTCUSDT"
+        onSymbolChange={onSymbolChange}
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={onInd}
         settings={{
@@ -56,6 +59,8 @@ describe('ChartToolbar', () => {
       <ChartToolbar
         timeframe="1m"
         onTimeframeChange={() => {}}
+        symbol="BTCUSDT"
+        onSymbolChange={() => {}}
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={() => {}}
         settings={{
@@ -83,6 +88,8 @@ describe('ChartToolbar', () => {
       <ChartToolbar
         timeframe="1m"
         onTimeframeChange={() => {}}
+        symbol="BTCUSDT"
+        onSymbolChange={() => {}}
         indicators={{ ma: false, rsi: false, macd: false, boll: false }}
         onIndicatorsChange={() => {}}
         settings={{

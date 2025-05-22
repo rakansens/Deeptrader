@@ -4,7 +4,7 @@ import IndicatorPanel from "./IndicatorPanel";
 import useOrderBook from "@/hooks/chart/use-order-book";
 import { cn } from "@/lib/utils";
 import type { SymbolValue } from "@/constants/chart";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 // 表示モード
 type ViewMode = "both" | "bids" | "asks";
@@ -30,8 +30,8 @@ export default function OrderBookPanel({
   const isCurrent = (price: number) =>
     currentPrice !== undefined && Math.abs(price - currentPrice) < 1e-6;
 
-  // 表示数を増やす（30行まで表示）
-  const maxRows = 30;
+  // 表示数を増やす（20行まで表示）
+  const maxRows = 20;
   const reversedAsks = [...asks].reverse().slice(0, maxRows);
   const limitedBids = bids.slice(0, maxRows);
 
@@ -48,17 +48,17 @@ export default function OrderBookPanel({
     if (total >= 1000) {
       return `${(total / 1000).toFixed(2)}K`;
     } else {
-      return total.toFixed(5);
+      return total.toFixed(2);
     }
   };
 
   // 背景色の透明度を数量に基づいて計算（最大値を基準に）
-  const maxAsksQty = Math.max(...reversedAsks.map(a => a.quantity));
-  const maxBidsQty = Math.max(...limitedBids.map(b => b.quantity));
+  const maxAsksQty = Math.max(...reversedAsks.map(a => a.quantity), 0.0001);
+  const maxBidsQty = Math.max(...limitedBids.map(b => b.quantity), 0.0001);
 
   const getOpacity = (quantity: number, isAsk: boolean) => {
     const maxQty = isAsk ? maxAsksQty : maxBidsQty;
-    const opacity = Math.min(0.6, Math.max(0.05, quantity / maxQty * 0.6));
+    const opacity = Math.min(0.45, Math.max(0.05, quantity / maxQty * 0.5));
     return opacity;
   };
 
@@ -69,63 +69,54 @@ export default function OrderBookPanel({
       onClose={onClose}
       className={className}
     >
-      <div className="flex items-center justify-between border-b border-border h-8 px-2 text-xs">
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between border-b border-border/70 py-1 px-2 text-xs bg-muted/30">
+        <div className="flex gap-1.5">
           <button
             className={cn(
-              "p-1 rounded hover:bg-accent/50",
-              viewMode === "bids" && "bg-accent/50"
+              "px-1.5 py-0.5 rounded transition-colors",
+              viewMode === "bids" ? "bg-accent/70 text-accent-foreground" : "hover:bg-accent/30"
             )}
             onClick={() => setViewMode("bids")}
             title="買い注文のみ表示"
           >
-            <div className="w-4 h-4 flex items-center justify-center">
-              <span className="text-green-500 text-[10px]">□</span>
-            </div>
+            <span className="text-green-500 font-medium">買い</span>
           </button>
           <button
             className={cn(
-              "p-1 rounded hover:bg-accent/50",
-              viewMode === "asks" && "bg-accent/50"
+              "px-1.5 py-0.5 rounded transition-colors",
+              viewMode === "asks" ? "bg-accent/70 text-accent-foreground" : "hover:bg-accent/30"
             )}
             onClick={() => setViewMode("asks")}
             title="売り注文のみ表示"
           >
-            <div className="w-4 h-4 flex items-center justify-center">
-              <span className="text-red-500 text-[10px]">□</span>
-            </div>
+            <span className="text-red-500 font-medium">売り</span>
           </button>
           <button
             className={cn(
-              "p-1 rounded hover:bg-accent/50",
-              viewMode === "both" && "bg-accent/50"
+              "px-1.5 py-0.5 rounded transition-colors",
+              viewMode === "both" ? "bg-accent/70 text-accent-foreground" : "hover:bg-accent/30"
             )}
             onClick={() => setViewMode("both")}
             title="両方表示"
           >
-            <div className="w-4 h-4 flex items-center justify-center">
-              <span className="flex flex-col">
-                <span className="text-red-500 text-[7px] leading-[7px]">□</span>
-                <span className="text-green-500 text-[7px] leading-[7px]">□</span>
-              </span>
-            </div>
+            <span className="font-medium">両方</span>
           </button>
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <span>0.01</span>
+        <div className="flex items-center gap-1 text-muted-foreground text-[10px]">
+          <span>精度: 0.01</span>
           <ChevronDown className="h-3 w-3" />
         </div>
       </div>
       <div className="flex flex-col h-full">
         {/* ヘッダー（固定） */}
-        <div className="w-full grid grid-cols-3 text-xs text-muted-foreground py-1 border-b border-border sticky top-0 bg-background z-10">
-          <div className="text-left pl-2">価格 (USDT)</div>
-          <div className="text-right">金額 (BTC)</div>
-          <div className="text-right pr-2">建値合計額</div>
+        <div className="w-full grid grid-cols-3 text-[10px] text-muted-foreground py-1 px-2 border-b border-border/70 sticky top-0 bg-background z-10">
+          <div className="text-left">価格 (USDT)</div>
+          <div className="text-right">数量 (BTC)</div>
+          <div className="text-right">合計</div>
         </div>
         
         {/* スクロール可能なコンテンツエリア */}
-        <div className="overflow-auto flex-1 font-mono-trading text-xs">
+        <div className="overflow-auto flex-1 font-mono text-[11px] overscroll-contain">
           {(viewMode === "both" || viewMode === "asks") && (
             <div className="w-full">
               {reversedAsks.map((a, i) => {
@@ -136,16 +127,16 @@ export default function OrderBookPanel({
                   <div
                     key={i}
                     className={cn(
-                      "grid grid-cols-3 py-0.5",
+                      "grid grid-cols-3 py-[2px] px-2 border-b border-border/10",
                       isCurrent(a.price) && "bg-accent/30"
                     )}
                     style={{
                       backgroundColor: isCurrent(a.price) ? "" : `rgba(220, 53, 69, ${bgOpacity})`,
                     }}
                   >
-                    <div className="text-left pl-2 text-red-500">{formatPrice(a.price)}</div>
+                    <div className="text-left text-red-500">{formatPrice(a.price)}</div>
                     <div className="text-right">{formatQuantity(a.quantity)}</div>
-                    <div className="text-right pr-2">{formatTotal(total)}</div>
+                    <div className="text-right text-muted-foreground">{formatTotal(total)}</div>
                   </div>
                 );
               })}
@@ -154,10 +145,16 @@ export default function OrderBookPanel({
           
           {currentPrice !== undefined && (
             <div
-              className="py-2 text-center font-bold text-lg border-y border-border"
+              className="py-1.5 flex items-center justify-between px-2 border-y border-primary/30 bg-primary/5"
             >
-              <span className="text-red-500">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-              <span className="text-xs ml-1 text-muted-foreground">${currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              <div className="flex items-center">
+                <ChevronUp className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-primary-foreground font-semibold">現在価格</span>
+              </div>
+              <div>
+                <span className="font-semibold">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span className="text-[10px] ml-1 text-muted-foreground">USDT</span>
+              </div>
             </div>
           )}
           
@@ -171,16 +168,16 @@ export default function OrderBookPanel({
                   <div
                     key={i}
                     className={cn(
-                      "grid grid-cols-3 py-0.5",
+                      "grid grid-cols-3 py-[2px] px-2 border-b border-border/10",
                       isCurrent(b.price) && "bg-accent/30"
                     )}
                     style={{
                       backgroundColor: isCurrent(b.price) ? "" : `rgba(40, 167, 69, ${bgOpacity})`,
                     }}
                   >
-                    <div className="text-left pl-2 text-green-500">{formatPrice(b.price)}</div>
+                    <div className="text-left text-green-500">{formatPrice(b.price)}</div>
                     <div className="text-right">{formatQuantity(b.quantity)}</div>
-                    <div className="text-right pr-2">{formatTotal(total)}</div>
+                    <div className="text-right text-muted-foreground">{formatTotal(total)}</div>
                   </div>
                 );
               })}
@@ -189,12 +186,14 @@ export default function OrderBookPanel({
         </div>
         
         {/* 下部バー（固定） */}
-        <div className="border-t border-border py-1 px-2 flex items-center text-xs sticky bottom-0 bg-background">
-          <span className="text-green-500 font-semibold">B 54.51%</span>
-          <div className="flex-1 mx-2 h-1.5 rounded-full overflow-hidden bg-red-500">
-            <div className="h-full bg-green-500" style={{ width: '54.51%' }}></div>
+        <div className="border-t border-border/70 py-1 px-2 flex items-center justify-between text-[10px] sticky bottom-0 bg-background">
+          <div className="flex items-center space-x-2">
+            <span className="text-green-500 font-medium">買い 54.51%</span>
+            <span className="text-red-500 font-medium">売り 45.49%</span>
           </div>
-          <span className="text-red-500 font-semibold">45.49% S</span>
+          <div className="w-24 h-1.5 rounded-full overflow-hidden bg-red-500/70">
+            <div className="h-full bg-green-500/70" style={{ width: '54.51%' }}></div>
+          </div>
         </div>
       </div>
     </IndicatorPanel>

@@ -3,7 +3,7 @@
 'use client'
 
 import { useRef, useEffect } from 'react'
-import { X, MoreHorizontal } from 'lucide-react'
+import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface IndicatorPanelProps {
@@ -36,22 +36,22 @@ export default function IndicatorPanel({
 
   return (
     <div
-      className={cn('w-full bg-background border-t border-border flex flex-col', className)}
+      className={cn('w-full bg-background/95 border border-border/70 rounded-sm shadow-sm flex flex-col', className)}
       style={height === "auto" ? {} : { height }}
       data-testid={`${title.toLowerCase()}-panel`}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/20">
-        <span className="font-medium">{title}</span>
-        <div className="flex items-center">
+      <div className="flex items-center justify-between px-2 py-1 border-b border-border/70 bg-muted/20">
+        <span className="text-xs font-medium">{title}</span>
+        {onClose && (
           <button
             onClick={onClose}
             aria-label={`Close ${title}`}
-            className="text-muted-foreground hover:text-foreground p-1"
+            className="text-muted-foreground hover:text-foreground p-0.5 rounded hover:bg-muted/30"
             type="button"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
-        </div>
+        )}
       </div>
       <div ref={containerRef} className="flex-1 overflow-auto bg-background">{children}</div>
     </div>
