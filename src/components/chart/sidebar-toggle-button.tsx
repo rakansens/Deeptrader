@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { PanelLeft, PanelLeftClose } from "lucide-react";
 
 interface SidebarToggleButtonProps {
   open: boolean;
@@ -20,7 +20,7 @@ export default function SidebarToggleButton({
       onClick={onToggle}
       title={open ? "サイドバーを非表示" : "サイドバーを表示"}
     >
-      {open ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
     </Button>
   );
 }

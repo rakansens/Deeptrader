@@ -4,6 +4,13 @@ import useChartTheme from "./use-chart-theme";
 import { logger } from "@/lib/logger";
 import { setActiveChartForCapture } from "@/lib/chart-capture-service";
 
+/**
+ * 🚀 2025-05-22: ResizeObserverの改良
+ * - contentRectから正確なサイズを取得して即座にresizeを反映
+ * - パネル切替・サイズ変更時の空白チャートを防止
+ * - fitContent()で初期ズームを最適化
+ */
+
 interface UseChartInstanceParams {
   container: HTMLDivElement | null;
   height: number;
@@ -109,25 +116,57 @@ export function useChartInstance({
       }
     }
 
-    const handleResize = () => {
-      if (chartRef.current) {
-        chartRef.current.resize(container.clientWidth, height);
-      }
-    };
-
+    // 古いブラウザ用のフォールバック処理
+    let handleResize: (() => void) | undefined;
+    
+    // 正確なサイズを取得して描画を即時反映するResizeObserver
     let observer: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined") {
-      observer = new ResizeObserver(handleResize);
+      observer = new ResizeObserver(entries => {
+        if (!chartRef.current) return;
+        
+        const { width, height: rectHeight } = entries[0].contentRect;
+        // 偶数に切り捨てるとHi-DPIディスプレイで描画が綺麗になる
+        const adjustedWidth = Math.floor(width);
+        const adjustedHeight = Math.floor(rectHeight || height);
+        
+        // サイズが変わった時だけリサイズを実行（無限ループ防止）
+        if (adjustedWidth > 0 && adjustedHeight > 0) {
+          chartRef.current.resize(adjustedWidth, adjustedHeight);
+          
+          // リサイズ後にデータが全て表示されるようにする
+          try {
+            chartRef.current.timeScale().fitContent();
+          } catch (e) {
+            // ignore errors
+          }
+        }
+      });
       observer.observe(container);
+      
+      // 初期描画のトリガーとして一度リサイズを実行
+      if (chartRef.current && container.clientWidth > 0) {
+        chartRef.current.resize(container.clientWidth, height);
+        chartRef.current.timeScale().fitContent();
+      }
     } else {
+      // 古いブラウザ用のフォールバック
+      handleResize = () => {
+        if (chartRef.current) {
+          chartRef.current.resize(container.clientWidth, height);
+        }
+      };
       window.addEventListener("resize", handleResize);
     }
 
     return () => {
       if (observer) {
         observer.disconnect();
-      } else {
-        window.removeEventListener("resize", handleResize);
+      } else if (typeof ResizeObserver === "undefined") {
+        // ResizeObserverが使えない環境でのフォールバックのクリーンアップ
+        if (handleResize) {
+          window.removeEventListener("resize", handleResize);
+        }
       }
       setActiveChartForCapture(null, null); // Unregister active chart
       logger.debug('Removing chart instance');

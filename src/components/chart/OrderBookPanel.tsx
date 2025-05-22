@@ -30,8 +30,8 @@ export default function OrderBookPanel({
   const isCurrent = (price: number) =>
     currentPrice !== undefined && Math.abs(price - currentPrice) < 1e-6;
 
-  // 表示数を増やす（20行まで表示）
-  const maxRows = 20;
+  // 表示数を増やす（30行まで表示）
+  const maxRows = 30;
   const reversedAsks = [...asks].reverse().slice(0, maxRows);
   const limitedBids = bids.slice(0, maxRows);
 
@@ -116,79 +116,80 @@ export default function OrderBookPanel({
           <ChevronDown className="h-3 w-3" />
         </div>
       </div>
-      <div
-        className="text-xs font-mono-trading h-full overflow-auto flex flex-col"
-        data-testid="orderbook-panel"
-      >
-        <div className="w-full grid grid-cols-3 text-xs text-muted-foreground py-1 border-b border-border">
+      <div className="flex flex-col h-full">
+        {/* ヘッダー（固定） */}
+        <div className="w-full grid grid-cols-3 text-xs text-muted-foreground py-1 border-b border-border sticky top-0 bg-background z-10">
           <div className="text-left pl-2">価格 (USDT)</div>
           <div className="text-right">金額 (BTC)</div>
           <div className="text-right pr-2">建値合計額</div>
         </div>
         
-        {(viewMode === "both" || viewMode === "asks") && (
-          <div className="w-full">
-            {reversedAsks.map((a, i) => {
-              const total = a.price * a.quantity;
-              const bgOpacity = getOpacity(a.quantity, true);
-              
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    "grid grid-cols-3 py-0.5",
-                    isCurrent(a.price) && "bg-accent/30"
-                  )}
-                  style={{
-                    backgroundColor: isCurrent(a.price) ? "" : `rgba(220, 53, 69, ${bgOpacity})`,
-                  }}
-                >
-                  <div className="text-left pl-2 text-red-500">{formatPrice(a.price)}</div>
-                  <div className="text-right">{formatQuantity(a.quantity)}</div>
-                  <div className="text-right pr-2">{formatTotal(total)}</div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* スクロール可能なコンテンツエリア */}
+        <div className="overflow-auto flex-1 font-mono-trading text-xs">
+          {(viewMode === "both" || viewMode === "asks") && (
+            <div className="w-full">
+              {reversedAsks.map((a, i) => {
+                const total = a.price * a.quantity;
+                const bgOpacity = getOpacity(a.quantity, true);
+                
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "grid grid-cols-3 py-0.5",
+                      isCurrent(a.price) && "bg-accent/30"
+                    )}
+                    style={{
+                      backgroundColor: isCurrent(a.price) ? "" : `rgba(220, 53, 69, ${bgOpacity})`,
+                    }}
+                  >
+                    <div className="text-left pl-2 text-red-500">{formatPrice(a.price)}</div>
+                    <div className="text-right">{formatQuantity(a.quantity)}</div>
+                    <div className="text-right pr-2">{formatTotal(total)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          
+          {currentPrice !== undefined && (
+            <div
+              className="py-2 text-center font-bold text-lg border-y border-border"
+            >
+              <span className="text-red-500">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              <span className="text-xs ml-1 text-muted-foreground">${currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+            </div>
+          )}
+          
+          {(viewMode === "both" || viewMode === "bids") && (
+            <div className="w-full">
+              {limitedBids.map((b, i) => {
+                const total = b.price * b.quantity;
+                const bgOpacity = getOpacity(b.quantity, false);
+                
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "grid grid-cols-3 py-0.5",
+                      isCurrent(b.price) && "bg-accent/30"
+                    )}
+                    style={{
+                      backgroundColor: isCurrent(b.price) ? "" : `rgba(40, 167, 69, ${bgOpacity})`,
+                    }}
+                  >
+                    <div className="text-left pl-2 text-green-500">{formatPrice(b.price)}</div>
+                    <div className="text-right">{formatQuantity(b.quantity)}</div>
+                    <div className="text-right pr-2">{formatTotal(total)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         
-        {currentPrice !== undefined && (
-          <div
-            className="py-2 text-center font-bold text-lg border-y border-border"
-          >
-            <span className="text-red-500">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-            <span className="text-xs ml-1 text-muted-foreground">${currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-          </div>
-        )}
-        
-        {(viewMode === "both" || viewMode === "bids") && (
-          <div className="w-full">
-            {limitedBids.map((b, i) => {
-              const total = b.price * b.quantity;
-              const bgOpacity = getOpacity(b.quantity, false);
-              
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    "grid grid-cols-3 py-0.5",
-                    isCurrent(b.price) && "bg-accent/30"
-                  )}
-                  style={{
-                    backgroundColor: isCurrent(b.price) ? "" : `rgba(40, 167, 69, ${bgOpacity})`,
-                  }}
-                >
-                  <div className="text-left pl-2 text-green-500">{formatPrice(b.price)}</div>
-                  <div className="text-right">{formatQuantity(b.quantity)}</div>
-                  <div className="text-right pr-2">{formatTotal(total)}</div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        
-        {/* 下部バー（B/S比率表示） */}
-        <div className="mt-auto border-t border-border py-1 px-2 flex items-center text-xs">
+        {/* 下部バー（固定） */}
+        <div className="border-t border-border py-1 px-2 flex items-center text-xs sticky bottom-0 bg-background">
           <span className="text-green-500 font-semibold">B 54.51%</span>
           <div className="flex-1 mx-2 h-1.5 rounded-full overflow-hidden bg-red-500">
             <div className="h-full bg-green-500" style={{ width: '54.51%' }}></div>

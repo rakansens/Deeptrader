@@ -47,48 +47,63 @@ export function useCandlestickSeries({
 
   // シリーズの生成と破棄
   useEffect(() => {
-    if (!chart) return
+    const MAX_RETRY = 5;
+    let attempt = 0;
+    const createSeries = () => {
+      const c = chart;
+      if (!c) return;
+      try {
+        if (
+          !candleRef.current &&
+          typeof (c as unknown as { addCandlestickSeries?: Function }).addCandlestickSeries ===
+            "function"
+        ) {
+          candleRef.current = c.addCandlestickSeries({
+            upColor: colors.upColor,
+            downColor: colors.downColor,
+            wickUpColor: colors.upColor,
+            wickDownColor: colors.downColor,
+            borderVisible: false,
+          });
+          if (processedCandles.length > 0) {
+            candleRef.current.setData(processedCandles);
+            prevCandleLength.current = processedCandles.length;
+            prevFirstTimeRef.current = (processedCandles[0]?.time as number) ?? null;
+          }
+        }
 
-    try {
-      if (
-        !candleRef.current &&
-        chart &&
-        typeof (chart as unknown as { addCandlestickSeries?: Function }).addCandlestickSeries ===
-          "function"
-      ) {
-        candleRef.current = chart.addCandlestickSeries({
-          upColor: colors.upColor,
-          downColor: colors.downColor,
-          wickUpColor: colors.upColor,
-          wickDownColor: colors.downColor,
-          borderVisible: false,
-        });
+        if (
+          !volumeRef.current &&
+          typeof (c as unknown as { addHistogramSeries?: Function }).addHistogramSeries ===
+            "function"
+        ) {
+          volumeRef.current = c.addHistogramSeries({
+            priceFormat: { type: "volume" },
+            priceScaleId: "vol",
+            color: colors.volume,
+          });
+          c
+            .priceScale("vol")
+            .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+          if (processedVolumes.length > 0) {
+            volumeRef.current.setData(processedVolumes);
+            prevVolumeLength.current = processedVolumes.length;
+            prevVolFirstTimeRef.current = (processedVolumes[0]?.time as number) ?? null;
+          }
+        }
+      } catch (err) {
+        logger.warn("Series creation failed, retrying", err);
+        attempt += 1;
+        if (attempt < MAX_RETRY) {
+          setTimeout(createSeries, 200);
+        }
       }
+    };
 
-      if (
-        !volumeRef.current &&
-        chart &&
-        typeof (chart as unknown as { addHistogramSeries?: Function }).addHistogramSeries ===
-          "function"
-      ) {
-        volumeRef.current = chart.addHistogramSeries({
-          priceFormat: { type: "volume" },
-          priceScaleId: "vol",
-          color: colors.volume,
-        });
-        chart
-          .priceScale("vol")
-          .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
-      }
-    } catch (err) {
-      // 破棄済みチャートに対してシリーズ追加を試みた場合など、
-      // lightweight-charts の内部プロパティ参照で例外が発生することがある。
-      // その場合は無視して、次回チャート再生成後の effect で再試行する。
-      logger.warn('Skipped series creation due to chart state:', err)
-    }
+    createSeries();
 
     return () => {
-      if (candleRef.current) {
+      if (candleRef.current && chart) {
         try {
           chart.removeSeries(candleRef.current)
         } catch {
@@ -97,7 +112,7 @@ export function useCandlestickSeries({
         candleRef.current = null
         prevCandleLength.current = 0
       }
-      if (volumeRef.current) {
+      if (volumeRef.current && chart) {
         try {
           chart.removeSeries(volumeRef.current)
         } catch {
@@ -121,8 +136,33 @@ export function useCandlestickSeries({
     volumeRef.current?.applyOptions({ color: colors.volume })
   }, [candleRef, volumeRef, colors.upColor, colors.downColor, colors.volume])
 
-  // データ更新
+  // データ更新（シリーズ未生成ならここで生成して即データ設定する）
   useEffect(() => {
+    if ((!candleRef.current || !volumeRef.current) && chart) {
+      // try creating again if missing
+      try {
+        if (!candleRef.current && typeof (chart as any).addCandlestickSeries === 'function') {
+          candleRef.current = (chart as IChartApi).addCandlestickSeries({
+            upColor: colors.upColor,
+            downColor: colors.downColor,
+            wickUpColor: colors.upColor,
+            wickDownColor: colors.downColor,
+            borderVisible: false,
+          });
+        }
+        if (!volumeRef.current && typeof (chart as any).addHistogramSeries === 'function') {
+          volumeRef.current = (chart as IChartApi).addHistogramSeries({
+            priceFormat: { type: 'volume' },
+            priceScaleId: 'vol',
+            color: colors.volume,
+          });
+          chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     if (candleRef.current && processedCandles.length > 0) {
       const firstTime = processedCandles[0]?.time as number | undefined;
       const dataChanged = firstTime !== undefined && firstTime !== prevFirstTimeRef.current;

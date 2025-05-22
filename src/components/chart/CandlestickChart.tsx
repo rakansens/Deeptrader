@@ -21,11 +21,13 @@ import useCrosshairInfo from "@/hooks/chart/use-crosshair-info";
 import useCountdownColor from "@/hooks/chart/use-countdown-color";
 import OrderBookPanel from "./OrderBookPanel";
 import OrderBookToggleButton from "./orderbook-toggle-button";
+import MainChartPanel, { MainChartPanelProps } from "./MainChartPanel";
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+  SYMBOLS,
+  TIMEFRAMES,
+  type SymbolValue,
+  type Timeframe,
+} from "@/constants/chart";
 import type {
   DrawingCanvasHandle,
   DrawingMode,
@@ -35,14 +37,6 @@ import type {
 } from "@/types/chart";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import type { IndicatorSettings } from "@/constants/chart";
-import MainChartPanel, { MainChartPanelProps } from "./MainChartPanel";
-import { logger } from "@/lib/logger";
-import {
-  SYMBOLS,
-  TIMEFRAMES,
-  type SymbolValue,
-  type Timeframe,
-} from "@/constants/chart";
 
 interface CandlestickChartProps {
   className?: string;
@@ -223,17 +217,11 @@ export default function CandlestickChart({
 
   const subHeight = 100;
 
+  // オーダーブックのトグル処理（ResizeObserverが自動的にリサイズ）
   const handleOrderBookToggle = useCallback(() => {
     setShowOrderBook((prev) => !prev);
-    requestAnimationFrame(() => {
-      if (chartRef.current && containerRef.current) {
-        chartRef.current.resize(
-          containerRef.current.clientWidth,
-          chartHeight,
-        );
-      }
-    });
-  }, [chartHeight]);
+    // リサイズは改良されたResizeObserverが自動的に処理
+  }, []);
 
   // Loading
   if (loading && candles.length === 0) {
@@ -287,43 +275,34 @@ export default function CandlestickChart({
     />
   );
 
+  // オーバーレイスタイルの新UI：リサイズのない高速な切り替え
   return (
-    <div className={className} id="chart-panel">
-      {showOrderBook ? (
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="w-full gap-4"
-          onLayout={() => {
-            if (chartRef.current && containerRef.current) {
-              chartRef.current.resize(
-                containerRef.current.clientWidth,
-                chartHeight,
-              );
-            }
-          }}
-        >
-          <ResizablePanel minSize={60} defaultSize={75}>
-            {mainChartPanel}
-          </ResizablePanel>
-          <ResizableHandle className="w-[2px] bg-border hover:bg-primary/50 transition-colors" />
-          <ResizablePanel minSize={15} defaultSize={25}>
-            <OrderBookPanel
-              symbol={currentSymbol}
-              height={chartHeight}
-              currentPrice={currentPrice}
-              className="w-[250px] flex-shrink-0"
-              onClose={handleOrderBookToggle}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      ) : (
-        <div className="relative">
-          {mainChartPanel}
-          <OrderBookToggleButton
-            onToggle={handleOrderBookToggle}
-            className="absolute top-2 right-2 z-30"
-          />
-        </div>
+    <div className={`${className} relative`} id="chart-panel">
+      {/* チャート（常に100%幅で固定、リサイズなし） */}
+      {mainChartPanel}
+
+      {/* OrderBookをオーバーレイ表示（右からスライドイン/アウト） */}
+      <div
+        className={`
+          absolute top-0 right-0 h-full w-[250px] bg-background border-l border-border
+          z-20 shadow-md
+          ${showOrderBook ? "block" : "hidden"}
+        `}
+      >
+        <OrderBookPanel
+          symbol={currentSymbol}
+          height={chartHeight}
+          currentPrice={currentPrice}
+          onClose={handleOrderBookToggle}
+        />
+      </div>
+
+      {/* オーダーブック表示ボタン（OrderBookが隠れているときだけ表示） */}
+      {!showOrderBook && (
+        <OrderBookToggleButton
+          onToggle={handleOrderBookToggle}
+          className="absolute top-2 right-2 z-30"
+        />
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 interface OrderBookToggleButtonProps {
   onToggle: () => void;
@@ -21,7 +21,7 @@ export default function OrderBookToggleButton({
       title="OrderBookを表示"
       aria-label="Show OrderBook"
     >
-      <Eye className="h-4 w-4" />
+      <BookOpen className="h-4 w-4" />
     </Button>
   );
 }
