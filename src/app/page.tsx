@@ -64,6 +64,12 @@ export default function Home() {
     DRAWING_COLORS[0].value,
   );
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  // 価格情報を保持するための状態
+  const [priceInfo, setPriceInfo] = useState<{
+    currentPrice?: number;
+    priceChange?: number;
+    priceChangePercent?: number;
+  }>({});
 
   // クライアントサイドでのみ実行する初期化
   useEffect(() => {
@@ -110,6 +116,14 @@ export default function Home() {
     [],
   );
 
+  // 価格情報を更新するためのコールバック
+  const handlePriceInfoUpdate = useCallback((info: {
+    currentPrice?: number;
+    priceChange?: number;
+    priceChangePercent?: number;
+  }) => {
+    setPriceInfo(info);
+  }, []);
 
   useEffect(() => {
     const hasSeenModal = localStorage.getItem("hasSeenWelcomeModal");
@@ -173,10 +187,6 @@ export default function Home() {
               <div className="p-4 md:p-4">
                 <Card className="mb-4">
                   <CardHeader className="pb-2">
-                    <CardTitle>{symbol} リアルタイムチャート</CardTitle>
-                    <CardDescription>
-                      {symbol}の価格変動をリアルタイムで監視します
-                    </CardDescription>
                     <ChartToolbar
                       timeframe={timeframe}
                       onTimeframeChange={handleTimeframeChange}
@@ -186,6 +196,9 @@ export default function Home() {
                       onIndicatorsChange={setIndicators}
                       settings={settings}
                       onSettingsChange={setSettings}
+                      latestPrice={priceInfo.currentPrice}
+                      priceChange={priceInfo.priceChange}
+                      priceChangePercent={priceInfo.priceChangePercent}
                     />
                   </CardHeader>
                   <CardContent>
@@ -201,6 +214,7 @@ export default function Home() {
                         indicatorSettings={settings}
                         drawingColor={drawingColor}
                         onDrawingColorChange={handleDrawingColorChange}
+                        onPriceInfoUpdate={handlePriceInfoUpdate}
                       />
                     </div>
                   </CardContent>

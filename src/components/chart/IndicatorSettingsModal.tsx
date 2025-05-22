@@ -1,11 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
   Tabs,
@@ -13,8 +11,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { DEFAULT_INDICATOR_SETTINGS, type IndicatorSettings } from '@/constants/chart'
+import { type IndicatorSettings } from '@/constants/chart'
 import MaSettings from './ma-settings'
 import RsiSettings from './rsi-settings'
 import MacdSettings from './macd-settings'
@@ -25,20 +22,24 @@ import { cn } from '@/lib/utils'
 interface IndicatorSettingsDropdownProps {
   settings: IndicatorSettings
   onSettingsChange: (s: IndicatorSettings) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode
 }
 
-export default function IndicatorSettingsModal({ settings, onSettingsChange }: IndicatorSettingsDropdownProps) {
+export default function IndicatorSettingsDropdown({ 
+  settings, 
+  onSettingsChange,
+  open,
+  onOpenChange,
+  children
+}: IndicatorSettingsDropdownProps) {
   const [activeTab, setActiveTab] = useState('ma')
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0" aria-label="指標設定">
-          <Settings className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="sm:max-w-[500px] p-4 w-[350px]">
-        <h3 className="text-lg font-semibold mb-4">指標設定</h3>
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
+      {children}
+      <DropdownMenuContent className="w-[500px] p-4" align="end">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-4 mb-6">
             <TabsTrigger value="ma" className="flex items-center gap-2">

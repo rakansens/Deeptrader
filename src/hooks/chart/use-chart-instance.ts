@@ -26,7 +26,7 @@ interface ChartWithContainer extends IChartApi {
 
 /**
  * チャートインスタンスの生成と更新を管理するフック
- * Lightweight Charts v4.1.3+ の機能に対応
+ * TradingView風のスタイルに最適化
  */
 export function useChartInstance({
   container,
@@ -47,10 +47,19 @@ export function useChartInstance({
       layout: {
         background: { color: colors.background },
         textColor: colors.text,
+        fontFamily: "'IBM Plex Sans', 'Trebuchet MS', Roboto, Ubuntu, sans-serif",
       },
       grid: {
-        vertLines: { color: colors.grid },
-        horzLines: { color: colors.grid },
+        vertLines: { 
+          color: colors.grid,
+          visible: true,
+          style: 1, // 点線
+        },
+        horzLines: { 
+          color: colors.grid,
+          visible: true,
+          style: 1, // 点線
+        },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -58,19 +67,46 @@ export function useChartInstance({
           color: colors.crosshair,
           labelVisible: true,
           labelBackgroundColor: colors.background,
+          style: 2, // 点線
+          width: 1,
         },
         horzLine: {
           color: colors.crosshair,
           labelVisible: true,
           labelBackgroundColor: colors.background,
+          style: 2, // 点線
+          width: 1,
         },
       },
       rightPriceScale: {
         borderColor: colors.grid,
         borderVisible: true,
         scaleMargins: { top: 0.1, bottom: 0.2 },
+        visible: true,
+        autoScale: true,
+        alignLabels: true,
       },
-      timeScale: { borderColor: colors.grid, timeVisible: true },
+      timeScale: { 
+        borderColor: colors.grid,
+        timeVisible: true,
+        secondsVisible: false,
+        tickMarkFormatter: (time: number) => {
+          const date = new Date(time * 1000);
+          return date.getHours().toString().padStart(2, '0') + ':' + 
+                 date.getMinutes().toString().padStart(2, '0');
+        },
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+      },
+      handleScroll: {
+        vertTouchDrag: true,
+        horzTouchDrag: true,
+        mouseWheel: true,
+        pressedMouseMove: true,
+      },
     });
     
     // チャートインスタンスを保存
@@ -182,10 +218,17 @@ export function useChartInstance({
       layout: {
         background: { color: colors.background },
         textColor: colors.text,
+        fontFamily: "'IBM Plex Sans', 'Trebuchet MS', Roboto, Ubuntu, sans-serif",
       },
       grid: {
-        vertLines: { color: colors.grid },
-        horzLines: { color: colors.grid },
+        vertLines: { 
+          color: colors.grid,
+          style: 1,
+        },
+        horzLines: { 
+          color: colors.grid,
+          style: 1,
+        },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -193,15 +236,25 @@ export function useChartInstance({
           color: colors.crosshair,
           labelVisible: true,
           labelBackgroundColor: colors.background,
+          style: 2,
+          width: 1,
         },
         horzLine: {
           color: colors.crosshair,
           labelVisible: true,
           labelBackgroundColor: colors.background,
+          style: 2,
+          width: 1,
         },
       },
-      rightPriceScale: { borderColor: colors.grid },
-      timeScale: { borderColor: colors.grid },
+      rightPriceScale: { 
+        borderColor: colors.grid,
+        visible: true,
+      },
+      timeScale: { 
+        borderColor: colors.grid,
+        timeVisible: true,
+      },
     });
   }, [colors]);
 
@@ -209,3 +262,4 @@ export function useChartInstance({
 }
 
 export default useChartInstance;
+

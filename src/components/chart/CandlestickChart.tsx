@@ -54,6 +54,12 @@ interface CandlestickChartProps {
   drawingColor?: string;
   /** 色変更ハンドラ */
   onDrawingColorChange?: (color: string) => void;
+  /** 価格情報更新ハンドラ */
+  onPriceInfoUpdate?: (info: {
+    currentPrice?: number;
+    priceChange?: number;
+    priceChangePercent?: number;
+  }) => void;
 }
 
 /**
@@ -71,6 +77,7 @@ export default function CandlestickChart({
   drawingEnabled = false,
   drawingColor = "#ef4444",
   onDrawingColorChange = () => {},
+  onPriceInfoUpdate = () => {},
 }: CandlestickChartProps) {
   const themeColors = useChartTheme();
   // オーダーブックはデフォルトで非表示（必要に応じて表示）
@@ -219,6 +226,27 @@ export default function CandlestickChart({
   // インジケーターの表示領域を広げる（RSIとMACDのパネル高さ）
   const subHeight = 150;
 
+  // 価格変動情報の計算
+  const priceChange = useMemo(() => {
+    if (candles.length < 2) return 0;
+    return latestCandle ? latestCandle.close - candles[candles.length - 2].close : 0;
+  }, [candles, latestCandle]);
+
+  const priceChangePercent = useMemo(() => {
+    if (candles.length < 2) return 0;
+    const previousClose = candles[candles.length - 2].close;
+    return previousClose ? (priceChange / previousClose) * 100 : 0;
+  }, [candles, priceChange]);
+
+  // 価格情報が変更されたときに親コンポーネントに通知
+  useEffect(() => {
+    onPriceInfoUpdate({
+      currentPrice: currentPrice,
+      priceChange: priceChange,
+      priceChangePercent: priceChangePercent
+    });
+  }, [currentPrice, priceChange, priceChangePercent, onPriceInfoUpdate]);
+
   // オーダーブックのトグル処理（ResizeObserverが自動的にリサイズ）
   const handleOrderBookToggle = useCallback(() => {
     setShowOrderBook((prev) => !prev);
@@ -274,6 +302,8 @@ export default function CandlestickChart({
       histogram={histogram}
       subHeight={subHeight}
       indicatorSettings={indicatorSettings}
+      priceChange={priceChange}
+      priceChangePercent={priceChangePercent}
     />
   );
 

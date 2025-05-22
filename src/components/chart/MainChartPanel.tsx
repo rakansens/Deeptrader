@@ -53,6 +53,8 @@ export interface MainChartPanelProps {
   histogram: UseCandlestickDataResult["histogram"];
   subHeight: number;
   indicatorSettings: IndicatorSettings;
+  priceChange?: number;
+  priceChangePercent?: number;
 }
 
 /**
@@ -90,6 +92,8 @@ function MainChartPanelComponent({
   histogram,
   subHeight,
   indicatorSettings,
+  priceChange,
+  priceChangePercent,
 }: MainChartPanelProps) {
   return (
     <div className="flex flex-col flex-1 space-y-4">

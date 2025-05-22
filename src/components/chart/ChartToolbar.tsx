@@ -1,148 +1,185 @@
 'use client'
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select'
-import { ThemeToggle } from "@/components/ui/theme-toggle"
+  TrendingUp,
+  Waves,
+  Settings,
+  TriangleRight,
+  ArrowUpRight,
+  ArrowDownRight
+} from "lucide-react";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from '@/components/ui/button'
-import { ListPlus, TrendingUp, Activity, BarChart3, Waves, Settings } from 'lucide-react'
-import { Accordion } from '@/components/ui/accordion'
-import type { IndicatorOptions, IndicatorsChangeHandler } from '@/types/chart'
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+
+import IndicatorSettingsDropdown from "./IndicatorSettingsModal";
 import {
-  TIMEFRAMES,
   SYMBOLS,
-  type Timeframe,
+  TIMEFRAMES,
   type SymbolValue,
-} from '@/constants/chart'
-import type { IndicatorSettings } from '@/constants/chart'
-import MaSettings from './ma-settings'
-import RsiSettings from './rsi-settings'
-import MacdSettings from './macd-settings'
-import BollSettings from './boll-settings'
-import IndicatorSettingsModal from './IndicatorSettingsModal'
+  type Timeframe,
+} from "@/constants/chart";
+import type { IndicatorOptions, IndicatorsChangeHandler } from "@/types/chart";
+import type { IndicatorSettings } from "@/constants/chart";
 
 interface ChartToolbarProps {
-  timeframe: Timeframe
-  onTimeframeChange: (timeframe: Timeframe) => void
-  symbol?: SymbolValue
-  onSymbolChange?: (symbol: SymbolValue) => void
-  indicators: IndicatorOptions
-  onIndicatorsChange: IndicatorsChangeHandler
-  settings: IndicatorSettings
-  onSettingsChange: (s: IndicatorSettings) => void
+  timeframe: Timeframe;
+  onTimeframeChange: (timeframe: Timeframe) => void;
+  symbol: SymbolValue;
+  onSymbolChange: (symbol: SymbolValue) => void;
+  indicators: IndicatorOptions;
+  onIndicatorsChange: IndicatorsChangeHandler;
+  settings: IndicatorSettings;
+  onSettingsChange: (settings: IndicatorSettings) => void;
+  latestPrice?: number;
+  priceChange?: number;
+  priceChangePercent?: number;
 }
-
-type IndicatorKey = keyof IndicatorOptions
-
-const INDICATOR_ITEMS: { key: IndicatorKey; label: string; icon: React.ComponentType<{className?: string}>; testId?: string }[] = [
-  { key: 'ma', label: '移動平均線 (MA)', icon: TrendingUp },
-  { key: 'rsi', label: 'RSI', icon: Activity, testId: 'checkbox-rsi' },
-  { key: 'macd', label: 'MACD', icon: BarChart3, testId: 'checkbox-macd' },
-  { key: 'boll', label: 'Bollinger Bands', icon: Waves },
-]
 
 export default function ChartToolbar({
   timeframe,
   onTimeframeChange,
-  symbol = SYMBOLS[0].value,
+  symbol,
   onSymbolChange,
   indicators,
   onIndicatorsChange,
   settings,
   onSettingsChange,
+  latestPrice,
+  priceChange = 0,
+  priceChangePercent = 0,
 }: ChartToolbarProps) {
+  const [showIndicatorSettings, setShowIndicatorSettings] = useState(false);
+  const isPriceUp = priceChange >= 0;
+  
+  const symbolObj = SYMBOLS.find((s) => s.value === symbol) || SYMBOLS[0];
+
   return (
-    <div
-      data-testid="chart-toolbar"
-      className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between bg-background border-b"
-    >
-      <div className="flex gap-4 items-center">
-        {onSymbolChange && (
-          <div className="flex-wrap md:flex-nowrap">
-            <Select value={symbol} onValueChange={(v) => v && onSymbolChange(v as SymbolValue)}>
-              <SelectTrigger className="w-[8.5rem]" data-testid="symbol-trigger" aria-label="Symbol">
-                <SelectValue>{SYMBOLS.find((s) => s.value === symbol)?.label || symbol}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {SYMBOLS.map((s) => (
-                  <SelectItem key={s.value} value={s.value} aria-label={`Symbol ${s.label}`}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        <div className="flex-wrap md:flex-nowrap">
-          <Select value={timeframe} onValueChange={(v) => v && onTimeframeChange(v as Timeframe)}>
-            <SelectTrigger className="w-[8.5rem]" data-testid="timeframe-trigger" aria-label="Timeframe">
-              <SelectValue>{timeframe}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {TIMEFRAMES.map((tf) => (
-                <SelectItem key={tf} value={tf} aria-label={`Timeframe ${tf}`}>
-                  {tf}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col w-full space-y-2">
+      {/* 上部バー: シンボル、現在価格、変化率 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-auto">
-                <ListPlus className="h-4 w-4 mr-2" />
-                インジケーター
+              <Button variant="ghost" className="font-bold text-lg px-2 py-1">
+                {symbolObj.label} <TriangleRight className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-60">
-              <DropdownMenuLabel>表示する指標</DropdownMenuLabel>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>通貨ペア</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {INDICATOR_ITEMS.map((item) => {
-                const Icon = item.icon
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={item.key}
-                    checked={!!indicators[item.key]}
-                    onCheckedChange={(checked) =>
-                      onIndicatorsChange({ ...indicators, [item.key]: checked } as IndicatorOptions)
-                    }
-                    onSelect={(e) => e.preventDefault()}
-                    data-testid={item.testId}
-                  >
-                    <Icon className="h-4 w-4 mr-2 opacity-70" />
-                    {item.label}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
+              {SYMBOLS.map((s) => (
+                <DropdownMenuItem
+                  key={s.value}
+                  onClick={() => onSymbolChange(s.value)}
+                  className={s.value === symbol ? "bg-accent" : ""}
+                >
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <div className="hidden md:flex items-center gap-1.5 text-muted-foreground ml-2">
-            {INDICATOR_ITEMS.map((item) => {
-              const Icon = item.icon
-              return indicators[item.key] ? <Icon key={item.key} className="h-3.5 w-3.5" /> : null
-            })}
-          </div>
         </div>
-
-        <ThemeToggle />
-        <IndicatorSettingsModal settings={settings} onSettingsChange={onSettingsChange} />
+        
+        {latestPrice && (
+          <div className="flex items-center space-x-4">
+            <span className="text-lg font-semibold">
+              {latestPrice.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+            <div className={`flex items-center ${isPriceUp ? 'text-green-500' : 'text-red-500'}`}>
+              <span className="font-semibold mr-1">
+                {isPriceUp ? '+' : ''}{priceChange.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+              <span className="text-sm">
+                ({isPriceUp ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+              </span>
+              {isPriceUp 
+                ? <ArrowUpRight className="h-4 w-4 ml-1" /> 
+                : <ArrowDownRight className="h-4 w-4 ml-1" />
+              }
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* 下部バー: タイムフレーム選択 */}
+      <div className="flex items-center justify-between border-b pb-2">
+        <Tabs
+          value={timeframe}
+          onValueChange={(value) => onTimeframeChange(value as Timeframe)}
+          className="w-full"
+        >
+          <TabsList className="w-full justify-start bg-transparent p-0 h-auto">
+            {TIMEFRAMES.map((tf) => (
+              <TabsTrigger
+                key={tf}
+                value={tf}
+                className={`
+                  text-xs px-3 py-1.5 h-auto rounded-md font-medium
+                  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+                  data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
+                  data-[state=inactive]:hover:bg-muted/50
+                `}
+              >
+                {tf}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`p-1 h-8 w-8 ${indicators.ma ? "bg-muted" : ""}`}
+            onClick={() => onIndicatorsChange({ ...indicators, ma: !indicators.ma })}
+            title="移動平均線"
+          >
+            <TrendingUp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`p-1 h-8 w-8 ${indicators.boll ? "bg-muted" : ""}`}
+            onClick={() => onIndicatorsChange({ ...indicators, boll: !indicators.boll })}
+            title="ボリンジャーバンド"
+          >
+            <Waves className="h-4 w-4" />
+          </Button>
+          
+          <IndicatorSettingsDropdown
+            settings={settings}
+            onSettingsChange={onSettingsChange}
+            open={showIndicatorSettings}
+            onOpenChange={setShowIndicatorSettings}
+          >
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-1 h-8 w-8"
+                title="指標設定"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </IndicatorSettingsDropdown>
+        </div>
       </div>
     </div>
-  )
+  );
 }
