@@ -355,25 +355,7 @@ export default function CandlestickChart({
       {/* チャート（常に100%幅で固定、リサイズなし） */}
       {mainChartPanel}
 
-      {/* OrderBookをオーバーレイ表示（自然なフェードイン/アウト） */}
-      <div
-        className={`
-          absolute top-0 right-0 h-auto max-h-[calc(100%-50px)] w-[250px] bg-background border-l border-border
-          z-20 shadow-md overflow-hidden
-          transition-all duration-300
-          origin-top-right
-          ${showOrderBook 
-            ? "opacity-100 scale-100 pointer-events-auto" 
-            : "opacity-0 scale-95 pointer-events-none"}
-        `}
-      >
-        <OrderBookPanel
-          symbol={currentSymbol}
-          height="auto"
-          currentPrice={currentPrice}
-          onClose={onOrderBookToggle}
-        />
-      </div>
+      {/* OrderBookパネルはOrderBookHoverCardコンポーネントで表示するためここでは非表示 */}
     </div>
   );
 }

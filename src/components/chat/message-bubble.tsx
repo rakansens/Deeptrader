@@ -196,7 +196,7 @@ export function MessageBubble({
               isImage ? "p-0" : "px-3 py-1.5",
               !isImage &&
                 (role === "user"
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-black font-medium"
                   : "bg-muted text-foreground"),
               "rounded-lg h-fit",
               typing && "motion-safe:animate-pulse"

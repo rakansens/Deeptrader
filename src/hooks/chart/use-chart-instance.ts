@@ -47,18 +47,19 @@ export function useChartInstance({
       layout: {
         background: { color: colors.background },
         textColor: colors.text,
-        fontFamily: "'IBM Plex Sans', 'Trebuchet MS', Roboto, Ubuntu, sans-serif",
+        fontFamily: "'JetBrains Mono', 'IBM Plex Mono', 'Trebuchet MS', sans-serif",
+        fontSize: 10,
       },
       grid: {
         vertLines: { 
           color: colors.grid,
           visible: true,
-          style: 1, // 点線
+          style: 1, // 点線パターン
         },
         horzLines: { 
           color: colors.grid,
           visible: true,
-          style: 1, // 点線
+          style: 1, // 点線パターン
         },
       },
       crosshair: {
@@ -67,24 +68,26 @@ export function useChartInstance({
           color: colors.crosshair,
           labelVisible: true,
           labelBackgroundColor: colors.background,
-          style: 2, // 点線
-          width: 1,
+          style: 2, // 破線
+          width: 1, // 細い線
         },
         horzLine: {
           color: colors.crosshair,
           labelVisible: true,
           labelBackgroundColor: colors.background,
-          style: 2, // 点線
-          width: 1,
+          style: 2, // 破線
+          width: 1, // 細い線
         },
       },
       rightPriceScale: {
         borderColor: colors.grid,
         borderVisible: true,
-        scaleMargins: { top: 0.1, bottom: 0.2 },
+        scaleMargins: { top: 0.05, bottom: 0.15 }, // 上下のマージンを調整
         visible: true,
         autoScale: true,
         alignLabels: true,
+        ticksVisible: true,
+        textColor: colors.text,
       },
       timeScale: { 
         borderColor: colors.grid,
@@ -95,6 +98,9 @@ export function useChartInstance({
           return date.getHours().toString().padStart(2, '0') + ':' + 
                  date.getMinutes().toString().padStart(2, '0');
         },
+        fixLeftEdge: true,
+        lockVisibleTimeRangeOnResize: true,
+        ticksVisible: true,
       },
       handleScale: {
         axisPressedMouseMove: true,
@@ -218,7 +224,8 @@ export function useChartInstance({
       layout: {
         background: { color: colors.background },
         textColor: colors.text,
-        fontFamily: "'IBM Plex Sans', 'Trebuchet MS', Roboto, Ubuntu, sans-serif",
+        fontFamily: "'JetBrains Mono', 'IBM Plex Mono', 'Trebuchet MS', sans-serif",
+        fontSize: 10,
       },
       grid: {
         vertLines: { 

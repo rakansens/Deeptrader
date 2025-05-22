@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 import IndicatorSettingsDropdown from "./IndicatorSettingsModal";
 import TimeframeDropdown from "./TimeframeDropdown";
 import OrderBookToggleButton from "./orderbook-toggle-button";
+import OrderBookPanel from "./OrderBookPanel";
+import OrderBookHoverCard from "./OrderBookHoverCard";
 import {
   SYMBOLS,
   TIMEFRAMES,
@@ -247,7 +249,7 @@ export default function ChartToolbar({
               key={tf}
               variant={tf === timeframe ? "default" : "ghost"}
               size="sm"
-              className="text-xs px-2 py-1 h-7"
+              className={`text-xs px-2 py-1 h-7 ${tf === timeframe ? "text-black font-medium" : ""}`}
               onClick={() => onTimeframeChange(tf as Timeframe)}
             >
               {tf}
@@ -301,19 +303,13 @@ export default function ChartToolbar({
             </Tooltip>
           </TooltipProvider>
           
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <OrderBookToggleButton 
-                  onToggle={onOrderBookToggle}
-                  active={showOrderBook}
-                />
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs py-1 px-2">
-                <p>オーダーブック</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* オーダーブックボタン - 専用コンポーネント */}
+          <OrderBookHoverCard 
+            symbol={symbol}
+            currentPrice={latestPrice}
+            showOrderBook={showOrderBook}
+            onOrderBookToggle={onOrderBookToggle}
+          />
           
           <IndicatorSettingsDropdown
             settings={settings}

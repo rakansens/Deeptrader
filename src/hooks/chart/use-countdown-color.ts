@@ -12,7 +12,7 @@ export function useCountdownColor(
   themeColors?: ChartTheme
 ) {
   const [backgroundColor, setBackgroundColor] = useState<string | undefined>()
-  const [textColor] = useState<string>('#ffffff')
+  const [textColor] = useState<string>('#000000')
 
   useEffect(() => {
     if (!themeColors || candles.length === 0) return
