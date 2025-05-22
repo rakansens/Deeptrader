@@ -7,7 +7,6 @@ import {
   TrendingUp,
   Waves,
   Settings,
-  TriangleRight,
   ArrowUpRight,
   ArrowDownRight
 } from "lucide-react";
@@ -19,8 +18,21 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 import IndicatorSettingsDropdown from "./IndicatorSettingsModal";
+import TimeframeDropdown from "./TimeframeDropdown";
 import {
   SYMBOLS,
   TIMEFRAMES,
@@ -44,6 +56,11 @@ interface ChartToolbarProps {
   priceChangePercent?: number;
 }
 
+// 利用可能なすべてのタイムフレーム
+const ALL_TIMEFRAMES = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M'] as const;
+// デフォルトで表示するタイムフレーム
+const DEFAULT_DISPLAY_TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
+
 export default function ChartToolbar({
   timeframe,
   onTimeframeChange,
@@ -57,36 +74,54 @@ export default function ChartToolbar({
   priceChange = 0,
   priceChangePercent = 0,
 }: ChartToolbarProps) {
-  const [showIndicatorSettings, setShowIndicatorSettings] = useState(false);
+  const [displayTimeframes, setDisplayTimeframes] = useState<string[]>(DEFAULT_DISPLAY_TIMEFRAMES);
   const isPriceUp = priceChange >= 0;
   
   const symbolObj = SYMBOLS.find((s) => s.value === symbol) || SYMBOLS[0];
+
+  const handleTimeframeVisibilityChange = (tf: string, isVisible: boolean) => {
+    if (isVisible && !displayTimeframes.includes(tf)) {
+      const newTimeframes = [...displayTimeframes, tf];
+      newTimeframes.sort((a, b) => {
+        return ALL_TIMEFRAMES.indexOf(a as any) - ALL_TIMEFRAMES.indexOf(b as any);
+      });
+      setDisplayTimeframes(newTimeframes);
+    } else if (!isVisible && displayTimeframes.includes(tf)) {
+      setDisplayTimeframes(displayTimeframes.filter(item => item !== tf));
+    }
+  };
 
   return (
     <div className="flex flex-col w-full space-y-2">
       {/* 上部バー: シンボル、現在価格、変化率 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <HoverCard openDelay={100} closeDelay={200}>
+            <HoverCardTrigger asChild>
               <Button variant="ghost" className="font-bold text-lg px-2 py-1">
-                {symbolObj.label} <TriangleRight className="ml-1 h-4 w-4" />
+                {symbolObj.label}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>通貨ペア</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {SYMBOLS.map((s) => (
-                <DropdownMenuItem
-                  key={s.value}
-                  onClick={() => onSymbolChange(s.value)}
-                  className={s.value === symbol ? "bg-accent" : ""}
-                >
-                  {s.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-[200px]" align="start">
+              <h3 className="text-sm font-medium mb-2">通貨ペア</h3>
+              <div className="space-y-1">
+                {SYMBOLS.map((s) => (
+                  <Button
+                    key={s.value}
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start px-2 py-1 h-7 text-xs",
+                      s.value === symbol && "bg-accent"
+                    )}
+                    onClick={() => onSymbolChange(s.value)}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         </div>
         
         {latestPrice && (
@@ -118,66 +153,71 @@ export default function ChartToolbar({
       
       {/* 下部バー: タイムフレーム選択 */}
       <div className="flex items-center justify-between border-b pb-2">
-        <Tabs
-          value={timeframe}
-          onValueChange={(value) => onTimeframeChange(value as Timeframe)}
-          className="w-full"
-        >
-          <TabsList className="w-full justify-start bg-transparent p-0 h-auto">
-            {TIMEFRAMES.map((tf) => (
-              <TabsTrigger
-                key={tf}
-                value={tf}
-                className={`
-                  text-xs px-3 py-1.5 h-auto rounded-md font-medium
-                  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
-                  data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
-                  data-[state=inactive]:hover:bg-muted/50
-                `}
-              >
-                {tf}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center space-x-1">
+          {/* 表示中のタイムフレーム */}
+          {displayTimeframes.map((tf) => (
+            <Button
+              key={tf}
+              variant={tf === timeframe ? "default" : "ghost"}
+              size="sm"
+              className="text-xs px-2 py-1 h-7"
+              onClick={() => onTimeframeChange(tf as Timeframe)}
+            >
+              {tf}
+            </Button>
+          ))}
+          
+          {/* 追加のタイムフレーム選択 */}
+          <TimeframeDropdown 
+            timeframe={timeframe} 
+            onTimeframeChange={onTimeframeChange}
+            displayTimeframes={displayTimeframes}
+            onDisplayChange={handleTimeframeVisibilityChange}
+            allTimeframes={ALL_TIMEFRAMES as readonly string[]}
+          />
+        </div>
         
         <div className="flex items-center space-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`p-1 h-8 w-8 ${indicators.ma ? "bg-muted" : ""}`}
-            onClick={() => onIndicatorsChange({ ...indicators, ma: !indicators.ma })}
-            title="移動平均線"
-          >
-            <TrendingUp className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`p-1 h-8 w-8 ${indicators.boll ? "bg-muted" : ""}`}
-            onClick={() => onIndicatorsChange({ ...indicators, boll: !indicators.boll })}
-            title="ボリンジャーバンド"
-          >
-            <Waves className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-1 h-7 ${indicators.ma ? "bg-muted" : ""}`}
+                  onClick={() => onIndicatorsChange({ ...indicators, ma: !indicators.ma })}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs py-1 px-2">
+                <p>移動平均線 (MA)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-1 h-7 ${indicators.boll ? "bg-muted" : ""}`}
+                  onClick={() => onIndicatorsChange({ ...indicators, boll: !indicators.boll })}
+                >
+                  <Waves className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs py-1 px-2">
+                <p>ボリンジャーバンド (BB)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           <IndicatorSettingsDropdown
             settings={settings}
             onSettingsChange={onSettingsChange}
-            open={showIndicatorSettings}
-            onOpenChange={setShowIndicatorSettings}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="p-1 h-8 w-8"
-                title="指標設定"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-          </IndicatorSettingsDropdown>
+          />
         </div>
       </div>
     </div>
