@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState, useEffect, useCallback } from "react";
 import { UiControlProvider } from "@/contexts/UiControlContext";
 import { Navbar } from "@/components/Navbar";
@@ -20,7 +19,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import Chat from "@/components/chat/Chat";
 import ChartToolbar from "@/components/chart/ChartToolbar";
 import {
@@ -38,14 +36,7 @@ import {
 } from "@/constants/chart";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import type { IndicatorSettings } from "@/constants/chart";
-
-const CandlestickChart = dynamic(
-  () => import("@/components/chart/CandlestickChart"),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="w-full h-[600px]" />,
-  },
-);
+import ChartTabs from "@/components/chart/ChartTabs";
 
 
 export default function Home() {
@@ -227,14 +218,13 @@ export default function Home() {
                   <CardContent>
                     {/* 描画色選択はサイドバーに移動 */}
                     <div className="w-full relative">
-                      <CandlestickChart
-                        key={`${symbol}-${timeframe}`}
-                        height={800}
-                        indicators={indicators}
-                        interval={timeframe}
+                      <ChartTabs
                         symbol={symbol}
+                        onSymbolChange={handleSymbolChange}
+                        timeframe={timeframe}
+                        indicators={indicators}
                         onIndicatorsChange={setIndicators}
-                        indicatorSettings={settings}
+                        settings={settings}
                         drawingColor={drawingColor}
                         onDrawingColorChange={handleDrawingColorChange}
                         onPriceInfoUpdate={handlePriceInfoUpdate}
