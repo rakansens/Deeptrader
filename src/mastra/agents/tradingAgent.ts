@@ -10,6 +10,7 @@ import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 import { z } from "zod";
 import { TIMEFRAMES, type Timeframe } from "@/constants/chart";
+import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { chartAnalysisTool } from "../tools/chartAnalysisTool";
@@ -17,15 +18,15 @@ import { marketDataTool } from "../tools/marketDataTool";
 import { tradingExecutionTool } from "../tools/tradingExecutionTool";
 import { entrySuggestionTool } from "../tools/entrySuggestionTool";
 
-// メモリ設定
+// メモリ設定（Mastra v0.7 仕様）
 const memory = new Memory({
+  // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
+  storage: SupabaseVector as any,
   options: {
-    // 最新の40メッセージを保持
     lastMessages: 40,
-    // セマンティック検索設定
     semanticRecall: {
-      topK: 5, // 5つの類似メッセージを取得
-      messageRange: 2, // 各一致の前後2メッセージを含める
+      topK: 5,
+      messageRange: 2,
     },
   },
 }) as unknown as MastraMemory;

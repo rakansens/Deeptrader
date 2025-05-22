@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchMessages, addMessage } from '@/infrastructure/supabase/db-service';
-import type { Message, OpenAIChatMessage } from '@/types/chat';
+import type { Message } from '@/types/chat';
 import { logger } from '@/lib/logger';
 
 /**
@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
  */
 export function useChatMessages(
   selectedId: string,
-  setAiMessages: (messages: OpenAIChatMessage[]) => void
+  setAiMessages: (messages: Message[]) => void
 ) {
   const [messages, setMessages] = useState<Message[]>([]);
   const lastSynced = useRef(0);
@@ -29,11 +29,7 @@ export function useChatMessages(
           timestamp: m.timestamp ?? Date.now(),
         }));
         setMessages(msgs);
-        setAiMessages(
-          msgs.map(
-            (m): OpenAIChatMessage => ({ role: m.role, content: m.content })
-          ) as unknown as OpenAIChatMessage[]
-        );
+        setAiMessages(msgs);
         lastSynced.current = msgs.length;
       }
     } catch (err) {
@@ -46,19 +42,15 @@ export function useChatMessages(
           logger.debug('Supabaseからメッセージを取得しました', data.length);
           const msgs = data.map((m) => ({
             id: String(m.id),
-            role: m.sender as Message['role'],
+            role: m.role as Message['role'],
             content: m.content,
-            type: m.type ?? 'text',
-            prompt: m.prompt,
-            imageUrl: m.image_url,
-            timestamp: new Date(m.created_at).getTime(),
+            type: m.type as 'text' | 'image',
+            prompt: m.prompt || undefined,
+            imageUrl: m.image_url || undefined,
+            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
           }));
           setMessages(msgs);
-          setAiMessages(
-            msgs.map(
-              (m): OpenAIChatMessage => ({ role: m.role, content: m.content })
-            ) as unknown as OpenAIChatMessage[]
-          );
+          setAiMessages(msgs);
           lastSynced.current = msgs.length;
         }
       })

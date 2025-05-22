@@ -10,6 +10,7 @@ import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // 既存エージェントのインポート
 import { tradingAgent } from "./tradingAgent";
@@ -17,8 +18,28 @@ import { researchAgent } from "./researchAgent";
 import { uiControlAgent } from "./uiControlAgent";
 import { backtestAgent } from "./backtestAgent";
 
+/**
+ * 重複する委任ツール定義をまとめるユーティリティ
+ */
+function makeDelegateTool(
+  id: string,
+  description: string,
+  agent: Agent
+) {
+  return createTool({
+    id,
+    description,
+    inputSchema: z.object({
+      message: z.string().describe("ユーザーからの問い合わせ"),
+    }),
+    execute: async ({ context }) => agent.stream(context.message),
+  });
+}
+
 // メモリ設定
 const memory = new Memory({
+  // FIXME: SupabaseVector が正式に MastraStorage を実装したら any を外す
+  storage: SupabaseVector as any,
   options: {
     lastMessages: 40,
     semanticRecall: {
@@ -28,45 +49,29 @@ const memory = new Memory({
   },
 }) as unknown as MastraMemory;
 
-// トレーディングエージェントへの委任ツール
-export const delegateTradingTool = createTool({
-  id: "delegate-trading-tool",
-  description: "トレーディングエージェントへ指示を渡します",
-  inputSchema: z.object({
-    message: z.string().describe("ユーザーからの問い合わせ"),
-  }),
-  execute: async ({ context }) => tradingAgent.stream(context.message),
-});
+export const delegateTradingTool = makeDelegateTool(
+  "delegate-trading-tool",
+  "トレーディングエージェントへ指示を渡します",
+  tradingAgent
+);
 
-// リサーチエージェントへの委任ツール
-export const delegateResearchTool = createTool({
-  id: "delegate-research-tool",
-  description: "リサーチエージェントへ指示を渡します",
-  inputSchema: z.object({
-    message: z.string().describe("ユーザーからの問い合わせ"),
-  }),
-  execute: async ({ context }) => researchAgent.stream(context.message),
-});
+export const delegateResearchTool = makeDelegateTool(
+  "delegate-research-tool",
+  "リサーチエージェントへ指示を渡します",
+  researchAgent
+);
 
-// UIコントロールエージェントへの委任ツール
-export const delegateUiControlTool = createTool({
-  id: "delegate-ui-control-tool",
-  description: "UIコントロールエージェントへ指示を渡します",
-  inputSchema: z.object({
-    message: z.string().describe("ユーザーからの問い合わせ"),
-  }),
-  execute: async ({ context }) => uiControlAgent.stream(context.message),
-});
+export const delegateUiControlTool = makeDelegateTool(
+  "delegate-ui-control-tool",
+  "UIコントロールエージェントへ指示を渡します",
+  uiControlAgent
+);
 
-// バックテストエージェントへの委任ツール
-export const delegateBacktestTool = createTool({
-  id: "delegate-backtest-tool",
-  description: "バックテストエージェントへ指示を渡します",
-  inputSchema: z.object({
-    message: z.string().describe("ユーザーからの問い合わせ"),
-  }),
-  execute: async ({ context }) => backtestAgent.stream(context.message),
-});
+export const delegateBacktestTool = makeDelegateTool(
+  "delegate-backtest-tool",
+  "バックテストエージェントへ指示を渡します",
+  backtestAgent
+);
 
 /**
  * オーケストラエージェント

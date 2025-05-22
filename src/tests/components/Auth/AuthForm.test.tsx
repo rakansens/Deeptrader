@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from "@testing-library/user-event";
 import AuthForm from "@/components/Auth/AuthForm";
-import { supabase } from "@/lib/supabase";
+import '@testing-library/jest-dom';
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
@@ -12,7 +13,7 @@ jest.mock("@/lib/supabase", () => ({
   },
 }));
 
-const mockSignInWithPassword = supabase.auth.signInWithPassword as jest.Mock;
+const mockSignInWithPassword = jest.requireMock("@/lib/supabase").supabase.auth.signInWithPassword;
 
 describe("AuthForm", () => {
   beforeEach(() => {

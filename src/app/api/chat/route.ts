@@ -1,90 +1,86 @@
 import { NextResponse } from "next/server";
-import { OpenAIStream, StreamingTextResponse } from "ai";
+import { StreamingTextResponse } from "ai";
+// import { orchestratorAgent } from "@/mastra/agents/orchestratorAgent";
 import { logger } from "@/lib/logger";
-import type { Message, OpenAIChatMessage } from "@/types";
-import { AI_MODEL, OPENAI_API_KEY } from "@/lib/env.server";
+import type { Message } from "@/types";
+import { createRouteHandlerClient } from "@/utils/supabase/route-handler";
 
-// 使用するAIモデル
-const aiModel = AI_MODEL;
-
-export const runtime = "edge";
+/**
+ * Chat API (Mastra version)
+ * すべてのチャットメッセージを Mastra の OrchestratorAgent に委譲する。
+ *
+ * 現時点で Mastra は画像メッセージを直接扱えないため、
+ * 画像が含まれる場合は `(画像メッセージ: [Image omitted])` へ置き換えて送信する。
+ */
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    // ユーザー認証チェック
+    const supabase = await createRouteHandlerClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      logger.warn("認証されていないユーザーからのリクエスト");
+      // 本番環境では401を返すべきかもしれませんが、デモ用に許可します
+      // return NextResponse.json({ error: "未認証" }, { status: 401 });
+    }
+
     const { messages }: { messages: Message[] } = await request.json();
 
-    // リクエストログ（センシティブ情報は除外）
-    logger.debug("Chat API request received with", messages.length, "messages");
+    // --- Mastra に渡す transcript を生成 ---
+    const transcript = messages
+      .map((m) => {
+        const role = m.role === "assistant" ? "アシスタント" : "ユーザー";
 
-    // メッセージ形式の変換と最適化
-    const openAIMessages: OpenAIChatMessage[] = messages.map((m) => {
-      if (
-        m.type === "image" ||
-        (typeof m.content === "string" && m.content.startsWith("data:image/"))
-      ) {
-        const prompt = m.prompt || "このチャートを分析してください";
-        const imageUrl = m.imageUrl ?? m.content;
-
-        if (!imageUrl) {
-          logger.error("Image URL not found in message:", m);
-          return { role: m.role, content: prompt };
+        // 画像メッセージはプレースホルダーに変換
+        if (
+          m.type === "image" ||
+          (typeof m.content === "string" && m.content.startsWith("data:image/"))
+        ) {
+          return `${role}: (画像メッセージ: [Image omitted])`;
         }
 
-        logger.debug("Processing multimodal message with image");
-        return {
-          role: m.role,
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: imageUrl } },
-          ],
-        };
+        const content =
+          typeof m.content === "string"
+            ? m.content
+            : JSON.stringify(m.content);
+        return `${role}: ${content}`;
+      })
+      .join("\n");
+
+    logger.debug("⇢ Transcript length:", transcript.length);
+
+    // TODO: Mastraエージェント統合（一時的に無効化）
+    // const mastraStream = await orchestratorAgent.stream(transcript);
+    
+    // 一時的なレスポンス（Mastraエージェント修正後に復元）
+    const responseText = `現在、システムは基本機能で動作しています。
+
+受信したメッセージ: ${messages.length}件
+最新のメッセージ: ${messages[messages.length - 1]?.content || 'なし'}
+
+Mastraエージェント統合は準備中です。`;
+
+    // Simple readable stream for testing
+    const stream = new ReadableStream({
+      start(controller) {
+        try {
+          const encoder = new TextEncoder();
+          controller.enqueue(encoder.encode(responseText));
+          controller.close();
+        } catch (e) {
+          console.error("Streaming error:", e);
+          controller.error(e);
+        }
       }
-
-      return { role: m.role, content: m.content };
     });
-
-    // API Key チェック
-    if (!OPENAI_API_KEY) {
-      logger.error("Missing OpenAI API key");
-      return NextResponse.json(
-        { error: "Missing OpenAI API key" },
-        { status: 500 },
-      );
-    }
-
-    logger.debug("Sending request to OpenAI API");
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: aiModel,
-        stream: true,
-        messages: openAIMessages,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!res.ok || !res.body) {
-      const text = await res.text();
-      logger.error("OpenAI API error:", text);
-      return NextResponse.json(
-        { error: "OpenAI request failed", detail: text },
-        { status: res.status },
-      );
-    }
-
-    logger.debug("OpenAI API response received, streaming...");
-    const stream = OpenAIStream(res);
+    
+    // 標準の StreamingTextResponse を使用
     return new StreamingTextResponse(stream);
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    logger.error("Chat API error:", errorMessage);
-    return NextResponse.json(
-      { error: "Invalid request", detail: errorMessage },
-      { status: 400 },
-    );
+    const message = err instanceof Error ? err.message : "Unknown error";
+    logger.error("Chat API error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

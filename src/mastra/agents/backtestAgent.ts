@@ -4,15 +4,20 @@ import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 
-// AIモデルを環境変数から取得
+// 環境変数からAIモデルを取得
 const aiModel = AI_MODEL;
-import { Memory } from "@mastra/memory";
-import type { MastraMemory } from "@mastra/core";
 
+import { Memory } from "@mastra/memory";
+import type { MastraMemory, MastraStorage } from "@mastra/core";
+import { SupabaseVector } from "../adapters/SupabaseVector";
+
+// ツールのインポート
 import { backtestTool } from "../tools/backtestTool";
 
-// メモリ設定
+// メモリ設定（新 API：オブジェクト 1 つで渡す）
 const memory = new Memory({
+  // FIXME: narrow `any` once SupabaseVector adapter implements full MastraStorage interface
+  storage: SupabaseVector as any,
   options: {
     lastMessages: 40,
     semanticRecall: {
@@ -24,13 +29,17 @@ const memory = new Memory({
 
 /**
  * バックテストエージェント
- * 簡易バックテストツールを用いて戦略検証を行います
+ * トレーディング戦略のバックテストと分析を行います
  */
 export const backtestAgent = new Agent({
-  name: "バックテストエージェント",
-  instructions: `あなたは暗号資産トレーディング戦略の検証を支援する専門家です。
-  ユーザーから与えられた条件で過去データを用いて簡易バックテストを実行し、結果を要約してください。`,
+  name: "バックテストスペシャリスト",
+  instructions: `あなたはトレーディング戦略のバックテストを行う専門家です。
+  ユーザーの提案した戦略に基づいて、過去のデータで検証し、結果を分析・報告します。
+  バックテスト結果では勝率、プロフィットファクター、最大ドローダウンなどの
+  重要な指標を含めた総合評価を提供してください。`,
   model: openai(aiModel),
-  tools: { backtestTool },
+  tools: {
+    backtestTool,
+  },
   memory,
 });

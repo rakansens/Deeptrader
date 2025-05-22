@@ -16,8 +16,12 @@ import {
 } from '@/components/ui/dialog';
 import { Settings, Upload, Image, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+
+
+
+
+import { getBrowserSupabase } from '@/lib/supabase-browser';
 import {
   Avatar,
   AvatarFallback,
@@ -66,6 +70,7 @@ export function SettingsDialog() {
       const fileName = `avatar_${isUser ? 'user' : 'assistant'}_${Date.now()}.${ext}`;
       
       // Supabaseにアップロード
+      const supabase = getBrowserSupabase();
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file);
@@ -81,9 +86,10 @@ export function SettingsDialog() {
         
       // 状態を更新
       if (isUser) {
-        setLocalUserAvatar(urlData.publicUrl);
+        // publicURLとpublicUrlのどちらかを使用（Supabase v1/v2の違いに対応）
+        setLocalUserAvatar((urlData as any)?.publicUrl || (urlData as any)?.publicURL || "");
       } else {
-        setLocalAssistantAvatar(urlData.publicUrl);
+        setLocalAssistantAvatar((urlData as any)?.publicUrl || (urlData as any)?.publicURL || "");
       }
       
       toast({

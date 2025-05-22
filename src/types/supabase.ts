@@ -558,6 +558,32 @@ export type Database = {
           updated_at?: string | null
         }
       }
+      memories_vector: {
+        Row: {
+          id: string
+          user_id: string
+          content: string
+          embedding: number[]
+          metadata: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          content: string
+          embedding: number[]
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          content?: string
+          embedding?: number[]
+          metadata?: Json | null
+          created_at?: string | null
+        }
+      }
     }
     Views: {
       admin_users: {

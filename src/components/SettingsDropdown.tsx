@@ -27,7 +27,7 @@ import {
   Volume1
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { getBrowserSupabase } from '@/lib/supabase-browser';
 import { logger } from '@/lib/logger';
 import {
   Avatar,
@@ -129,6 +129,7 @@ export function SettingsDropdown({ className }: { className?: string }) {
       const fileName = `avatar_${isUser ? 'user' : 'assistant'}_${Date.now()}.${ext}`;
       
       // Supabaseにアップロード
+      const supabase = getBrowserSupabase();
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file);
@@ -144,9 +145,10 @@ export function SettingsDropdown({ className }: { className?: string }) {
         
       // 状態を更新
       if (isUser) {
-        setTempUserAvatar(urlData.publicUrl);
+        // publicURLとpublicUrlのどちらかを使用（Supabase v1/v2の違いに対応）
+        setTempUserAvatar((urlData as any)?.publicUrl || (urlData as any)?.publicURL || "");
       } else {
-        setTempAssistantAvatar(urlData.publicUrl);
+        setTempAssistantAvatar((urlData as any)?.publicUrl || (urlData as any)?.publicURL || "");
       }
       
       toast({

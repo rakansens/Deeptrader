@@ -100,17 +100,26 @@ export function ChatInput({
       data-testid="chat-input"
     >
       <div className="flex justify-end mb-2 space-x-2">
-        <Button
-          aria-label="スクリーンショット送信"
-          onClick={onScreenshot}
-          disabled={loading}
-          size="sm"
-          variant="outline"
-          className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary transition-all duration-300 ease-in-out overflow-hidden group hover:w-auto hover:pl-3 hover:pr-4"
-        >
-          <TrendingUp className="h-5 w-5 min-w-5 transition-transform group-hover:scale-110 duration-200 text-inherit" />
-          <span className="max-w-0 whitespace-nowrap opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-out text-sm font-medium">チャートを送信</span>
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label="チャートを送信"
+                onClick={onScreenshot}
+                disabled={loading}
+                size="icon"
+                variant="ghost"
+                className="relative flex items-center justify-center h-9 w-9 rounded-md bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 ease-in-out"
+              >
+                <TrendingUp className="h-4 w-4 transition-transform hover:scale-110 duration-200" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="end" className="bg-background/95 backdrop-blur-sm border-border shadow-sm">
+              <p className="text-xs font-medium">チャートを送信</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         <input
           type="file"
           accept="image/*"
@@ -119,22 +128,33 @@ export function ChatInput({
           className="hidden"
           data-testid="image-input"
         />
-        <Button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={loading || uploading}
-          size="sm"
-          variant="outline"
-          aria-label="画像をアップロード"
-          className="relative flex items-center justify-center h-9 w-9 rounded-full border border-input text-muted-foreground hover:text-primary hover:border-primary"
-        >
-          {uploading ? (
-            <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
-          ) : (
-            <ImagePlus className="h-5 w-5" />
-          )}
-        </Button>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading || uploading}
+                size="icon"
+                variant="ghost"
+                aria-label="画像をアップロード"
+                className="relative flex items-center justify-center h-9 w-9 rounded-md bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 ease-in-out"
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+                ) : (
+                  <ImagePlus className="h-4 w-4 transition-transform hover:scale-110 duration-200" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="end" className="bg-background/95 backdrop-blur-sm border-border shadow-sm">
+              <p className="text-xs font-medium">画像をアップロード</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
+
       <Textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
@@ -143,6 +163,8 @@ export function ChatInput({
         className={cn(
           "min-h-[80px] resize-none pr-12",
           "focus-visible:ring-primary",
+          "bg-background/95 backdrop-blur-sm border-border shadow-sm",
+          "transition-colors duration-200",
           showVoiceInput ? "pl-20" : "pl-4"
         )}
         onKeyDown={(e) => {
@@ -167,9 +189,9 @@ export function ChatInput({
                   disabled={loading}
                   aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
                   className={cn(
-                    "h-8 w-8 border",
-                    isListening && "bg-red-500 text-white border-0",
-                    !isListening && "text-muted-foreground"
+                    "h-8 w-8 rounded-md transition-all duration-300",
+                    isListening && "bg-red-500/90 text-white hover:bg-red-500",
+                    !isListening && "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   {isListening ? (
@@ -180,7 +202,7 @@ export function ChatInput({
                 </Button>
                 {isListening && (
                   <span
-                    className="text-xs text-muted-foreground"
+                    className="text-xs text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded animate-pulse"
                     data-testid="recording-timer"
                   >
                     {new Date(recordingTime).toISOString().substring(14, 19)}
@@ -188,23 +210,38 @@ export function ChatInput({
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>{isListening ? "音声入力を停止" : "音声入力を開始"}</p>
+            <TooltipContent side="top" className="bg-background/95 backdrop-blur-sm border-border shadow-sm">
+              <p className="text-xs font-medium">{isListening ? "音声入力を停止" : "音声入力を開始"}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       )}
 
-      <Button
-        type="submit"
-        size="icon"
-        onClick={onSendMessage}
-        disabled={loading || !input.trim()}
-        aria-label="送信"
-        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-primary-foreground"
-      >
-        <ArrowUpIcon className="h-4 w-4" />
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="submit"
+              size="icon"
+              onClick={onSendMessage}
+              disabled={loading || !input.trim()}
+              aria-label="送信"
+              className={cn(
+                "absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-md",
+                "bg-primary text-primary-foreground",
+                "transition-all duration-300",
+                "hover:bg-primary/90 disabled:opacity-50",
+                "disabled:pointer-events-none"
+              )}
+            >
+              <ArrowUpIcon className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end" className="bg-background/95 backdrop-blur-sm border-border shadow-sm">
+            <p className="text-xs font-medium">送信</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

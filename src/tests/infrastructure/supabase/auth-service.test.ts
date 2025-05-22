@@ -3,72 +3,72 @@ import {
   signUp,
   signOut,
   getCurrentUser,
+  getServerSideUser,
   resetPassword,
 } from "@/infrastructure/supabase/auth-service";
-import { supabase } from "@/lib/supabase";
+import { createBrowserClient } from '@/utils/supabase/client-entry';
 
-type SupabaseType = typeof supabase;
+// モックの設定
+const mockSupabase = { 
+  auth: {
+    signUp: jest.fn(),
+    signInWithPassword: jest.fn(),
+    signOut: jest.fn(),
+    getUser: jest.fn(),
+    resetPasswordForEmail: jest.fn()
+  }
+};
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      signInWithPassword: jest.fn(),
-      signUp: jest.fn(),
-      signOut: jest.fn(),
-      getUser: jest.fn(),
-      resetPasswordForEmail: jest.fn(),
-    },
-  },
+jest.mock("@/utils/supabase/client-entry", () => ({
+  createBrowserClient: jest.fn().mockReturnValue(mockSupabase)
 }));
 
-const auth = (supabase as unknown as SupabaseType).auth;
-
 describe("auth-service", () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("signIn calls supabase", async () => {
-    (auth.signInWithPassword as jest.Mock).mockResolvedValue({
+    mockSupabase.auth.signInWithPassword.mockResolvedValue({
       data: { user: { id: "1" } },
       error: null,
     });
     await signIn("a", "b");
-    expect(auth.signInWithPassword).toHaveBeenCalledWith({
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: "a",
       password: "b",
     });
   });
 
   it("signUp calls supabase", async () => {
-    (auth.signUp as jest.Mock).mockResolvedValue({
-      data: { user: { id: "1" } },
+    mockSupabase.auth.signUp.mockResolvedValue({
+      data: { user: { id: "user1" } },
       error: null,
     });
     await signUp("a", "b");
-    expect(auth.signUp).toHaveBeenCalledWith({ email: "a", password: "b" });
+    expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({ email: "a", password: "b" });
   });
 
   it("signOut calls supabase", async () => {
-    (auth.signOut as jest.Mock).mockResolvedValue({ error: null });
+    mockSupabase.auth.signOut.mockResolvedValue({ error: null });
     await signOut();
-    expect(auth.signOut).toHaveBeenCalled();
+    expect(mockSupabase.auth.signOut).toHaveBeenCalled();
   });
 
   it("getCurrentUser calls supabase", async () => {
-    (auth.getUser as jest.Mock).mockResolvedValue({
+    mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: null },
       error: null,
     });
     await getCurrentUser();
-    expect(auth.getUser).toHaveBeenCalled();
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
   });
 
   it("resetPassword calls supabase", async () => {
-    (auth.resetPasswordForEmail as jest.Mock).mockResolvedValue({
+    mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
       error: null,
     });
     await resetPassword("test@example.com");
-    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("test@example.com");
+    expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith("test@example.com");
   });
 });

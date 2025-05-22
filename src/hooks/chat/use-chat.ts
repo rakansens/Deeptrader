@@ -1,5 +1,7 @@
 "use client";
 
+import { getBrowserSupabase } from "@/lib/supabase-browser";
+
 import { useEffect, useState } from "react";
 import {
   useChat as useAIChatBase,
@@ -19,9 +21,8 @@ import { useSidebar } from "./use-sidebar";
 function useAIChat<M>(options?: Parameters<typeof useAIChatBase>[0]): UseAIChatTyped<M> {
   return useAIChatBase(options) as unknown as UseAIChatTyped<M>;
 }
-import type { Conversation, Message, OpenAIChatMessage, OpenAIContent } from "@/types/chat";
+import type { Conversation, Message } from "@/types/chat";
 import { logger } from "@/lib/logger";
-import { supabase } from "@/lib/supabase";
 import { useChatMessages } from "./use-chat-messages";
 
 export interface UseChat {
@@ -33,7 +34,7 @@ export interface UseChat {
   conversations: Conversation[];
   selectedId: string;
   selectConversation: (id: string) => void;
-  newConversation: () => void;
+  newConversation: () => Promise<void>;
   renameConversation: (id: string, title: string) => void;
   removeConversation: (id: string) => void;
   sidebarOpen: boolean;
@@ -63,7 +64,7 @@ export function useChat(): UseChat {
     setMessages: setAiMessages,
     isLoading,
     error: aiError,
-  } = useAIChat<OpenAIChatMessage>({
+  } = useAIChat<Message>({
     api: "/api/chat",
     id: selectedId,
     initialMessages: [] as unknown as AIMessage[],
@@ -81,8 +82,8 @@ export function useChat(): UseChat {
 
   const { sidebarOpen, toggleSidebar } = useSidebar(false);
 
-  const newConversation = () => {
-    const id = createConversation();
+  const newConversation = async () => {
+    const id = await createConversation();
     setAiMessages([]);
     setMessages([]);
   };
@@ -90,86 +91,14 @@ export function useChat(): UseChat {
 
   // Vercel AI SDKのaiMessagesの変更をローカルのmessagesに反映
   useEffect(() => {
-    setMessages((prev) =>
-      aiMessages.map((m, i) => {
-        type ExtMessage = OpenAIChatMessage & Partial<Omit<Message, 'id' | 'role' | 'content'>> & { id?: string };
-        const em = m as ExtMessage;
-
-        let messageContentStr: string = "";
-        let messageType: Message['type'] = 'text';
-        let messagePrompt: string | undefined = undefined;
-        let messageImageUrl: string | undefined = undefined;
-
-        // メッセージコンテンツの処理
-        if (typeof em.content === 'string') {
-          messageContentStr = em.content;
-        } else if (Array.isArray(em.content)) { 
-          const textItem = em.content.find((item): item is Extract<OpenAIContent, {type: 'text'}> => item.type === 'text');
-          const imageItem = em.content.find((item): item is Extract<OpenAIContent, {type: 'image_url'}> => item.type === 'image_url');
-
-          // テキストコンテンツの取得
-          messageContentStr = textItem?.text || "";
-
-          // 画像コンテンツの処理
-          if (imageItem) {
-            messageType = 'image';
-            messageImageUrl = imageItem.image_url.url;
-            messagePrompt = textItem?.text;
-          }
-        } else if (typeof em.content === 'object' && em.content !== null) {
-          try {
-            messageContentStr = JSON.stringify(em.content);
-          } catch {
-            messageContentStr = '[複雑なメッセージ形式]';
-          }
-        }
-        
-        // 追加属性の処理
-        if (em.type === 'image') messageType = 'image';
-        if (em.prompt) messagePrompt = em.prompt;
-        if (em.imageUrl) messageImageUrl = em.imageUrl;
-
-        // 既存のメッセージ情報を保持
-        const prevMsg = prev[i];
-        const id = (m as AIMessage).id ?? prevMsg?.id ?? crypto.randomUUID();
-
-        // 画像メッセージの場合、以前のコンテンツを保持
-        if (messageType === 'image' && prevMsg?.type === 'image' && prevMsg?.content.startsWith('data:image/')) {
-          messageContentStr = prevMsg.content;
-        }
-
-        // チャート分析テキストが途切れないようにする処理
-        // 1. 前のメッセージが同じIDを持ち、現在のメッセージより短い場合は前のメッセージを使用
-        if (prevMsg?.id === id && 
-            typeof prevMsg?.content === 'string' && 
-            typeof messageContentStr === 'string' &&
-            messageContentStr.length < prevMsg.content.length) {
-          messageContentStr = prevMsg.content;
-        }
-
-        // 2. AIのレスポンスが途中で切れている可能性がある場合は結合
-        if (m.role === 'assistant' && prevMsg?.role === 'assistant' && 
-            typeof messageContentStr === 'string' && 
-            typeof prevMsg?.content === 'string' &&
-            !messageContentStr.endsWith('.') && 
-            !messageContentStr.endsWith('。')) {
-          // 明らかに途中で切れている場合は結合して保持
-          if (prevMsg.content.startsWith(messageContentStr) && 
-              prevMsg.content.length > messageContentStr.length) {
-            messageContentStr = prevMsg.content;
-          }
-        }
-
-        return {
-          id: id,
-          role: m.role as Message['role'],
-          content: messageContentStr,
-          type: prevMsg?.type ?? messageType,
-          prompt: prevMsg?.prompt ?? messagePrompt,
-          imageUrl: prevMsg?.imageUrl ?? messageImageUrl,
-          timestamp: prevMsg?.timestamp ?? Date.now(),
-        };
-      })
+    // Mastra から返って来る aiMessages はすでに Message 型
+    // timestamp が欠けていた場合のみ補完する
+    setMessages(
+      aiMessages.map((m) => ({
+        ...m,
+        timestamp: m.timestamp ?? Date.now(),
+        id: m.id ?? crypto.randomUUID(),
+      })),
     );
   }, [aiMessages, setMessages]);
 
@@ -181,7 +110,6 @@ export function useChat(): UseChat {
     setError(null);
     const userMessageId = crypto.randomUUID();
     
-    let contentForAppend: string | OpenAIContent[];
     let uiContent = text;
     let messageType: Message['type'] = 'text';
     let uiImageUrl: string | undefined;
@@ -194,6 +122,7 @@ export function useChat(): UseChat {
 
       const ext = imageFile.name.split('.').pop() || 'png';
       const fileName = `${crypto.randomUUID()}.${ext}`;
+      const supabase = getBrowserSupabase();
       const { error: upErr } = await supabase.storage
         .from('chat-images')
         .upload(fileName, imageFile);
@@ -205,15 +134,8 @@ export function useChat(): UseChat {
       }
       
       const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(fileName);
-      uiImageUrl = urlData.publicUrl;
-
-      contentForAppend = [
-        { type: 'text', text: promptForDb },
-        { type: 'image_url', image_url: { url: uiImageUrl } },
-      ];
-
-    } else {
-      contentForAppend = text;
+      // Supabase v1/v2の違いに対応（publicUrl/publicURL）
+      uiImageUrl = (urlData as any)?.publicUrl || (urlData as any)?.publicURL || "";
     }
 
     const uiMessage: Message = {
@@ -228,10 +150,7 @@ export function useChat(): UseChat {
     setMessages((prev) => [...prev, uiMessage]);
 
     try {
-      await append({
-        role: 'user',
-        content: contentForAppend,
-      } as OpenAIChatMessage); 
+      await append(uiMessage);
       
       if (!imageFile) { 
         setInput("");
@@ -255,11 +174,6 @@ export function useChat(): UseChat {
     setError(null);
     const userMessageId = crypto.randomUUID();
 
-    const contentForAppend: OpenAIContent[] = [
-      { type: 'text', text: promptText },
-      { type: 'image_url', image_url: { url: dataUrl } },
-    ];
-
     const uiMessage: Message = {
       id: userMessageId,
       role: 'user',
@@ -273,13 +187,7 @@ export function useChat(): UseChat {
     setMessages((prev) => [...prev, uiMessage]);
 
     try {
-      await append({
-        role: 'user',
-        content: contentForAppend,
-        type: 'image',
-        prompt: promptText,
-        imageUrl: dataUrl,
-      } as OpenAIChatMessage);
+      await append(uiMessage);
     } catch (err) {
       const message =
         err instanceof Error

@@ -17,7 +17,7 @@ const clientEnvSchema = z.object({
     .string()
     .url()
     .default('wss://stream.binance.com:9443'),
-  NEXT_PUBLIC_HUB_WS_URL: z.string().url().default('ws://localhost:8080'),
+  NEXT_PUBLIC_HUB_WS_URL: z.string().url().default('ws://localhost:3000/ws'),
 });
 
 // Next.js のクライアントバンドルでは `process.env` 全体が存在しないため、

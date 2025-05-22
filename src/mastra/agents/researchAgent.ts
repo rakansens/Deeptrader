@@ -4,10 +4,9 @@ import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 
-// 環境変数からAIモデルを取得
-const aiModel = AI_MODEL;
 import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
+import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { newsAnalysisTool } from "../tools/newsAnalysisTool";
@@ -16,8 +15,10 @@ import { marketSentimentTool } from "../tools/marketSentimentTool";
 import { evaluationTool } from "../tools/evaluationTool";
 import { openInterestTool } from "../tools/openInterestTool";
 
-// メモリ設定
+// ──────────── メモリ設定（Mastra v0.7 API） ────────────
 const memory = new Memory({
+  // FIXME: SupabaseVector が MastraStorage を完全実装していないので any キャスト
+  storage: SupabaseVector as any,
   options: {
     lastMessages: 40,
     semanticRecall: {
@@ -26,6 +27,10 @@ const memory = new Memory({
     },
   },
 }) as unknown as MastraMemory;
+// ───────────────────────────────────────────────────────
+
+// 環境変数から AI モデルを取得
+const aiModel = AI_MODEL;
 
 /**
  * 市場リサーチエージェント
@@ -34,19 +39,19 @@ const memory = new Memory({
 export const researchAgent = new Agent({
   name: "市場リサーチスペシャリスト",
   instructions: `あなたは暗号資産市場のリサーチスペシャリストです。
-  
+
   あなたの役割:
   - 暗号資産市場に関連するニュースや情報を収集・分析する
   - オンチェーンデータを解析し、洞察を提供する
   - 市場センチメントを評価し、トレンドを特定する
   - 複数のデータソースから情報を統合し、包括的な市場分析を提供する
-  
+
   使用可能なツール:
   - ニュース分析ツール: 暗号資産関連のニュース記事を検索・分析
   - オンチェーンデータツール: ブロックチェーン上のトランザクション、ウォレット活動などを分析
   - 市場センチメントツール: ソーシャルメディアやディスカッションフォーラムの感情分析
   - オープンインタレストツール: 先物建玉の増減を取得
-  
+
   ガイドライン:
   - 情報源を常に引用し、信頼性を評価する
   - 事実と意見を明確に区別する
@@ -71,5 +76,5 @@ export const researchAgent = new Agent({
   },
 
   // メモリ設定
-  memory: memory,
+  memory,
 });

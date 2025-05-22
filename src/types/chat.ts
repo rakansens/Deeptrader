@@ -5,13 +5,13 @@ export interface Conversation {
 
 export type ChatRole = "user" | "assistant";
 
-export type OpenAIContent =
-  | { type: 'text'; text: string }
-  | { type: 'image_url'; image_url: { url: string } };
-
-export interface OpenAIChatMessage {
-  role: ChatRole | 'system';
-  content: string | OpenAIContent[];
+/**
+ * Mastra / DeepTrader 共通メッセージ型
+ * （旧 OpenAI 互換型は廃止）
+ */
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
 }
 
 export interface Message {

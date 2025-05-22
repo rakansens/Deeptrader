@@ -1,11 +1,16 @@
-import { supabase } from "@/lib/supabase";
+import { getBrowserSupabase } from "@/lib/supabase-browser";
+
 import type { Database } from "@/types";
 import { logger } from "@/lib/logger";
+
+// ゲストユーザー用のデフォルトID
+const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 /**
  * 会話を作成
  */
 export async function createConversation(userId: string) {
+  const supabase = getBrowserSupabase();
   const { data, error } = await supabase
     .from("conversations")
     .insert({ user_id: userId })
@@ -19,6 +24,7 @@ export async function createConversation(userId: string) {
  * 会話一覧を取得
  */
 export async function fetchConversations(userId: string) {
+  const supabase = getBrowserSupabase();
   const { data, error } = await supabase
     .from("conversations")
     .select("*")
@@ -33,23 +39,32 @@ export async function fetchConversations(userId: string) {
  */
 export async function addMessage(
   conversationId: string,
-  sender: string,
+  role: "user" | "assistant",
   content: string,
-  type: string = 'text',
+  type: "text" | "image" = "text",
   prompt?: string,
   imageUrl?: string,
 ) {
   try {
-    const { error } = await supabase
+    const supabase = getBrowserSupabase();
+    // ユーザーIDを取得
+    const { data: authData } = await supabase.auth.getUser();
+    // ユーザーIDがない場合はゲストIDを使用
+    const userId = authData?.user?.id || GUEST_USER_ID;
+
+    const { data, error } = await supabase
       .from("chat_messages")
       .insert({
         conversation_id: conversationId,
-        sender,
+        user_id: userId,
+        role,
         content,
         type,
         prompt,
         image_url: imageUrl,
-      });
+      })
+      .select("id,created_at")
+      .single();
 
     if (error) {
       // テーブルが存在しない場合は静かに失敗
@@ -59,9 +74,11 @@ export async function addMessage(
       }
       throw error;
     }
+    
+    return data;
   } catch (err) {
     logger.error('メッセージ追加エラー:', err);
-    // エラーを上位に伝播させない
+    throw err; // エラーを上位に伝播させる
   }
 }
 
@@ -70,6 +87,7 @@ export async function addMessage(
  */
 export async function fetchMessages(conversationId: string) {
   try {
+    const supabase = getBrowserSupabase();
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
@@ -99,6 +117,7 @@ export type TradingHistoryInsert =
  * 取引履歴を追加
  */
 export async function insertTradingHistory(data: TradingHistoryInsert) {
+  const supabase = getBrowserSupabase();
   const { error } = await supabase.from("trading_history").insert(data);
   if (error) throw error;
 }
