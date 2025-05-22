@@ -226,7 +226,7 @@ export function MessageBubble({
                   ? "bg-primary/5 border border-primary/10" 
                   : "bg-muted/80 border border-muted-foreground/10") 
                 : (role === "user"
-                  ? "bg-primary text-primary-foreground font-medium"
+                  ? "bg-primary text-neutral-900 dark:text-neutral-900 font-medium"
                   : "bg-muted text-foreground"),
               // パディングは画像の場合小さく
               isImage ? "p-2" : "px-3 py-1.5",

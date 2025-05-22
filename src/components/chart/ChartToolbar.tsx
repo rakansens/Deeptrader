@@ -8,7 +8,9 @@ import {
   Waves,
   Settings,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  BarChart2,
+  TrendingDown
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -71,6 +73,12 @@ interface ChartToolbarProps {
     ma25?: number;
     ma99?: number;
   };
+  rsiValue?: number;
+  macdValues?: {
+    macd?: number;
+    signal?: number;
+    histogram?: number;
+  };
 }
 
 // 利用可能なすべてのタイムフレーム
@@ -94,6 +102,8 @@ export default function ChartToolbar({
   onOrderBookToggle = () => {},
   ohlc,
   maValues,
+  rsiValue,
+  macdValues,
 }: ChartToolbarProps) {
   const [displayTimeframes, setDisplayTimeframes] = useState<string[]>(DEFAULT_DISPLAY_TIMEFRAMES);
   const isPriceUp = priceChange >= 0;
@@ -119,8 +129,8 @@ export default function ChartToolbar({
         <div className="flex items-center space-x-2">
           <HoverCard openDelay={100} closeDelay={200}>
             <HoverCardTrigger asChild>
-              <Button variant="ghost" className="font-bold text-lg px-2 py-1">
-                {symbolObj.label}
+              <Button variant="ghost" className="font-bold text-lg px-2 py-1 flex items-center">
+                {symbolObj.label} <span className="ml-1 text-xs opacity-70">▼</span>
               </Button>
             </HoverCardTrigger>
             <HoverCardContent className="w-[200px]" align="start">
@@ -238,6 +248,38 @@ export default function ChartToolbar({
             </span>
           </>
         )}
+        
+        {/* RSI情報表示 - 有効な場合のみ表示 */}
+        {indicators.rsi && rsiValue !== undefined && (
+          <span className="opacity-80 ml-2 pl-2 border-l border-border">
+            RSI: <span className={`font-medium ${
+              rsiValue > 70 ? 'text-red-400' : 
+              rsiValue < 30 ? 'text-green-400' : 
+              'text-blue-400'
+            }`}>
+              {rsiValue.toFixed(2)}
+            </span>
+          </span>
+        )}
+        
+        {/* MACD情報表示 - 有効な場合のみ表示 */}
+        {indicators.macd && macdValues && (
+          <>
+            <span className="opacity-80 ml-2 pl-2 border-l border-border">
+              MACD: <span className="text-green-400 font-medium">{macdValues.macd?.toFixed(2) || '—'}</span>
+            </span>
+            <span className="opacity-80">
+              シグナル: <span className="text-red-400 font-medium">{macdValues.signal?.toFixed(2) || '—'}</span>
+            </span>
+            <span className="opacity-80">
+              ヒストグラム: <span className={`font-medium ${
+                (macdValues.histogram || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {macdValues.histogram?.toFixed(2) || '—'}
+              </span>
+            </span>
+          </>
+        )}
       </div>
       
       {/* 下部バー: タイムフレーム選択 */}
@@ -299,6 +341,44 @@ export default function ChartToolbar({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs py-1 px-2">
                 <p>ボリンジャーバンド (BB)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          {/* RSIインジケーターボタン */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-1 h-7 ${indicators.rsi ? "bg-muted" : ""}`}
+                  onClick={() => onIndicatorsChange({ ...indicators, rsi: !indicators.rsi })}
+                >
+                  <BarChart2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs py-1 px-2">
+                <p>RSI (相対力指数)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          {/* MACDインジケーターボタン */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-1 h-7 ${indicators.macd ? "bg-muted" : ""}`}
+                  onClick={() => onIndicatorsChange({ ...indicators, macd: !indicators.macd })}
+                >
+                  <TrendingDown className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs py-1 px-2">
+                <p>MACD (移動平均収束拡散法)</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

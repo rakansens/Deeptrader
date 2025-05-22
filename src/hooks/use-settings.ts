@@ -14,6 +14,10 @@ export interface UseSettings {
   setAssistantAvatar: (v: string) => void;
   speechRate: number;
   setSpeechRate: (v: number) => void;
+  userName: string;
+  setUserName: (v: string) => void;
+  assistantName: string;
+  setAssistantName: (v: string) => void;
   refreshSettings: () => void; // 設定を再読み込みするための関数を追加
 }
 
@@ -21,6 +25,10 @@ export interface UseSettings {
 export const DEFAULT_SPEECH_RATE = 1.0;
 export const MIN_SPEECH_RATE = 0.5;
 export const MAX_SPEECH_RATE = 2.0;
+
+// 名前のデフォルト値
+export const DEFAULT_USER_NAME = "あなた";
+export const DEFAULT_ASSISTANT_NAME = "DeepTrader AI";
 
 /**
  * 音声入力と読み上げ設定を管理するフック
@@ -38,6 +46,8 @@ export function useSettings(): UseSettings {
     string | undefined
   >(undefined);
   const [speechRate, setSpeechRateState] = useState<number>(DEFAULT_SPEECH_RATE);
+  const [userName, setUserNameState] = useState<string>(DEFAULT_USER_NAME);
+  const [assistantName, setAssistantNameState] = useState<string>(DEFAULT_ASSISTANT_NAME);
   const [initialized, setInitialized] = useState<boolean>(false);
 
   // LocalStorageから設定を読み込む
@@ -50,6 +60,8 @@ export function useSettings(): UseSettings {
       const userAvatarValue = localStorage.getItem("userAvatar");
       const assistantAvatarValue = localStorage.getItem("assistantAvatar");
       const speechRateValue = localStorage.getItem("speechRate");
+      const userNameValue = localStorage.getItem("userName");
+      const assistantNameValue = localStorage.getItem("assistantName");
 
       console.log("LocalStorageから設定を読み込み:", { voiceValue, speechValue, speechRateValue });
 
@@ -82,6 +94,22 @@ export function useSettings(): UseSettings {
       } else {
         // デフォルト値をlocalStorageに保存
         localStorage.setItem("speechRate", String(DEFAULT_SPEECH_RATE));
+      }
+
+      // ユーザー名の読み込み
+      if (userNameValue !== null && userNameValue.trim() !== '') {
+        setUserNameState(userNameValue);
+      } else {
+        // デフォルト値をlocalStorageに保存
+        localStorage.setItem("userName", DEFAULT_USER_NAME);
+      }
+      
+      // アシスタント名の読み込み
+      if (assistantNameValue !== null && assistantNameValue.trim() !== '') {
+        setAssistantNameState(assistantNameValue);
+      } else {
+        // デフォルト値をlocalStorageに保存
+        localStorage.setItem("assistantName", DEFAULT_ASSISTANT_NAME);
       }
 
       if (userAvatarValue !== null) {
@@ -158,6 +186,32 @@ export function useSettings(): UseSettings {
     }
   }, []);
 
+  const setUserName = useCallback((value: string) => {
+    try {
+      // 空白の場合はデフォルト値を使用
+      const nameValue = value.trim() ? value : DEFAULT_USER_NAME;
+      // localStorageに保存
+      localStorage.setItem("userName", nameValue);
+      // 状態を更新
+      setUserNameState(nameValue);
+    } catch (error) {
+      logger.error("[useSettings] ユーザー名設定の保存に失敗:", error);
+    }
+  }, []);
+
+  const setAssistantName = useCallback((value: string) => {
+    try {
+      // 空白の場合はデフォルト値を使用
+      const nameValue = value.trim() ? value : DEFAULT_ASSISTANT_NAME;
+      // localStorageに保存
+      localStorage.setItem("assistantName", nameValue);
+      // 状態を更新
+      setAssistantNameState(nameValue);
+    } catch (error) {
+      logger.error("[useSettings] アシスタント名設定の保存に失敗:", error);
+    }
+  }, []);
+
   const setUserAvatar = useCallback((value: string) => {
     try {
       localStorage.setItem("userAvatar", value);
@@ -187,6 +241,10 @@ export function useSettings(): UseSettings {
     setAssistantAvatar,
     speechRate,
     setSpeechRate,
+    userName,
+    setUserName,
+    assistantName,
+    setAssistantName,
     refreshSettings,
   };
 }
