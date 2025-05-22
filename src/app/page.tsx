@@ -167,7 +167,7 @@ export default function Home() {
               </div>
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle className="w-[2px] bg-border hover:bg-primary/50 transition-colors" />
           <ResizablePanel minSize={50}>
             <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-auto">
               <div className="p-4 md:p-4">
