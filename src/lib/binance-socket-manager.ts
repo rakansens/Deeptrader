@@ -1,6 +1,6 @@
 import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from './env'
 
-const RECONNECT_DELAY = 1000; // ms – wait 1 s before trying to reconnect
+const RECONNECT_DELAY = 1000; // ms – wait 1 s before trying to reconnect
 
 export type Listener = (data: unknown) => void
 
@@ -11,6 +11,7 @@ interface StreamInfo {
   pingTimer?: NodeJS.Timeout
   retryCount: number // exponential‑back‑off counter
   reconnectTimer?: NodeJS.Timeout
+  keepAlive?: NodeJS.Timeout // キープアライブタイマー
 }
 
 export class BinanceSocketManager {
@@ -58,7 +59,7 @@ export class BinanceSocketManager {
           } catch {
             /* ignore */
           }
-          info.pingTimer = setTimeout(schedulePing, 30_000) // 30 s later
+          info.pingTimer = setTimeout(schedulePing, 30_000) // 30 s later
         }
       }
       const stopPing = () => {
