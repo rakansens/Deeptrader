@@ -30,8 +30,8 @@ export default function OrderBookPanel({
   const isCurrent = (price: number) =>
     currentPrice !== undefined && Math.abs(price - currentPrice) < 1e-6;
 
-  // 表示数を増やす（20行まで表示）
-  const maxRows = 20;
+  // 表示数を最適化（15行まで表示）
+  const maxRows = 15;
   const reversedAsks = [...asks].reverse().slice(0, maxRows);
   const limitedBids = bids.slice(0, maxRows);
 
@@ -123,14 +123,14 @@ export default function OrderBookPanel({
       </div>
       <div className="flex flex-col h-full">
         {/* ヘッダー（固定） */}
-        <div className="w-full grid grid-cols-3 text-[10px] text-muted-foreground py-1 px-2 border-b border-border/40 sticky top-0 bg-card z-10">
+        <div className="w-full grid grid-cols-3 text-[12px] text-muted-foreground py-1.5 px-2 border-b border-border/40 sticky top-0 bg-card z-10">
           <div className="text-left">価格 (USDT)</div>
           <div className="text-right">数量 (BTC)</div>
           <div className="text-right">合計</div>
         </div>
         
         {/* スクロール可能なコンテンツエリア */}
-        <div className="overflow-auto flex-1 font-mono-trading text-[11px] overscroll-contain">
+        <div className="overflow-auto flex-1 font-mono-trading text-[13px] overscroll-contain">
           {(viewMode === "both" || viewMode === "asks") && (
             <div className="w-full">
               {reversedAsks.map((a, i) => {
@@ -165,12 +165,12 @@ export default function OrderBookPanel({
               className="py-1.5 flex items-center justify-between px-2 border-y border-primary/50 bg-primary/10"
             >
               <div className="flex items-center">
-                <ChevronUp className="h-3 w-3 text-success mr-1" />
-                <span className="text-primary font-medium text-[11px]">現在価格</span>
+                <ChevronUp className="h-3.5 w-3.5 text-success mr-1" />
+                <span className="text-primary font-medium text-[13px]">現在価格</span>
               </div>
               <div>
-                <span className="font-medium text-[12px]">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                <span className="text-[9px] ml-1 text-muted-foreground">USDT</span>
+                <span className="font-medium text-[14px]">{currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span className="text-[11px] ml-1 text-muted-foreground">USDT</span>
               </div>
             </div>
           )}
@@ -206,12 +206,12 @@ export default function OrderBookPanel({
         </div>
         
         {/* 下部バー（固定） */}
-        <div className="border-t border-border/40 py-1 px-2 flex items-center justify-between text-[9px] sticky bottom-0 bg-secondary">
+        <div className="border-t border-border/40 py-1.5 px-2 flex items-center justify-between text-[11px] sticky bottom-0 bg-secondary">
           <div className="flex items-center space-x-2">
             <span className="text-success font-medium">買い 54.51%</span>
             <span className="text-error font-medium">売り 45.49%</span>
           </div>
-          <div className="w-24 h-1 rounded-full overflow-hidden bg-error/70">
+          <div className="w-24 h-1.5 rounded-full overflow-hidden bg-error/70">
             <div className="h-full bg-success/70" style={{ width: '54.51%' }}></div>
           </div>
         </div>

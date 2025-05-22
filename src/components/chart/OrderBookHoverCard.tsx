@@ -38,12 +38,18 @@ export default function OrderBookHoverCard({
           <BookOpen className="h-3.5 w-3.5" />
         </Button>
       </HoverCardTrigger>
-      <HoverCardContent className="w-[320px] p-0" align="end" side="bottom" avoidCollisions={false}>
+      <HoverCardContent 
+        className="w-[320px] p-0 max-h-[calc(100vh-120px)]" 
+        align="end" 
+        side="bottom" 
+        avoidCollisions={true}
+        sideOffset={5}
+      >
         <OrderBookPanel
           symbol={symbol}
           height="auto"
           currentPrice={currentPrice}
-          className="border-none shadow-none"
+          className="border-none shadow-none max-h-[calc(100vh-120px)] overflow-hidden"
         />
       </HoverCardContent>
     </HoverCard>
