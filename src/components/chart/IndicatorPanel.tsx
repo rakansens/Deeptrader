@@ -46,7 +46,7 @@ export default function IndicatorPanel({
           <button
             onClick={onClose}
             aria-label={`Close ${title}`}
-            className="text-muted-foreground hover:text-foreground p-0.5 rounded-none hover:bg-background/30"
+            className="text-muted-foreground p-0.5 rounded-none"
             type="button"
           >
             <X className="w-3 h-3" />

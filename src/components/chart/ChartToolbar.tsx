@@ -35,7 +35,7 @@ import IndicatorSettingsDropdown from "./IndicatorSettingsModal";
 import TimeframeDropdown from "./TimeframeDropdown";
 import OrderBookToggleButton from "./orderbook-toggle-button";
 import OrderBookPanel from "./OrderBookPanel";
-import OrderBookHoverCard from "./OrderBookHoverCard";
+import OrderBookButton from "./OrderBookButton";
 import {
   SYMBOLS,
   TIMEFRAMES,
@@ -113,7 +113,7 @@ export default function ChartToolbar({
   };
 
   return (
-    <div className="flex flex-col w-full space-y-2">
+    <div className="flex flex-col w-full space-y-2 relative">
       {/* 上部バー: シンボル、現在価格、変化率 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -266,7 +266,7 @@ export default function ChartToolbar({
           />
         </div>
         
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 relative">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -304,7 +304,7 @@ export default function ChartToolbar({
           </TooltipProvider>
           
           {/* オーダーブックボタン - 専用コンポーネント */}
-          <OrderBookHoverCard 
+          <OrderBookButton 
             symbol={symbol}
             currentPrice={latestPrice}
             showOrderBook={showOrderBook}
@@ -315,8 +315,23 @@ export default function ChartToolbar({
             settings={settings}
             onSettingsChange={onSettingsChange}
           />
+          
+          {/* オーダーブックパネル - showOrderBookがtrueの場合に表示 */}
+          {showOrderBook && (
+            <div className="absolute right-0 top-[calc(100%+5px)] z-30 max-h-[calc(100vh-100px)] overflow-auto">
+              <OrderBookPanel
+                symbol={symbol}
+                height={800}
+                currentPrice={latestPrice}
+                onClose={onOrderBookToggle}
+                className="w-[320px] shadow-xl border border-border"
+              />
+            </div>
+          )}
         </div>
       </div>
+
+
     </div>
   );
 }
