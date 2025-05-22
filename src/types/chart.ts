@@ -33,6 +33,7 @@ export interface ChartTheme {
   upColor: string;
   downColor: string;
   volume: string;
+  volumeBackground?: string;
   ma7?: string;
   ma25?: string;
   ma99?: string;

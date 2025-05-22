@@ -10,6 +10,9 @@ interface CandlestickSeriesColors {
   upColor: string
   downColor: string
   volume: string
+  volumeUp?: string  // 上昇時の出来高カラー（オプション）
+  volumeDown?: string  // 下降時の出来高カラー（オプション）
+  volumeBackground?: string  // 出来高の背景色（オプション）
 }
 
 interface UseCandlestickSeriesParams {
@@ -45,6 +48,14 @@ export function useCandlestickSeries({
     [volumes]
   )
 
+  // ボリュームの色を適用
+  const volumeColor = useMemo(() => colors.volume, [colors.volume]);
+  // ボリュームの背景色
+  const volumeBackground = useMemo(() => 
+    colors.volumeBackground || '#1a2832', 
+    [colors.volumeBackground]
+  );
+
   // シリーズの生成と破棄
   useEffect(() => {
     const MAX_RETRY = 5;
@@ -78,13 +89,25 @@ export function useCandlestickSeries({
             "function"
         ) {
           volumeRef.current = c.addHistogramSeries({
-            priceFormat: { type: "volume" },
+            priceFormat: { 
+              type: "volume",
+              precision: 0, // 整数表示
+              minMove: 0.01, // 最小変動幅
+            },
             priceScaleId: "vol",
-            color: colors.volume,
+            color: volumeColor,
+            base: 0,
           });
-          c
-            .priceScale("vol")
-            .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+          
+          // 出来高のプライススケール設定
+          c.priceScale("vol").applyOptions({ 
+            scaleMargins: { top: 0.7, bottom: 0 }, // 上部マージンを縮小（より多くのスペースを使用）
+            visible: true, // スケールを表示
+            borderVisible: true, // 境界線を表示
+            borderColor: volumeBackground, // 境界色
+            entireTextOnly: false, // 数値を完全に表示
+            autoScale: true, // 自動スケーリング
+          });
           if (processedVolumes.length > 0) {
             volumeRef.current.setData(processedVolumes);
             prevVolumeLength.current = processedVolumes.length;
@@ -122,7 +145,7 @@ export function useCandlestickSeries({
         prevVolumeLength.current = 0
       }
     }
-  }, [chart, candleRef, volumeRef, colors.upColor, colors.downColor, colors.volume])
+  }, [chart, candleRef, volumeRef, colors.upColor, colors.downColor, volumeColor, volumeBackground])
 
   // テーマ変更時のオプション更新
   useEffect(() => {
@@ -133,8 +156,18 @@ export function useCandlestickSeries({
       wickDownColor: colors.downColor,
       borderVisible: false,
     })
-    volumeRef.current?.applyOptions({ color: colors.volume })
-  }, [candleRef, volumeRef, colors.upColor, colors.downColor, colors.volume])
+    volumeRef.current?.applyOptions({ 
+      color: volumeColor,
+      priceLineVisible: false,
+    })
+    
+    // ボリュームの背景色をプライススケールに反映
+    if (chart && volumeRef.current) {
+      chart.priceScale('vol').applyOptions({
+        borderColor: volumeBackground,
+      });
+    }
+  }, [candleRef, volumeRef, colors.upColor, colors.downColor, volumeColor, volumeBackground, chart])
 
   // データ更新（シリーズ未生成ならここで生成して即データ設定する）
   useEffect(() => {
@@ -152,11 +185,23 @@ export function useCandlestickSeries({
         }
         if (!volumeRef.current && typeof (chart as any).addHistogramSeries === 'function') {
           volumeRef.current = (chart as IChartApi).addHistogramSeries({
-            priceFormat: { type: 'volume' },
-            priceScaleId: 'vol',
-            color: colors.volume,
+            priceFormat: { 
+              type: "volume",
+              precision: 0, // 整数表示
+              minMove: 0.01, // 最小変動幅
+            },
+            priceScaleId: "vol",
+            color: volumeColor,
+            base: 0,
           });
-          chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+          chart.priceScale('vol').applyOptions({ 
+            scaleMargins: { top: 0.7, bottom: 0 }, // 上部マージンを縮小（より多くのスペースを使用）
+            visible: true, // スケールを表示
+            borderVisible: true, // 境界線を表示
+            borderColor: volumeBackground, // 境界色
+            entireTextOnly: false, // 数値を完全に表示
+            autoScale: true, // 自動スケーリング
+          });
         }
       } catch {
         /* ignore */

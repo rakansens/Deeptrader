@@ -118,11 +118,22 @@ const config: Config = {
           '0%, 80%, 100%': { transform: 'scale(0)' },
           '40%': { transform: 'scale(1)' },
         },
+        'fadeIn': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'slideUpFade': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'typing-bounce': 'typing-bounce 1s infinite',
+        'fadeIn': 'fadeIn 0.6s ease-out forwards',
+        'slideUpFade': 'slideUpFade 0.4s ease-out forwards',
+        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
@@ -139,6 +150,44 @@ const config: Config = {
         };
       });
       addUtilities(motionSafe);
+
+      const animationDelays = {
+        '.delay-100': {
+          'animation-delay': '100ms',
+        },
+        '.delay-200': {
+          'animation-delay': '200ms',
+        },
+        '.delay-300': {
+          'animation-delay': '300ms',
+        },
+        '.delay-400': {
+          'animation-delay': '400ms',
+        },
+        '.delay-500': {
+          'animation-delay': '500ms',
+        },
+        '.animation-delay-100': {
+          'animation-delay': '100ms',
+        },
+        '.animation-delay-200': {
+          'animation-delay': '200ms',
+        },
+        '.animation-delay-300': {
+          'animation-delay': '300ms',
+        },
+        '.animation-delay-400': {
+          'animation-delay': '400ms',
+        },
+        '.animation-delay-500': {
+          'animation-delay': '500ms',
+        },
+        '.animation-delay-600': {
+          'animation-delay': '600ms',
+        },
+      };
+      
+      addUtilities(animationDelays);
     }),
   ],
 };

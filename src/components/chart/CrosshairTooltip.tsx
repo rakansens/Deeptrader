@@ -20,7 +20,7 @@ export default function CrosshairTooltip({ info, className }: CrosshairTooltipPr
   return (
     <div
       className={cn(
-        'absolute top-2 left-2 z-20 text-xs bg-background/80 border border-border rounded px-2 py-1 space-y-0.5',
+        'absolute top-2 left-24 z-30 text-xs bg-background/90 border border-border rounded px-2 py-1 space-y-0.5 shadow-md backdrop-blur-sm',
         className,
       )}
       data-testid="crosshair-tooltip"

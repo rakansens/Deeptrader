@@ -10,6 +10,7 @@ import SidebarToggleButton from "./sidebar-toggle-button";
 import EraserSizeControl from "./eraser-size-control";
 import CandleCountdown from "./CandleCountdown";
 import DrawingCanvas from "./drawing-canvas";
+import VolumeInfo from "./VolumeInfo";
 import { DRAWING_MODES } from "@/types/chart";
 import type {
   DrawingCanvasHandle,
@@ -17,7 +18,7 @@ import type {
   IndicatorOptions,
   CrosshairInfo
 } from "@/types/chart";
-import type { IndicatorSettings, Timeframe } from "@/constants/chart";
+import type { IndicatorSettings, Timeframe, SymbolValue } from "@/constants/chart";
 import type { UseCandlestickDataResult } from "@/hooks/chart/use-candlestick-data";
 import type { MutableRefObject } from "react";
 
@@ -28,6 +29,8 @@ export interface MainChartPanelProps {
   loading: boolean;
   error: string | null;
   initialInterval: Timeframe;
+  symbol: SymbolValue;
+  volumes: UseCandlestickDataResult["volumes"];
   crosshairInfo: CrosshairInfo | null;
   showSidebar: boolean;
   mode: DrawingMode;
@@ -67,6 +70,8 @@ function MainChartPanelComponent({
   loading,
   error,
   initialInterval,
+  symbol,
+  volumes,
   crosshairInfo,
   showSidebar,
   mode,
@@ -98,6 +103,11 @@ function MainChartPanelComponent({
   return (
     <div className="flex flex-col flex-1 space-y-4">
       <div className="relative w-full h-full">
+        {!loading && !error && candles.length > 0 && (
+          <div className="absolute top-2 right-16 z-20 bg-background/80 py-0.5 px-2 rounded">
+            <VolumeInfo volumes={volumes} symbol={symbol} candles={candles} />
+          </div>
+        )}
         <div
           ref={containerRef}
           className="w-full rounded-md overflow-hidden border border-border"
@@ -109,11 +119,11 @@ function MainChartPanelComponent({
             interval={initialInterval}
             backgroundColor={countdownBgColor}
             textColor={countdownTextColor}
-            className="absolute top-2 right-16 z-20"
+            className="absolute top-2 right-2 z-20"
           />
         )}
         <CrosshairTooltip info={crosshairInfo} />
-        <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} />
+        <SidebarToggleButton open={showSidebar} onToggle={toggleSidebar} className="absolute top-2 left-2 z-30" />
         {showSidebar && (
           <ChartSidebar
             mode={mode}
@@ -125,6 +135,7 @@ function MainChartPanelComponent({
             unregisterShortcuts={unregisterShortcuts}
             eraserSize={eraserSize}
             setEraserSize={setEraserSize}
+            vertical={true}
             className="absolute top-12 left-2 z-20"
           />
         )}

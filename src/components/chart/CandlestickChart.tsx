@@ -4,6 +4,7 @@
 // ・シンボル(symbol)/時間枠(interval)切り替え時に旧データが残るバグを修正。
 //   - currentSymbol/currentInterval の useState を削除し、props を直接使用。
 //   - これによりチャートスケールとオーダーブックの不整合を解消。
+// ・ツールバーをチャート内に表示し、表示/非表示を切り替えられるように変更。
 
 import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { useEffect, useRef, useCallback, useState, CSSProperties, useMemo } from "react";
@@ -319,6 +320,8 @@ export default function CandlestickChart({
       loading={loading}
       error={error}
       initialInterval={currentInterval}
+      symbol={currentSymbol}
+      volumes={volumes}
       crosshairInfo={crosshairInfo}
       showSidebar={showSidebar}
       mode={mode}

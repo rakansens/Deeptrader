@@ -19,6 +19,7 @@ import type { DrawingMode } from "@/types/chart";
 import { DRAWING_MODES } from "@/types/chart";
 import DrawingColorPicker from "./drawing-color-picker";
 import EraserSizeControl from "./eraser-size-control";
+import { cn } from "@/lib/utils";
 
 interface ChartSidebarProps {
   mode: DrawingMode | null;
@@ -32,6 +33,8 @@ interface ChartSidebarProps {
   // 消しゴムサイズ管理用のプロパティを追加
   eraserSize?: number;
   setEraserSize?: (size: number) => void;
+  // 垂直表示モード
+  vertical?: boolean;
 }
 
 interface ToolInfo {
@@ -68,6 +71,7 @@ export default function ChartSidebar({
   className,
   eraserSize = 30,
   setEraserSize = () => {},
+  vertical = false,
 }: ChartSidebarProps) {
   // ツールをクリックした時のハンドラー
   const handleToolClick = (clickedMode: DrawingMode | null) => {
@@ -95,12 +99,16 @@ export default function ChartSidebar({
   return (
     <div
       data-testid="chart-sidebar"
-      className={`flex flex-col gap-1.5 p-1.5 bg-background/90 backdrop-blur-sm rounded-md border shadow-sm ${className ?? ""}`}
+      className={cn(
+        "flex gap-1.5 p-1.5 bg-background/95 backdrop-blur-sm rounded-md border border-border shadow-md",
+        vertical ? "flex-col" : "flex-row",
+        className
+      )}
     >
       {DRAWING_TOOLS.map(({ mode: toolMode, icon: Icon, label }) => (
         <button
           key={label}
-          className={`w-full p-1.5 rounded-md flex items-center justify-center transition-colors ${
+          className={`p-2 rounded-md flex items-center justify-center transition-colors ${
             toolMode === "eraser"
               ? isActive(toolMode)
                 ? "bg-red-500/90 text-white"
@@ -113,7 +121,7 @@ export default function ChartSidebar({
           aria-label={label}
           title={label}
         >
-          <Icon className="h-3.5 w-3.5" />
+          <Icon className="h-4 w-4" />
         </button>
       ))}
 
@@ -122,24 +130,27 @@ export default function ChartSidebar({
         <EraserSizeControl
           size={eraserSize}
           onChange={setEraserSize}
-          className="mt-1 w-full"
+          className={cn("w-full", vertical ? "mt-1" : "ml-1")}
         />
       )}
 
       <DrawingColorPicker
         value={drawingColor}
         onChange={onColorChange}
-        className="mt-1"
+        className={vertical ? "mt-1" : "ml-1"}
       />
 
       {onClear && (
         <button
-          className="w-full p-1.5 mt-2 rounded-md flex items-center justify-center bg-muted/80 text-muted-foreground hover:bg-red-100/80 hover:text-red-600 transition-colors"
+          className={cn(
+            "p-2 rounded-md flex items-center justify-center bg-muted/80 text-muted-foreground hover:bg-red-100/80 hover:text-red-600 transition-colors",
+            vertical ? "mt-2" : "ml-2"
+          )}
           onClick={onClear}
           aria-label="全て消去"
           title="全て消去"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-4 w-4" />
         </button>
       )}
     </div>
