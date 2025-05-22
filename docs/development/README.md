@@ -25,7 +25,7 @@ pnpm test
 - Node.js 18.x以上
 - pnpm 8.x以上
 - Supabase アカウント
-- 各種API キー (OpenAI, BitGet)
+- 各種API キー (OpenAI, Binance)
 
 ## 2. 開発フロー
 

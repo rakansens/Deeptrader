@@ -16,7 +16,7 @@ DeepTraderは自然言語を活用した次世代の暗号資産トレーディ�
 - **ライブオーダーブック**: Binanceの注文板をリアルタイム表示
 - **マルチチャネル分析**: テクニカル分析、センチメント分析、ニュース分析を統合
 - **自動トレード実行**: 承認プロセスを経て取引を自動実行
-- **取引所連携**: BitGet APIを初期サポート（今後拡大予定）
+- **取引所連携**: Binance APIを中心にサポート（今後拡大予定）
 
 ## 技術スタック
 
@@ -24,7 +24,7 @@ DeepTraderは自然言語を活用した次世代の暗号資産トレーディ�
 - **バックエンド**: Supabase (PostgreSQL)
 - **AI/ML**: Mastra AIエージェント, OpenAI API
 - **チャート**: LightWeight Charts
-- **取引所API**: BitGet (初期フェーズ)
+- **取引所API**: Binance (メイン)
 - **開発手法**: TDD（テスト駆動開発）, DDD（ドメイン駆動設計）
 
 ## 始め方
@@ -34,7 +34,7 @@ DeepTraderは自然言語を活用した次世代の暗号資産トレーディ�
 - Node.js 18.x以上
 - pnpm 8.x以上
 - Supabase アカウント
-- 各種API キー (OpenAI, BitGet)
+- 各種API キー (OpenAI, Binance)
 
 ### インストール
 

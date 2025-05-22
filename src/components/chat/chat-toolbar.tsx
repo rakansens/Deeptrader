@@ -14,22 +14,26 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import SettingsDialog from "@/components/SettingsDialog";
-import { ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Download, PanelLeft } from "lucide-react";
 
 interface ChatToolbarProps {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   exportConversation: (format: "json" | "txt") => void;
+  totalConversations?: number;
+  currentConversationIndex?: number;
 }
 
 export function ChatToolbar({
   sidebarOpen,
   toggleSidebar,
   exportConversation,
+  totalConversations = 0,
+  currentConversationIndex = 0,
 }: ChatToolbarProps) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <div>
+      <div className="flex items-center">
         <Button
           variant="ghost"
           size="icon"
@@ -39,12 +43,13 @@ export function ChatToolbar({
           onClick={toggleSidebar}
           className="text-muted-foreground hover:text-foreground"
         >
-          {sidebarOpen ? (
-            <ChevronLeft className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
+          <PanelLeft className={`h-4 w-4 ${!sidebarOpen ? "opacity-40" : ""}`} />
         </Button>
+        {!sidebarOpen && totalConversations > 0 && (
+          <span className="text-xs text-muted-foreground ml-1">
+            {currentConversationIndex + 1}/{totalConversations}
+          </span>
+        )}
       </div>
 
       <div className="flex items-center space-x-1">

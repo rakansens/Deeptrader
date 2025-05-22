@@ -2,7 +2,7 @@ import {
   setActiveChartForCapture,
   getActiveChartInstanceForCapture,
   getActiveChartElementForCapture,
-} from './chart-capture-service';
+} from '@/lib/chart-capture-service';
 import type { IChartApi } from 'lightweight-charts';
 
 // Mock IChartApi and HTMLElement for testing purposes

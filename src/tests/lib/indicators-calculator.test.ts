@@ -1,4 +1,10 @@
-import { SMACalculator, EMACalculator, RsiCalculator, MACDCalculator, BollingerBandsCalculator } from './indicators';
+import {
+  SMACalculator,
+  EMACalculator,
+  RsiCalculator,
+  MACDCalculator,
+  BollingerBandsCalculator,
+} from '@/lib/indicators';
 
 describe('SMACalculator', () => {
   describe('constructor', () => {

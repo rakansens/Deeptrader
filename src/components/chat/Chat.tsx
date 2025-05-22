@@ -226,6 +226,8 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
           exportConversation={exportConversation}
+          totalConversations={conversations.length}
+          currentConversationIndex={conversations.findIndex(c => c.id === selectedId)}
         />
         <div className="relative flex-1 overflow-hidden">
           <div className="absolute inset-0 max-w-full overflow-auto">
