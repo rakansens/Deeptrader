@@ -55,7 +55,7 @@ export function MessageBubble({
   const [isSpeaking, setIsSpeaking] = useState(false);
   // コピー状態管理
   const [isCopied, setIsCopied] = useState(false);
-  const { speechSynthesisEnabled } = useSettings();
+  const { speechSynthesisEnabled, userName, assistantName } = useSettings();
 
   // 画像メッセージ用の表示処理
   const isImage = type === 'image';
@@ -178,6 +178,15 @@ export function MessageBubble({
     return children;
   };
   
+  // アバターのフォールバック文字を取得
+  const getAvatarFallback = () => {
+    if (role === "user") {
+      return userName.charAt(0).toUpperCase() || "U";
+    } else {
+      return assistantName.charAt(0).toUpperCase() || "AI";
+    }
+  };
+  
   return (
     <motion.div
       data-testid="message-bubble"
@@ -194,17 +203,17 @@ export function MessageBubble({
         {typeof avatar === "string" ? (
           <Avatar className="h-5 w-5">
             {avatar && <AvatarImage src={avatar} />}
-            <AvatarFallback>{role === "user" ? "U" : "AI"}</AvatarFallback>
+            <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
           </Avatar>
         ) : avatar ? (
           avatar
         ) : (
           <Avatar className="h-5 w-5">
-            <AvatarFallback>{role === "user" ? "U" : "AI"}</AvatarFallback>
+            <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
           </Avatar>
         )}
         <span className="font-medium">
-          {role === "user" ? "あなた" : "DeepTrader AI"}
+          {role === "user" ? userName : assistantName}
         </span>
       </div>
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useSettings, MIN_SPEECH_RATE, MAX_SPEECH_RATE } from '@/hooks/use-settings';
+import { useSettings, MIN_SPEECH_RATE, MAX_SPEECH_RATE, DEFAULT_USER_NAME, DEFAULT_ASSISTANT_NAME } from '@/hooks/use-settings';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +60,11 @@ export function SettingsDropdown({ className }: { className?: string }) {
     assistantAvatar,
     setAssistantAvatar,
     speechRate,
-    setSpeechRate
+    setSpeechRate,
+    userName,
+    setUserName,
+    assistantName,
+    setAssistantName
   } = useSettings();
   const { toast } = useToast();
   
@@ -76,12 +80,16 @@ export function SettingsDropdown({ className }: { className?: string }) {
   const [tempUserAvatar, setTempUserAvatar] = useState(userAvatar || "");
   const [tempAssistantAvatar, setTempAssistantAvatar] = useState(assistantAvatar || "");
   const [tempSpeechRate, setTempSpeechRate] = useState(speechRate);
+  const [tempUserName, setTempUserName] = useState(userName);
+  const [tempAssistantName, setTempAssistantName] = useState(assistantName);
   
   useEffect(() => {
     setTempUserAvatar(userAvatar || "");
     setTempAssistantAvatar(assistantAvatar || "");
     setTempSpeechRate(speechRate);
-  }, [userAvatar, assistantAvatar, speechRate]);
+    setTempUserName(userName);
+    setTempAssistantName(assistantName);
+  }, [userAvatar, assistantAvatar, speechRate, userName, assistantName]);
   
   // スピーチレートを読みやすい形式で表示する関数
   const formatSpeechRate = (rate: number) => {
@@ -195,27 +203,29 @@ export function SettingsDropdown({ className }: { className?: string }) {
     });
   };
   
-  // アバターを保存
+  // アバターと名前を保存
   const saveUserAvatar = () => {
     setUserAvatar(tempUserAvatar);
-    localStorage.setItem("userAvatar", tempUserAvatar);
-    setUserAvatarDialogOpen(false);
+    setUserName(tempUserName);
     
     toast({
-      title: "アイコンを保存しました",
-      description: "あなたのアイコンが更新されました",
+      title: "ユーザー設定を保存しました",
+      description: "アイコンと表示名が更新されました",
     });
+    
+    setUserAvatarDialogOpen(false);
   };
   
   const saveAssistantAvatar = () => {
     setAssistantAvatar(tempAssistantAvatar);
-    localStorage.setItem("assistantAvatar", tempAssistantAvatar);
-    setAssistantAvatarDialogOpen(false);
+    setAssistantName(tempAssistantName);
     
     toast({
-      title: "アイコンを保存しました",
-      description: "AIのアイコンが更新されました",
+      title: "AI設定を保存しました",
+      description: "アイコンと表示名が更新されました",
     });
+    
+    setAssistantAvatarDialogOpen(false);
   };
   
   const saveSpeechRate = () => {
@@ -313,7 +323,7 @@ export function SettingsDropdown({ className }: { className?: string }) {
           >
             <div className="flex items-center">
               <User className="mr-2 h-4 w-4" />
-              <span>あなたのアイコン</span>
+              <span>あなたの設定</span>
             </div>
           </DropdownMenuItem>
           
@@ -326,7 +336,7 @@ export function SettingsDropdown({ className }: { className?: string }) {
           >
             <div className="flex items-center">
               <Bot className="mr-2 h-4 w-4" />
-              <span>AIのアイコン</span>
+              <span>AIの設定</span>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -336,24 +346,40 @@ export function SettingsDropdown({ className }: { className?: string }) {
       <Dialog open={userAvatarDialogOpen} onOpenChange={setUserAvatarDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-background/95 backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle>あなたのアイコン設定</DialogTitle>
+            <DialogTitle>あなたの設定</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center space-x-4 my-4">
-            <Avatar className="h-16 w-16 ring-2 ring-border">
-              {tempUserAvatar && <AvatarImage src={tempUserAvatar} />}
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Label htmlFor="user-avatar-url" className="text-sm mb-1 block">アイコンURL</Label>
+          
+          {/* 名前入力欄を追加 */}
+          <div className="space-y-4 my-4">
+            <div>
+              <Label htmlFor="user-name" className="text-sm mb-1 block">表示名</Label>
               <Input
-                id="user-avatar-url"
-                value={tempUserAvatar}
-                onChange={(e) => setTempUserAvatar(e.target.value)}
-                placeholder="https://example.com/avatar.png"
+                id="user-name"
+                value={tempUserName}
+                onChange={(e) => setTempUserName(e.target.value)}
+                placeholder={DEFAULT_USER_NAME}
                 className="w-full"
               />
             </div>
+            
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-16 w-16 ring-2 ring-border">
+                {tempUserAvatar && <AvatarImage src={tempUserAvatar} />}
+                <AvatarFallback>{tempUserName[0] || "U"}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <Label htmlFor="user-avatar-url" className="text-sm mb-1 block">アイコンURL</Label>
+                <Input
+                  id="user-avatar-url"
+                  value={tempUserAvatar}
+                  onChange={(e) => setTempUserAvatar(e.target.value)}
+                  placeholder="https://example.com/avatar.png"
+                  className="w-full"
+                />
+              </div>
+            </div>
           </div>
+          
           <div className="flex items-center gap-2 mt-2">
             <input
               ref={userAvatarInputRef}
@@ -394,24 +420,40 @@ export function SettingsDropdown({ className }: { className?: string }) {
       <Dialog open={assistantAvatarDialogOpen} onOpenChange={setAssistantAvatarDialogOpen}>
         <DialogContent className="sm:max-w-[425px] bg-background/95 backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle>AIのアイコン設定</DialogTitle>
+            <DialogTitle>AIの設定</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center space-x-4 my-4">
-            <Avatar className="h-16 w-16 ring-2 ring-border">
-              {tempAssistantAvatar && <AvatarImage src={tempAssistantAvatar} />}
-              <AvatarFallback>AI</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Label htmlFor="assistant-avatar-url" className="text-sm mb-1 block">アイコンURL</Label>
+          
+          {/* 名前入力欄を追加 */}
+          <div className="space-y-4 my-4">
+            <div>
+              <Label htmlFor="assistant-name" className="text-sm mb-1 block">表示名</Label>
               <Input
-                id="assistant-avatar-url"
-                value={tempAssistantAvatar}
-                onChange={(e) => setTempAssistantAvatar(e.target.value)}
-                placeholder="https://example.com/avatar.png"
+                id="assistant-name"
+                value={tempAssistantName}
+                onChange={(e) => setTempAssistantName(e.target.value)}
+                placeholder={DEFAULT_ASSISTANT_NAME}
                 className="w-full"
               />
             </div>
+            
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-16 w-16 ring-2 ring-border">
+                {tempAssistantAvatar && <AvatarImage src={tempAssistantAvatar} />}
+                <AvatarFallback>{tempAssistantName[0] || "AI"}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <Label htmlFor="assistant-avatar-url" className="text-sm mb-1 block">アイコンURL</Label>
+                <Input
+                  id="assistant-avatar-url"
+                  value={tempAssistantAvatar}
+                  onChange={(e) => setTempAssistantAvatar(e.target.value)}
+                  placeholder="https://example.com/avatar.png"
+                  className="w-full"
+                />
+              </div>
+            </div>
           </div>
+          
           <div className="flex items-center gap-2 mt-2">
             <input
               ref={assistantAvatarInputRef}
