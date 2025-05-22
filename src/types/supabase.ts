@@ -7,7 +7,8 @@
  * npx supabase gen types typescript --project-id <プロジェクトID> --schema public > src/types/supabase.ts
  */
 
-import type { OrderSide } from './order'
+import type { OrderSide } from './order';
+import type { ChatRole } from './chat';
 
 export type Json =
   | string
@@ -141,7 +142,7 @@ export type Database = {
           id: string
           conversation_id: string
           user_id: string
-          role: 'user' | 'assistant'
+          role: ChatRole
           content: string
           type: 'text' | 'image'
           prompt: string | null
@@ -149,7 +150,7 @@ export type Database = {
           image_id: string | null
           is_proposal: boolean | null
           is_public: boolean | null
-          proposal_type: 'buy' | 'sell' | null
+          proposal_type: OrderSide | null
           price: number | null
           take_profit: number | null
           stop_loss: number | null
@@ -160,7 +161,7 @@ export type Database = {
           id?: string
           conversation_id: string
           user_id: string
-          role: 'user' | 'assistant'
+          role: ChatRole
           content: string
           type?: 'text' | 'image'
           prompt?: string | null
@@ -168,7 +169,7 @@ export type Database = {
           image_id?: string | null
           is_proposal?: boolean | null
           is_public?: boolean | null
-          proposal_type?: 'buy' | 'sell' | null
+          proposal_type?: OrderSide | null
           price?: number | null
           take_profit?: number | null
           stop_loss?: number | null
@@ -179,7 +180,7 @@ export type Database = {
           id?: string
           conversation_id?: string
           user_id?: string
-          role?: 'user' | 'assistant'
+          role?: ChatRole
           content?: string
           type?: 'text' | 'image'
           prompt?: string | null
@@ -187,7 +188,7 @@ export type Database = {
           image_id?: string | null
           is_proposal?: boolean | null
           is_public?: boolean | null
-          proposal_type?: 'buy' | 'sell' | null
+          proposal_type?: OrderSide | null
           price?: number | null
           take_profit?: number | null
           stop_loss?: number | null

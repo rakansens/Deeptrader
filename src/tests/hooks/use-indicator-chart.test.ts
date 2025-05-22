@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import useIndicatorChart from '@/hooks/chart/use-indicator-chart'
-import { createChart } from 'lightweight-charts'
+import { createChart, type IChartApi, type ITimeScaleApi } from 'lightweight-charts'
+import type { ChartTheme } from '@/types'
 
 jest.mock('lightweight-charts', () => ({
   createChart: jest.fn(),
@@ -29,11 +30,21 @@ describe('useIndicatorChart', () => {
         getVisibleLogicalRange: jest.fn(() => ({ from: 0, to: 1 })),
         subscribeVisibleLogicalRangeChange: jest.fn(),
         unsubscribeVisibleLogicalRangeChange: jest.fn()
-      })
-    } as any
+      } as unknown as ITimeScaleApi<any>)
+    } as unknown as IChartApi
+
+    const colors: ChartTheme = {
+      background: '#000',
+      text: '#fff',
+      grid: '#333',
+      crosshair: '#ccc',
+      upColor: '#0f0',
+      downColor: '#f00',
+      volume: '#00f'
+    }
 
     const { result } = renderHook(() =>
-      useIndicatorChart({ height: 100, colors: {} as any, mainChart })
+      useIndicatorChart({ height: 100, colors, mainChart })
     )
     const container = document.createElement('div')
     Object.defineProperty(container, 'clientWidth', { value: 200 })

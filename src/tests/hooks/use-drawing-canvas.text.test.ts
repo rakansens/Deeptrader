@@ -1,6 +1,9 @@
 import { renderHook, act } from '@testing-library/react'
 import React from 'react'
-import useDrawingCanvas from '@/hooks/use-drawing-canvas'
+import useDrawingCanvas, {
+  type UseDrawingCanvasProps
+} from '@/hooks/use-drawing-canvas'
+import { type DrawingCanvasHandle } from '@/types/chart'
 
 const mockCtx = {
   fillText: jest.fn(),
@@ -29,8 +32,8 @@ describe('useDrawingCanvas text mode', () => {
   });
 
   it('draws text on submit', () => {
-    const ref = React.createRef<any>()
-    const { result } = renderHook((props: any) => useDrawingCanvas(props, ref), {
+    const ref = React.createRef<DrawingCanvasHandle>()
+    const { result } = renderHook((props: UseDrawingCanvasProps) => useDrawingCanvas(props, ref), {
       initialProps: { mode: 'text', enabled: true, color: '#000000' }, // color も渡す
     })
 
@@ -40,7 +43,7 @@ describe('useDrawingCanvas text mode', () => {
     // getContext が常に同じモックインスタンスを返すようにする
     jest
       .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue(mockCtx as any)
+      .mockReturnValue(mockCtx as unknown as CanvasRenderingContext2D)
 
     act(() => {
       // canvasRef にモックcanvasを割り当て
@@ -50,7 +53,7 @@ describe('useDrawingCanvas text mode', () => {
         currentTarget: canvas,
         clientX: 10,
         clientY: 20,
-      } as any)
+      } as unknown as React.PointerEvent<HTMLCanvasElement>)
     })
 
     // textInput state が更新されていることを確認 (オプション)
@@ -58,7 +61,9 @@ describe('useDrawingCanvas text mode', () => {
 
     act(() => {
       // テキスト入力
-      result.current.handleTextChange({ target: { value: 'Hello' } } as any)
+      result.current.handleTextChange({
+        target: { value: 'Hello' }
+      } as unknown as React.ChangeEvent<HTMLInputElement>)
     })
 
     // textInput state が更新されていることを確認
@@ -78,16 +83,16 @@ describe('useDrawingCanvas text mode', () => {
   })
 
   it('should focus input when textInput is active', () => {
-    const ref = React.createRef<any>();
-    const { result, rerender } = renderHook((props: any) => useDrawingCanvas(props, ref), {
+    const ref = React.createRef<DrawingCanvasHandle>();
+    const { result, rerender } = renderHook((props: UseDrawingCanvasProps) => useDrawingCanvas(props, ref), {
       initialProps: { mode: 'text', enabled: true },
     });
 
     const canvas = document.createElement('canvas');
     (result.current.canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = canvas;
     
-    const mockInputRef = { focus: jest.fn() };
-    (result.current.textInputRef as React.MutableRefObject<HTMLInputElement | null>).current = mockInputRef as any;
+    const mockInputRef = { focus: jest.fn() } as unknown as HTMLInputElement;
+    (result.current.textInputRef as React.MutableRefObject<HTMLInputElement | null>).current = mockInputRef;
 
     // 初期状態では textInput は null
     expect(result.current.textInput).toBeNull();
@@ -98,7 +103,7 @@ describe('useDrawingCanvas text mode', () => {
         currentTarget: canvas,
         clientX: 50,
         clientY: 50,
-      } as any);
+      } as unknown as React.PointerEvent<HTMLCanvasElement>);
     });
     
     // textInput が設定された後、rerender をシミュレートして useEffect をトリガー
@@ -108,5 +113,4 @@ describe('useDrawingCanvas text mode', () => {
     // focus が呼ばれたことを確認
     expect(mockInputRef.focus).toHaveBeenCalled();
   });
-
 }); 

@@ -1,79 +1,65 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { TextEncoder, TextDecoder } from "util";
-import { ReadableStream } from "stream/web";
-import { useChat } from "@/hooks/chat/use-chat";
-import {
-  fetchMessages,
-  addMessage,
-} from "@/infrastructure/supabase/db-service";
+import { renderHook, act } from '@testing-library/react';
+import { TextEncoder } from 'util';
+import { ReadableStream } from 'stream/web';
+import { useChat } from '@/hooks/chat/use-chat';
 
-jest.mock("@/infrastructure/supabase/db-service", () => ({
-  fetchMessages: jest.fn(),
-  addMessage: jest.fn().mockResolvedValue(undefined),
-}));
-
-import type { OpenAIChatMessage } from "@/types";
-
-jest.mock("ai/react", () => {
-  return {
-    useChat: <T,>({ initialMessages }: { initialMessages?: T[] }) => {
-      const React = require("react") as typeof import("react");
-      const [messages, setMessages] = React.useState<T[]>(initialMessages || []);
-      const [input, setInput] = React.useState("");
-      const append = async (msg: T) => {
-        setMessages((prev: T[]) => [
-          ...prev,
-          msg,
-          { role: "assistant", content: "pong" } as T,
-        ]);
-      };
-      return {
-        messages,
-        input,
-        setInput,
-        append,
-        setMessages,
-        isLoading: false,
-        error: null,
-      };
-    },
-  };
-});
-
-global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder;
-global.ReadableStream = ReadableStream as any;
-global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder;
-
-const mockedFetch = fetchMessages as jest.MockedFunction<typeof fetchMessages>;
-const mockedAdd = addMessage as jest.MockedFunction<typeof addMessage>;
-
-mockedFetch.mockResolvedValue([
-  {
-    id: 1,
-    conversation_id: "current",
-    sender: "user",
-    content: "hello",
-    created_at: new Date().toISOString(),
-  },
-]);
-
-describe("useChat integration", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+// 実際のfetchを模倣するモック
+const mockFetch = (response = 'test response') => {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(response));
+      controller.close();
+    }
   });
 
-  it("loads and sends messages via supabase", async () => {
+  return jest.fn().mockResolvedValue({
+    ok: true,
+    body: stream,
+    headers: new Headers()
+  });
+};
+
+// グローバルオブジェクトのモック
+global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder;
+// @ts-ignore - テストで使用するグローバルReadableStreamの型定義の問題を無視
+global.ReadableStream = ReadableStream as any;
+
+// fetchのモック化
+global.fetch = jest.fn();
+
+describe('useChat integration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('sends message and receives streamed response', async () => {
+    global.fetch = mockFetch('受信したレスポンス');
+
     const { result } = renderHook(() => useChat());
 
-    await waitFor(() => expect(result.current.messages.length).toBe(1));
-
+    // メッセージを入力
     act(() => {
-      result.current.setInput("ping");
+      result.current.setInput('テストメッセージ');
     });
+
+    // メッセージを送信
     await act(async () => {
       await result.current.sendMessage();
     });
 
-    expect(mockedAdd).toHaveBeenCalled();
+    // チャットの状態を検証
+    expect(result.current.messages.length).toBe(2);
+    expect(result.current.messages[0].role).toBe('user');
+    expect(result.current.messages[0].content).toBe('テストメッセージ');
+    expect(result.current.messages[1].role).toBe('assistant');
+    expect(result.current.messages[1].content).toBe('受信したレスポンス');
+
+    // ローカルストレージに保存されたことを確認
+    const savedMessages = JSON.parse(localStorage.getItem('messages_current') || '[]');
+    expect(savedMessages.length).toBe(2);
+    expect(savedMessages[0].content).toBe('テストメッセージ');
+    expect(savedMessages[1].content).toBe('受信したレスポンス');
   });
 });

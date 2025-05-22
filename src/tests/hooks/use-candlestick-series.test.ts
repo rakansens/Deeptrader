@@ -1,6 +1,12 @@
 import { renderHook } from '@testing-library/react'
 import { useCandlestickSeries } from '@/hooks/chart/use-candlestick-series'
-import type { IChartApi, ISeriesApi, CandlestickData, HistogramData } from 'lightweight-charts'
+import type {
+  IChartApi,
+  ISeriesApi,
+  CandlestickData,
+  HistogramData,
+  UTCTimestamp
+} from 'lightweight-charts'
 import { processTimeSeriesData } from '@/lib/chart-utils'
 
 jest.mock('@/lib/chart-utils', () => ({
@@ -23,8 +29,12 @@ describe('useCandlestickSeries', () => {
     const candleRef = { current: null } as React.MutableRefObject<ISeriesApi<'Candlestick'> | null>
     const volumeRef = { current: null } as React.MutableRefObject<ISeriesApi<'Histogram'> | null>
 
-    const candles: CandlestickData[] = [{ time: 1 as any, open: 1, high: 2, low: 0, close: 1 }]
-    const volumes: HistogramData[] = [{ time: 1 as any, value: 100 }]
+    const candles: CandlestickData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, open: 1, high: 2, low: 0, close: 1 }
+    ]
+    const volumes: HistogramData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, value: 100 }
+    ]
 
     renderHook(() =>
       useCandlestickSeries({
@@ -96,10 +106,12 @@ describe('useCandlestickSeries', () => {
     const candleRef = { current: null } as React.MutableRefObject<ISeriesApi<'Candlestick'> | null>
     const volumeRef = { current: null } as React.MutableRefObject<ISeriesApi<'Histogram'> | null>
 
-    const candles1: CandlestickData[] = [
-      { time: 1 as any, open: 1, high: 2, low: 0, close: 1 }
+    const candles1: CandlestickData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, open: 1, high: 2, low: 0, close: 1 }
     ]
-    const volumes1: HistogramData[] = [{ time: 1 as any, value: 100 }]
+    const volumes1: HistogramData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, value: 100 }
+    ]
 
     const { rerender } = renderHook(
       ({ candles, volumes }) =>
@@ -114,10 +126,12 @@ describe('useCandlestickSeries', () => {
       { initialProps: { candles: candles1, volumes: volumes1 } }
     )
 
-    const candles2: CandlestickData[] = [
-      { time: 1 as any, open: 2, high: 3, low: 1, close: 2 }
+    const candles2: CandlestickData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, open: 2, high: 3, low: 1, close: 2 }
     ]
-    const volumes2: HistogramData[] = [{ time: 1 as any, value: 200 }]
+    const volumes2: HistogramData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, value: 200 }
+    ]
 
     rerender({ candles: candles2, volumes: volumes2 })
 
@@ -149,10 +163,12 @@ describe('useCandlestickSeries', () => {
     const candleRef = { current: null } as React.MutableRefObject<ISeriesApi<'Candlestick'> | null>
     const volumeRef = { current: null } as React.MutableRefObject<ISeriesApi<'Histogram'> | null>
 
-    const candles1: CandlestickData[] = [
-      { time: 1 as any, open: 1, high: 2, low: 0, close: 1 }
+    const candles1: CandlestickData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, open: 1, high: 2, low: 0, close: 1 }
     ]
-    const volumes1: HistogramData[] = [{ time: 1 as any, value: 100 }]
+    const volumes1: HistogramData<UTCTimestamp>[] = [
+      { time: 1 as UTCTimestamp, value: 100 }
+    ]
 
     const { rerender } = renderHook(
       ({ candles, volumes }) =>
@@ -167,13 +183,13 @@ describe('useCandlestickSeries', () => {
       { initialProps: { candles: candles1, volumes: volumes1 } }
     )
 
-    const candles2: CandlestickData[] = [
+    const candles2: CandlestickData<UTCTimestamp>[] = [
       ...candles1,
-      { time: 2 as any, open: 2, high: 3, low: 1, close: 2 }
+      { time: 2 as UTCTimestamp, open: 2, high: 3, low: 1, close: 2 }
     ]
-    const volumes2: HistogramData[] = [
+    const volumes2: HistogramData<UTCTimestamp>[] = [
       ...volumes1,
-      { time: 2 as any, value: 200 }
+      { time: 2 as UTCTimestamp, value: 200 }
     ]
 
     rerender({ candles: candles2, volumes: volumes2 })

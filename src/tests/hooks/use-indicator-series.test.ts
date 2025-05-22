@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import useIndicatorSeries from '@/hooks/chart/use-indicator-series'
 import useLineSeries from '@/hooks/chart/use-line-series'
+import type { ISeriesApi } from 'lightweight-charts'
 
 jest.mock('@/hooks/chart/use-line-series')
 const mockUseLineSeries = useLineSeries as jest.Mock
@@ -9,10 +10,10 @@ describe('useIndicatorSeries', () => {
   it('creates line series based on flags', () => {
     renderHook(() =>
       useIndicatorSeries({
-        chart: {} as any,
-        maRef: { current: null } as any,
-        bollUpperRef: { current: null } as any,
-        bollLowerRef: { current: null } as any,
+        chart: null,
+        maRef: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
+        bollUpperRef: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
+        bollLowerRef: { current: null } as React.MutableRefObject<ISeriesApi<'Line'> | null>,
         ma: [],
         bollUpper: [],
         bollLower: [],

@@ -12,7 +12,7 @@ describe('useCandlestickData', () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => sampleKline
-    }) as any
+    }) as unknown as typeof fetch
     mockUseBinanceSocket.mockReturnValue({ status: 'connected' })
     localStorage.clear()
   })
@@ -23,7 +23,7 @@ describe('useCandlestickData', () => {
 
   it('loads data and handles websocket message', async () => {
     const { result } = renderHook(() =>
-      useCandlestickData('BTCUSDT' as any, '1m' as any)
+      useCandlestickData('BTCUSDT', '1m')
     )
 
     await waitFor(() => mockUseBinanceSocket.mock.calls.length > 0)

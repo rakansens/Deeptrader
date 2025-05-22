@@ -1,13 +1,13 @@
 import { renderHook, act } from "@testing-library/react";
-import useDrawingCanvas from "@/hooks/use-drawing-canvas";
+import useDrawingCanvas, { type UseDrawingCanvasProps } from "@/hooks/use-drawing-canvas";
 import React from "react";
-import { DRAWING_MODES, type DrawingMode } from "@/types/chart";
+import { DRAWING_MODES, type DrawingMode, type DrawingCanvasHandle } from "@/types/chart";
 
 describe("useDrawingCanvas", () => {
   it("updates eraser position on pointer enter and resets on mode change", () => {
-    const ref = React.createRef<any>();
+    const ref = React.createRef<DrawingCanvasHandle>();
     const { result, rerender } = renderHook(
-      (props: any) => useDrawingCanvas(props, ref),
+      (props: UseDrawingCanvasProps) => useDrawingCanvas(props, ref),
       { initialProps: { mode: DRAWING_MODES.ERASER as DrawingMode, enabled: true } },
     );
 
@@ -23,7 +23,7 @@ describe("useDrawingCanvas", () => {
         currentTarget: canvas,
         clientX: 10,
         clientY: 20,
-      } as any);
+      } as unknown as React.PointerEvent<HTMLCanvasElement>);
     });
 
     expect(result.current.eraserPosition).toEqual({ x: 10, y: 20 });

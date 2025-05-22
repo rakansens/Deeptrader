@@ -19,7 +19,8 @@ class MockWebSocket {
   close(code?: number, reason?: string) {}
 }
 
-;(global as any).WebSocket = MockWebSocket as any
+;(global as unknown as { WebSocket: typeof WebSocket }).WebSocket =
+  MockWebSocket as unknown as typeof WebSocket
 
 describe('useBinanceSocket', () => {
   it('opens websocket and handles messages', () => {

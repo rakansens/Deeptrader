@@ -19,6 +19,7 @@ jest.mock('ai/react', () => {
 })
 
 global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder
+// @ts-ignore - テストで使用するグローバルReadableStreamの型定義の問題を無視
 global.ReadableStream = ReadableStream as any
 global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder
 import { useChat } from '@/hooks/chat/use-chat'

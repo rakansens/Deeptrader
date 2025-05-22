@@ -27,8 +27,10 @@ class MockSpeechRecognition {
   }
 }
 
-;(global as any).SpeechRecognition = MockSpeechRecognition as any
-;(window as any).SpeechRecognition = MockSpeechRecognition as any
+;(global as unknown as { SpeechRecognition: typeof MockSpeechRecognition }).SpeechRecognition =
+  MockSpeechRecognition
+;(window as unknown as { SpeechRecognition: typeof MockSpeechRecognition }).SpeechRecognition =
+  MockSpeechRecognition
 
 describe('useVoiceInput', () => {
   afterEach(() => {

@@ -138,3 +138,8 @@ export const chartAnalysisTool = createTool({
     } satisfies ChartAnalysisResult;
   },
 });
+
+/**
+ * chartAnalysisToolのexecute関数の型
+ */
+export type ChartAnalysisExecute = typeof chartAnalysisTool.execute;

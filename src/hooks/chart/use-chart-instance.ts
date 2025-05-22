@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useEffect, useRef } from "react";
 import { createChart, CrosshairMode, IChartApi } from "lightweight-charts";
 import useChartTheme from "./use-chart-theme";
 import { logger } from "@/lib/logger";
@@ -29,7 +29,7 @@ export function useChartInstance({
   const chartRef = useRef<IChartApi | null>(null);
 
   // チャート生成とリサイズ管理
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!container) return;
 
     // チャートの作成
