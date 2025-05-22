@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 
 interface IndicatorPanelProps {
   title: string
-  height: number
+  height: number | "auto"
   className?: string
   onClose?: () => void
   /**
@@ -37,7 +37,7 @@ export default function IndicatorPanel({
   return (
     <div
       className={cn('w-full bg-background border-t border-border flex flex-col', className)}
-      style={{ height }}
+      style={height === "auto" ? {} : { height }}
       data-testid={`${title.toLowerCase()}-panel`}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/20">
@@ -49,7 +49,7 @@ export default function IndicatorPanel({
             className="text-muted-foreground hover:text-foreground p-1"
             type="button"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>

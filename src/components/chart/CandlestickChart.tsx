@@ -283,29 +283,33 @@ export default function CandlestickChart({
       {/* チャート（常に100%幅で固定、リサイズなし） */}
       {mainChartPanel}
 
-      {/* OrderBookをオーバーレイ表示（右からスライドイン/アウト） */}
+      {/* OrderBookをオーバーレイ表示（自然なフェードイン/アウト） */}
       <div
         className={`
-          absolute top-0 right-0 h-full w-[250px] bg-background border-l border-border
-          z-20 shadow-md
-          ${showOrderBook ? "block" : "hidden"}
+          absolute top-0 right-0 h-auto max-h-[calc(100%-50px)] w-[250px] bg-background border-l border-border
+          z-20 shadow-md overflow-hidden
+          transition-all duration-300
+          origin-top-right
+          ${showOrderBook 
+            ? "opacity-100 scale-100 pointer-events-auto" 
+            : "opacity-0 scale-95 pointer-events-none"}
         `}
       >
         <OrderBookPanel
           symbol={currentSymbol}
-          height={chartHeight}
+          height="auto"
           currentPrice={currentPrice}
           onClose={handleOrderBookToggle}
         />
       </div>
 
-      {/* オーダーブック表示ボタン（OrderBookが隠れているときだけ表示） */}
-      {!showOrderBook && (
+      {/* オーダーブック表示ボタン（表示/非表示用） */}
+      <div className={`absolute top-2 right-2 z-30 transition-opacity duration-300 ${showOrderBook ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <OrderBookToggleButton
           onToggle={handleOrderBookToggle}
-          className="absolute top-2 right-2 z-30"
+          className=""
         />
-      )}
+      </div>
     </div>
   );
 }

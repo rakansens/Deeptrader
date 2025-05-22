@@ -11,7 +11,7 @@ type ViewMode = "both" | "bids" | "asks";
 
 interface OrderBookPanelProps {
   symbol: SymbolValue;
-  height: number;
+  height: number | "auto";
   currentPrice?: number;
   onClose?: () => void;
   className?: string;
