@@ -4,12 +4,12 @@ import {
   HistogramData,
   UTCTimestamp,
 } from "lightweight-charts";
-import useBinanceSocket from "./use-binance-socket";
 import { safeLoadJson, safeSaveJson } from "@/lib/utils";
 import { upsertSeries } from "@/lib/candlestick-utils";
-import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from "@/lib/env";
+import { socketHub } from "@/lib/binance-socket-manager";
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
+import type { ConnectionStatus } from "./use-binance-socket";
 
 export interface UseCandlestickStreamResult {
   candles: CandlestickData<UTCTimestamp>[];
@@ -19,11 +19,6 @@ export interface UseCandlestickStreamResult {
   connected: boolean;
 }
 
-/**
- * ローソク足データの取得とWebSocket更新を管理するフック
- * @param symbol - 通貨ペア
- * @param interval - 時間枠
- */
 export function useCandlestickStream(
   symbol: SymbolValue,
   interval: Timeframe,
@@ -56,33 +51,33 @@ export function useCandlestickStream(
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
 
-  // シンボルまたは時間枠が変更された際にキャッシュを再読み込み
   useEffect(() => {
     const c = safeLoadJson<CandlestickData<UTCTimestamp>[]>(
       `candles_${symbol}_${interval}`,
-      'cached candles',
+      "cached candles",
     );
     const v = safeLoadJson<HistogramData<UTCTimestamp>[]>(
       `volumes_${symbol}_${interval}`,
-      'cached volumes',
+      "cached volumes",
     );
     setCandles(
       Array.isArray(c) &&
-        (c.length === 0 || (c[0] && typeof c[0].time === 'number'))
+        (c.length === 0 || (c[0] && typeof c[0].time === "number"))
         ? (c as CandlestickData<UTCTimestamp>[])
         : [],
     );
     setVolumes(
       Array.isArray(v) &&
-        (v.length === 0 || (v[0] && typeof v[0].time === 'number'))
+        (v.length === 0 || (v[0] && typeof v[0].time === "number"))
         ? (v as HistogramData<UTCTimestamp>[])
         : [],
     );
   }, [symbol, interval]);
 
   const lastSaveRef = useRef(0);
-  const SAVE_INTERVAL = 5000; // 5秒おきに保存
+  const SAVE_INTERVAL = 5000;
 
   const persist = useCallback(
     (c: CandlestickData<UTCTimestamp>[], v: HistogramData<UTCTimestamp>[], force = false) => {
@@ -96,7 +91,6 @@ export function useCandlestickStream(
     [symbol, interval],
   );
 
-  // 初期データ取得
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
@@ -144,7 +138,6 @@ export function useCandlestickStream(
     return () => controller.abort();
   }, [symbol, interval, persist]);
 
-  // WebSocketメッセージ処理
   const handleMessage = useCallback(
     (msg: BinanceKlineMessage) => {
       if (!msg.k) return;
@@ -157,7 +150,6 @@ export function useCandlestickStream(
         low: parseFloat(k.l),
         close: parseFloat(k.c),
       };
-
       setCandles((prev) => {
         const updated = upsertSeries(prev, candle, 500);
         persist(updated, volumes);
@@ -177,12 +169,30 @@ export function useCandlestickStream(
     [candles, volumes, persist],
   );
 
-  const { status } = useBinanceSocket<BinanceKlineMessage>({
-    url: `${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/ws/${symbol.toLowerCase()}@kline_${interval}`,
-    onMessage: handleMessage,
-    enabled: !loading && !error,
-    pingInterval: 0,
-  });
+  useEffect(() => {
+    let unsub: (() => void) | null = null;
+    setStatus("connecting");
+    const timer = setTimeout(() => {
+      // OrderBook hook now handles depth updates; subscribe only to kline here
+      const streamKey = `${symbol.toLowerCase()}@kline_${interval}`;
+      const sub = socketHub.subscribe(streamKey, (m) => {
+        const data = (m as any).data ?? m;
+        handleMessage(data as BinanceKlineMessage);
+      });
+      unsub = sub.unsubscribe;
+      const ws = sub.ws;
+      const open = () => setStatus("connected");
+      const close = () => setStatus("disconnected");
+      ws.addEventListener("open", open);
+      ws.addEventListener("close", close);
+      ws.addEventListener("error", close);
+      if (ws.readyState === WebSocket.OPEN) setStatus("connected");
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      if (unsub) unsub();
+    };
+  }, [symbol, interval, handleMessage]);
 
   return { candles, volumes, loading, error, connected: status === "connected" };
 }

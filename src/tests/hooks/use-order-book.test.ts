@@ -1,18 +1,19 @@
-import { renderHook, act, waitFor } from '@testing-library/react'
-import useOrderBook from '@/hooks/chart/use-order-book'
-import useBinanceSocket from '@/hooks/chart/use-binance-socket'
+import { act, waitFor } from '@testing-library/react'
+import { renderHookWithQueryClient } from '../utils/renderWithQueryClient'
+import useOrderBook, { UseOrderBookResult } from '@/hooks/chart/use-order-book'
+import { socketHub } from '@/lib/binance-socket-manager'
 import { fetchOrderBook } from '@/infrastructure/exchange/binance-service'
 
-jest.mock('@/hooks/chart/use-binance-socket')
+jest.mock('@/lib/binance-socket-manager')
 jest.mock('@/infrastructure/exchange/binance-service')
 
-const mockSocket = useBinanceSocket as jest.Mock
+const mockSubscribe = socketHub.subscribe as jest.Mock
 const mockFetch = fetchOrderBook as jest.Mock
 
 describe('useOrderBook', () => {
   beforeEach(() => {
     mockFetch.mockResolvedValue({ bids: [{ price: 1, quantity: 2 }], asks: [{ price: 1.1, quantity: 3 }] })
-    mockSocket.mockReturnValue({ status: 'connected' })
+    mockSubscribe.mockReturnValue({ ws: { addEventListener: jest.fn(), removeEventListener: jest.fn(), readyState: 1 }, unsubscribe: jest.fn() })
   })
 
   afterEach(() => {
@@ -20,20 +21,21 @@ describe('useOrderBook', () => {
   })
 
   it('loads snapshot and handles websocket update', async () => {
-    const { result } = renderHook(() => useOrderBook('BTCUSDT'))
+    const { result } = renderHookWithQueryClient(() => useOrderBook('BTCUSDT'))
+    const orderBook = result as { current: UseOrderBookResult }
 
     await waitFor(() => mockFetch.mock.calls.length > 0)
-    expect(mockSocket.mock.calls[0][0].pingInterval).toBe(0)
-    expect(result.current.bids.length).toBe(1)
-    expect(result.current.connected).toBe(true)
+    await waitFor(() => orderBook.current.bids.length > 0)
+    expect(orderBook.current.bids.length).toBe(1)
+    expect(orderBook.current.connected).toBe(true)
 
     const msg = { b: [['1', '3']], a: [['1.1', '0']] }
     act(() => {
-      mockSocket.mock.calls[0][0].onMessage!(msg)
+      mockSubscribe.mock.calls[0][1](msg)
     })
 
-    expect(result.current.bids[0].quantity).toBe(3)
-    expect(result.current.asks.length).toBe(0)
+    expect(orderBook.current.bids[0].quantity).toBe(3)
+    expect(orderBook.current.asks.length).toBe(0)
   })
 })
 

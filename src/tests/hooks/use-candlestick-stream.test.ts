@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import useCandlestickStream from '@/hooks/chart/use-candlestick-stream'
-import useBinanceSocket from '@/hooks/chart/use-binance-socket'
+import { socketHub } from '@/lib/binance-socket-manager'
 
-jest.mock('@/hooks/chart/use-binance-socket')
-const mockUseBinanceSocket = useBinanceSocket as jest.Mock
+jest.mock('@/lib/binance-socket-manager')
+const mockSubscribe = socketHub.subscribe as jest.Mock
 
 const sampleKline = [[0, '1', '2', '0', '1', '100']]
 
@@ -13,7 +13,7 @@ describe('useCandlestickStream', () => {
       ok: true,
       json: async () => sampleKline
     }) as any
-    mockUseBinanceSocket.mockReturnValue({ status: 'connected' })
+    mockSubscribe.mockReturnValue({ ws: { addEventListener: jest.fn(), removeEventListener: jest.fn(), readyState: 1 }, unsubscribe: jest.fn() })
     localStorage.clear()
   })
 
@@ -55,3 +55,4 @@ describe('useCandlestickStream', () => {
     resolveFetch({ ok: true, json: async () => sampleKline })
   })
 })
+

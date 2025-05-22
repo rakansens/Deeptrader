@@ -1,71 +1,46 @@
-import { renderHook } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import useBinanceSocket from '@/hooks/chart/use-binance-socket'
+import { socketHub } from '@/lib/binance-socket-manager'
 
-class MockWebSocket {
-  static instances: MockWebSocket[] = []
-  static OPEN = 1
-  readyState = MockWebSocket.OPEN
-  onopen?: () => void
-  onclose?: () => void
-  onerror?: (e: any) => void
-  onmessage?: (e: { data: string }) => void
-  sent: string[] = []
-  constructor(url: string) {
-    MockWebSocket.instances.push(this)
+jest.mock('@/lib/binance-socket-manager')
+const mockSubscribe = socketHub.subscribe as jest.Mock
+
+class MockWS {
+  readyState = 0
+  private listeners: Record<string, Function[]> = {}
+  addEventListener(event: string, cb: () => void) {
+    this.listeners[event] = this.listeners[event] || []
+    this.listeners[event].push(cb)
   }
-  send(data: string) {
-    this.sent.push(data)
+  removeEventListener(event: string, cb: () => void) {
+    this.listeners[event] = (this.listeners[event] || []).filter((f) => f !== cb)
   }
-  close(code?: number, reason?: string) {}
+  trigger(event: string) {
+    for (const cb of this.listeners[event] || []) cb()
+  }
 }
 
-;(global as unknown as { WebSocket: typeof WebSocket }).WebSocket =
-  MockWebSocket as unknown as typeof WebSocket
-
 describe('useBinanceSocket', () => {
-  it('opens websocket and handles messages', () => {
+  beforeEach(() => {
+    const ws = new MockWS()
+    mockSubscribe.mockReturnValue({ ws, unsubscribe: jest.fn() })
+  })
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('subscribes and handles messages', () => {
     const onMessage = jest.fn()
-    const { unmount } = renderHook(() =>
+    const { unmount, result } = renderHook(() =>
       useBinanceSocket<{ foo: string }>({ url: 'wss://test', onMessage })
     )
-    const ws = MockWebSocket.instances[0]
-    ws.onopen?.()
-    ws.onmessage?.({ data: JSON.stringify({ foo: 'bar' }) })
+    const ws: MockWS = mockSubscribe.mock.results[0].value.ws
+    act(() => ws.trigger('open'))
+    expect(result.current.status).toBe('connected')
+    act(() => mockSubscribe.mock.calls[0][1]({ foo: 'bar' }))
     expect(onMessage).toHaveBeenCalledWith({ foo: 'bar' })
     unmount()
-  })
-
-  it('reconnects on close', () => {
-    jest.useFakeTimers()
-    renderHook(() => useBinanceSocket<unknown>({ url: 'wss://test' }))
-    const ws1 = MockWebSocket.instances[0]
-    ws1.onclose?.()
-    jest.advanceTimersByTime(3000)
-    expect(MockWebSocket.instances.length).toBe(2)
-    jest.useRealTimers()
-  })
-
-  it('does not send ping when interval is 0', () => {
-    jest.useFakeTimers()
-    renderHook(() => useBinanceSocket<unknown>({ url: 'wss://test' }))
-    const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1]
-    ws.onopen?.()
-    jest.advanceTimersByTime(5000)
-    expect(ws.sent.length).toBe(0)
-    jest.useRealTimers()
-  })
-
-  it('sends ping at interval', () => {
-    jest.useFakeTimers()
-    renderHook(() =>
-      useBinanceSocket<unknown>({ url: 'wss://test', pingInterval: 1000 })
-    )
-    const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1]
-    ws.onopen?.()
-    jest.advanceTimersByTime(1000)
-    expect(ws.sent.length).toBeGreaterThan(0)
-    const msg = JSON.parse(ws.sent[0])
-    expect(msg.method).toBe('PING')
-    jest.useRealTimers()
+    expect(mockSubscribe.mock.results[0].value.unsubscribe).toHaveBeenCalled()
   })
 })
+

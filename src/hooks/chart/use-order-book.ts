@@ -1,10 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import useBinanceSocket from "./use-binance-socket";
 import { fetchOrderBook } from "@/infrastructure/exchange/binance-service";
-import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from "@/lib/env";
+import { socketHub } from "@/lib/binance-socket-manager";
 import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
+import type { ConnectionStatus } from "./use-binance-socket";
 
 export interface UseOrderBookResult {
   bids: OrderBookEntry[];
@@ -32,6 +32,8 @@ function updateLevels(
 export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   const [bids, setBids] = useState<OrderBookEntry[]>([]);
   const [asks, setAsks] = useState<OrderBookEntry[]>([]);
+  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
+  const rafId = useRef<number | null>(null);
 
   const { data, refetch } = useQuery({
     queryKey: ["orderBook", symbol, depth],
@@ -49,23 +51,53 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
 
   const handleMessage = useCallback(
     (msg: BinanceDepthMessage) => {
-      if (msg.b) {
-        const u = msg.b.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
-        setBids((prev) => updateLevels(prev, u, true, depth));
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
       }
-      if (msg.a) {
-        const u = msg.a.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
-        setAsks((prev) => updateLevels(prev, u, false, depth));
-      }
+      rafId.current = requestAnimationFrame(() => {
+        if (msg.b) {
+          const u = msg.b.map(([p, q]) => ({
+            price: parseFloat(p),
+            quantity: parseFloat(q),
+          }));
+          setBids((prev) => updateLevels(prev, u, true, depth));
+        }
+        if (msg.a) {
+          const u = msg.a.map(([p, q]) => ({
+            price: parseFloat(p),
+            quantity: parseFloat(q),
+          }));
+          setAsks((prev) => updateLevels(prev, u, false, depth));
+        }
+      });
     },
     [depth],
   );
 
-  const { status } = useBinanceSocket<BinanceDepthMessage>({
-    url: `${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/ws/${symbol.toLowerCase()}@depth`,
-    onMessage: handleMessage,
-    pingInterval: 0,
-  });
+  useEffect(() => {
+    const { ws, unsubscribe } = socketHub.subscribe(
+      `${symbol.toLowerCase()}@depth`,
+      (msg) => {
+        const payload = (msg as any).data ?? msg;
+        handleMessage(payload as BinanceDepthMessage);
+      },
+    );
+    const open = () => setStatus("connected");
+    const close = () => setStatus("disconnected");
+    ws.addEventListener("open", open);
+    ws.addEventListener("close", close);
+    ws.addEventListener("error", close);
+    setStatus(ws.readyState === WebSocket.OPEN ? "connected" : "connecting");
+    return () => {
+      ws.removeEventListener("open", open);
+      ws.removeEventListener("close", close);
+      ws.removeEventListener("error", close);
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
+      unsubscribe();
+    };
+  }, [symbol, handleMessage]);
 
   useEffect(() => {
     if (status === "disconnected") {
@@ -79,4 +111,3 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
 }
 
 export default useOrderBook;
-

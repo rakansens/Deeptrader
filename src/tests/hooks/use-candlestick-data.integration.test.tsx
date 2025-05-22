@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCandlestickData } from '@/hooks/chart/use-candlestick-data';
-import useBinanceSocket from '@/hooks/chart/use-binance-socket';
+import { socketHub } from '@/lib/binance-socket-manager';
 import type { BinanceKlineMessage } from '@/types';
 
-jest.mock('@/hooks/chart/use-binance-socket');
-const mockUseBinanceSocket = useBinanceSocket as jest.Mock;
+jest.mock('@/lib/binance-socket-manager');
+const mockSubscribe = socketHub.subscribe as jest.Mock;
 
 describe('useCandlestickData (integration)', () => {
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe('useCandlestickData (integration)', () => {
       ok: true,
       json: async () => [[0, '1', '2', '0', '1', '100']],
     }) as unknown as typeof fetch;
-    mockUseBinanceSocket.mockReturnValue({ status: 'connected' });
+    mockSubscribe.mockReturnValue({ ws: { addEventListener: jest.fn(), removeEventListener: jest.fn(), readyState: 1 }, unsubscribe: jest.fn() });
     localStorage.clear();
   });
 
@@ -25,7 +25,7 @@ describe('useCandlestickData (integration)', () => {
       useCandlestickData('BTCUSDT', '1m'),
     );
 
-    await waitFor(() => mockUseBinanceSocket.mock.calls.length > 0);
+    await waitFor(() => mockSubscribe.mock.calls.length > 0);
     expect(global.fetch).toHaveBeenCalled();
 
     const msg: BinanceKlineMessage = {
@@ -54,7 +54,7 @@ describe('useCandlestickData (integration)', () => {
     };
 
     act(() => {
-      mockUseBinanceSocket.mock.calls[0][0].onMessage!(msg);
+      mockSubscribe.mock.calls[0][1](msg);
     });
 
     expect(result.current.candles.length).toBeGreaterThan(0);

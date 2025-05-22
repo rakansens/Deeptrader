@@ -46,24 +46,34 @@ export function useCandlestickSeries({
   useEffect(() => {
     if (!chart) return
 
-    if (!candleRef.current) {
+    if (
+      !candleRef.current &&
+      chart &&
+      typeof (chart as unknown as { addCandlestickSeries?: Function }).addCandlestickSeries ===
+        "function"
+    ) {
       candleRef.current = chart.addCandlestickSeries({
         upColor: colors.upColor,
         downColor: colors.downColor,
         wickUpColor: colors.upColor,
         wickDownColor: colors.downColor,
-        borderVisible: false
-      })
+        borderVisible: false,
+      });
     }
-    if (!volumeRef.current) {
+    if (
+      !volumeRef.current &&
+      chart &&
+      typeof (chart as unknown as { addHistogramSeries?: Function }).addHistogramSeries ===
+        "function"
+    ) {
       volumeRef.current = chart.addHistogramSeries({
-        priceFormat: { type: 'volume' },
-        priceScaleId: 'vol',
-        color: colors.volume
-      })
+        priceFormat: { type: "volume" },
+        priceScaleId: "vol",
+        color: colors.volume,
+      });
       chart
-        .priceScale('vol')
-        .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } })
+        .priceScale("vol")
+        .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
     }
 
     return () => {
