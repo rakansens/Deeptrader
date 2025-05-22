@@ -3,12 +3,10 @@
 import { useState } from 'react'
 import { Settings } from 'lucide-react'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Tabs,
   TabsContent,
@@ -24,27 +22,24 @@ import BollSettings from './boll-settings'
 import { TrendingUp, Activity, BarChart3, Waves } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface IndicatorSettingsModalProps {
+interface IndicatorSettingsDropdownProps {
   settings: IndicatorSettings
   onSettingsChange: (s: IndicatorSettings) => void
 }
 
-export default function IndicatorSettingsModal({ settings, onSettingsChange }: IndicatorSettingsModalProps) {
-  const [open, setOpen] = useState(false)
+export default function IndicatorSettingsModal({ settings, onSettingsChange }: IndicatorSettingsDropdownProps) {
   const [activeTab, setActiveTab] = useState('ma')
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0" aria-label="指標設定">
           <Settings className="h-4 w-4" />
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">指標設定</DialogTitle>
-        </DialogHeader>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-2">
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="sm:max-w-[500px] p-4 w-[350px]">
+        <h3 className="text-lg font-semibold mb-4">指標設定</h3>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-4 mb-6">
             <TabsTrigger value="ma" className="flex items-center gap-2">
               <TrendingUp className={cn("h-4 w-4", activeTab === "ma" ? "text-primary" : "text-muted-foreground")} />
@@ -63,28 +58,28 @@ export default function IndicatorSettingsModal({ settings, onSettingsChange }: I
               <span className="hidden sm:inline">BB</span>
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="ma" className="space-y-4 mt-2">
-            <div className="rounded-lg border p-4 bg-card shadow-sm">
+          <TabsContent value="ma" className="mt-2">
+            <div className="rounded-lg border p-3 bg-card shadow-sm">
               <MaSettings settings={settings} onChange={onSettingsChange} />
             </div>
           </TabsContent>
-          <TabsContent value="rsi" className="space-y-4 mt-2">
-            <div className="rounded-lg border p-4 bg-card shadow-sm">
+          <TabsContent value="rsi" className="mt-2">
+            <div className="rounded-lg border p-3 bg-card shadow-sm">
               <RsiSettings settings={settings} onChange={onSettingsChange} />
             </div>
           </TabsContent>
-          <TabsContent value="macd" className="space-y-4 mt-2">
-            <div className="rounded-lg border p-4 bg-card shadow-sm">
+          <TabsContent value="macd" className="mt-2">
+            <div className="rounded-lg border p-3 bg-card shadow-sm">
               <MacdSettings settings={settings} onChange={onSettingsChange} />
             </div>
           </TabsContent>
-          <TabsContent value="boll" className="space-y-4 mt-2">
-            <div className="rounded-lg border p-4 bg-card shadow-sm">
+          <TabsContent value="boll" className="mt-2">
+            <div className="rounded-lg border p-3 bg-card shadow-sm">
               <BollSettings settings={settings} onChange={onSettingsChange} />
             </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 } 
