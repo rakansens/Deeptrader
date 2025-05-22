@@ -162,12 +162,6 @@ export default function Home() {
         >
           <ResizablePanel defaultSize={40} minSize={20} className="border-r">
             <div className="flex flex-col h-[calc(100vh-3.5rem)]">
-              <div className="p-4 border-b">
-                <h2 className="text-xl font-semibold">AIアシスタント</h2>
-                <p className="text-sm text-muted-foreground">
-                  トレーディングや市場分析に関して質問してください
-                </p>
-              </div>
               <div className="flex-1 p-4 overflow-hidden">
                 <Chat symbol={symbol} timeframe={timeframe} />
               </div>
@@ -177,13 +171,6 @@ export default function Home() {
           <ResizablePanel minSize={40}>
             <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-auto">
               <div className="p-4 md:p-6">
-                <h1 className="text-2xl font-bold tracking-tight mb-2">
-                  市場分析ダッシュボード
-                </h1>
-                <p className="text-muted-foreground mb-4">
-                  リアルタイムチャートと市場情報
-                </p>
-
                 <Card className="mb-6">
                   <CardHeader className="pb-2">
                     <CardTitle>{symbol} リアルタイムチャート</CardTitle>
