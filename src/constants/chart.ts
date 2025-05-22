@@ -44,7 +44,10 @@ export interface IndicatorSettings {
   boll: { period: number; stdDev: number };
   /** ライン幅設定 */
   lineWidth: {
-    ma: number;
+    ma: number;  // 互換性のための共通設定
+    ma1?: number; // MA1用
+    ma2?: number; // MA2用
+    ma3?: number; // MA3用
     rsi: number;
     macd: number;
     boll: number;
@@ -72,7 +75,7 @@ export const DEFAULT_INDICATOR_SETTINGS: IndicatorSettings = {
   rsiLower: 30,
   macd: { short:12, long:26, signal:9 },
   boll: { period:20, stdDev:2 },
-  lineWidth: { ma: 2, rsi: 2, macd: 2, boll: 1 },
+  lineWidth: { ma: 2, ma1: 2, ma2: 2, ma3: 2, rsi: 2, macd: 2, boll: 1 },
   colors: {
     ma1: '#F0E68C', // 黄色（短期）
     ma2: '#FF69B4', // ピンク（中期）

@@ -19,6 +19,9 @@ interface UseIndicatorSeriesParams {
   enabledBoll: boolean;
   lineWidth: {
     ma: number;
+    ma1?: number;
+    ma2?: number;
+    ma3?: number;
     boll: number;
   };
   colors: {
@@ -62,7 +65,7 @@ export function useIndicatorSeries({
     enabled: enabledMa,
     options: { 
       color: colors?.ma1,
-      lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
+      lineWidth: (lineWidth.ma1 ?? lineWidth.ma) as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
     data: processedMa1,
@@ -75,7 +78,7 @@ export function useIndicatorSeries({
     enabled: enabledMa,
     options: { 
       color: colors?.ma2,
-      lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
+      lineWidth: (lineWidth.ma2 ?? lineWidth.ma) as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
     data: processedMa2,
@@ -88,7 +91,7 @@ export function useIndicatorSeries({
     enabled: enabledMa,
     options: { 
       color: colors?.ma3,
-      lineWidth: lineWidth.ma as DeepPartial<LineWidth>,
+      lineWidth: (lineWidth.ma3 ?? lineWidth.ma) as DeepPartial<LineWidth>,
       priceLineVisible: false
     },
     data: processedMa3,

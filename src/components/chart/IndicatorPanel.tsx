@@ -52,7 +52,7 @@ export default function IndicatorPanel({
             <X className="w-3 h-3" />
           </button>
         )}
-      </div>
+        </div>
       <div 
         ref={containerRef} 
         className="flex-1 overflow-hidden"

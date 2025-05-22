@@ -196,6 +196,9 @@ export default function CandlestickChart({
     enabledBoll: !!indicators.boll,
     lineWidth: {
       ma: indicatorSettings.lineWidth.ma,
+      ma1: indicatorSettings.lineWidth.ma1,
+      ma2: indicatorSettings.lineWidth.ma2,
+      ma3: indicatorSettings.lineWidth.ma3,
       boll: indicatorSettings.lineWidth.boll,
     },
     colors: {

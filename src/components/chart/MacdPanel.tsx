@@ -154,6 +154,23 @@ export default function MacdPanel({
     histRef.current.setData(processTimeSeriesData(diffHist, toNumericTime));
   }, [histogram, macd, signal]);
 
+  // 線の太さと色が変更された時に反映する
+  useEffect(() => {
+    if (!macdRef.current || !signalRef.current) return;
+    
+    // MACDシリーズのスタイルを更新
+    macdRef.current.applyOptions({
+      lineWidth: lineWidth as any,
+      color: macdColor
+    });
+    
+    // シグナルシリーズのスタイルを更新
+    signalRef.current.applyOptions({
+      lineWidth: lineWidth as any,
+      color: "#FF6D00" // シグナル線の色は固定
+    });
+  }, [lineWidth, macdColor]);
+
   return (
     <IndicatorPanel
       title="MACD"

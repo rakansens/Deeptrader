@@ -135,6 +135,17 @@ export default function RsiPanel({
     ]);
   }, [rsiUpper, rsiLower]);
 
+  // 線の太さと色が変更された時に反映する
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    
+    // RSIシリーズのスタイルを更新
+    seriesRef.current.applyOptions({
+      lineWidth: lineWidth as any,
+      color
+    });
+  }, [lineWidth, color]);
+
   return (
     <IndicatorPanel
       title="RSI"

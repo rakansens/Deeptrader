@@ -27,6 +27,11 @@ export function useLineSeries({
     if (enabled) {
       if (!ref.current) {
         ref.current = chart.addLineSeries(options)
+      } else {
+        // 既存のシリーズが存在する場合は、オプションを更新
+        ref.current.applyOptions(options)
+        // デバッグ用ログ
+        logger.debug('Line series options updated - width:', options.lineWidth)
       }
       const processed = preprocessLineData(data)
       if (ref.current && processed.length > 0) {

@@ -76,12 +76,12 @@ export default function MaSettings({ settings, onChange }: MaSettingsProps) {
         />
         <IndicatorWidthControl
           label="MA1 カラー"
-          width={settings.lineWidth.ma}
+          width={settings.lineWidth.ma1 ?? settings.lineWidth.ma}
           color={(settings.colors?.ma1 ?? DEFAULT_INDICATOR_SETTINGS.colors!.ma1) as string}
           onWidthChange={(w) =>
             onChange({
               ...settings,
-              lineWidth: { ...settings.lineWidth, ma: w },
+              lineWidth: { ...settings.lineWidth, ma1: w, ma: w },
             })
           }
           onColorChange={(c) =>
@@ -122,12 +122,12 @@ export default function MaSettings({ settings, onChange }: MaSettingsProps) {
         />
         <IndicatorWidthControl
           label="MA2 カラー"
-          width={settings.lineWidth.ma}
+          width={settings.lineWidth.ma2 ?? settings.lineWidth.ma}
           color={(settings.colors?.ma2 ?? DEFAULT_INDICATOR_SETTINGS.colors!.ma2) as string}
           onWidthChange={(w) =>
             onChange({
               ...settings,
-              lineWidth: { ...settings.lineWidth, ma: w },
+              lineWidth: { ...settings.lineWidth, ma2: w },
             })
           }
           onColorChange={(c) =>
@@ -168,12 +168,12 @@ export default function MaSettings({ settings, onChange }: MaSettingsProps) {
         />
         <IndicatorWidthControl
           label="MA3 カラー"
-          width={settings.lineWidth.ma}
+          width={settings.lineWidth.ma3 ?? settings.lineWidth.ma}
           color={(settings.colors?.ma3 ?? DEFAULT_INDICATOR_SETTINGS.colors!.ma3) as string}
           onWidthChange={(w) =>
             onChange({
               ...settings,
-              lineWidth: { ...settings.lineWidth, ma: w },
+              lineWidth: { ...settings.lineWidth, ma3: w },
             })
           }
           onColorChange={(c) =>
