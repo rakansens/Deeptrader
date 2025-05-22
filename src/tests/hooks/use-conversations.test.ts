@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react'
 import { useConversations } from '@/hooks/chat/use-conversations'
 
 describe('useConversations', () => {
-  it('renames and removes conversations', () => {
+  it('renames and removes conversations', async () => {
     const { result } = renderHook(() => useConversations())
 
     act(() => {
@@ -10,8 +10,8 @@ describe('useConversations', () => {
     })
     expect(result.current.conversations[0].title).toBe('renamed')
 
-    act(() => {
-      const id = result.current.newConversation()
+    await act(async () => {
+      const id = await result.current.newConversation()
       result.current.removeConversation(id)
     })
     expect(result.current.conversations.length).toBe(1)

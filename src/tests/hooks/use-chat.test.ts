@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { TextEncoder, TextDecoder } from 'util'
 import { ReadableStream } from 'stream/web'
 
-import type { OpenAIChatMessage } from '@/types'
+import type { Message } from '@/types'
 
 jest.mock('ai/react', () => {
   return {

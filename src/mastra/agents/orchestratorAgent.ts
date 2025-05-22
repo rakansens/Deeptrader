@@ -1,96 +1,21 @@
 // src/mastra/agents/orchestratorAgent.ts
-// オーケストラエージェントの定義
+// オーケストラエージェントの定義（最小限版）
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
-import { AI_MODEL } from "@/lib/env";
+import { AI_MODEL } from "@/lib/env.server";
 
 // 使用するAIモデル
 const aiModel = AI_MODEL;
-import { Memory } from "@mastra/memory";
-import type { MastraMemory } from "@mastra/core";
-import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
-import { SupabaseVector } from "../adapters/SupabaseVector";
-
-// 既存エージェントのインポート
-import { tradingAgent } from "./tradingAgent";
-import { researchAgent } from "./researchAgent";
-import { uiControlAgent } from "./uiControlAgent";
-import { backtestAgent } from "./backtestAgent";
 
 /**
- * 重複する委任ツール定義をまとめるユーティリティ
- */
-function makeDelegateTool(
-  id: string,
-  description: string,
-  agent: Agent
-) {
-  return createTool({
-    id,
-    description,
-    inputSchema: z.object({
-      message: z.string().describe("ユーザーからの問い合わせ"),
-    }),
-    execute: async ({ context }) => agent.stream(context.message),
-  });
-}
-
-// メモリ設定
-const memory = new Memory({
-  // FIXME: SupabaseVector が正式に MastraStorage を実装したら any を外す
-  storage: SupabaseVector as any,
-  options: {
-    lastMessages: 40,
-    semanticRecall: {
-      topK: 5,
-      messageRange: 2,
-    },
-  },
-}) as unknown as MastraMemory;
-
-export const delegateTradingTool = makeDelegateTool(
-  "delegate-trading-tool",
-  "トレーディングエージェントへ指示を渡します",
-  tradingAgent
-);
-
-export const delegateResearchTool = makeDelegateTool(
-  "delegate-research-tool",
-  "リサーチエージェントへ指示を渡します",
-  researchAgent
-);
-
-export const delegateUiControlTool = makeDelegateTool(
-  "delegate-ui-control-tool",
-  "UIコントロールエージェントへ指示を渡します",
-  uiControlAgent
-);
-
-export const delegateBacktestTool = makeDelegateTool(
-  "delegate-backtest-tool",
-  "バックテストエージェントへ指示を渡します",
-  backtestAgent
-);
-
-/**
- * オーケストラエージェント
- * ユーザーの入力を解析し、適切な専門エージェントへ委任して結果を統合します
+ * オーケストラエージェント（最小限版）
+ * ツールやメモリを使わない最もシンプルな設定
  */
 export const orchestratorAgent = new Agent({
   name: "オーケストラエージェント",
-  instructions: `あなたは複数の専門AIを統合するオーケストレーターです。
-  ユーザーの入力を解析し、適切な専門エージェントへ委任して結果を統合する。
-  トレーディング関連はトレーディングエージェント、情報収集はリサーチエージェントを活用すること。
-  各情報がどのエージェントから提供されたかを回答に明記し、
-  エージェント間で内容が矛盾する場合はその不一致を簡潔に指摘してください。
-  最終的な回答をまとめて提示してください。`,
+  instructions: `あなたはDeeptraderの基本AIアシスタントです。
+  ユーザーの質問に対して、トレーディングや投資に関する一般的な情報を提供してください。
+  現在はシステムの基本機能で動作しており、今後より高度な機能が追加される予定です。`,
   model: openai(aiModel),
-  tools: {
-    delegateTradingTool,
-    delegateResearchTool,
-    delegateUiControlTool,
-    delegateBacktestTool,
-  },
-  memory,
+  // ツールなし、メモリなしの最小構成
 });
