@@ -12,6 +12,7 @@ import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/chart/use-indicator-chart";
 import useChartTheme from "@/hooks/chart/use-chart-theme";
 import { preprocessLineData, toNumericTime, processTimeSeriesData } from "@/lib/chart-utils";
+import type { IndicatorSettings } from "@/constants/chart";
 
 interface MacdPanelProps {
   macd: LineData[];
@@ -22,6 +23,7 @@ interface MacdPanelProps {
   onClose?: () => void;
   lineWidth?: number;
   macdColor?: string;
+  indicatorSettings: IndicatorSettings;
 }
 
 /**
@@ -36,6 +38,7 @@ export default function MacdPanel({
   lineWidth = 2,
   macdColor = "#2962FF",
   onClose,
+  indicatorSettings,
 }: MacdPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const macdRef = useRef<ISeriesApi<"Line"> | null>(null);

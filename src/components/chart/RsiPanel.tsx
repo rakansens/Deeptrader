@@ -11,6 +11,7 @@ import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/chart/use-indicator-chart";
 import useChartTheme from "@/hooks/chart/use-chart-theme";
 import { preprocessLineData, toNumericTime } from "@/lib/chart-utils";
+import type { IndicatorSettings } from "@/constants/chart";
 
 interface RsiPanelProps {
   data: LineData[];
@@ -21,6 +22,7 @@ interface RsiPanelProps {
   color?: string;
   rsiUpper?: number;
   rsiLower?: number;
+  indicatorSettings: IndicatorSettings;
 }
 
 /**
@@ -35,6 +37,7 @@ export default function RsiPanel({
   onClose,
   rsiUpper = 70,
   rsiLower = 30,
+  indicatorSettings,
 }: RsiPanelProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Line"> | null>(null);

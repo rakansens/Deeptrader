@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import RsiPanel from '@/components/chart/RsiPanel'
 import mockIndicatorPanel from '../utils/mockIndicatorPanel'
+import { DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart'
 
 jest.mock('lightweight-charts', () => {
   const lineSeriesMocks: any[] = []
@@ -33,7 +34,7 @@ jest.mock('@/components/chart/IndicatorPanel', () => {
 
 describe('RsiPanel', () => {
   it('renders panel element', () => {
-    render(<RsiPanel data={[]} chart={null} height={100} />)
+    render(<RsiPanel data={[]} chart={null} height={100} indicatorSettings={DEFAULT_INDICATOR_SETTINGS} />)
     expect(screen.getByTestId('rsi-panel')).toBeInTheDocument()
   })
 
@@ -47,6 +48,7 @@ describe('RsiPanel', () => {
         height={100}
         rsiUpper={80}
         rsiLower={20}
+        indicatorSettings={DEFAULT_INDICATOR_SETTINGS}
       />
     )
     const lines = (createChart as any).lineSeriesMocks as any[]
@@ -75,7 +77,7 @@ describe('RsiPanel', () => {
       }),
     }
     const { rerender } = render(
-      <RsiPanel data={[]} chart={chart1 as any} height={100} />
+      <RsiPanel data={[]} chart={chart1 as any} height={100} indicatorSettings={DEFAULT_INDICATOR_SETTINGS} />
     )
     await waitFor(() => expect(createChart).toHaveBeenCalledTimes(1))
 
@@ -87,7 +89,7 @@ describe('RsiPanel', () => {
       }),
     }
 
-    rerender(<RsiPanel data={[]} chart={chart2 as any} height={100} />)
+    rerender(<RsiPanel data={[]} chart={chart2 as any} height={100} indicatorSettings={DEFAULT_INDICATOR_SETTINGS} />)
 
     await waitFor(() => expect(createChart).toHaveBeenCalledTimes(2))
   })

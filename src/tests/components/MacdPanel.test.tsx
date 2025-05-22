@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import MacdPanel from '@/components/chart/MacdPanel'
 import mockIndicatorPanel from '../utils/mockIndicatorPanel'
+import { DEFAULT_INDICATOR_SETTINGS } from '@/constants/chart'
 
 jest.mock('lightweight-charts', () => {
   const createChart = jest.fn(() => ({
@@ -27,7 +28,7 @@ jest.mock('@/components/chart/IndicatorPanel', () => {
 
 describe('MacdPanel', () => {
   it('renders panel element', () => {
-    render(<MacdPanel macd={[]} signal={[]} histogram={[]} chart={null} height={100} />)
+    render(<MacdPanel macd={[]} signal={[]} histogram={[]} chart={null} height={100} indicatorSettings={DEFAULT_INDICATOR_SETTINGS} />)
     expect(screen.getByTestId('macd-panel')).toBeInTheDocument()
   })
 
@@ -42,7 +43,7 @@ describe('MacdPanel', () => {
       }),
     }
     const { rerender } = render(
-      <MacdPanel macd={[]} signal={[]} histogram={[]} chart={chart1 as any} height={100} />
+      <MacdPanel macd={[]} signal={[]} histogram={[]} chart={chart1 as any} height={100} indicatorSettings={DEFAULT_INDICATOR_SETTINGS} />
     )
     await waitFor(() => expect(createChart).toHaveBeenCalledTimes(1))
 
@@ -54,7 +55,7 @@ describe('MacdPanel', () => {
       }),
     }
     rerender(
-      <MacdPanel macd={[]} signal={[]} histogram={[]} chart={chart2 as any} height={100} />
+      <MacdPanel macd={[]} signal={[]} histogram={[]} chart={chart2 as any} height={100} indicatorSettings={DEFAULT_INDICATOR_SETTINGS} />
     )
 
     await waitFor(() => expect(createChart).toHaveBeenCalledTimes(2))
