@@ -6,7 +6,7 @@ import {
 } from "lightweight-charts";
 import { safeLoadJson, safeSaveJson } from "@/lib/utils";
 import { upsertSeries } from "@/lib/candlestick-utils";
-import { socketHub } from "@/lib/binance-socket-manager";
+import { hubSdk } from "@/lib/hub-sdk";
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import type { Timeframe, SymbolValue } from "@/constants/chart";
 import type { ConnectionStatus } from "./use-binance-socket";
@@ -175,7 +175,7 @@ export function useCandlestickStream(
     const timer = setTimeout(() => {
       // OrderBook hook now handles depth updates; subscribe only to kline here
       const streamKey = `${symbol.toLowerCase()}@kline_${interval}`;
-      const sub = socketHub.subscribe(streamKey, (m) => {
+      const sub = hubSdk.subscribe(streamKey, (m) => {
         const data = (m as any).data ?? m;
         handleMessage(data as BinanceKlineMessage);
       });

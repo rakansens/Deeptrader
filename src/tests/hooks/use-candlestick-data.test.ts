@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useCandlestickData from '@/hooks/chart/use-candlestick-data'
-import { socketHub } from '@/lib/binance-socket-manager'
+import { hubSdk } from '@/lib/hub-sdk'
 
-jest.mock('@/lib/binance-socket-manager')
-const mockSubscribe = socketHub.subscribe as jest.Mock
+jest.mock('@/lib/hub-sdk')
+const mockSubscribe = hubSdk.subscribe as jest.Mock
 
 const sampleKline = [[0, '1', '2', '0', '1', '100']]
 

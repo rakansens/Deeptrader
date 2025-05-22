@@ -17,6 +17,7 @@ export {
   NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_BINANCE_WS_BASE_URL,
+  NEXT_PUBLIC_HUB_WS_URL,
 } from './env.client';
 
 // サーバーサイドの環境変数
@@ -26,6 +27,10 @@ let AI_MODEL: string;
 let BINANCE_BASE_URL: string;
 let BITGET_BASE_URL: string;
 let BITGET_API_KEY: string;
+let BINANCE_WS_BASE_URL: string;
+let HUB_JWT_SECRET: string;
+let REDIS_URL: string;
+let KAFKA_BROKER_URL: string;
 let BLOCKCHAIR_BASE_URL: string;
 let BLOCKCHAIR_API_KEY: string;
 let SENTIMENT_API_URL: string;
@@ -47,6 +52,10 @@ if (typeof window === 'undefined') {
   BINANCE_BASE_URL = serverEnv.BINANCE_BASE_URL;
   BITGET_BASE_URL = serverEnv.BITGET_BASE_URL;
   BITGET_API_KEY = serverEnv.BITGET_API_KEY;
+  BINANCE_WS_BASE_URL = serverEnv.BINANCE_WS_BASE_URL;
+  HUB_JWT_SECRET = serverEnv.HUB_JWT_SECRET;
+  REDIS_URL = serverEnv.REDIS_URL;
+  KAFKA_BROKER_URL = serverEnv.KAFKA_BROKER_URL;
   BLOCKCHAIR_BASE_URL = serverEnv.BLOCKCHAIR_BASE_URL;
   BLOCKCHAIR_API_KEY = serverEnv.BLOCKCHAIR_API_KEY;
   SENTIMENT_API_URL = serverEnv.SENTIMENT_API_URL;
@@ -81,6 +90,10 @@ if (typeof window === 'undefined') {
   BINANCE_BASE_URL = createServerSideOnlyProxy('BINANCE_BASE_URL') as any;
   BITGET_BASE_URL = createServerSideOnlyProxy('BITGET_BASE_URL') as any;
   BITGET_API_KEY = createServerSideOnlyProxy('BITGET_API_KEY') as any;
+  BINANCE_WS_BASE_URL = createServerSideOnlyProxy('BINANCE_WS_BASE_URL') as any;
+  HUB_JWT_SECRET = createServerSideOnlyProxy('HUB_JWT_SECRET') as any;
+  REDIS_URL = createServerSideOnlyProxy('REDIS_URL') as any;
+  KAFKA_BROKER_URL = createServerSideOnlyProxy('KAFKA_BROKER_URL') as any;
   BLOCKCHAIR_BASE_URL = createServerSideOnlyProxy('BLOCKCHAIR_BASE_URL') as any;
   BLOCKCHAIR_API_KEY = createServerSideOnlyProxy('BLOCKCHAIR_API_KEY') as any;
   SENTIMENT_API_URL = createServerSideOnlyProxy('SENTIMENT_API_URL') as any;
@@ -97,6 +110,10 @@ export {
   OPENAI_API_KEY,
   AI_MODEL,
   BINANCE_BASE_URL,
+  BINANCE_WS_BASE_URL,
+  HUB_JWT_SECRET,
+  REDIS_URL,
+  KAFKA_BROKER_URL,
   BITGET_BASE_URL,
   BITGET_API_KEY,
   BLOCKCHAIR_BASE_URL,

@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react'
 import useBinanceSocket from '@/hooks/chart/use-binance-socket'
-import { socketHub } from '@/lib/binance-socket-manager'
+import { hubSdk } from '@/lib/hub-sdk'
 
-jest.mock('@/lib/binance-socket-manager')
-const mockSubscribe = socketHub.subscribe as jest.Mock
+jest.mock('@/lib/hub-sdk')
+const mockSubscribe = hubSdk.subscribe as jest.Mock
 
 class MockWS {
   readyState = 0

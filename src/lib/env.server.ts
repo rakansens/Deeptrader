@@ -30,6 +30,13 @@ const serverEnvSchema = z.object({
   BINANCE_BASE_URL: z.string().url().default("https://api.binance.com"),
   BITGET_BASE_URL: z.string().url().default("https://api.bitget.com"),
   BITGET_API_KEY: z.string().optional(),
+  BINANCE_WS_BASE_URL: z
+    .string()
+    .url()
+    .default('wss://stream.binance.com:9443'),
+  HUB_JWT_SECRET: z.string(),
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  KAFKA_BROKER_URL: z.string().url().default('http://localhost:9092'),
   BLOCKCHAIR_BASE_URL: z.string().url().default("https://api.blockchair.com/ethereum"),
   BLOCKCHAIR_API_KEY: z.string().optional(),
   SENTIMENT_API_URL: z.string().url().default("https://api.alternative.me/fng/"),
@@ -53,6 +60,10 @@ let AI_MODEL: string;
 let BINANCE_BASE_URL: string;
 let BITGET_BASE_URL: string;
 let BITGET_API_KEY: string;
+let BINANCE_WS_BASE_URL: string;
+let HUB_JWT_SECRET: string;
+let REDIS_URL: string;
+let KAFKA_BROKER_URL: string;
 let BLOCKCHAIR_BASE_URL: string;
 let BLOCKCHAIR_API_KEY: string;
 let SENTIMENT_API_URL: string;
@@ -82,6 +93,10 @@ if (!serverEnv.success) {
     BINANCE_BASE_URL: binanceUrl,
     BITGET_BASE_URL: bitgetUrl,
     BITGET_API_KEY: bitgetKey,
+    BINANCE_WS_BASE_URL: binanceWsUrl,
+    HUB_JWT_SECRET: jwtSecret,
+    REDIS_URL: redisUrl,
+    KAFKA_BROKER_URL: kafkaUrl,
     BLOCKCHAIR_BASE_URL: blockchairUrl,
     BLOCKCHAIR_API_KEY: blockchairKey,
     SENTIMENT_API_URL: sentimentUrl,
@@ -99,6 +114,10 @@ if (!serverEnv.success) {
   BINANCE_BASE_URL = binanceUrl;
   BITGET_BASE_URL = bitgetUrl;
   BITGET_API_KEY = bitgetKey ?? "";
+  BINANCE_WS_BASE_URL = binanceWsUrl;
+  HUB_JWT_SECRET = jwtSecret;
+  REDIS_URL = redisUrl;
+  KAFKA_BROKER_URL = kafkaUrl;
   BLOCKCHAIR_BASE_URL = blockchairUrl;
   BLOCKCHAIR_API_KEY = blockchairKey ?? "";
   SENTIMENT_API_URL = sentimentUrl;
@@ -115,6 +134,10 @@ export {
   OPENAI_API_KEY,
   AI_MODEL,
   BINANCE_BASE_URL,
+  BINANCE_WS_BASE_URL,
+  HUB_JWT_SECRET,
+  REDIS_URL,
+  KAFKA_BROKER_URL,
   BITGET_BASE_URL,
   BITGET_API_KEY,
   BLOCKCHAIR_BASE_URL,

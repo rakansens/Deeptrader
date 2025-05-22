@@ -7,7 +7,7 @@
  * 空白表示・遅延を解消し、常時リアルタイム表示を実現。
  */
 import { useCallback, useEffect, useState, useRef } from "react";
-import { socketHub } from "@/lib/binance-socket-manager";
+import { hubSdk } from "@/lib/hub-sdk";
 import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 import type { ConnectionStatus } from "./use-binance-socket";
 
@@ -78,8 +78,8 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   useEffect(() => {
     const streamName = `${symbol.toLowerCase()}@depth${depth}@100ms`;
 
-    const { ws, unsubscribe } = socketHub.subscribe(streamName, (msg) => {
-        const payload = (msg as any).data ?? msg;
+    const { ws, unsubscribe } = hubSdk.subscribe(streamName, (msg) => {
+      const payload = (msg as any).data ?? msg;
       handleMessage(payload);
     });
 

@@ -55,3 +55,29 @@ DeepTrader では Binance をはじめとする取引所の WebSocket ストリ�
 ```
 
 この三段階を踏むことで、開発初期の PoC から大規模運用までスムーズに移行できます。
+
+## Hub の実行方法
+
+### 開発環境
+
+```
+pnpm ts-node src/infrastructure/ws-hub/index.ts
+```
+
+環境変数 `HUB_JWT_SECRET` などを `.env.local` に設定した上で実行します。WebSocket は `NEXT_PUBLIC_HUB_WS_URL` で指定した URL で待ち受けます。
+
+### 本番環境
+
+1. `tsc` でビルド
+
+   ```bash
+   pnpm exec tsc src/infrastructure/ws-hub/index.ts --outDir dist
+   ```
+
+2. Node.js で起動
+
+   ```bash
+   NODE_ENV=production node dist/index.js
+   ```
+
+Redis と Kafka の接続先は `REDIS_URL`、`KAFKA_BROKER_URL` で指定できます。

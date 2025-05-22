@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { socketHub, type Listener } from "@/lib/binance-socket-manager";
+import { hubSdk, type Listener } from "@/lib/hub-sdk";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
@@ -29,7 +29,7 @@ export function useBinanceSocket<T>(options: UseBinanceSocketOptions<T>) {
       return;
     }
     const stream = extractStream(url);
-    const { ws, unsubscribe } = socketHub.subscribe(stream, (d) => {
+    const { ws, unsubscribe } = hubSdk.subscribe(stream, (d) => {
       onMessage?.(d as T);
     });
     const handleOpen = () => {

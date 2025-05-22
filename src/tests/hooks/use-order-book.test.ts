@@ -1,13 +1,13 @@
 import { act, waitFor } from '@testing-library/react'
 import { renderHookWithQueryClient } from '../utils/renderWithQueryClient'
 import useOrderBook, { UseOrderBookResult } from '@/hooks/chart/use-order-book'
-import { socketHub } from '@/lib/binance-socket-manager'
+import { hubSdk } from '@/lib/hub-sdk'
 import { fetchOrderBook } from '@/infrastructure/exchange/binance-service'
 
-jest.mock('@/lib/binance-socket-manager')
+jest.mock('@/lib/hub-sdk')
 jest.mock('@/infrastructure/exchange/binance-service')
 
-const mockSubscribe = socketHub.subscribe as jest.Mock
+const mockSubscribe = hubSdk.subscribe as jest.Mock
 const mockFetch = fetchOrderBook as jest.Mock
 
 describe('useOrderBook', () => {

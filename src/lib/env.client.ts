@@ -17,6 +17,7 @@ const clientEnvSchema = z.object({
     .string()
     .url()
     .default('wss://stream.binance.com:9443'),
+  NEXT_PUBLIC_HUB_WS_URL: z.string().url().default('ws://localhost:8080'),
 });
 
 // Next.js のクライアントバンドルでは `process.env` 全体が存在しないため、
@@ -25,6 +26,7 @@ const rawClientEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_BINANCE_WS_BASE_URL: process.env.NEXT_PUBLIC_BINANCE_WS_BASE_URL,
+  NEXT_PUBLIC_HUB_WS_URL: process.env.NEXT_PUBLIC_HUB_WS_URL,
 };
 
 const clientEnv = clientEnvSchema.safeParse(rawClientEnv);
@@ -33,6 +35,7 @@ const clientEnv = clientEnvSchema.safeParse(rawClientEnv);
 let NEXT_PUBLIC_SUPABASE_URL: string;
 let NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
 let NEXT_PUBLIC_BINANCE_WS_BASE_URL: string;
+let NEXT_PUBLIC_HUB_WS_URL: string;
 
 // 検証に失敗した場合はエラーメッセージを表示して例外をスロー
 if (!clientEnv.success) {
@@ -48,12 +51,14 @@ if (!clientEnv.success) {
     NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey,
     NEXT_PUBLIC_BINANCE_WS_BASE_URL: binanceWsBaseUrl,
+    NEXT_PUBLIC_HUB_WS_URL: hubUrl,
   } = clientEnv.data;
   
   // 型安全な変数への代入
   NEXT_PUBLIC_SUPABASE_URL = supabaseUrl;
   NEXT_PUBLIC_SUPABASE_ANON_KEY = supabaseAnonKey;
   NEXT_PUBLIC_BINANCE_WS_BASE_URL = binanceWsBaseUrl;
+  NEXT_PUBLIC_HUB_WS_URL = hubUrl;
 }
 
 // 変数のエクスポート
@@ -61,4 +66,5 @@ export {
   NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_BINANCE_WS_BASE_URL,
+  NEXT_PUBLIC_HUB_WS_URL,
 };
