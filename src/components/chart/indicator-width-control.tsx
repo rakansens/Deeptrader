@@ -29,7 +29,10 @@ export default function IndicatorWidthControl({
               type="color"
               value={color}
               className="w-8 h-8 rounded-full border cursor-pointer opacity-0 absolute inset-0"
-              onChange={(e) => onColorChange(e.target.value)}
+              onChange={(e) => {
+                console.log('色を変更:', e.target.value);
+                onColorChange(e.target.value);
+              }}
             />
             <div 
               className="w-8 h-8 rounded-full border-2 border-muted flex items-center justify-center overflow-hidden"

@@ -108,7 +108,7 @@ export default function RsiPanel({
       overSoldRef.current = null;
       overBoughtRef.current = null;
     };
-  }, [createIndicatorChart]);
+  }, [createIndicatorChart, color, lineWidth]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
@@ -138,6 +138,8 @@ export default function RsiPanel({
   // 線の太さと色が変更された時に反映する
   useEffect(() => {
     if (!seriesRef.current) return;
+    
+    console.log('RSI: 色と線幅を更新:', { color, lineWidth });
     
     // RSIシリーズのスタイルを更新
     seriesRef.current.applyOptions({

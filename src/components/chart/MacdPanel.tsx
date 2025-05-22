@@ -93,7 +93,7 @@ export default function MacdPanel({
       signalRef.current = null;
       histRef.current = null;
     };
-  }, [createIndicatorChart]);
+  }, [createIndicatorChart, macdColor, lineWidth]);
 
   useEffect(() => {
     if (!macdRef.current) return;
@@ -157,6 +157,8 @@ export default function MacdPanel({
   // 線の太さと色が変更された時に反映する
   useEffect(() => {
     if (!macdRef.current || !signalRef.current) return;
+    
+    console.log('MACD: 色と線幅を更新:', { macdColor, lineWidth });
     
     // MACDシリーズのスタイルを更新
     macdRef.current.applyOptions({

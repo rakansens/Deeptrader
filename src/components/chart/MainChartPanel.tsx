@@ -163,6 +163,7 @@ function MainChartPanelComponent({
           color={indicatorSettings.colors?.rsi}
           rsiUpper={indicatorSettings.rsiUpper}
           rsiLower={indicatorSettings.rsiLower}
+          indicatorSettings={indicatorSettings}
           onClose={() => handleToggleIndicator("rsi", false)}
         />
       )}
@@ -175,6 +176,7 @@ function MainChartPanelComponent({
           height={subHeight}
           lineWidth={indicatorSettings.lineWidth.macd}
           macdColor={indicatorSettings.colors?.macd}
+          indicatorSettings={indicatorSettings}
           onClose={() => handleToggleIndicator("macd", false)}
         />
       )}
