@@ -160,7 +160,7 @@ export default function Home() {
           direction="horizontal"
           className="flex-1 overflow-hidden"
         >
-          <ResizablePanel defaultSize={40} minSize={20} className="border-r">
+          <ResizablePanel defaultSize={25} minSize={15} className="border-r">
             <div className="flex flex-col h-[calc(100vh-3.5rem)]">
               <div className="flex-1 p-4 overflow-hidden">
                 <Chat symbol={symbol} timeframe={timeframe} />
@@ -168,10 +168,10 @@ export default function Home() {
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel minSize={40}>
+          <ResizablePanel minSize={50}>
             <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-auto">
-              <div className="p-4 md:p-6">
-                <Card className="mb-6">
+              <div className="p-4 md:p-4">
+                <Card className="mb-4">
                   <CardHeader className="pb-2">
                     <CardTitle>{symbol} リアルタイムチャート</CardTitle>
                     <CardDescription>
@@ -193,7 +193,7 @@ export default function Home() {
                     <div className="w-full relative">
                       <CandlestickChart
                         key={`${symbol}-${timeframe}`}
-                        height={600}
+                        height={700}
                         indicators={indicators}
                         interval={timeframe}
                         symbol={symbol}

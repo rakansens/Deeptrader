@@ -24,7 +24,10 @@ export default function OrderBookPanel({
   const isCurrent = (price: number) =>
     currentPrice !== undefined && Math.abs(price - currentPrice) < 1e-6;
 
-  const reversedAsks = [...asks].reverse();
+  // 表示数を増やす（20行まで表示）
+  const maxRows = 20;
+  const reversedAsks = [...asks].reverse().slice(0, maxRows);
+  const limitedBids = bids.slice(0, maxRows);
 
   return (
     <IndicatorPanel
@@ -37,14 +40,14 @@ export default function OrderBookPanel({
         className="text-xs h-full overflow-auto flex flex-col"
         data-testid="orderbook-panel"
       >
-        <table className="w-full mb-1" data-testid="asks-table">
+        <table className="w-full mb-0.5" data-testid="asks-table">
           <thead>
-            <tr>
-              <th className="text-left">Ask</th>
-              <th className="text-right">Qty</th>
+            <tr className="text-xs">
+              <th className="text-left py-0">Ask</th>
+              <th className="text-right py-0">Qty</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="leading-tight">
             {reversedAsks.map((a, i) => (
               <tr
                 key={i}
@@ -54,29 +57,29 @@ export default function OrderBookPanel({
                 )}
                 data-testid={isCurrent(a.price) ? "current-price-row" : "ask-row"}
               >
-                <td className="text-left">{a.price}</td>
-                <td className="text-right">{a.quantity}</td>
+                <td className="text-left py-0">{a.price}</td>
+                <td className="text-right py-0">{a.quantity}</td>
               </tr>
             ))}
           </tbody>
         </table>
         {currentPrice !== undefined && (
           <div
-            className="py-1 text-center font-bold bg-accent/50"
+            className="py-[1px] text-center font-bold bg-accent/50 text-xs"
             data-testid="current-price-row"
           >
             {currentPrice}
           </div>
         )}
-        <table className="w-full mt-1" data-testid="bids-table">
+        <table className="w-full mt-0.5" data-testid="bids-table">
           <thead>
-            <tr>
-              <th className="text-left">Bid</th>
-              <th className="text-right">Qty</th>
+            <tr className="text-xs">
+              <th className="text-left py-0">Bid</th>
+              <th className="text-right py-0">Qty</th>
             </tr>
           </thead>
-          <tbody>
-            {bids.map((b, i) => (
+          <tbody className="leading-tight">
+            {limitedBids.map((b, i) => (
               <tr
                 key={i}
                 className={cn(
@@ -85,8 +88,8 @@ export default function OrderBookPanel({
                 )}
                 data-testid={isCurrent(b.price) ? "current-price-row" : "bid-row"}
               >
-                <td className="text-left">{b.price}</td>
-                <td className="text-right">{b.quantity}</td>
+                <td className="text-left py-0">{b.price}</td>
+                <td className="text-right py-0">{b.quantity}</td>
               </tr>
             ))}
           </tbody>

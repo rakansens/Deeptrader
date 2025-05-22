@@ -306,7 +306,7 @@ export default function CandlestickChart({
             {mainChartPanel}
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel minSize={20} defaultSize={25}>
+          <ResizablePanel minSize={15} defaultSize={25}>
             <OrderBookPanel
               symbol={currentSymbol}
               height={chartHeight}

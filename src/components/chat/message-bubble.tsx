@@ -184,7 +184,7 @@ export function MessageBubble({
 
       <div
         className={cn(
-          "flex flex-col max-w-[90%] sm:max-w-[75%] md:max-w-[65%]",
+          "flex flex-col max-w-[95%] sm:max-w-[85%] md:max-w-[85%]",
           role === "user" ? "items-end" : "items-start",
           !isImage && "group"
         )}
@@ -193,7 +193,7 @@ export function MessageBubble({
           <div
             className={cn(
               // 画像メッセージは背景・余白を除去してネイティブな見た目に
-              isImage ? "p-0" : "px-4 py-2",
+              isImage ? "p-0" : "px-3 py-1.5",
               !isImage &&
                 (role === "user"
                   ? "bg-primary text-primary-foreground"

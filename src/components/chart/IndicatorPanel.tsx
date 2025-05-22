@@ -40,7 +40,7 @@ export default function IndicatorPanel({
       style={{ height }}
       data-testid={`${title.toLowerCase()}-panel`}
     >
-      <div className="flex items-center justify-between text-xs px-2 py-1 border-b">
+      <div className="flex items-center justify-between text-xs px-2 py-0.5 border-b h-5">
         <span>{title}</span>
         <button
           onClick={onClose}

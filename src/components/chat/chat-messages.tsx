@@ -47,7 +47,7 @@ export function ChatMessages({
   return (
     <div
       ref={listRef}
-      className="flex-1 overflow-y-auto space-y-4 pr-2 mt-2"
+      className="flex-1 overflow-y-auto space-y-2.5 pr-2 mt-2"
       aria-live="polite"
     >
       {messages.length === 0 ? (
@@ -61,12 +61,12 @@ export function ChatMessages({
               下のように、市場分析、チャート操作、一般的な質問など、何でも聞いてみてくださいね。
             </p>
           </div>
-          <div className="flex flex-col gap-2 mx-auto w-full max-w-sm">
+          <div className="flex flex-col gap-1.5 mx-auto w-full max-w-sm">
             {suggestions.map((s) => (
               <Button
                 key={s}
                 variant="outline"
-                className="text-sm h-auto py-2 px-3 justify-start text-left w-full"
+                className="text-xs h-auto py-1.5 px-2 justify-start text-left w-full"
                 onClick={() => sendMessage(s)}
               >
                 {s}
