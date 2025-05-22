@@ -81,7 +81,8 @@ export async function fetchOrderBook(
   url.searchParams.set('symbol', symbol)
   url.searchParams.set('limit', String(limit))
 
-  const res = await fetchWithTimeout(url.toString())
+  // Binance API access can sometimes be slow; limit waiting time to improve UX
+  const res = await fetchWithTimeout(url.toString(), { timeout: 5000 })
   if (!res.ok) {
     throw new Error(`Failed to fetch order book: ${res.status} ${res.statusText}`)
   }
