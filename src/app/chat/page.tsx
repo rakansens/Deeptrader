@@ -1,5 +1,7 @@
 "use client";
 
+// Updated to handle Mastra streaming responses properly
+
 import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -12,6 +14,18 @@ import { cn } from "@/lib/utils";
 import { useSettings } from "@/hooks/use-settings";
 import { logger } from "@/lib/logger";
 import { Message } from "@/types";
+
+// Mastraストリーミングレスポンスの型定義
+interface MastraStreamPart {
+  type: "text-delta" | "step-start" | "step-finish" | "finish";
+  textDelta?: string;
+  finishReason?: string;
+  usage?: any;
+}
+
+interface MastraStreamResponse {
+  part: MastraStreamPart;
+}
 
 // チャットの受信メッセージを処理するコンポーネント
 function ChatPageContent() {
@@ -31,8 +45,81 @@ function ChatPageContent() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcript, setTranscript] = useState("");
 
+  // Mastraストリーミングレスポンスを処理する関数
+  const processMastraStream = async (response: Response): Promise<string> => {
+    if (!response.body) {
+      throw new Error("レスポンスボディがありません");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        // チャンクをデコードしてバッファに追加
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        // 改行で分割して個々のJSONオブジェクトを処理
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 最後の不完全な行は次回に持ち越し
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const parsed: MastraStreamResponse = JSON.parse(line);
+              
+              if (parsed.part?.type === "text-delta" && parsed.part.textDelta) {
+                fullText += parsed.part.textDelta;
+                
+                // リアルタイムでメッセージを更新
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  
+                  if (lastMessage?.role === "assistant" && lastMessage.id === "streaming") {
+                    lastMessage.content = fullText;
+                  } else {
+                    // 新しいアシスタントメッセージを追加
+                    newMessages.push({
+                      id: "streaming",
+                      role: "assistant",
+                      content: fullText,
+                      timestamp: Date.now(),
+                      type: "text"
+                    });
+                  }
+                  
+                  return newMessages;
+                });
+              }
+              
+              // ストリーミング完了の処理
+              if (parsed.part?.type === "finish" || parsed.part?.type === "step-finish") {
+                logger.info("Mastraストリーミング完了", { usage: parsed.part.usage });
+              }
+              
+            } catch (parseError) {
+              logger.warn("JSONパース失敗:", line);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return fullText;
+  };
+
   // メッセージ送信処理
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!input.trim() || isLoading) return;
     
     const userMessage: Message = {
@@ -44,24 +131,64 @@ function ChatPageContent() {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
-    
-    // TODO: APIリクエスト処理を実装
     setIsLoading(true);
-    
-    // 擬似的な応答を追加（実際にはAPIレスポンスを使用）
-    setTimeout(() => {
-      const aiMessage: Message = {
+    setError(null);
+
+    try {
+      // Mastra API呼び出し
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [
+            ...messages.map(m => ({ role: m.role, content: m.content })),
+            { role: "user", content: currentInput }
+          ]
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      // ストリーミングレスポンスを処理
+      const finalText = await processMastraStream(response);
+      
+      // ストリーミング完了後、一意IDで最終メッセージを更新
+      setMessages(prev => {
+        const newMessages = [...prev];
+        const lastMessage = newMessages[newMessages.length - 1];
+        
+        if (lastMessage?.id === "streaming") {
+          lastMessage.id = Date.now().toString();
+          lastMessage.content = finalText;
+        }
+        
+        return newMessages;
+      });
+
+    } catch (err) {
+      logger.error("チャットAPI呼び出しエラー:", err);
+      const errorMessage = err instanceof Error ? err.message : "不明なエラーが発生しました";
+      setError(errorMessage);
+      
+      // エラーメッセージを表示
+      const errorAIMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: "申し訳ありませんが、現在APIの接続が正常に機能していません。この問題は開発中です。",
+        content: `申し訳ありません。エラーが発生しました: ${errorMessage}`,
         timestamp: Date.now(),
         type: "text"
       };
       
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages(prev => [...prev, errorAIMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   
   // 画像アップロード処理（仮実装）
@@ -116,7 +243,8 @@ function ChatPageContent() {
   // ページコンポーネントでメッセージの送信ロジックを管理
   const sendMessage = (text: string) => {
     setInput(text);
-    handleSubmit();
+    // 次のイベントループで実行して、inputの更新を確実に反映
+    setTimeout(() => handleSubmit(), 0);
   };
 
   return (
