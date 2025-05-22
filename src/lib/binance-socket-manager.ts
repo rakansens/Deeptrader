@@ -8,7 +8,8 @@ interface StreamInfo {
   ws: WebSocket
   listeners: Set<Listener>
   refs: number
-  keepAlive?: NodeJS.Timeout
+  pingTimer?: NodeJS.Timeout
+  retryCount: number // exponential‑back‑off counter
   reconnectTimer?: NodeJS.Timeout
 }
 
@@ -32,11 +33,11 @@ export class BinanceSocketManager {
   private create(stream: string): StreamInfo {
     // prepare the record first so inner helpers can refer to it
     const info: StreamInfo = {
-      // a temporary dummy – will be overwritten by connect()
-      // @ts-expect-error overwrite later
+      // @ts-expect-error will be set immediately
       ws: null,
       listeners: new Set(),
-      refs: 0
+      refs: 0,
+      retryCount: 0
     }
 
     const connect = () => {
@@ -49,26 +50,29 @@ export class BinanceSocketManager {
       const ws = new WebSocket(`${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/stream?streams=${stream}`)
       info.ws = ws
 
-      // start / stop keep‑alive
-      const startKeepAlive = () => {
-        info.keepAlive = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            try {
-              ws.send('{}')
-            } catch {
-              /* ignore */
-            }
+      // local helper to send one ping and reschedule itself
+      const schedulePing = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send('{}')
+          } catch {
+            /* ignore */
           }
-        }, 25_000)
+          info.pingTimer = setTimeout(schedulePing, 30_000) // 30 s later
+        }
       }
-      const stopKeepAlive = () => {
-        if (info.keepAlive) {
-          clearInterval(info.keepAlive)
-          info.keepAlive = undefined
+      const stopPing = () => {
+        if (info.pingTimer) {
+          clearTimeout(info.pingTimer)
+          info.pingTimer = undefined
         }
       }
 
-      ws.addEventListener('open', startKeepAlive)
+      // once the socket is open, reset retry counter and start ping cycle
+      ws.addEventListener('open', () => {
+        info.retryCount = 0
+        schedulePing()
+      })
 
       ws.addEventListener('message', ev => {
         let data: unknown
@@ -81,11 +85,13 @@ export class BinanceSocketManager {
       })
 
       const handleCloseOrError = () => {
-        stopKeepAlive()
+        stopPing()
 
-        // if still used somewhere, reconnect, otherwise flush completely
         if (info.refs > 0) {
-          info.reconnectTimer = setTimeout(connect, RECONNECT_DELAY)
+          // exponential back‑off: 1s, 2s, 4s … capped at 30s
+          info.retryCount += 1
+          const delay = Math.min(30_000, 2 ** info.retryCount * 1_000)
+          info.reconnectTimer = setTimeout(connect, delay)
         } else {
           this.streams.delete(stream)
         }
