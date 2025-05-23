@@ -4,7 +4,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
-import { useUiControl } from '@/contexts/UiControlContext';
 import type { Timeframe } from '@/constants/chart';
 
 interface UICommand {
@@ -21,7 +20,6 @@ export function useUICommandWebSocket() {
   const [lastCommand, setLastCommand] = useState<UICommand | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const uiControl = useUiControl();
 
   // WebSocket接続
   const connect = () => {
@@ -69,28 +67,34 @@ export function useUICommandWebSocket() {
     }
   };
 
-  // UI操作実行
+  // UI操作実行（UiControlContext無しでも動作）
   const executeUICommand = (operation: string, payload: Record<string, any>) => {
     try {
       logger.info(`UI操作実行: ${operation}`, payload);
 
       switch (operation) {
         case 'change_timeframe':
-          if (payload.timeframe && uiControl.changeTimeframe) {
-            uiControl.changeTimeframe(payload.timeframe as Timeframe);
+          if (payload.timeframe) {
+            // グローバルイベントでタイムフレーム変更を通知
+            window.dispatchEvent(new CustomEvent('timeframeChange', { 
+              detail: { timeframe: payload.timeframe as Timeframe } 
+            }));
             logger.info(`タイムフレーム変更実行: ${payload.timeframe}`);
           }
           break;
 
         case 'toggle_indicator':
-          if (payload.indicator && uiControl.toggleIndicator) {
-            uiControl.toggleIndicator(payload.indicator, payload.enabled);
+          if (payload.indicator) {
+            // グローバルイベントでインジケーター切り替えを通知
+            window.dispatchEvent(new CustomEvent('indicatorToggle', { 
+              detail: { indicator: payload.indicator, enabled: payload.enabled } 
+            }));
             logger.info(`インジケーター切り替え実行: ${payload.indicator} = ${payload.enabled}`);
           }
           break;
 
         case 'change_theme':
-          // テーマ変更ロジック（実装例）
+          // テーマ変更ロジック
           if (payload.theme) {
             document.documentElement.setAttribute('data-theme', payload.theme);
             logger.info(`テーマ変更実行: ${payload.theme}`);
@@ -98,9 +102,8 @@ export function useUICommandWebSocket() {
           break;
 
         case 'change_symbol':
-          // 銘柄変更ロジック（実装例）
+          // 銘柄変更ロジック
           if (payload.symbol) {
-            // グローバル状態またはコンテキストで銘柄を更新
             window.dispatchEvent(new CustomEvent('symbolChange', { 
               detail: { symbol: payload.symbol } 
             }));
@@ -109,7 +112,7 @@ export function useUICommandWebSocket() {
           break;
 
         case 'zoom_chart':
-          // チャートズームロジック（実装例）
+          // チャートズームロジック
           if (payload.action) {
             window.dispatchEvent(new CustomEvent('chartZoom', { 
               detail: { action: payload.action, factor: payload.factor } 

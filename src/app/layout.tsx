@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ReactQueryProvider } from '@/components/react-query-provider';
 import { PageTransition } from '@/components/PageTransition';
+import { UICommandConsole } from '@/components/chart/UICommandConsole';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
             forcedTheme="dark"
           >
             <PageTransition>{children}</PageTransition>
+            <UICommandConsole />
           </ThemeProvider>
         </ReactQueryProvider>
       </body>

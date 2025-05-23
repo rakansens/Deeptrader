@@ -1,6 +1,8 @@
 // src/mastra/agents/uiControlAgent.ts
 // 🎨 実際のUI操作による高度なUIコントロールマスター（WebSocket連携版）
 import { Agent } from "@mastra/core";
+import { openai } from "@ai-sdk/openai";
+import { AI_MODEL } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
 // 実際のUI操作ツール（WebSocket連携）をインポート
@@ -17,6 +19,9 @@ import {
   changeChartTypeTool, 
   uiActionLoggerTool 
 } from "@/mastra/tools/ui";
+
+// 環境変数からAIモデルを取得
+const aiModel = AI_MODEL;
 
 export const uiControlAgent = new Agent({
   name: "UIコントロールマスター（実UI操作版）",
@@ -81,11 +86,8 @@ WebSocket連携により、実際にユーザーインターフェースを制�
 
 常に実際のUI変更を目指し、ユーザーが期待する通りの画面操作を実現してください。
 `,
-  model: {
-    provider: "openai",
-    name: "gpt-4o",
-  },
-  tools: [
+  model: openai(aiModel),
+  tools: {
     // 実際のUI操作ツール（WebSocket連携）
     realChangeTimeframeTool,
     realToggleIndicatorTool, 
@@ -96,12 +98,12 @@ WebSocket連携により、実際にユーザーインターフェースを制�
     // 補助ツール
     uiActionLoggerTool,
     changeChartTypeTool,
-  ],
+  },
 });
 
 // エージェント実行ログ
 logger.info("🎨 UIコントロールマスター（実UI操作版）が初期化されました", {
-  toolCount: uiControlAgent.tools.length,
+  toolCount: Object.keys(uiControlAgent.tools).length,
   realUITools: 5,
   supportTools: 2,
   capabilities: [

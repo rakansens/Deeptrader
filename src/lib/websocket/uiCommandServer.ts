@@ -1,6 +1,5 @@
 // src/lib/websocket/uiCommandServer.ts
-// WebSocketベースのUI操作命令サーバー
-import { WebSocketServer } from 'ws';
+// WebSocketベースのUI操作命令サーバー（サーバーサイド専用）
 import { logger } from '@/lib/logger';
 
 // UI操作命令の型定義
@@ -14,40 +13,51 @@ export interface UICommand {
 
 // WebSocketクライアント管理
 class UICommandServer {
-  private wss: WebSocketServer | null = null;
+  private wss: any = null;
   private clients: Set<any> = new Set();
 
   initialize(port: number = 8080) {
+    // サーバーサイドでのみ実行
+    if (typeof window !== 'undefined') {
+      logger.warn('WebSocketサーバーはサーバーサイドでのみ実行されます');
+      return;
+    }
+
     if (this.wss) {
       logger.warn('WebSocketサーバーは既に初期化済みです');
       return;
     }
 
-    this.wss = new WebSocketServer({ port });
+    // 動的インポートでWebSocketServerをロード
+    import('ws').then(({ WebSocketServer }) => {
+      this.wss = new WebSocketServer({ port });
 
-    this.wss.on('connection', (ws) => {
-      logger.info('UI WebSocketクライアント接続');
-      this.clients.add(ws);
+      this.wss.on('connection', (ws: any) => {
+        logger.info('UI WebSocketクライアント接続');
+        this.clients.add(ws);
 
-      ws.on('close', () => {
-        logger.info('UI WebSocketクライアント切断');
-        this.clients.delete(ws);
+        ws.on('close', () => {
+          logger.info('UI WebSocketクライアント切断');
+          this.clients.delete(ws);
+        });
+
+        ws.on('error', (error: any) => {
+          logger.error('UI WebSocketエラー:', error);
+          this.clients.delete(ws);
+        });
+
+        // 接続確認メッセージ
+        ws.send(JSON.stringify({
+          type: 'connection_established',
+          message: 'UI Command WebSocket接続完了',
+          timestamp: new Date().toISOString(),
+        }));
       });
 
-      ws.on('error', (error) => {
-        logger.error('UI WebSocketエラー:', error);
-        this.clients.delete(ws);
-      });
-
-      // 接続確認メッセージ
-      ws.send(JSON.stringify({
-        type: 'connection_established',
-        message: 'UI Command WebSocket接続完了',
-        timestamp: new Date().toISOString(),
-      }));
+      logger.info(`UI Command WebSocketサーバー開始: ws://localhost:${port}`);
+    }).catch((error) => {
+      logger.error('WebSocketサーバー初期化エラー:', error);
     });
-
-    logger.info(`UI Command WebSocketサーバー開始: ws://localhost:${port}`);
   }
 
   // UI操作命令をすべてのクライアントに送信
@@ -110,8 +120,8 @@ class UICommandServer {
 // シングルトンインスタンス
 export const uiCommandServer = new UICommandServer();
 
-// サーバー初期化（開発環境のみ）
-if (process.env.NODE_ENV === 'development') {
+// サーバー初期化（開発環境かつサーバーサイドのみ）
+if (process.env.NODE_ENV === 'development' && typeof window === 'undefined') {
   try {
     uiCommandServer.initialize(8080);
   } catch (error) {

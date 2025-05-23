@@ -76,22 +76,6 @@ export default function Home() {
     };
   }>({});
 
-  // クライアントサイドでのみ実行する初期化
-  useEffect(() => {
-    // ローカルストレージからの読み込みはクライアントサイドでのみ行う
-    const savedColor = localStorage.getItem("drawingColor");
-    if (savedColor) {
-      setDrawingColor(savedColor);
-    }
-  }, []);
-
-  const handleDrawingColorChange = useCallback((value: string) => {
-    setDrawingColor(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("drawingColor", value);
-    }
-  }, []);
-
   // 型安全なハンドラー関数を定義
   const handleTimeframeChange = useCallback(
     (timeframe: Timeframe) => setTimeframe(timeframe),
@@ -120,6 +104,63 @@ export default function Home() {
     },
     [],
   );
+
+  // クライアントサイドでのみ実行する初期化
+  useEffect(() => {
+    // ローカルストレージからの読み込みはクライアントサイドでのみ行う
+    const savedColor = localStorage.getItem("drawingColor");
+    if (savedColor) {
+      setDrawingColor(savedColor);
+    }
+
+    // WebSocketからのUI操作イベントリスナー追加
+    const handleWebSocketTimeframeChange = (event: any) => {
+      const { timeframe } = event.detail;
+      setTimeframe(timeframe);
+      console.log('WebSocketからタイムフレーム変更:', timeframe);
+    };
+
+    const handleWebSocketIndicatorToggle = (event: any) => {
+      const { indicator, enabled } = event.detail;
+      // toggleIndicatorを直接呼び出さずに、setIndicatorsを使用
+      setIndicators((prevIndicators) => {
+        const key = indicator.toLowerCase() as keyof typeof prevIndicators;
+        if (key === "ma" || key === "rsi" || key === "macd" || key === "boll") {
+          return {
+            ...prevIndicators,
+            [key]: typeof enabled === "boolean" ? enabled : !prevIndicators[key],
+          };
+        }
+        return prevIndicators;
+      });
+      console.log('WebSocketからインジケーター切り替え:', indicator, enabled);
+    };
+
+    const handleWebSocketSymbolChange = (event: any) => {
+      const { symbol } = event.detail;
+      setSymbol(symbol);
+      console.log('WebSocketから銘柄変更:', symbol);
+    };
+
+    // イベントリスナー登録
+    window.addEventListener('timeframeChange', handleWebSocketTimeframeChange);
+    window.addEventListener('indicatorToggle', handleWebSocketIndicatorToggle);
+    window.addEventListener('symbolChange', handleWebSocketSymbolChange);
+
+    // クリーンアップ
+    return () => {
+      window.removeEventListener('timeframeChange', handleWebSocketTimeframeChange);
+      window.removeEventListener('indicatorToggle', handleWebSocketIndicatorToggle);
+      window.removeEventListener('symbolChange', handleWebSocketSymbolChange);
+    };
+  }, []); // 空の依存配列
+
+  const handleDrawingColorChange = useCallback((value: string) => {
+    setDrawingColor(value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("drawingColor", value);
+    }
+  }, []);
 
   // 価格情報を更新するためのコールバック
   const handlePriceInfoUpdate = useCallback((info: {

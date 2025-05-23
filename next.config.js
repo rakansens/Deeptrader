@@ -11,9 +11,17 @@ const nextConfig = {
   // Next.js 実験的オプション
   experimental: {
     typedRoutes: true,
+    // 🚀 MASTRAサポート: esmExternalsを無効化
+    esmExternals: false,
   },
 
-  webpack(config) {
+  // 🚀 MASTRA対応: サーバー専用パッケージを調整
+  serverExternalPackages: [
+    // MASTRAコアパッケージは外部化しない（バンドルに含める）
+    // "@mastra/*", // この行をコメントアウト
+  ],
+
+  webpack(config, { isServer }) {
     // -------- 1) .md ファイルをそのまま取り込む --------
     config.module.rules.unshift({
       test: /\.md$/,
@@ -34,39 +42,61 @@ const nextConfig = {
       type: 'asset/source',
     });
 
-    // -------- 2) .node ネイティブバイナリを読み込む --------
-    config.module.rules.push({
-      test: /\.node$/,
-      use: 'node-loader',
-    });
-
-    // -------- 3) Node.js 標準モジュールのポリフィル & 不要ライブラリの無効化 --------
+    // -------- 2) 🚀 ai/test解決: MASTRAが参照するai/testをfallbackで処理 --------
     config.resolve.fallback = {
-      ...(config.resolve.fallback || {}),
-      path: false,
-      fs: false,
+      ...config.resolve.fallback,
+      'ai/test': require.resolve('./ai-test-fallback.js'), // フォールバックファイルを指定
     };
 
-    // Edge ランタイムでは使用しない @libsql 系パッケージを空モジュール化して
-    // .d.ts や ESM ファイルの解析をスキップさせる
+    // -------- 2.1) ai/testのaliasを設定 --------
     config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      '@libsql/core': false,
-      '@libsql/client': false,
-      '@libsql/hrana-client': false,
+      ...config.resolve.alias,
+      'ai/test': require.resolve('./ai-test-fallback.js'),
     };
 
-    // -------- 4) バイナリをバンドル対象から除外 --------
-    const externals = [
-      '@libsql/darwin-arm64/index.node',
-      '@libsql/darwin-x86_64/index.node',
-      '@libsql/linux-x64-gnu/index.node',
-      '@libsql/linux-x64-musl/index.node',
-      '@libsql/linux-arm64-gnu/index.node',
-      '@libsql/linux-arm64-musl/index.node',
-      '@libsql/win32-x64/index.node',
-    ];
-    config.externals = [...(config.externals || []), ...externals];
+    // -------- 3) サーバーサイド向けの設定 --------
+    if (isServer) {
+      // Node.js専用モジュールをfallbackで無効化
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+
+      // MASTRAパッケージはサーバーサイドでバンドルに含める
+      // (externalsに追加しない)
+    }
+
+    // -------- 4) クライアントサイド向けの設定 --------
+    if (!isServer) {
+      // クライアントサイドではNode.jsモジュールを無効化
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+        '@mastra/core': false, // クライアントサイドではMASTRA無効化
+      };
+    }
 
     return config;
   },

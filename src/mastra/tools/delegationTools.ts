@@ -1,150 +1,179 @@
 // src/mastra/tools/delegationTools.ts
-// オーケストラエージェントが各専門エージェントに委任するためのツール
+// 循環依存解決版 - インターフェースベースの委任ツール
 
-import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
-import { tradingAgent } from "../agents/tradingAgent";
-import { researchAgent } from "../agents/researchAgent";
-import { uiControlAgent } from "../agents/uiControlAgent";
-import { backtestAgent } from "../agents/backtestAgent";
-import { logger } from "@/lib/logger";
+import { Tool, createTool } from '@mastra/core/tools';
+import { errorHandler, ErrorType } from '@/lib/error-handler';
+import { AppConfig } from '@/config';
+import { z } from 'zod';
 
-/**
- * トレーディングエージェントに委任するツール
- */
+// �� インターフェース定義（循環依存回避）
+export interface DelegationRequest {
+  agentType: 'trading' | 'research' | 'ui' | 'backtest';
+  message: string;
+  context?: Record<string, any>;
+  requestId?: string;
+}
+
+export interface DelegationResponse {
+  success: boolean;
+  agentType: string;
+  response?: string;
+  error?: string;
+  executionTime?: number;
+  requestId?: string;
+}
+
+// 🎯 委任実行ハンドラー（外部注入される）
+type DelegationHandler = (request: DelegationRequest) => Promise<DelegationResponse>;
+
+// グローバル委任ハンドラー（オーケストレーターから設定される）
+let globalDelegationHandler: DelegationHandler | null = null;
+
+export function setDelegationHandler(handler: DelegationHandler) {
+  globalDelegationHandler = handler;
+  console.log('✅ 委任ハンドラーが設定されました');
+}
+
+// 🚀 共通委任実行関数
+async function executeDelegation(request: DelegationRequest): Promise<DelegationResponse> {
+  const startTime = Date.now();
+  
+  try {
+    if (!globalDelegationHandler) {
+      throw new Error('委任ハンドラーが設定されていません');
+    }
+
+    console.log(`🎯 ${request.agentType}エージェントに委任:`, request.message);
+    
+    const response = await globalDelegationHandler(request);
+    const executionTime = Date.now() - startTime;
+    
+    console.log(`✅ ${request.agentType}エージェント応答完了 (${executionTime}ms)`);
+    
+    return {
+      ...response,
+      executionTime,
+      requestId: request.requestId
+    };
+
+  } catch (error) {
+    const executionTime = Date.now() - startTime;
+    const appError = errorHandler.handleError(error, ErrorType.MASTRA_ERROR, {
+      agentType: request.agentType,
+      message: request.message,
+      executionTime
+    });
+
+    console.error(`❌ ${request.agentType}エージェント委任失敗:`, appError.message);
+    
+    return {
+      success: false,
+      agentType: request.agentType,
+      error: appError.message,
+      executionTime,
+      requestId: request.requestId
+    };
+  }
+}
+
+// 🎯 トレーディングエージェント委任ツール
 export const delegateTradingTool = createTool({
-  id: "delegate_trading",
-  description: "市場分析、チャート分析、トレード戦略、売買判断に関する質問をトレーディング専門エージェントに委任します",
+  id: 'delegate_trading',
+  description: 'トレーディング戦略、チャート分析、市場分析の質問をトレーディングエージェントに委任します',
   inputSchema: z.object({
-    query: z.string().describe("トレーディングに関する質問やリクエスト"),
-    context: z.string().optional().describe("追加のコンテキスト情報"),
+    message: z.string().describe('トレーディング関連の質問やリクエスト'),
+    symbol: z.string().default('BTCUSDT').describe('対象銘柄（例: BTCUSDT）'),
+    timeframe: z.string().default('1h').describe('時間足（例: 1h, 4h, 1d）')
   }),
   execute: async ({ context }) => {
-    try {
-      logger.info("🔀 トレーディングエージェントに委任:", context.query.substring(0, 100));
-      
-      const fullQuery = context.context ? `${context.context}\n\n${context.query}` : context.query;
-      const result = await tradingAgent.generate(fullQuery);
-      
-      return {
-        success: true,
-        agent: "トレーディングアドバイザー",
-        response: result,
-        delegationType: "trading_analysis"
-      };
-    } catch (error) {
-      logger.error("トレーディングエージェント委任エラー:", error);
-      return {
-        success: false,
-        agent: "トレーディングアドバイザー", 
-        error: error instanceof Error ? error.message : "不明なエラー",
-        delegationType: "trading_analysis"
-      };
-    }
-  },
+    const { message, symbol, timeframe } = context;
+    return await executeDelegation({
+      agentType: 'trading',
+      message,
+      context: { symbol, timeframe },
+      requestId: `trading_${Date.now()}`
+    });
+  }
 });
 
-/**
- * リサーチエージェントに委任するツール
- */
+// 🔍 リサーチエージェント委任ツール
 export const delegateResearchTool = createTool({
-  id: "delegate_research",
-  description: "市場調査、ニュース分析、オンチェーンデータ分析、センチメント分析に関する質問をリサーチ専門エージェントに委任します",
+  id: 'delegate_research',
+  description: 'ニュース分析、センチメント分析、ファンダメンタル分析をリサーチエージェントに委任します',
   inputSchema: z.object({
-    query: z.string().describe("リサーチに関する質問やリクエスト"),
-    context: z.string().optional().describe("追加のコンテキスト情報"),
+    message: z.string().describe('リサーチ関連の質問やリクエスト'),
+    scope: z.string().default('news').describe('調査範囲（news, sentiment, fundamental）')
   }),
   execute: async ({ context }) => {
-    try {
-      logger.info("🔀 リサーチエージェントに委任:", context.query.substring(0, 100));
-      
-      const fullQuery = context.context ? `${context.context}\n\n${context.query}` : context.query;
-      const result = await researchAgent.generate(fullQuery);
-      
-      return {
-        success: true,
-        agent: "市場リサーチスペシャリスト",
-        response: result,
-        delegationType: "research_analysis"
-      };
-    } catch (error) {
-      logger.error("リサーチエージェント委任エラー:", error);
-      return {
-        success: false,
-        agent: "市場リサーチスペシャリスト",
-        error: error instanceof Error ? error.message : "不明なエラー", 
-        delegationType: "research_analysis"
-      };
-    }
-  },
+    const { message, scope } = context;
+    return await executeDelegation({
+      agentType: 'research',
+      message,
+      context: { scope },
+      requestId: `research_${Date.now()}`
+    });
+  }
 });
 
-/**
- * UIコントロールエージェントに委任するツール
- */
+// 🖥️ UIコントロールエージェント委任ツール
 export const delegateUiControlTool = createTool({
-  id: "delegate_ui_control",
-  description: "チャート操作、UI設定、画面制御に関する質問をUIコントロール専門エージェントに委任します",
+  id: 'delegate_ui_control',
+  description: 'チャート操作、画面設定、インターフェース制御をUIエージェントに委任します',
   inputSchema: z.object({
-    query: z.string().describe("UIコントロールに関する質問やリクエスト"),
-    context: z.string().optional().describe("追加のコンテキスト情報"),
+    message: z.string().describe('UI操作関連のリクエスト'),
+    operationType: z.string().default('chart').describe('操作タイプ（chart, settings, theme）')
   }),
   execute: async ({ context }) => {
-    try {
-      logger.info("🔀 UIコントロールエージェントに委任:", context.query.substring(0, 100));
-      
-      const fullQuery = context.context ? `${context.context}\n\n${context.query}` : context.query;
-      const result = await uiControlAgent.generate(fullQuery);
-      
-      return {
-        success: true,
-        agent: "UIコントロールスペシャリスト",
-        response: result,
-        delegationType: "ui_control"
-      };
-    } catch (error) {
-      logger.error("UIコントロールエージェント委任エラー:", error);
-      return {
-        success: false,
-        agent: "UIコントロールスペシャリスト",
-        error: error instanceof Error ? error.message : "不明なエラー",
-        delegationType: "ui_control"
-      };
-    }
-  },
+    const { message, operationType } = context;
+    return await executeDelegation({
+      agentType: 'ui',
+      message,
+      context: { operationType },
+      requestId: `ui_${Date.now()}`
+    });
+  }
 });
 
-/**
- * バックテストエージェントに委任するツール
- */
+// 📊 バックテストエージェント委任ツール
 export const delegateBacktestTool = createTool({
-  id: "delegate_backtest",
-  description: "トレード戦略のバックテスト、パフォーマンス分析、戦略最適化に関する質問をバックテスト専門エージェントに委任します",
+  id: 'delegate_backtest',
+  description: '戦略検証、パフォーマンス分析、最適化をバックテストエージェントに委任します',
   inputSchema: z.object({
-    query: z.string().describe("バックテストに関する質問やリクエスト"),
-    context: z.string().optional().describe("追加のコンテキスト情報"),
+    message: z.string().describe('バックテスト関連のリクエスト'),
+    strategy: z.string().default('moving_average').describe('検証対象戦略'),
+    period: z.string().default('1month').describe('検証期間')
   }),
   execute: async ({ context }) => {
-    try {
-      logger.info("🔀 バックテストエージェントに委任:", context.query.substring(0, 100));
-      
-      const fullQuery = context.context ? `${context.context}\n\n${context.query}` : context.query;
-      const result = await backtestAgent.generate(fullQuery);
-      
-      return {
-        success: true,
-        agent: "バックテストスペシャリスト",
-        response: result,
-        delegationType: "backtest_analysis"
-      };
-    } catch (error) {
-      logger.error("バックテストエージェント委任エラー:", error);
-      return {
-        success: false,
-        agent: "バックテストスペシャリスト",
-        error: error instanceof Error ? error.message : "不明なエラー",
-        delegationType: "backtest_analysis"
-      };
-    }
-  },
-}); 
+    const { message, strategy, period } = context;
+    return await executeDelegation({
+      agentType: 'backtest',
+      message,
+      context: { strategy, period },
+      requestId: `backtest_${Date.now()}`
+    });
+  }
+});
+
+// 📋 全委任ツールエクスポート
+export const allDelegationTools = {
+  delegateTradingTool,
+  delegateResearchTool,
+  delegateUiControlTool,
+  delegateBacktestTool
+} as const;
+
+// 🧪 設定検証
+export function validateDelegationConfig(): boolean {
+  if (!AppConfig.mastra.enabled) {
+    console.warn('⚠️ MASTRAが無効です。委任ツールは動作しません。');
+    return false;
+  }
+
+  if (!globalDelegationHandler) {
+    console.warn('⚠️ 委任ハンドラーが設定されていません。');
+    return false;
+  }
+
+  console.log('✅ 委任ツール設定検証完了');
+  return true;
+} 

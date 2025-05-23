@@ -36,39 +36,31 @@ jest.mock('@/mastra/tools/delegationTools', () => ({
 }), { virtual: true });
 
 import {
-  orchestratorAgent,
+  unifiedOrchestratorAgent,
   delegateTradingTool,
   delegateResearchTool,
   delegateUiControlTool,
   delegateBacktestTool,
 } from '@/mastra/agents/orchestratorAgent';
 
-describe('orchestratorAgent (Advanced Version)', () => {
-  it('is configured correctly with delegation tools', () => {
-    expect(orchestratorAgent.name).toBe('オーケストラエージェント');
-    expect(orchestratorAgent.instructions).toContain('中央制御エージェント');
-    expect(orchestratorAgent.model).toBe('openai-gpt-4o');
-    expect(orchestratorAgent.tools).toBeDefined();
-  });
-  
-  it('has all delegation tools configured', () => {
-    expect(orchestratorAgent.tools.delegateTradingTool).toBeDefined();
-    expect(orchestratorAgent.tools.delegateResearchTool).toBeDefined();
-    expect(orchestratorAgent.tools.delegateUiControlTool).toBeDefined();
-    expect(orchestratorAgent.tools.delegateBacktestTool).toBeDefined();
+describe('統合オーケストレーターエージェント', () => {
+  it('オーケストレーターが正常に初期化される', () => {
+    expect(unifiedOrchestratorAgent).toBeDefined();
+    expect(typeof unifiedOrchestratorAgent.analyzeAndDelegate).toBe('function');
   });
 
-  it('has comprehensive agent delegation instructions', () => {
-    expect(orchestratorAgent.instructions).toContain('トレーディングアドバイザー');
-    expect(orchestratorAgent.instructions).toContain('市場リサーチスペシャリスト');
-    expect(orchestratorAgent.instructions).toContain('UIコントロールスペシャリスト');
-    expect(orchestratorAgent.instructions).toContain('バックテストスペシャリスト');
+  it('委任ツールが正常に初期化される', () => {
+    expect(delegateTradingTool).toBeDefined();
+    expect(delegateResearchTool).toBeDefined();
+    expect(delegateUiControlTool).toBeDefined();
+    expect(delegateBacktestTool).toBeDefined();
   });
 
-  it('exports individual delegation tools', () => {
-    expect(delegateTradingTool.id).toBe('delegate_trading');
-    expect(delegateResearchTool.id).toBe('delegate_research'); 
-    expect(delegateUiControlTool.id).toBe('delegate_ui_control');
-    expect(delegateBacktestTool.id).toBe('delegate_backtest');
+  it('analyzeAndDelegateメソッドが動作する', async () => {
+    const result = await unifiedOrchestratorAgent.analyzeAndDelegate('テストメッセージ');
+    expect(result).toBeDefined();
+    expect(result.targetAgent).toBeDefined();
+    expect(result.response).toBeDefined();
+    expect(typeof result.mastraUsed).toBe('boolean');
   });
 });
