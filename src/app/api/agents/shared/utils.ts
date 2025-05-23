@@ -44,7 +44,7 @@ export function analyzeNaturalLanguageForUI(message: string): UIOperation[] {
   const operations: UIOperation[] = [];
   
   // メッセージの防御的チェック
-  if (!message || typeof message !== 'string') {
+  if (!message || typeof message !== 'string' || message.trim() === '') {
     console.log('⚠️ analyzeNaturalLanguageForUI: 無効なメッセージ', { message, type: typeof message });
     return operations;
   }
@@ -187,10 +187,18 @@ export function generateNaturalResponse(userMessage: string, executedOperations:
 export function extractParameters(message: string, context?: any): Record<string, any> {
   const params: Record<string, any> = {};
   
+  // メッセージの防御的チェック
+  if (!message || typeof message !== 'string') {
+    console.log('⚠️ extractParameters: 無効なメッセージ', { message, type: typeof message });
+    return { ...context };
+  }
+  
+  const upperMessage = message.toUpperCase();
+  
   // シンボル抽出
   const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'MATIC'];
   for (const symbol of symbols) {
-    if (message.toUpperCase().includes(symbol)) {
+    if (upperMessage.includes(symbol)) {
       params.symbol = `${symbol}USDT`;
       break;
     }
@@ -213,6 +221,9 @@ export function extractParameters(message: string, context?: any): Record<string
 
 // パターンマッチングユーティリティ
 export function matchesPattern(text: string, patterns: string[]): boolean {
+  if (!text || typeof text !== 'string' || !patterns || !Array.isArray(patterns)) {
+    return false;
+  }
   return patterns.some(pattern => text.includes(pattern));
 }
 

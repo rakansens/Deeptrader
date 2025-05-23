@@ -41,7 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
     }
     
     logAgentActivity('Unified Router', '統合ルーター受信', { 
-      message: message.substring(0, 100), 
+      message: message ? message.substring(0, 100) : '[空メッセージ]', 
       symbol, 
       timeframe, 
       strategy 

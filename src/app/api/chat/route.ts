@@ -9,13 +9,18 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, symbol, timeframe } = await req.json();
+    const requestBody = await req.json();
+    const { message, symbol, timeframe } = requestBody || {};
     
     console.log('💬 メインチャット - 統合エージェントAPI処理:', { message, symbol, timeframe });
     
-    // メッセージの防御的チェック
-    if (!message || typeof message !== 'string') {
-      console.log('❌ メインチャット: 無効なメッセージ受信', { message, type: typeof message });
+    // メッセージの防御的チェック（強化版）
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.log('❌ メインチャット: 無効なメッセージ受信', { 
+        message, 
+        type: typeof message,
+        requestBody: JSON.stringify(requestBody)
+      });
       
       return NextResponse.json({
         success: false,
