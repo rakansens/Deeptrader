@@ -93,9 +93,14 @@ export class SupabaseVectorIntegrated {
     try {
       const client = await this.getClient();
       
+      // UUID生成を修正：標準的なUUIDv4形式を使用
+      const messageId = message.id && message.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) 
+        ? message.id 
+        : uuidv4();
+      
       // memoriesテーブルにMASTRA情報を拡張して保存
       const record = {
-        id: message.id || uuidv4(),
+        id: messageId,
         user_id: message.resourceId || 'system',
         content: message.content,
         metadata: {
@@ -229,8 +234,13 @@ export class SupabaseVectorIntegrated {
     try {
       const client = await this.getClient();
       
+      // UUID生成を修正：標準的なUUIDv4形式を使用
+      const documentId = doc.id && doc.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) 
+        ? doc.id 
+        : uuidv4();
+      
       const record = {
-        id: doc.id || uuidv4(),
+        id: documentId,
         user_id: doc.resourceId || 'system',
         content: doc.content,
         embedding: doc.embedding || [],
@@ -354,7 +364,9 @@ export const SupabaseVector = {
     const storage = new SupabaseVectorIntegrated();
     for (const doc of docs) {
       await storage.saveDocument({
-        id: doc.id || uuidv4(),
+        id: doc.id && doc.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) 
+          ? doc.id 
+          : uuidv4(),
         content: doc.content || '',
         embedding: doc.embedding,
         metadata: doc.metadata || {},

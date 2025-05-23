@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { IChartApi } from 'lightweight-charts'
 
 jest.mock('html2canvas', () => ({

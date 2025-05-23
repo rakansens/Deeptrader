@@ -1,4 +1,4 @@
-import { calculateIndicators, upsertSeries } from "@/lib/candlestick-utils";
+import { calculateIndicators, upsertSeries } from "@/lib/chart";
 import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 
