@@ -104,29 +104,42 @@ async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: s
     }
     
     if (operation && payload) {
-      // Socket.IOサーバーのHTTP POST /ui-operationエンドポイントを使用
-      const response = await fetch('http://127.0.0.1:8080/ui-operation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'ui_operation',
-          operation: operation,
-          payload,
-          description: `MASTRAエージェントによる${operation}実行`,
-          source: 'mastra_server_agent',
-          timestamp: new Date().toISOString()
-        })
-      });
+      // Socket.IOサーバーのHTTP POST /ui-operationエンドポイントを使用（タイムアウト付き）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       
-      if (response.ok) {
-        const result = await response.json();
-        logAgentActivity('MASTRA Agent', 'UI操作実行成功', { operation, payload, result });
-      } else {
-        const errorData = await response.json();
-        logAgentActivity('MASTRA Agent', 'UI操作実行失敗', { operation, payload, error: errorData }, false);
+      try {
+        const response = await fetch('http://127.0.0.1:8080/ui-operation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'ui_operation',
+            operation: operation,
+            payload,
+            description: `MASTRAエージェントによる${operation}実行`,
+            source: 'mastra_server_agent',
+            timestamp: new Date().toISOString()
+          }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const result = await response.json().catch(() => ({ success: true }));
+          logAgentActivity('MASTRA Agent', 'UI操作実行成功', { operation, payload, result });
+        } else {
+          const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+          logAgentActivity('MASTRA Agent', 'UI操作実行失敗', { operation, payload, error: errorData }, false);
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        const errorInstance = fetchError as Error;
+        logAgentActivity('MASTRA Agent', 'WebSocket UI操作エラー', errorInstance.message, false);
       }
     }
   } catch (error) {
-    logAgentActivity('MASTRA Agent', 'UI操作実行エラー', error, false);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logAgentActivity('MASTRA Agent', 'UI操作実行エラー', errorMessage, false);
   }
 } 

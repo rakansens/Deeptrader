@@ -132,7 +132,7 @@ export function analyzeNaturalLanguageForUI(message: string): UIOperation[] {
 // WebSocket操作実行ユーティリティ
 export async function executeUIOperationViaWebSocket(operation: UIOperation): Promise<boolean> {
   try {
-    // Socket.IO経由でのHTTP POST試行
+    // Socket.IO経由でのHTTP POST試行（タイムアウト付き）
     const operationRequest = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -148,22 +148,45 @@ export async function executeUIOperationViaWebSocket(operation: UIOperation): Pr
     
     console.log('🎯→🖥️ エージェント→Socket.IO UI操作:', operation.description);
     
-    const response = await fetch('http://127.0.0.1:8080/ui-operation', operationRequest);
+    // 5秒タイムアウト付きでfetch実行
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    if (response.ok) {
-      const result = await response.json();
-      console.log('✅ UI操作送信成功:', operation.description, result);
-      return true;
-    } else {
-      const errorData = await response.json();
-      console.log('⚠️ UI操作送信失敗:', response.status, operation.description, errorData);
-      return false;
+    try {
+      const response = await fetch('http://127.0.0.1:8080/ui-operation', {
+        ...operationRequest,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const result = await response.json().catch(() => ({ success: true }));
+        console.log('✅ UI操作送信成功:', operation.description, result);
+        return true;
+      } else {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        console.log('⚠️ UI操作送信失敗:', response.status, operation.description, errorData);
+        return false;
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      const errorInstance = fetchError as Error;
+      if (errorInstance.name === 'AbortError') {
+        console.log('⚠️ Socket.IO UI操作タイムアウト:', operation.description);
+      } else {
+        console.log('⚠️ Socket.IO UI操作ネットワークエラー:', errorInstance.message);
+      }
+      throw fetchError;
     }
     
   } catch (error) {
-    console.log('⚠️ Socket.IO UI操作実行エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log('⚠️ Socket.IO UI操作実行エラー:', errorMessage);
     
-    // フォールバック: 元のWebSocket実装は削除
+    // フォールバック: 操作は無効化（WebSocket直接接続は削除）
+    console.log('📝 UI操作はログのみ記録 - WebSocketサーバーが利用できません');
     return false;
   }
 }

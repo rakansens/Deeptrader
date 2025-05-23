@@ -293,7 +293,7 @@ export default function Home() {
             </div>
           </ResizablePanel>
           <ResizableHandle className="w-[2px] bg-border hover:bg-primary/50 transition-colors" />
-          <ResizablePanel minSize={50}>
+          <ResizablePanel defaultSize={75} minSize={50}>
             <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-auto">
               <div className="p-4 md:p-4">
                 <Card className="mb-4">
