@@ -3,10 +3,10 @@
 // 最適化のため、個別のエントリーポイントの使用を推奨
 
 // クライアントコンポーネント用
-export { createClient as createBrowserClient } from './client';
+export { createClient } from './client';
 
 // サーバーコンポーネント用
-export { createServerClient } from './server';
+export { createServerSupabase } from './server';
 
 // APIルートハンドラー用
 export { createRouteHandlerClient } from './route-handler';

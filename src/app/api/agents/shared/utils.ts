@@ -1,5 +1,6 @@
 // src/app/api/agents/shared/utils.ts
 // エージェント共通ユーティリティ - ロジック重複削除と再利用性向上
+// undefinedメッセージの防御的処理追加でTypeErrorを回避
 
 import { UIOperation, WebSocketCommand, AgentError } from './types';
 
@@ -41,6 +42,13 @@ export function createErrorResponse(
 // 自然言語解析ユーティリティ（agent-pure.tsより移行・改善）
 export function analyzeNaturalLanguageForUI(message: string): UIOperation[] {
   const operations: UIOperation[] = [];
+  
+  // メッセージの防御的チェック
+  if (!message || typeof message !== 'string') {
+    console.log('⚠️ analyzeNaturalLanguageForUI: 無効なメッセージ', { message, type: typeof message });
+    return operations;
+  }
+  
   const lowerMessage = message.toLowerCase();
   
   // 銘柄変更の検出（拡張パターン）

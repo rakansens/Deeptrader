@@ -1,12 +1,12 @@
 import type { BinanceKline, BinanceKlineObject } from '@/types/binance';
 import type { OrderBookEntry } from '@/types';
-import { BINANCE_BASE_URL } from '@/lib/env';
+import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 
 /**
  * Binance APIの基本URL
  */
-const BASE_URL = BINANCE_BASE_URL;
+const BASE_URL = serverEnv.BINANCE_BASE_URL;
 
 /**
  * Binance APIからのタプル形式データをオブジェクト形式に変換

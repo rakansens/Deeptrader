@@ -1,4 +1,4 @@
-import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from './env'
+import { clientEnv } from '@/config';
 
 const RECONNECT_DELAY = 1000; // ms – wait 1 s before trying to reconnect
 
@@ -48,7 +48,7 @@ export class BinanceSocketManager {
         info.reconnectTimer = undefined
       }
 
-      const ws = new WebSocket(`${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/stream?streams=${stream}`)
+      const ws = new WebSocket(`${clientEnv.BINANCE_WS_URL}/stream?streams=${stream}`)
       info.ws = ws
 
       // local helper to send one ping and reschedule itself

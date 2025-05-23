@@ -1,13 +1,10 @@
 import type { AddressInfo } from "@/types";
 
-import {
-  BLOCKCHAIR_API_KEY,
-  BLOCKCHAIR_BASE_URL,
-} from '@/lib/env';
+import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 
-const BASE_URL = BLOCKCHAIR_BASE_URL;
-const API_KEY = BLOCKCHAIR_API_KEY;
+const BASE_URL = serverEnv.BLOCKCHAIR_BASE_URL;
+const API_KEY = serverEnv.BLOCKCHAIR_API_KEY;
 
 /**
  * Blockchair APIからアドレス情報を取得

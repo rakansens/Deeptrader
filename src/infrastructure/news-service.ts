@@ -1,16 +1,19 @@
-import { NEWS_API_KEY, NEWS_API_URL } from '@/lib/env';
+import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 import type { NewsArticle } from "@/types";
+
+const API_KEY = serverEnv.NEWS_API_KEY;
+const API_URL = serverEnv.NEWS_API_URL;
 
 /**
  * 外部ニュースAPIから記事を取得し、要約を返す
  * @param query - 検索キーワード
  */
 export async function fetchNewsSummary(query: string): Promise<NewsArticle> {
-  const url = new URL(NEWS_API_URL);
+  const url = new URL(API_URL);
   url.searchParams.set('q', query);
-  if (NEWS_API_KEY) {
-    url.searchParams.set('apiKey', NEWS_API_KEY);
+  if (API_KEY) {
+    url.searchParams.set('apiKey', API_KEY);
   }
 
   const res = await fetchWithTimeout(url.toString());

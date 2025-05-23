@@ -9,7 +9,7 @@
  * 🔄 最新の更新: Hubサーバーを使わず、Binanceに直接接続するように変更
  */
 import { useCallback, useEffect, useState, useRef } from "react";
-import { NEXT_PUBLIC_BINANCE_WS_BASE_URL } from "@/lib/env";
+import { clientEnv } from '@/config';
 import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 import type { ConnectionStatus } from "./use-binance-socket";
 
@@ -109,7 +109,7 @@ export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
   useEffect(() => {
     // Binanceに直接接続
     const streamName = `${symbol.toLowerCase()}@depth${depth}@100ms`;
-    const wsUrl = `${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/stream?streams=${streamName}`;
+    const wsUrl = `${clientEnv.BINANCE_WS_URL}/stream?streams=${streamName}`;
     console.log(`Connecting directly to Binance WebSocket: ${wsUrl}`);
 
     const ws = new WebSocket(wsUrl);

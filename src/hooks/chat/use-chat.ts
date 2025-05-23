@@ -2,7 +2,6 @@
 
 import { getBrowserSupabase } from "@/lib/supabase-browser";
 import { useEffect, useState, useCallback } from "react";
-import { useChat as useAIChat } from "ai/react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
 import type { Conversation, Message } from "@/types/chat";
@@ -28,9 +27,14 @@ export interface UseChat {
 
 /**
  * チャットの状態と操作を管理するカスタムフック
- * AI SDKとMastraを組み合わせた真のストリーミング実装
+ * AI SDKを使わずに直接チャットAPIと通信する実装
  */
 export function useChat(): UseChat {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const {
     conversations,
     selectedId,
@@ -40,44 +44,17 @@ export function useChat(): UseChat {
     removeConversation,
   } = useConversations();
 
-  // AI SDKのuseChatフックを使用
-  const {
-    messages: aiMessages,
-    input,
-    setInput,
-    handleSubmit,
-    isLoading,
-    error: aiError,
-    append,
-  } = useAIChat({
-    api: "/api/chat",
-    onError: (error) => {
-      logger.error("AI SDKチャットエラー:", error);
-    },
-  });
-
-  const [error, setError] = useState<string | null>(null);
   const { sidebarOpen, toggleSidebar } = useSidebar(false);
-
-  // AI SDKのメッセージをアプリケーション形式に変換
-  const messages: Message[] = aiMessages.map((msg) => ({
-    id: msg.id,
-    role: msg.role as "user" | "assistant",
-    content: msg.content,
-    timestamp: Date.now(), // AI SDKでは実際のタイムスタンプが無いため現在時刻を使用
-    type: "text",
-  }));
 
   // 会話変更時のメッセージリセット
   useEffect(() => {
     // TODO: 会話切り替え時のメッセージクリア実装
-    // AI SDKのuseChatではsetMessagesが提供されていないため、
-    // 会話履歴の管理は別途実装が必要
+    setMessages([]);
   }, [selectedId]);
 
   const newConversation = async () => {
     const id = await createConversation();
-    // TODO: AI SDKのメッセージをクリアする方法を実装
+    setMessages([]);
   };
 
   // カスタムsendMessage実装（画像対応など）
@@ -86,8 +63,21 @@ export function useChat(): UseChat {
     if (!text && !imageFile) return;
 
     setError(null);
+    setLoading(true);
+
+    // ユーザーメッセージを即座に追加
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: text,
+      timestamp: Date.now(),
+      type: "text",
+    };
+    setMessages(prev => [...prev, userMessage]);
 
     try {
+      let imageUrl = "";
+      
       if (imageFile) {
         // 画像アップロード処理
         const ext = imageFile.name.split('.').pop() || 'png';
@@ -104,21 +94,36 @@ export function useChat(): UseChat {
         }
         
         const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(fileName);
-        const imageUrl = (urlData as any)?.publicUrl || (urlData as any)?.publicURL || "";
-        
-        // 画像メッセージとして送信
-        const promptForAI = text || 'この画像を説明してください。';
-        await append({
-          role: "user",
-          content: `${promptForAI}\n\n[画像: ${imageUrl}]`,
-        });
-      } else {
-        // テキストメッセージの場合はAI SDKの標準機能を使用
-        await append({
-          role: "user",
-          content: text,
-        });
+        imageUrl = (urlData as any)?.publicUrl || (urlData as any)?.publicURL || "";
       }
+
+      // チャットAPIに送信
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: imageFile ? `${text}\n\n[画像: ${imageUrl}]` : text,
+          symbol: "BTCUSDT", // デフォルト値
+          timeframe: "1h", // デフォルト値
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // アシスタントメッセージを追加
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: data.response || "応答を受信できませんでした",
+        timestamp: Date.now(),
+        type: "text",
+      };
+      setMessages(prev => [...prev, assistantMessage]);
 
       // 入力をクリア
       if (!imageFile) {
@@ -129,8 +134,20 @@ export function useChat(): UseChat {
       logger.error("メッセージ送信エラー:", err);
       const errorMessage = err instanceof Error ? err.message : "不明なエラーが発生しました";
       setError(errorMessage);
+      
+      // エラーメッセージを追加
+      const errorMessageObj: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `❌ エラー: ${errorMessage}`,
+        timestamp: Date.now(),
+        type: "text",
+      };
+      setMessages(prev => [...prev, errorMessageObj]);
+    } finally {
+      setLoading(false);
     }
-  }, [input, append, setInput]);
+  }, [input]);
 
   const sendImageMessage = useCallback(async (dataUrl: string, promptText = 'このチャートを分析してください') => {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {
@@ -155,8 +172,8 @@ export function useChat(): UseChat {
     messages,
     input,
     setInput,
-    loading: isLoading,
-    error: error || aiError?.message || null,
+    loading,
+    error,
     conversations,
     selectedId,
     selectConversation,

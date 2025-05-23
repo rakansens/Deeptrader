@@ -3,7 +3,7 @@
 // 更新日: 2025-01-23 - 既存Supabaseテーブル統合版に対応
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
-import { AI_MODEL } from "@/lib/env";
+import { serverEnv } from "@/config/server";
 
 // 🔧 MASTRAメモリ機能を復活（既存テーブル統合版）
 import { Memory } from "@mastra/memory";
@@ -14,7 +14,7 @@ import SupabaseVectorIntegrated from "../adapters/SupabaseVectorIntegrated";
 import { backtestTool } from "../tools/backtestTool";
 
 // 環境変数からAIモデルを取得
-const aiModel = AI_MODEL;
+const aiModel = serverEnv.AI_MODEL;
 
 // 🚀 メモリ設定（既存Supabaseテーブル統合版）
 const memory = new Memory({

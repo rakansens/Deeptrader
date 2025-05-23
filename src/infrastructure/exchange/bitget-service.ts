@@ -1,11 +1,12 @@
 import type { OrderRequest, Ticker } from "@/types";
-import { BITGET_API_KEY, BITGET_BASE_URL } from '@/lib/env';
+import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 
 /**
  * Bitget APIの基本URL
  */
-const BASE_URL = BITGET_BASE_URL;
+const BASE_URL = serverEnv.BITGET_BASE_URL;
+const API_KEY = serverEnv.BITGET_API_KEY;
 
 /**
  * Bitgetからティッカー情報を取得
@@ -42,10 +43,14 @@ export async function getTicker(symbol: string): Promise<Ticker> {
  */
 export async function placeOrder(req: OrderRequest): Promise<void> {
   const url = `${BASE_URL}/api/v2/spot/trade/place-order`;
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "X-BG-API-KEY": BITGET_API_KEY,
   };
+  
+  // API_KEYが設定されている場合のみ追加
+  if (API_KEY) {
+    headers["X-BG-API-KEY"] = API_KEY;
+  }
 
   const body = JSON.stringify({
     symbol: req.symbol,

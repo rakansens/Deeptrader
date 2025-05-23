@@ -6,6 +6,7 @@
 import { createServerClient as supabaseServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types';
+import { clientEnv } from '@/config';
 
 /**
  * APIルートハンドラーからのみ使用するSupabaseクライアントを作成
@@ -14,8 +15,8 @@ export async function createRouteHandlerClient() {
   const cookieStore = cookies();
   
   return supabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    clientEnv.SUPABASE_URL,
+    clientEnv.SUPABASE_ANON_KEY,
     {
       cookies: {
         get(name: string) {

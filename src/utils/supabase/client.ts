@@ -5,6 +5,7 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@/types';
+import { clientEnv } from '@/config';
 
 // シングルトンインスタンスを保持
 let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
@@ -15,8 +16,8 @@ export function createClient() {
   }
   
   browserClient = createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    clientEnv.SUPABASE_URL,
+    clientEnv.SUPABASE_ANON_KEY
   );
   
   return browserClient;

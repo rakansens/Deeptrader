@@ -1,47 +1,50 @@
 // src/config/index.ts
-// 統一設定ファイル - ポート競合解決とサービス整理
+// クライアント専用設定ファイル - Phase 3統合完了
+// セキュリティ：サーバー環境変数のクライアントサイドアクセスを完全防止
 
+// 🔐 クライアント専用環境変数インポート・エクスポート
+import { clientEnv } from './client';
+export { clientEnv, type ClientEnv } from './client';
+
+// サーバー環境変数は別途 '@/config/server' から直接インポートしてください
+// export { serverEnv, type ServerEnv } from './server'; // 削除: クライアントバンドル防止
+
+// 🚀 アプリケーション設定（クライアント専用）
 export const AppConfig = {
-  // 🌐 サーバーポート設定
+  // 🌐 サーバーポート設定（クライアントサイドでは参考値）
   servers: {
     next: {
-      port: parseInt(process.env.PORT || '3000'),
-      url: `http://localhost:${process.env.PORT || '3000'}`
+      port: 3003, // デフォルト値
+      url: 'http://localhost:3003'
     },
     socketio: {
-      port: parseInt(process.env.SOCKETIO_PORT || '8080'),
-      url: `http://127.0.0.1:${process.env.SOCKETIO_PORT || '8080'}`
+      port: 8080,
+      url: 'http://127.0.0.1:8080'
     },
     websocket: {
-      port: parseInt(process.env.WEBSOCKET_PORT || '8081'), // ポート分離
-      url: `ws://127.0.0.1:${process.env.WEBSOCKET_PORT || '8081'}`
+      port: 8081,
+      url: 'ws://127.0.0.1:8081'
     }
   },
 
-  // 🔐 認証設定
-  auth: {
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    jwtSecret: process.env.JWT_SECRET || 'default-jwt-secret'
-  },
-
-  // 🚀 MASTRA設定
+  // 🚀 MASTRA設定（クライアント用デフォルト）
   mastra: {
-    enabled: process.env.MASTRA_ENABLED !== 'false',
-    model: process.env.MASTRA_MODEL || 'gpt-4o',
-    timeout: parseInt(process.env.MASTRA_TIMEOUT || '30000')
+    enabled: true,
+    model: 'gpt-4o',
+    timeout: 30000
   },
 
-  // 📊 外部API設定
+  // 📊 外部API設定（クライアント用）
   external: {
     binance: {
-      wsBaseUrl: process.env.NEXT_PUBLIC_BINANCE_WS_BASE_URL || 'wss://stream.binance.com:9443'
+      wsBaseUrl: 'wss://stream.binance.com:9443'
     }
   },
 
   // 🛠️ 開発環境設定
   development: {
     enableDebugLogs: process.env.NODE_ENV === 'development',
-    mockMode: process.env.MOCK_MODE === 'true',
+    mockMode: false,
     hotReload: process.env.NODE_ENV === 'development'
   },
 
@@ -57,30 +60,24 @@ export const AppConfig = {
 // 型エクスポート
 export type AppConfigType = typeof AppConfig;
 
-// 設定検証
-export function validateConfig(): boolean {
-  const required = [
-    AppConfig.auth.openaiApiKey,
-  ];
-  
-  const missing = required.filter(val => !val);
-  
-  if (missing.length > 0) {
-    console.error('❌ 必須設定が不足:', { missingOpenAI: !AppConfig.auth.openaiApiKey });
-    return false;
-  }
-  
-  console.log('✅ 設定検証完了:', {
-    nextPort: AppConfig.servers.next.port,
-    socketioPort: AppConfig.servers.socketio.port,
-    websocketPort: AppConfig.servers.websocket.port,
-    mastraEnabled: AppConfig.mastra.enabled
-  });
-  
-  return true;
-}
-
-// 環境別設定
+// 🌍 環境判定ユーティリティ
 export const isDevelopment = process.env.NODE_ENV === 'development';
 export const isProduction = process.env.NODE_ENV === 'production';
-export const isTest = process.env.NODE_ENV === 'test'; 
+export const isTest = process.env.NODE_ENV === 'test';
+
+// 📋 設定検証関数（クライアント専用）
+export function validateConfig(): boolean {
+  try {
+    // クライアント環境変数は自動で検証済み
+    console.log('✅ クライアント設定検証完了:', {
+      supabaseUrl: !!clientEnv.SUPABASE_URL,
+      supabaseAnonKey: !!clientEnv.SUPABASE_ANON_KEY,
+      binanceWsUrl: !!clientEnv.BINANCE_WS_URL,
+      hubWsUrl: !!clientEnv.HUB_WS_URL
+    });
+    return true;
+  } catch (error) {
+    console.error('❌ クライアント設定検証失敗:', error);
+    return false;
+  }
+} 

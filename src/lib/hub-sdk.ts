@@ -1,4 +1,4 @@
-import { NEXT_PUBLIC_HUB_WS_URL, NEXT_PUBLIC_BINANCE_WS_BASE_URL } from './env'
+import { clientEnv } from '@/config'
 
 export type Listener = (data: unknown) => void
 
@@ -33,13 +33,12 @@ export class HubSocketManager {
     console.log(`[HubSDK] Subscribing to stream: ${stream}`);
     
     // 直接Binanceに接続するかどうかチェック
-    const useDirectBinance =
-      process.env.NEXT_PUBLIC_USE_DIRECT_BINANCE === 'true';
+    const useDirectBinance = process.env.NEXT_PUBLIC_USE_DIRECT_BINANCE === 'true';
       
     if (useDirectBinance) {
       console.log(`[HubSDK] Using direct Binance connection for stream: ${stream}`);
     } else {
-      const normalizedUrl = this.normalizeHubUrl(NEXT_PUBLIC_HUB_WS_URL);
+      const normalizedUrl = this.normalizeHubUrl(clientEnv.HUB_WS_URL);
       console.log(`[HubSDK] Using Hub WebSocket URL: ${normalizedUrl}`);
     }
     
@@ -76,7 +75,7 @@ export class HubSocketManager {
       console.log(`[HubSDK] Attempting direct connection to Binance for stream: ${stream}`);
       
       // Binanceへの直接接続
-      const binanceWsUrl = `${NEXT_PUBLIC_BINANCE_WS_BASE_URL}/stream?streams=${stream}`;
+      const binanceWsUrl = `${clientEnv.BINANCE_WS_URL}/stream?streams=${stream}`;
       console.log(`[HubSDK] Connecting directly to Binance: ${binanceWsUrl}`);
       
       const ws = new WebSocket(binanceWsUrl);
@@ -153,7 +152,7 @@ export class HubSocketManager {
       }
       
       // HubサーバーURLを正規化
-      const normalizedHubUrl = this.normalizeHubUrl(NEXT_PUBLIC_HUB_WS_URL);
+      const normalizedHubUrl = this.normalizeHubUrl(clientEnv.HUB_WS_URL);
       const wsUrl = `${normalizedHubUrl}?stream=${stream}`;
       console.log(`[HubSDK] Connecting to Hub: ${wsUrl}`);
       

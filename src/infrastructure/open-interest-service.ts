@@ -1,16 +1,24 @@
-import { COINGLASS_BASE_URL, COINGLASS_API_KEY } from '@/lib/env';
+import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 import type { OpenInterestData } from "@/types";
+
+/**
+ * オープンインタレストデータサービス
+ * Coinglassからオープンインタレストデータを取得
+ */
+
+const BASE_URL = serverEnv.COINGLASS_BASE_URL;
+const API_KEY = serverEnv.COINGLASS_API_KEY;
 
 /**
  * Coinglass APIからオープンインタレストを取得
  * @param symbol - 例: BTCUSDT
  */
 export async function fetchOpenInterest(symbol: string): Promise<OpenInterestData> {
-  const url = `${COINGLASS_BASE_URL}/futures/open_interest?symbol=${encodeURIComponent(symbol)}`;
+  const url = `${BASE_URL}/futures/open_interest?symbol=${encodeURIComponent(symbol)}`;
   const headers: Record<string, string> = {};
-  if (COINGLASS_API_KEY) {
-    headers.coinglassSecret = COINGLASS_API_KEY;
+  if (API_KEY) {
+    headers.coinglassSecret = API_KEY;
   }
   const res = await fetchWithTimeout(url, { headers });
   if (!res.ok) {

@@ -1,5 +1,5 @@
 // test-schema-comprehensive.mjs
-// Supabase包括的スキーマ整合性テスト
+// Supabase包括的スキーマ整合性テスト（修正版）
 // 作成日: 2025-01-23
 // 機能: 全テーブル、関数、型定義の一致性を包括的に検証
 
@@ -9,6 +9,15 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// 🔧 UUID生成関数（グローバルスコープ）
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 // 🔧 環境変数読み込み
 function loadEnvFile() {
@@ -104,6 +113,9 @@ async function runComprehensiveSchemaTest() {
     // ===========================================
     console.log('🔧 2. SQL関数存在・動作確認');
     
+    // 🔧 有効なテスト用UUIDを作成
+    const validTestUserId = generateUUID();
+    
     const testFunctions = [
       {
         name: 'update_updated_at_column',
@@ -116,13 +128,27 @@ async function runComprehensiveSchemaTest() {
         name: 'match_documents',
         test: async () => {
           try {
+            // 🔧 実際に存在するユーザーIDか、有効なUUIDを使用
+            let testUserId = validTestUserId;
+            
+            // 既存ユーザーを取得して使用
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('id')
+              .limit(1)
+              .single();
+            
+            if (existingUser) {
+              testUserId = existingUser.id;
+            }
+            
             // テスト用の小さなベクトルで関数呼び出し
             const testVector = new Array(1536).fill(0.1);
             const { data, error } = await supabase.rpc('match_documents', {
               query_embedding: testVector,
               match_threshold: 0.5,
               match_count: 1,
-              user_id: 'test-uuid-123'
+              user_id: testUserId
             });
             
             if (error) {
@@ -138,8 +164,21 @@ async function runComprehensiveSchemaTest() {
         name: 'is_admin',
         test: async () => {
           try {
+            // 🔧 実際に存在するユーザーIDか、有効なUUIDを使用
+            let testUserId = validTestUserId;
+            
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('id')
+              .limit(1)
+              .single();
+            
+            if (existingUser) {
+              testUserId = existingUser.id;
+            }
+            
             const { data, error } = await supabase.rpc('is_admin', {
-              user_id: 'test-uuid-123'
+              user_id: testUserId
             });
             
             if (error) {
@@ -155,8 +194,21 @@ async function runComprehensiveSchemaTest() {
         name: 'get_conversation_messages',
         test: async () => {
           try {
+            // 🔧 実際に存在する会話IDか、有効なUUIDを使用
+            let testConversationId = validTestUserId;
+            
+            const { data: existingConv } = await supabase
+              .from('conversations')
+              .select('id')
+              .limit(1)
+              .single();
+            
+            if (existingConv) {
+              testConversationId = existingConv.id;
+            }
+            
             const { data, error } = await supabase.rpc('get_conversation_messages', {
-              conversation_uuid: 'test-uuid-123',
+              conversation_uuid: testConversationId,
               message_limit: 1
             });
             
@@ -221,15 +273,6 @@ async function runComprehensiveSchemaTest() {
     console.log('💬 4. チャット機能統合テスト');
     
     try {
-      // テスト用ユーザー作成（外部キー制約対応）
-      function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0;
-          const v = c == 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      }
-
       const testUserId = generateUUID();
       
       // テスト用ユーザー作成
@@ -294,7 +337,7 @@ async function runComprehensiveSchemaTest() {
     console.log('📈 5. トレーディング機能統合テスト');
     
     try {
-      const testUserId = generateUUID();
+      let testUserId = generateUUID(); // 🔧 スコープ修正
       
       // テスト用ユーザー作成
       const { error: userError } = await supabase

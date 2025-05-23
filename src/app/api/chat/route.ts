@@ -13,6 +13,18 @@ export async function POST(req: NextRequest) {
     
     console.log('💬 メインチャット - 統合エージェントAPI処理:', { message, symbol, timeframe });
     
+    // メッセージの防御的チェック
+    if (!message || typeof message !== 'string') {
+      console.log('❌ メインチャット: 無効なメッセージ受信', { message, type: typeof message });
+      
+      return NextResponse.json({
+        success: false,
+        error: 'メッセージが無効または空です',
+        details: 'チャットメッセージが正しく送信されていません。入力を確認してください。',
+        timestamp: new Date().toISOString()
+      }, { status: 400 });
+    }
+
     // 統合エージェントAPIに委任（自動フォールバック機能付き）
     try {
       // 直接統合エージェントを呼び出し
@@ -90,6 +102,16 @@ export async function POST(req: NextRequest) {
 // UI操作実行関数（レガシーフォールバック用）
 async function executeUIOperation(message: string, parameters: any) {
   try {
+    // メッセージの防御的チェック
+    if (!message || typeof message !== 'string') {
+      console.log('⚠️ executeUIOperation: 無効なメッセージ', { message, type: typeof message });
+      return {
+        success: false,
+        response: 'メッセージが無効または空です',
+        type: 'ui_control'
+      };
+    }
+    
     // 直接Pureエージェントを呼び出し
     const { POST: pureHandler } = await import('../agents/pure/route');
     

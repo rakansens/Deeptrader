@@ -3,7 +3,7 @@
 // src/utils/supabase/server-entry.ts
 // サーバーコンポーネント用のエントリーポイント
 
-import { createServerClient as serverClient } from './server';
+import { createServerSupabase as serverClient } from './server';
 import { createRouteHandlerClient as originalCreateRouteHandlerClient } from './route-handler';
 import { createServiceRoleClient as originalCreateServiceRoleClient } from './service-role';
 import { updateSession as originalUpdateSession } from './middleware';

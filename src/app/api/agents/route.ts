@@ -1,5 +1,6 @@
 // src/app/api/agents/route.ts
 // エージェント統合ルーター - 構造整理によりHTTP_COMMONSエラー回避とフォールバック実装
+// undefinedメッセージの防御的処理追加でTypeErrorを回避
 
 import { NextRequest, NextResponse } from 'next/server';
 import { 
@@ -18,6 +19,26 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
   try {
     const requestData: AgentRequest = await req.json();
     const { message, symbol, timeframe, strategy = 'auto' } = requestData;
+    
+    // メッセージの防御的チェック
+    if (!message || typeof message !== 'string') {
+      logAgentActivity('Unified Router', '無効なメッセージ受信', { 
+        message, 
+        symbol, 
+        timeframe, 
+        strategy 
+      }, false);
+      
+      return NextResponse.json(
+        createErrorResponse(
+          new Error('メッセージが無効または空です'),
+          'メッセージが正しく送信されていません',
+          'api',
+          'fallback'
+        ),
+        { status: 400 }
+      );
+    }
     
     logAgentActivity('Unified Router', '統合ルーター受信', { 
       message: message.substring(0, 100), 

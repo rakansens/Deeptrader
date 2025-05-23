@@ -3,16 +3,17 @@
 // src/utils/supabase/server.ts
 // 最もシンプルなサーバークライアント実装
 
-import { createServerClient as supabaseServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types';
+import { clientEnv } from '@/config';
 
-export async function createServerClient() {
+export async function createServerSupabase() {
   const cookieStore = cookies();
   
-  return supabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  return createServerClient<Database>(
+    clientEnv.SUPABASE_URL,
+    clientEnv.SUPABASE_ANON_KEY,
     {
       cookies: {
         get(name: string) {
