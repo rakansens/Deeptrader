@@ -1,11 +1,18 @@
 import { useRef } from 'react';
 import { DRAWING_MODES, type DrawingMode } from '@/types/chart';
-import { drawFreehand } from '@/hooks/use-freehand-tool';
-import { previewTrendline, drawTrendline } from '@/hooks/use-trendline-tool';
-import { previewFibonacci, drawFibonacci } from '@/hooks/use-fibonacci-tool';
-import { previewHorizontalLine, drawHorizontalLine } from '@/hooks/use-horizontal-line-tool';
-import { previewBox, drawBox } from '@/hooks/use-box-tool';
-import { previewArrow, drawArrow } from '@/hooks/use-arrow-tool';
+import {
+  drawFreehand,
+  previewTrendline,
+  drawTrendline,
+  previewFibonacci,
+  drawFibonacci,
+  previewHorizontalLine,
+  drawHorizontalLine,
+  previewBox,
+  drawBox,
+  previewArrow,
+  drawArrow,
+} from './tools';
 
 export interface UsePointerEventsOptions {
   canvasRef: React.RefObject<HTMLCanvasElement>;
