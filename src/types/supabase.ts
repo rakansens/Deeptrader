@@ -1,5 +1,7 @@
 // src/types/supabase.ts
-// Supabaseデータベース型定義
+// 🔧 Supabase型定義修正（整合性問題解決版）
+// 作成日: 2025-01-23
+// 修正内容: SQL定義との型不一致を解決
 
 /**
  * Supabaseで使用するデータベースの型定義
@@ -528,7 +530,7 @@ export type Database = {
           id: string
           user_id: string
           content: string
-          embedding: unknown | null
+          embedding: number[] | null
           metadata: Json | null
           external_id: string | null
           is_synced: boolean | null
@@ -539,7 +541,7 @@ export type Database = {
           id?: string
           user_id: string
           content: string
-          embedding?: unknown | null
+          embedding?: number[] | null
           metadata?: Json | null
           external_id?: string | null
           is_synced?: boolean | null
@@ -550,7 +552,7 @@ export type Database = {
           id?: string
           user_id?: string
           content?: string
-          embedding?: unknown | null
+          embedding?: number[] | null
           metadata?: Json | null
           external_id?: string | null
           is_synced?: boolean | null
@@ -565,6 +567,7 @@ export type Database = {
           content: string
           embedding: number[]
           metadata: Json | null
+          is_public: boolean | null
           created_at: string | null
         }
         Insert: {
@@ -573,6 +576,7 @@ export type Database = {
           content: string
           embedding: number[]
           metadata?: Json | null
+          is_public?: boolean | null
           created_at?: string | null
         }
         Update: {
@@ -581,6 +585,7 @@ export type Database = {
           content?: string
           embedding?: number[]
           metadata?: Json | null
+          is_public?: boolean | null
           created_at?: string | null
         }
       }
@@ -599,7 +604,7 @@ export type Database = {
       }
       match_documents: {
         Args: {
-          query_embedding: unknown
+          query_embedding: number[]
           match_threshold: number
           match_count: number
           user_id: string
