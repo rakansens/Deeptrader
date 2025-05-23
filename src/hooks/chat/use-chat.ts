@@ -1,3 +1,7 @@
+// src/hooks/chat/use-chat.ts
+// チャット管理フック - AI SDK削除でmessage:undefinedエラーを修正
+// 直接チャットAPIにfetchでメッセージ送信するカスタム実装
+
 "use client";
 
 import { getBrowserSupabase } from "@/lib/supabase-browser";
