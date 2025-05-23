@@ -1,131 +1,116 @@
 // src/mastra/agents/uiControlAgent.ts
-// UIコントロールエージェントの定義（拡張版 - 包括的チャート制御）
-import { Agent } from "@mastra/core/agent";
-import { openai } from "@ai-sdk/openai";
-import { AI_MODEL } from "@/lib/env";
+// 🎨 実際のUI操作による高度なUIコントロールマスター（WebSocket連携版）
+import { Agent } from "@mastra/core";
+import { logger } from "@/lib/logger";
 
-// 環境変数からAIモデルを取得
-const aiModel = AI_MODEL;
-// import { Memory } from "@mastra/memory";
-// import type { MastraMemory } from "@mastra/core";
-// import { SupabaseVector } from "../adapters/SupabaseVector";
-
-// ツールのインポート
-import { toggleIndicatorTool } from "../tools/toggleIndicatorTool";
-import { changeTimeframeTool } from "../tools/changeTimeframeTool";
-
-// 新規UI制御ツール（実際に作成済み）
+// 実際のUI操作ツール（WebSocket連携）をインポート
 import { 
-  toggleGridTool,
-  toggleVolumeTool,
-  changeChartScaleTool,
-  togglePriceLabelTool,
-  zoomChartTool,
-  panChartTool,
-  changeSymbolTool,
-  changeThemeTool,
-  resetChartTool,
-  addDrawingTool,
-  toggleFullscreenTool,
-} from "../tools/ui/basicUITools";
+  realChangeTimeframeTool, 
+  realToggleIndicatorTool, 
+  realChangeThemeTool, 
+  realChangeSymbolTool, 
+  realZoomChartTool 
+} from "@/mastra/tools/ui/realUITools";
 
-// メモリ設定（Mastra v0.7 仕様） - 一時的に無効化
-// const memory = new Memory({
-//   // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
-//   storage: SupabaseVector as any,
-//   options: {
-//     lastMessages: 40,
-//     semanticRecall: {
-//       topK: 5,
-//       messageRange: 2,
-//     },
-//   },
-// }) as unknown as MastraMemory;
+// シミュレーション版ツールもインポート（フォールバック用）
+import { 
+  changeChartTypeTool, 
+  uiActionLoggerTool 
+} from "@/mastra/tools/ui";
 
-/**
- * UIコントロールエージェント（拡張版）
- * チャートパネルのあらゆるUI操作を自然言語で制御できる包括的システム
- */
 export const uiControlAgent = new Agent({
-  name: "UIコントロールマスター",
-  instructions: `あなたはトレーディングプラットフォームの包括的UI制御システムです。
-  ユーザーの自然言語による指示を理解し、チャートパネルのあらゆるUI操作を実行します。
+  name: "UIコントロールマスター（実UI操作版）",
+  instructions: `
+🎨 **UIコントロールマスター** - あなたは実際のUI操作を行う専門エージェントです
 
-  ## 制御可能なUI要素
-  
-  ### チャート表示制御
-  - **タイムフレーム**: 1分足～月足まで全対応 (1m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M)
-  - **スケール**: 自動、リニア、ログスケール
-  - **テーマ**: ライト、ダーク、自動
+## 🎯 主要機能
+WebSocket連携により、実際にユーザーインターフェースを制御します。
 
-  ### インジケーター制御
-  - **トレンド系**: MA、EMA、ボリンジャーバンド、一目均衡表
-  - **オシレーター系**: RSI、MACD、ストキャスティクス、Williams %R
-  - **ボリューム系**: ボリューム、OBV
+### 📊 実際のUI操作ツール（WebSocket連携）
+1. **realChangeTimeframeTool** - チャートのタイムフレーム実変更
+2. **realToggleIndicatorTool** - インジケーター実表示切り替え  
+3. **realChangeThemeTool** - テーマ実変更（ライト/ダーク/自動）
+4. **realChangeSymbolTool** - 取引銘柄実変更
+5. **realZoomChartTool** - チャートズーム実操作
 
-  ### 表示オプション
-  - **グリッド**: 表示/非表示
-  - **ボリューム**: 表示/非表示
-  - **価格ラベル**: 現在価格、高値・安値表示
-  - **フルスクリーン**: 全画面表示切り替え
+### 📝 補助ツール
+- **uiActionLoggerTool** - UI操作履歴管理
+- **changeChartTypeTool** - チャート種類変更（シミュレーション）
 
-  ### チャート操作
-  - **ズーム**: 拡大/縮小、リセット、フィット
-  - **パン**: チャート移動（上下左右）
-  - **描画**: トレンドライン、水平線、垂直線、フィボナッチ、四角形
-  - **リセット**: 全設定、インジケーター、描画、ズームの個別リセット
+## 🔧 操作実行プロセス
+1. 自然言語で操作要求を解析
+2. 適切な実UI操作ツールを選択
+3. WebSocket経由で実際のUI変更を実行
+4. 操作結果をログ記録
+5. 成功/失敗状況を報告
 
-  ### データ制御
-  - **銘柄切り替え**: BTC/USD、ETH/USD、その他アルトコイン
+## 💬 対応可能な自然言語コマンド例
 
-  ## 自然言語理解例
+### 基本操作
+- "4時間足に変更して" → realChangeTimeframeTool(timeframe: "4h")
+- "ダークテーマにして" → realChangeThemeTool(theme: "dark")
+- "ETHUSDTに銘柄変更" → realChangeSymbolTool(symbol: "ETHUSDT")
 
-  ### 基本操作
-  - "チャートを4時間足に変更して" → changeTimeframeTool("4h")
-  - "RSIを表示して" → toggleIndicatorTool("RSI", true)
-  - "グリッドを消して" → toggleGridTool(false)
+### 複合操作
+- "ダークテーマにしてRSIを表示" → 複数ツール実行
+- "1時間足でボリュームインジケーター追加" → 順次実行
 
-  ### 複合操作
-  - "ダークテーマにしてグリッドを消して" → changeThemeTool("dark") + toggleGridTool(false)
-  - "BTCの日足でボリュームを表示" → changeSymbolTool("BTCUSDT") + changeTimeframeTool("1d") + toggleVolumeTool(true)
+### 高度な操作
+- "チャートを拡大して詳細表示" → realZoomChartTool(action: "in")
+- "画面をフィット表示にリセット" → realZoomChartTool(action: "fit")
 
-  ### 高度な操作
-  - "フィボナッチリトレースメントを引いて" → addDrawingTool("fibonacci")
-  - "チャートを拡大して" → zoomChartTool("in")
-  - "フルスクリーンで表示" → toggleFullscreenTool(true)
+## ⚡ WebSocket接続状況の確認
+- 各操作前にWebSocket接続状況を確認
+- 切断時は適切なエラーメッセージを提供
+- 操作成功時は詳細なフィードバックを返却
 
-  ## 応答形式
-  UI操作を実行した際は、以下の情報を含めて応答してください：
-  1. **実行した操作**: 何を変更したか
-  2. **現在の状態**: 変更後のUI状態
-  3. **操作ログ**: 詳細な実行ログ
-  4. **次の提案**: 関連する操作の提案（オプション）
+## 📋 応答形式
+\`\`\`
+✅ **実UI操作完了**
+🔧 実行操作: [操作名]
+📊 変更内容: [詳細]
+🌐 WebSocket状況: [接続クライアント数]
+⏰ 実行時刻: [タイムスタンプ]
+📝 次の推奨操作: [提案があれば]
+\`\`\`
 
-  常にユーザビリティを重視し、分かりやすく迅速な操作を心がけてください。`,
+## 🚨 エラーハンドリング
+- WebSocket切断エラー
+- 不正なパラメータエラー  
+- UI操作実行失敗エラー
 
-  // OpenAI GPT-4o モデルを使用
-  model: openai(aiModel),
-
-  // 拡張されたツール設定
-  tools: {
-    // 既存ツール
-    toggleIndicatorTool,
-    changeTimeframeTool,
-    
-    // 新規UI制御ツール
-    toggleGridTool,
-    toggleVolumeTool,
-    changeChartScaleTool,
-    togglePriceLabelTool,
-    zoomChartTool,
-    panChartTool,
-    changeSymbolTool,
-    changeThemeTool,
-    resetChartTool,
-    addDrawingTool,
-    toggleFullscreenTool,
+常に実際のUI変更を目指し、ユーザーが期待する通りの画面操作を実現してください。
+`,
+  model: {
+    provider: "openai",
+    name: "gpt-4o",
   },
+  tools: [
+    // 実際のUI操作ツール（WebSocket連携）
+    realChangeTimeframeTool,
+    realToggleIndicatorTool, 
+    realChangeThemeTool,
+    realChangeSymbolTool,
+    realZoomChartTool,
+    
+    // 補助ツール
+    uiActionLoggerTool,
+    changeChartTypeTool,
+  ],
+});
 
-  // メモリ設定（一時的に無効化）
-  // memory,
+// エージェント実行ログ
+logger.info("🎨 UIコントロールマスター（実UI操作版）が初期化されました", {
+  toolCount: uiControlAgent.tools.length,
+  realUITools: 5,
+  supportTools: 2,
+  capabilities: [
+    "実際のタイムフレーム変更",
+    "実際のインジケーター切り替え", 
+    "実際のテーマ変更",
+    "実際の銘柄変更",
+    "実際のチャートズーム",
+    "WebSocket連携",
+    "操作履歴管理"
+  ]
 });
