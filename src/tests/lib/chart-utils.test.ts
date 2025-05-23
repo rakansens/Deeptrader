@@ -1,4 +1,4 @@
-import { preprocessLineData, processTimeSeriesData } from '@/lib/chart-utils'
+import { preprocessLineData, processTimeSeriesData } from '@/lib/chart'
 import type { LineData, UTCTimestamp } from 'lightweight-charts'
 
 describe('chart-utils', () => {

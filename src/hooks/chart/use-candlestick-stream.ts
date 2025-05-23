@@ -5,7 +5,7 @@ import {
   UTCTimestamp,
 } from "lightweight-charts";
 import { safeLoadJson, safeSaveJson } from "@/lib/utils";
-import { upsertSeries } from "@/lib/candlestick-utils";
+import { upsertSeries } from "@/lib/chart";
 import { hubSdk } from "@/lib/hub-sdk";
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
 import type { Timeframe, SymbolValue } from "@/constants/chart";

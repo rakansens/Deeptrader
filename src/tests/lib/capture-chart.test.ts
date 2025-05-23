@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { IChartApi } from 'lightweight-charts'
 
 jest.mock('html2canvas', () => ({
@@ -5,7 +6,7 @@ jest.mock('html2canvas', () => ({
   default: jest.fn(() => Promise.resolve(document.createElement('canvas')))
 }))
 
-import { captureChart } from '@/lib/capture-chart'
+import { captureChart } from '@/lib/chart'
 
 interface WindowWithChart extends Window {
   __getChartElement?: () => HTMLElement

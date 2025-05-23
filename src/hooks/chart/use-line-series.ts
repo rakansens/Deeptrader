@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { IChartApi, ISeriesApi, LineData } from 'lightweight-charts'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { preprocessLineData } from '@/lib/chart'
 import { logger } from '@/lib/logger'
 
 interface UseLineSeriesParams {

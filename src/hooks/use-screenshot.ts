@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { captureChart } from "@/lib/capture-chart";
+import { captureChart } from "@/lib/chart";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 

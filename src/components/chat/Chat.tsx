@@ -7,7 +7,7 @@ import ConversationSidebar from "./conversation-sidebar";
 import ChatMessages from "./chat-messages";
 import { useChat } from "@/hooks/chat/use-chat";
 import { cn } from "@/lib/utils";
-import { captureChart } from "@/lib/capture-chart";
+import { captureChart } from "@/lib/chart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { logger } from "@/lib/logger";

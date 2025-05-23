@@ -10,7 +10,7 @@ import {
 import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/chart/use-indicator-chart";
 import useChartTheme from "@/hooks/chart/use-chart-theme";
-import { preprocessLineData, toNumericTime } from "@/lib/chart-utils";
+import { preprocessLineData, toNumericTime } from "@/lib/chart";
 import type { IndicatorSettings } from "@/constants/chart";
 
 interface RsiPanelProps {

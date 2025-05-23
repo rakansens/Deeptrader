@@ -2,7 +2,7 @@ import { useLayoutEffect, useEffect, useRef } from "react";
 import { createChart, CrosshairMode, IChartApi } from "lightweight-charts";
 import useChartTheme from "./use-chart-theme";
 import { logger } from "@/lib/logger";
-import { setActiveChartForCapture } from "@/lib/chart-capture-service";
+import { setActiveChartForCapture } from "@/lib/chart";
 
 /**
  * 🚀 2025-05-22: ResizeObserverの改良

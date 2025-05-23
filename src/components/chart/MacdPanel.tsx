@@ -11,7 +11,7 @@ import {
 import IndicatorPanel from "./IndicatorPanel";
 import { useIndicatorChart } from "@/hooks/chart/use-indicator-chart";
 import useChartTheme from "@/hooks/chart/use-chart-theme";
-import { preprocessLineData, toNumericTime, processTimeSeriesData } from "@/lib/chart-utils";
+import { preprocessLineData, toNumericTime, processTimeSeriesData } from "@/lib/chart";
 import type { IndicatorSettings } from "@/constants/chart";
 
 interface MacdPanelProps {

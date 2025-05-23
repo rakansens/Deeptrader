@@ -7,9 +7,9 @@ import type {
   HistogramData,
   UTCTimestamp
 } from 'lightweight-charts'
-import { processTimeSeriesData } from '@/lib/chart-utils'
+import { processTimeSeriesData } from '@/lib/chart'
 
-jest.mock('@/lib/chart-utils', () => ({
+jest.mock('@/lib/chart', () => ({
   processTimeSeriesData: jest.fn((d) => d),
   toNumericTime: jest.fn((t) => t)
 }))

@@ -1,15 +1,41 @@
+// src/lib/chart/capture.ts
+// チャートキャプチャ機能統合 - Phase 2統合 (capture-chart + chart-capture-service)
+
 import html2canvas from 'html2canvas'
 import type { IChartApi } from 'lightweight-charts'
+import { logger } from '@/lib/logger'
+
+// =============================================================================
+// 🔗 アクティブチャート管理 (旧: chart-capture-service.ts)
+// =============================================================================
+
+let activeChart: IChartApi | null = null;
+let activeChartElement: HTMLElement | null = null;
+
+export const setActiveChartForCapture = (
+  chart: IChartApi | null,
+  element: HTMLElement | null,
+): void => {
+  activeChart = chart;
+  activeChartElement = element;
+};
+
+export const getActiveChartInstanceForCapture = (): IChartApi | null => {
+  return activeChart;
+};
+
+export const getActiveChartElementForCapture = (): HTMLElement | null => {
+  return activeChartElement;
+};
+
+// =============================================================================
+// 📸 チャートキャプチャ機能 (旧: capture-chart.ts)
+// =============================================================================
 
 interface WindowWithChart extends Window {
   __getChartElement?: () => HTMLElement
   __chartInstance?: IChartApi
 }
-import { logger } from '@/lib/logger'
-import {
-  getActiveChartInstanceForCapture,
-  getActiveChartElementForCapture
-} from '@/lib/chart-capture-service'
 
 /**
  * チャートカード要素を取得する
@@ -117,4 +143,4 @@ export async function captureChart(): Promise<string | null> {
 
   logger.error('Chart panel element not found')
   return null
-}
+} 

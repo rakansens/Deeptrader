@@ -1,9 +1,10 @@
+import type { IChartApi } from 'lightweight-charts'
+
 import {
   setActiveChartForCapture,
   getActiveChartInstanceForCapture,
-  getActiveChartElementForCapture,
-} from '@/lib/chart-capture-service';
-import type { IChartApi } from 'lightweight-charts';
+  getActiveChartElementForCapture
+} from '@/lib/chart';
 
 // Mock IChartApi and HTMLElement for testing purposes
 const getMockChartApi = (): IChartApi => {

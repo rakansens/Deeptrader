@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { IChartApi, ISeriesApi, CandlestickData, HistogramData, UTCTimestamp } from 'lightweight-charts'
-import { processTimeSeriesData, toNumericTime } from '@/lib/chart-utils'
+import { processTimeSeriesData, toNumericTime } from '@/lib/chart'
 import { logger } from '@/lib/logger'
 
 // 🛠️ 2025-05-22: シリーズ生成時に破棄済みチャートへアクセスし例外が発生するケースを try/catch で吸収。

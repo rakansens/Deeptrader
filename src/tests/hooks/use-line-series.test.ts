@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import { useLineSeries } from '@/hooks/chart/use-line-series'
-import { preprocessLineData } from '@/lib/chart-utils'
+import { preprocessLineData } from '@/lib/chart'
 import type { IChartApi, ISeriesApi, LineData, UTCTimestamp } from 'lightweight-charts'
 
 jest.mock('@/lib/chart-utils', () => ({

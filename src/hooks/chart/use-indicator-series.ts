@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { IChartApi, ISeriesApi, LineData, DeepPartial, LineWidth } from "lightweight-charts";
 import useLineSeries from "./use-line-series";
-import { preprocessLineData } from '@/lib/chart-utils';
+import { preprocessLineData } from '@/lib/chart';
 
 interface UseIndicatorSeriesParams {
   chart: IChartApi | null;

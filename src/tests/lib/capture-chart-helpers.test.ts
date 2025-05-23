@@ -1,5 +1,5 @@
 import type { IChartApi } from 'lightweight-charts'
-import { getChartCardElement, captureViaHtml2Canvas, captureViaNativeApi } from '@/lib/capture-chart'
+import { getChartCardElement, captureViaHtml2Canvas, captureViaNativeApi } from '@/lib/chart'
 
 interface WindowWithChart extends Window {
   __getChartElement?: () => HTMLElement
