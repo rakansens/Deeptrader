@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { StreamingTextResponse } from "ai";
 import { orchestratorAgent } from "@/mastra/agents/orchestratorAgent";
 import { logger } from "@/lib/logger";
 import type { Message } from "@/types";
 import { createRouteHandlerClient } from "@/utils/supabase/route-handler";
 
 /**
- * Chat API (Mastra version - 純粋ストリーミング版)
- * /chatページで成功している実装と同じ方式でMastraストリーミングを直接返す
+ * Chat API (Mastra version - AI SDK真ストリーミング版)
+ * MastraのbaseStreamをAI SDKのStreamingTextResponseで真のストリーミングとして提供
  */
 export const runtime = "nodejs";
 
@@ -45,21 +46,21 @@ export async function POST(request: Request) {
 
     logger.debug("⇢ Transcript length:", transcript.length);
 
-    // --- OrchestratorAgent へ送信（直接ストリーミング版）---
+    // --- OrchestratorAgent へ送信（AI SDK真ストリーミング版）---
     logger.info("🔍 Mastraエージェント実行中...");
     
     try {
       const result = await orchestratorAgent.stream(transcript);
       logger.info("🔍 Mastraエージェントの結果タイプ:", typeof result);
       
-      // baseStreamを検索してストリーミング
+      // baseStreamを検索してAI SDKでストリーミング
       if (result && typeof result === 'object' && 'baseStream' in result) {
-        logger.info("✅ baseStreamを発見、ストリーミング変換を開始");
+        logger.info("✅ baseStreamを発見、AI SDKストリーミング変換を開始");
         const baseStream = (result as any).baseStream;
         
         if (baseStream instanceof ReadableStream) {
-          // MastraのオブジェクトストリームをJSONテキストストリームに変換
-          const responseStream = new ReadableStream({
+          // MastraのオブジェクトストリームをAI SDK互換のテキストストリームに変換
+          const textStream = new ReadableStream({
             async start(controller) {
               try {
                 const reader = baseStream.getReader();
@@ -72,36 +73,35 @@ export async function POST(request: Request) {
                     break;
                   }
                   
-                  // Mastraオブジェクトを文字列に変換
-                  let textToSend: string;
+                  // Mastraオブジェクトからテキストを抽出
+                  let textToStream: string = "";
+                  
                   if (typeof value === 'string') {
-                    textToSend = value;
+                    textToStream = value;
                   } else if (value && typeof value === 'object') {
-                    // オブジェクトの場合はJSON文字列として送信
-                    textToSend = JSON.stringify(value);
+                    // MastraのJSONオブジェクトからテキストデルタを抽出
+                    if (value.part?.type === "text-delta" && value.part.textDelta) {
+                      textToStream = value.part.textDelta;
+                    }
                   } else {
-                    textToSend = String(value);
+                    textToStream = String(value);
                   }
                   
-                  // 改行を追加してJSON Linesフォーマットに
-                  if (textToSend) {
-                    controller.enqueue(new TextEncoder().encode(textToSend + '\n'));
+                  // テキストが存在する場合のみストリーミング
+                  if (textToStream) {
+                    const encoder = new TextEncoder();
+                    controller.enqueue(encoder.encode(textToStream));
                   }
                 }
               } catch (error) {
-                logger.error("ストリーム変換エラー:", error);
+                logger.error("AI SDKストリーム変換エラー:", error);
                 controller.error(error);
               }
             }
           });
           
-          // プレーンテキストとしてストリーミングレスポンスを返す（/chatページと同じ）
-          return new Response(responseStream, {
-            headers: {
-              'Content-Type': 'text/plain; charset=utf-8',
-              'Transfer-Encoding': 'chunked',
-            },
-          });
+          // AI SDKのStreamingTextResponseを使用
+          return new StreamingTextResponse(textStream);
         } else {
           logger.warn("❌ baseStreamがReadableStreamではありません:", typeof baseStream);
         }
