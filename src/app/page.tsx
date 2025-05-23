@@ -1,3 +1,7 @@
+// src/app/page.tsx 
+// メインページコンポーネント - Socket.IOクライアント追加でUI操作エージェント連携
+// サーバーからのUI操作イベントを受信してWindowイベントに変換
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -113,6 +117,57 @@ export default function Home() {
       setDrawingColor(savedColor);
     }
 
+    // Socket.IOクライアント接続
+    let socket: any = null;
+    const connectSocketIO = async () => {
+      try {
+        const { io } = await import('socket.io-client');
+        socket = io('http://127.0.0.1:8080', {
+          transports: ['polling', 'websocket'],
+          timeout: 10000,
+        });
+
+        socket.on('connect', () => {
+          console.log('✅ Socket.IOクライアント接続成功:', socket.id);
+        });
+
+        socket.on('ui_operation_from_api', (data: any) => {
+          console.log('📡 Socket.IOからUI操作受信:', data);
+          
+          // サーバーからのUI操作をWindowイベントに変換
+          if (data.operation === 'change_timeframe' && data.payload?.timeframe) {
+            window.dispatchEvent(new CustomEvent('timeframeChange', {
+              detail: { timeframe: data.payload.timeframe }
+            }));
+          } else if (data.operation === 'change_symbol' && data.payload?.symbol) {
+            window.dispatchEvent(new CustomEvent('symbolChange', {
+              detail: { symbol: data.payload.symbol }
+            }));
+          } else if (data.operation === 'toggle_indicator' && data.payload?.indicator) {
+            window.dispatchEvent(new CustomEvent('indicatorToggle', {
+              detail: { 
+                indicator: data.payload.indicator,
+                enabled: data.payload.enabled
+              }
+            }));
+          }
+        });
+
+        socket.on('disconnect', (reason: string) => {
+          console.log('❌ Socket.IOクライアント切断:', reason);
+        });
+
+        socket.on('connect_error', (error: any) => {
+          console.log('⚠️ Socket.IO接続エラー:', error.message);
+        });
+
+      } catch (error) {
+        console.log('⚠️ Socket.IO初期化エラー:', error);
+      }
+    };
+
+    connectSocketIO();
+
     // WebSocketからのUI操作イベントリスナー追加
     const handleWebSocketTimeframeChange = (event: any) => {
       const { timeframe } = event.detail;
@@ -152,6 +207,11 @@ export default function Home() {
       window.removeEventListener('timeframeChange', handleWebSocketTimeframeChange);
       window.removeEventListener('indicatorToggle', handleWebSocketIndicatorToggle);
       window.removeEventListener('symbolChange', handleWebSocketSymbolChange);
+      
+      // Socket.IO接続クリーンアップ
+      if (socket) {
+        socket.disconnect();
+      }
     };
   }, []); // 空の依存配列
 
