@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import { StreamingTextResponse } from "ai";
 import { orchestratorAgent } from "@/mastra/agents/orchestratorAgent";
 import { logger } from "@/lib/logger";
 import type { Message } from "@/types";
 import { createRouteHandlerClient } from "@/utils/supabase/route-handler";
 
 /**
- * Chat API (Mastra version - ストリーム変換修正版)
- * すべてのチャットメッセージを Mastra の OrchestratorAgent に委譲する。
- *
- * 現時点で Mastra は画像メッセージを直接扱えないため、
- * 画像が含まれる場合は `(画像メッセージ: [Image omitted])` へ置き換えて送信する。
+ * Chat API (Mastra version - 純粋ストリーミング版)
+ * /chatページで成功している実装と同じ方式でMastraストリーミングを直接返す
  */
 export const runtime = "nodejs";
 
@@ -22,8 +18,6 @@ export async function POST(request: Request) {
     
     if (!session) {
       logger.warn("認証されていないユーザーからのリクエスト");
-      // 本番環境では401を返すべきかもしれませんが、デモ用に許可します
-      // return NextResponse.json({ error: "未認証" }, { status: 401 });
     }
 
     const { messages }: { messages: Message[] } = await request.json();
@@ -51,25 +45,24 @@ export async function POST(request: Request) {
 
     logger.debug("⇢ Transcript length:", transcript.length);
 
-    // --- OrchestratorAgent へ送信（ストリーム変換修正版）---
+    // --- OrchestratorAgent へ送信（直接ストリーミング版）---
     logger.info("🔍 Mastraエージェント実行中...");
     
     try {
       const result = await orchestratorAgent.stream(transcript);
       logger.info("🔍 Mastraエージェントの結果タイプ:", typeof result);
       
-      // DefaultStreamTextResultからbaseStreamを取得
+      // baseStreamを検索してストリーミング
       if (result && typeof result === 'object' && 'baseStream' in result) {
         logger.info("✅ baseStreamを発見、ストリーミング変換を開始");
         const baseStream = (result as any).baseStream;
         
         if (baseStream instanceof ReadableStream) {
-          // MastraのObjectストリームを文字列ストリームに変換
-          const textStream = new ReadableStream({
+          // MastraのオブジェクトストリームをJSONテキストストリームに変換
+          const responseStream = new ReadableStream({
             async start(controller) {
               try {
                 const reader = baseStream.getReader();
-                const decoder = new TextDecoder();
                 
                 while (true) {
                   const { done, value } = await reader.read();
@@ -79,22 +72,20 @@ export async function POST(request: Request) {
                     break;
                   }
                   
-                  // MastraのObjectを文字列に変換
-                  let textChunk: string;
+                  // Mastraオブジェクトを文字列に変換
+                  let textToSend: string;
                   if (typeof value === 'string') {
-                    textChunk = value;
+                    textToSend = value;
                   } else if (value && typeof value === 'object') {
-                    // オブジェクトの場合、テキスト部分を抽出
-                    textChunk = value.text || value.content || value.delta || JSON.stringify(value);
-                  } else if (value instanceof Uint8Array) {
-                    textChunk = decoder.decode(value, { stream: true });
+                    // オブジェクトの場合はJSON文字列として送信
+                    textToSend = JSON.stringify(value);
                   } else {
-                    textChunk = String(value);
+                    textToSend = String(value);
                   }
                   
-                  // 文字列をUint8Arrayに変換してエンキュー
-                  if (textChunk) {
-                    controller.enqueue(new TextEncoder().encode(textChunk));
+                  // 改行を追加してJSON Linesフォーマットに
+                  if (textToSend) {
+                    controller.enqueue(new TextEncoder().encode(textToSend + '\n'));
                   }
                 }
               } catch (error) {
@@ -104,7 +95,13 @@ export async function POST(request: Request) {
             }
           });
           
-          return new StreamingTextResponse(textStream);
+          // プレーンテキストとしてストリーミングレスポンスを返す（/chatページと同じ）
+          return new Response(responseStream, {
+            headers: {
+              'Content-Type': 'text/plain; charset=utf-8',
+              'Transfer-Encoding': 'chunked',
+            },
+          });
         } else {
           logger.warn("❌ baseStreamがReadableStreamではありません:", typeof baseStream);
         }
