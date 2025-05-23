@@ -163,17 +163,25 @@ export default function MacdPanel({
     
     console.log('MACD: 色と線幅を更新:', { macdColor, lineWidth });
     
-    // MACDシリーズのスタイルを更新
-    macdRef.current.applyOptions({
-      lineWidth: lineWidth as any,
-      color: macdColor
-    });
-    
-    // シグナルシリーズのスタイルを更新
-    signalRef.current.applyOptions({
-      lineWidth: lineWidth as any,
-      color: "#FF6D00" // シグナル線の色は固定
-    });
+    // MACDシリーズのスタイルを更新（安全性チェック追加）
+    try {
+      if (macdRef.current && typeof macdRef.current.applyOptions === 'function') {
+        macdRef.current.applyOptions({
+          lineWidth: lineWidth as any,
+          color: macdColor
+        });
+      }
+      
+      // シグナルシリーズのスタイルを更新（安全性チェック追加）
+      if (signalRef.current && typeof signalRef.current.applyOptions === 'function') {
+        signalRef.current.applyOptions({
+          lineWidth: lineWidth as any,
+          color: "#FF6D00" // シグナル線の色は固定
+        });
+      }
+    } catch (error) {
+      console.warn('MACD applyOptions failed:', error);
+    }
   }, [lineWidth, macdColor]);
 
   return (

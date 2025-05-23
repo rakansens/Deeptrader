@@ -1,15 +1,16 @@
 // src/mastra/agents/tradingAgent.ts
 // トレーディングアドバイザーエージェントの定義（MASTRA v0.10 ベストプラクティス準拠）
+// 更新日: 2025-01-23 - 既存Supabaseテーブル統合版に対応
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 import { z } from "zod";
 
-// 🔧 MASTRAメモリ機能を復活
+// 🔧 MASTRAメモリ機能を復活（既存テーブル統合版）
 import { Memory } from "@mastra/memory";
 import type { MastraMemory } from "@mastra/core";
 import { TIMEFRAMES, type Timeframe } from "@/constants/chart";
-import SupabaseVectorStorage from "../adapters/SupabaseVector";
+import SupabaseVectorIntegrated from "../adapters/SupabaseVectorIntegrated";
 
 // ツールのインポート
 import { chartAnalysisTool } from "../tools/chartAnalysisTool";
@@ -20,15 +21,15 @@ import { entrySuggestionTool } from "../tools/entrySuggestionTool";
 // 使用するAIモデルを環境変数から取得
 const aiModel = AI_MODEL;
 
-// 🚀 メモリ設定（MASTRA v0.10 ベストプラクティス完全版）
+// 🚀 メモリ設定（既存Supabaseテーブル統合版）
 const memory = new Memory({
-  storage: new SupabaseVectorStorage({
+  storage: new SupabaseVectorIntegrated({
     lastMessages: 40,
     semanticRecall: {
       topK: 5,
       messageRange: 2,
     },
-  }) as any, // 完全SupabaseVectorストレージ使用
+  }) as any, // 既存memoriesテーブル活用統合版
   options: {
     lastMessages: 40, // 直近40メッセージを保持
     semanticRecall: {
@@ -68,7 +69,7 @@ export const tradingStrategySchema = z.object({
  * 市場分析、チャートパターンの解釈、トレーディング戦略の提案を行います
  * 
  * MASTRA v0.10 ベストプラクティス準拠:
- * - Memory機能でコンテキスト保持
+ * - Memory機能でコンテキスト保持（既存Supabaseテーブル活用）
  * - 構造化されたツール定義
  * - 詳細なシステムプロンプト
  * - Zodスキーマによる型安全性
@@ -131,6 +132,6 @@ export const tradingAgent = new Agent({
     entrySuggestionTool,
   },
 
-  // 🚀 メモリ設定を復活（MASTRAベストプラクティス）
+  // 🚀 メモリ設定を復活（既存Supabaseテーブル統合版）
   memory: memory,
 });

@@ -144,11 +144,17 @@ export default function RsiPanel({
     
     console.log('RSI: 色と線幅を更新:', { color, lineWidth });
     
-    // RSIシリーズのスタイルを更新
-    seriesRef.current.applyOptions({
-      lineWidth: lineWidth as any,
-      color
-    });
+    // RSIシリーズのスタイルを更新（安全性チェック追加）
+    try {
+      if (seriesRef.current && typeof seriesRef.current.applyOptions === 'function') {
+        seriesRef.current.applyOptions({
+          lineWidth: lineWidth as any,
+          color
+        });
+      }
+    } catch (error) {
+      console.warn('RSI applyOptions failed:', error);
+    }
   }, [lineWidth, color]);
 
   return (

@@ -1,9 +1,15 @@
 // src/mastra/agents/uiControlAgent.ts
 // 🎨 実際のUI操作による高度なUIコントロールマスター（WebSocket連携版）
-import { Agent } from "@mastra/core";
+// 更新日: 2025-01-23 - MASTRA v0.10ベストプラクティス準拠 + 既存Supabaseテーブル統合版対応
+import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 import { logger } from "@/lib/logger";
+
+// 🔧 MASTRAメモリ機能を復活（既存テーブル統合版）
+import { Memory } from "@mastra/memory";
+import type { MastraMemory } from "@mastra/core";
+import SupabaseVectorIntegrated from "../adapters/SupabaseVectorIntegrated";
 
 // 実際のUI操作ツール（WebSocket連携）をインポート
 import { 
@@ -23,6 +29,33 @@ import {
 // 環境変数からAIモデルを取得
 const aiModel = AI_MODEL;
 
+// 🚀 メモリ設定（既存Supabaseテーブル統合版）
+const memory = new Memory({
+  storage: new SupabaseVectorIntegrated({
+    lastMessages: 30, // UI操作は頻繁なので少し短めに設定
+    semanticRecall: {
+      topK: 3,
+      messageRange: 1,
+    },
+  }) as any, // 既存memoriesテーブル活用統合版
+  options: {
+    lastMessages: 30, // 直近30メッセージを保持
+    semanticRecall: {
+      topK: 3, // 類似メッセージ上位3件を取得
+      messageRange: 1, // 前後1メッセージを含める
+    },
+  },
+}) as unknown as MastraMemory;
+
+/**
+ * UIコントロールマスター（実UI操作版）
+ * WebSocket連携により実際のUIを制御する専門エージェント
+ * 
+ * MASTRA v0.10 ベストプラクティス準拠:
+ * - Memory機能でコンテキスト保持（既存Supabaseテーブル活用）
+ * - 構造化されたツール定義
+ * - 詳細なシステムプロンプト
+ */
 export const uiControlAgent = new Agent({
   name: "UIコントロールマスター（実UI操作版）",
   instructions: `
@@ -44,10 +77,11 @@ WebSocket連携により、実際にユーザーインターフェースを制�
 
 ## 🔧 操作実行プロセス
 1. 自然言語で操作要求を解析
-2. 適切な実UI操作ツールを選択
-3. WebSocket経由で実際のUI変更を実行
-4. 操作結果をログ記録
-5. 成功/失敗状況を報告
+2. 過去の操作履歴を参考にして最適な操作を判断
+3. 適切な実UI操作ツールを選択
+4. WebSocket経由で実際のUI変更を実行
+5. 操作結果をログ記録
+6. 成功/失敗状況を報告
 
 ## 💬 対応可能な自然言語コマンド例
 
@@ -69,6 +103,11 @@ WebSocket連携により、実際にユーザーインターフェースを制�
 - 切断時は適切なエラーメッセージを提供
 - 操作成功時は詳細なフィードバックを返却
 
+## 🧠 メモリ活用
+- 過去のUI操作設定を記憶
+- ユーザーの好みに合わせた操作提案
+- 操作パターンの学習と最適化
+
 ## 📋 応答形式
 \`\`\`
 ✅ **実UI操作完了**
@@ -76,6 +115,7 @@ WebSocket連携により、実際にユーザーインターフェースを制�
 📊 変更内容: [詳細]
 🌐 WebSocket状況: [接続クライアント数]
 ⏰ 実行時刻: [タイムスタンプ]
+🧠 関連する過去操作: [メモリから参照した情報]
 📝 次の推奨操作: [提案があれば]
 \`\`\`
 
@@ -85,8 +125,13 @@ WebSocket連携により、実際にユーザーインターフェースを制�
 - UI操作実行失敗エラー
 
 常に実際のUI変更を目指し、ユーザーが期待する通りの画面操作を実現してください。
+過去の操作履歴を活用して、一貫性のあるUI体験を提供してください。
 `,
+
+  // OpenAI GPT-4 モデルを使用
   model: openai(aiModel),
+
+  // ツール設定
   tools: {
     // 実際のUI操作ツール（WebSocket連携）
     realChangeTimeframeTool,
@@ -99,6 +144,9 @@ WebSocket連携により、実際にユーザーインターフェースを制�
     uiActionLoggerTool,
     changeChartTypeTool,
   },
+
+  // 🚀 メモリ設定を復活（既存Supabaseテーブル統合版）
+  memory: memory,
 });
 
 // エージェント実行ログ
@@ -106,6 +154,7 @@ logger.info("🎨 UIコントロールマスター（実UI操作版）が初期�
   toolCount: Object.keys(uiControlAgent.tools).length,
   realUITools: 5,
   supportTools: 2,
+  memoryEnabled: true, // メモリ機能追加
   capabilities: [
     "実際のタイムフレーム変更",
     "実際のインジケーター切り替え", 
@@ -113,6 +162,7 @@ logger.info("🎨 UIコントロールマスター（実UI操作版）が初期�
     "実際の銘柄変更",
     "実際のチャートズーム",
     "WebSocket連携",
-    "操作履歴管理"
+    "操作履歴管理",
+    "メモリ学習機能" // 新機能追加
   ]
 });
