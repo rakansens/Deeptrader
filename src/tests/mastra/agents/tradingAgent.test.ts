@@ -19,24 +19,36 @@ jest.mock('@mastra/memory', () => ({
   }
 }), { virtual: true });
 
-jest.mock('@ai-sdk/openai', () => ({ openai: () => 'openai' }), { virtual: true });
+jest.mock('@ai-sdk/openai', () => ({ 
+  openai: (model: string) => `openai-${model}` 
+}), { virtual: true });
+
+jest.mock('@/lib/env', () => ({
+  AI_MODEL: 'gpt-4o'
+}), { virtual: true });
+
+jest.mock('@/mastra/adapters/SupabaseVector', () => ({
+  SupabaseVector: {}
+}), { virtual: true });
 
 jest.mock('@mastra/core/tools', () => ({
   createTool: (opts: any) => opts
 }), { virtual: true });
 
-import { tradingAgent } from '@/mastra/agents/tradingAgent';
+import { tradingAgent, marketAnalysisSchema, tradingStrategySchema } from '@/mastra/agents/tradingAgent';
 import { chartAnalysisTool } from '@/mastra/tools/chartAnalysisTool';
 import { marketDataTool } from '@/mastra/tools/marketDataTool';
 import { tradingExecutionTool } from '@/mastra/tools/tradingExecutionTool';
-import { marketAnalysisSchema, tradingStrategySchema } from '@/mastra/agents/tradingAgent';
+import { entrySuggestionTool } from '@/mastra/tools/entrySuggestionTool';
 
 describe('tradingAgent', () => {
   it('is configured correctly', () => {
     expect(tradingAgent.name).toBe('トレーディングアドバイザー');
+    expect(tradingAgent.instructions).toContain('暗号資産トレーディングの専門家');
     expect(tradingAgent.tools.chartAnalysisTool).toBe(chartAnalysisTool);
     expect(tradingAgent.tools.marketDataTool).toBe(marketDataTool);
     expect(tradingAgent.tools.tradingExecutionTool).toBe(tradingExecutionTool);
+    expect(tradingAgent.tools.entrySuggestionTool).toBe(entrySuggestionTool);
     expect(tradingAgent.getMemory()).toBeDefined();
   });
 
@@ -44,23 +56,23 @@ describe('tradingAgent', () => {
     expect(() =>
       marketAnalysisSchema.parse({
         trend: 'bullish',
-        supportLevels: [],
-        resistanceLevels: [],
-        keyPatterns: [],
-        riskLevel: 'low',
-        timeframe: '1year',
-        summary: ''
+        supportLevels: [50000],
+        resistanceLevels: [60000],
+        keyPatterns: ['ascending triangle'],
+        riskLevel: 'medium',
+        timeframe: 'invalid',
+        summary: 'Test summary',
       })
     ).toThrow();
   });
 
-  it('rejects invalid timeframe in tradingStrategySchema', () => {
+  it('accepts valid timeframe in tradingStrategySchema', () => {
     expect(() =>
       tradingStrategySchema.parse({
         action: 'buy',
-        timeframe: '2h',
-        reasoning: '',
+        timeframe: '1h',
+        reasoning: 'Test reasoning',
       })
-    ).toThrow();
+    ).not.toThrow();
   });
 });

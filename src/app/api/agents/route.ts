@@ -81,21 +81,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
   }
 }
 
-// MASTRAエージェント実行
+// MASTRAエージェント実行（直接関数呼び出し）
 async function executeMASTRAAgent(requestData: AgentRequest): Promise<NextResponse<AgentResponse>> {
   try {
-    const response = await fetch('http://localhost:3000/api/agents/mastra', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
-    });
+    // 直接MASTRAエージェントモジュールをインポートして実行
+    const { POST: mastraHandler } = await import('./mastra/route');
     
-    if (!response.ok) {
-      throw new Error(`MASTRA Agent HTTP ${response.status}: ${response.statusText}`);
-    }
+    // リクエストオブジェクトを模擬
+    const mockRequest = {
+      json: async () => requestData
+    } as NextRequest;
     
-    const data = await response.json();
-    return NextResponse.json(data);
+    return await mastraHandler(mockRequest);
     
   } catch (error) {
     logAgentActivity('MASTRA Executor', 'MASTRAエージェント実行エラー', error, false);
@@ -103,21 +100,18 @@ async function executeMASTRAAgent(requestData: AgentRequest): Promise<NextRespon
   }
 }
 
-// Pureエージェント実行
+// Pureエージェント実行（直接関数呼び出し）
 async function executePureAgent(requestData: AgentRequest): Promise<NextResponse<AgentResponse>> {
   try {
-    const response = await fetch('http://localhost:3000/api/agents/pure', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
-    });
+    // 直接Pureエージェントモジュールをインポートして実行
+    const { POST: pureHandler } = await import('./pure/route');
     
-    if (!response.ok) {
-      throw new Error(`Pure Agent HTTP ${response.status}: ${response.statusText}`);
-    }
+    // リクエストオブジェクトを模擬
+    const mockRequest = {
+      json: async () => requestData
+    } as NextRequest;
     
-    const data = await response.json();
-    return NextResponse.json(data);
+    return await pureHandler(mockRequest);
     
   } catch (error) {
     logAgentActivity('Pure Executor', 'Pureエージェント実行エラー', error, false);

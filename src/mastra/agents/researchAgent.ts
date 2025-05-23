@@ -1,12 +1,13 @@
 // src/mastra/agents/researchAgent.ts
-// 市場リサーチエージェントの定義
+// 市場リサーチエージェントの定義（MASTRA v0.10 ベストプラクティス準拠）
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 
-// import { Memory } from "@mastra/memory";
-// import type { MastraMemory } from "@mastra/core";
-// import { SupabaseVector } from "../adapters/SupabaseVector";
+// 🔧 MASTRAメモリ機能を復活
+import { Memory } from "@mastra/memory";
+import type { MastraMemory } from "@mastra/core";
+import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { newsAnalysisTool } from "../tools/newsAnalysisTool";
@@ -15,26 +16,29 @@ import { marketSentimentTool } from "../tools/marketSentimentTool";
 import { evaluationTool } from "../tools/evaluationTool";
 import { openInterestTool } from "../tools/openInterestTool";
 
-// ──────────── メモリ設定（Mastra v0.7 API） - 一時的に無効化 ────────────
-// const memory = new Memory({
-//   // FIXME: SupabaseVector が MastraStorage を完全実装していないので any キャスト
-//   storage: SupabaseVector as any,
-//   options: {
-//     lastMessages: 40,
-//     semanticRecall: {
-//       topK: 5,
-//       messageRange: 2,
-//     },
-//   },
-// }) as unknown as MastraMemory;
-// ───────────────────────────────────────────────────────
-
 // 環境変数から AI モデルを取得
 const aiModel = AI_MODEL;
+
+// 🚀 メモリ設定（MASTRA v0.10 ベストプラクティス）
+const memory = new Memory({
+  storage: SupabaseVector as any, // SupabaseVectorアダプター使用（シングルトン）
+  options: {
+    lastMessages: 40, // 直近40メッセージを保持
+    semanticRecall: {
+      topK: 5, // 類似メッセージ上位5件を取得
+      messageRange: 2, // 前後2メッセージを含める
+    },
+  },
+}) as unknown as MastraMemory;
 
 /**
  * 市場リサーチエージェント
  * ニュース分析、オンチェーンデータ、市場センチメントの調査を行います
+ * 
+ * MASTRA v0.10 ベストプラクティス準拠:
+ * - Memory機能でコンテキスト保持
+ * - 構造化されたツール定義
+ * - 詳細なシステムプロンプト
  */
 export const researchAgent = new Agent({
   name: "市場リサーチスペシャリスト",
@@ -60,6 +64,7 @@ export const researchAgent = new Agent({
   - 複雑なデータやトレンドを理解しやすく説明する
   - 結果にはニュースソース、オンチェーン指標、センチメントスコアを
     箇条書きまたは小さなJSONオブジェクトでまとめる
+  - 過去の調査結果を参考にして一貫性のある分析を提供する
 
   注意: あなたの分析は教育目的のみであり、投資アドバイスではありません。`,
 
@@ -75,6 +80,6 @@ export const researchAgent = new Agent({
     openInterestTool,
   },
 
-  // メモリ設定
-  // memory,
+  // 🚀 メモリ設定を復活（MASTRAベストプラクティス）
+  memory: memory,
 });

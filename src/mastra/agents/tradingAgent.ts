@@ -1,17 +1,15 @@
 // src/mastra/agents/tradingAgent.ts
-// トレーディングアドバイザーエージェントの定義
+// トレーディングアドバイザーエージェントの定義（MASTRA v0.10 ベストプラクティス準拠）
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 import { z } from "zod";
 
-// 使用するAIモデルを環境変数から取得
-const aiModel = AI_MODEL;
-// import { Memory } from "@mastra/memory";
-// import type { MastraMemory } from "@mastra/core";
-// import { z } from "zod";
+// 🔧 MASTRAメモリ機能を復活
+import { Memory } from "@mastra/memory";
+import type { MastraMemory } from "@mastra/core";
 import { TIMEFRAMES, type Timeframe } from "@/constants/chart";
-// import { SupabaseVector } from "../adapters/SupabaseVector";
+import SupabaseVectorStorage from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { chartAnalysisTool } from "../tools/chartAnalysisTool";
@@ -19,18 +17,26 @@ import { marketDataTool } from "../tools/marketDataTool";
 import { tradingExecutionTool } from "../tools/tradingExecutionTool";
 import { entrySuggestionTool } from "../tools/entrySuggestionTool";
 
-// メモリ設定（Mastra v0.7 仕様） - 一時的に無効化
-// const memory = new Memory({
-//   // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
-//   storage: SupabaseVector as any,
-//   options: {
-//     lastMessages: 40,
-//     semanticRecall: {
-//       topK: 5,
-//       messageRange: 2,
-//     },
-//   },
-// }) as unknown as MastraMemory;
+// 使用するAIモデルを環境変数から取得
+const aiModel = AI_MODEL;
+
+// 🚀 メモリ設定（MASTRA v0.10 ベストプラクティス完全版）
+const memory = new Memory({
+  storage: new SupabaseVectorStorage({
+    lastMessages: 40,
+    semanticRecall: {
+      topK: 5,
+      messageRange: 2,
+    },
+  }) as any, // 完全SupabaseVectorストレージ使用
+  options: {
+    lastMessages: 40, // 直近40メッセージを保持
+    semanticRecall: {
+      topK: 5, // 類似メッセージ上位5件を取得
+      messageRange: 2, // 前後2メッセージを含める
+    },
+  },
+}) as unknown as MastraMemory;
 
 // TIMEFRAMESをZodのenumで使用できるように変換
 const timeframeEnum = z.enum(TIMEFRAMES as [Timeframe, ...Timeframe[]]);
@@ -60,6 +66,12 @@ export const tradingStrategySchema = z.object({
 /**
  * トレーディングアドバイザーエージェント
  * 市場分析、チャートパターンの解釈、トレーディング戦略の提案を行います
+ * 
+ * MASTRA v0.10 ベストプラクティス準拠:
+ * - Memory機能でコンテキスト保持
+ * - 構造化されたツール定義
+ * - 詳細なシステムプロンプト
+ * - Zodスキーマによる型安全性
  */
 export const tradingAgent = new Agent({
   name: "トレーディングアドバイザー",
@@ -83,6 +95,7 @@ export const tradingAgent = new Agent({
   - すべての分析に根拠を示す
   - ユーザーの経験レベルに合わせて説明の詳細度を調整する
   - 確実でない情報には適切な注釈をつける
+  - 過去の会話履歴を参考にして一貫性のあるアドバイスを提供する
   
   注意: 財務アドバイスではなく、情報提供と教育目的のツールとしてのみ機能します。
   
@@ -118,6 +131,6 @@ export const tradingAgent = new Agent({
     entrySuggestionTool,
   },
 
-  // メモリ設定
-  // memory: memory,
+  // 🚀 メモリ設定を復活（MASTRAベストプラクティス）
+  memory: memory,
 });

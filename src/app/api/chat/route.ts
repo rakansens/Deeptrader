@@ -14,41 +14,47 @@ export async function POST(req: NextRequest) {
     console.log('💬 メインチャット - 統合エージェントAPI処理:', { message, symbol, timeframe });
     
     // 統合エージェントAPIに委任（自動フォールバック機能付き）
-    const agentResponse = await fetch('http://localhost:3000/api/agents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message,
-        symbol,
-        timeframe,
-        strategy: 'auto' // 自動選択でMASTRA→Pureフォールバック
-      })
-    });
-
-    if (agentResponse.ok) {
+    try {
+      // 直接統合エージェントを呼び出し
+      const { POST: agentsHandler } = await import('../agents/route');
+      
+      const mockRequest = {
+        json: async () => ({
+          message,
+          symbol,
+          timeframe,
+          strategy: 'auto' // 自動選択でMASTRA→Pureフォールバック
+        })
+      } as NextRequest;
+      
+      const agentResponse = await agentsHandler(mockRequest);
       const agentData = await agentResponse.json();
       
-      console.log('🎯 統合エージェント応答:', agentData);
-      
-      return NextResponse.json({
-        success: true,
-        orchestrator: {
-          targetAgent: 'unified',
-          reasoning: `統合エージェントAPI経由で${agentData.mode}モード実行`,
-          action: 'unified_agent_delegation',
-          mastraUsed: agentData.mode === 'mastra'
-        },
-        execution: {
-          success: agentData.success,
+      if (agentData.success) {
+        console.log('🎯 統合エージェント応答:', agentData);
+        
+        return NextResponse.json({
+          success: true,
+          orchestrator: {
+            targetAgent: 'unified',
+            reasoning: `統合エージェントAPI経由で${agentData.mode}モード実行`,
+            action: 'unified_agent_delegation',
+            mastraUsed: agentData.mode === 'mastra'
+          },
+          execution: {
+            success: agentData.success,
+            response: agentData.response || agentData.message,
+            executedOperations: agentData.executedOperations,
+            type: 'unified_agent_control'
+          },
           response: agentData.response || agentData.message,
-          executedOperations: agentData.executedOperations,
-          type: 'unified_agent_control'
-        },
-        response: agentData.response || agentData.message,
-        timestamp: new Date().toISOString(),
-        mode: `unified_${agentData.mode}_delegation`
-      });
-    } else {
+          timestamp: new Date().toISOString(),
+          mode: `unified_${agentData.mode}_delegation`
+        });
+      } else {
+        throw new Error('統合エージェントが失敗');
+      }
+    } catch (agentError) {
       // 統合エージェントが失敗した場合のフォールバック
       console.log('⚠️ 統合エージェントエラー、UI操作エージェントにフォールバック');
       
@@ -84,14 +90,17 @@ export async function POST(req: NextRequest) {
 // UI操作実行関数（レガシーフォールバック用）
 async function executeUIOperation(message: string, parameters: any) {
   try {
-    const response = await fetch('http://localhost:3000/api/agents/pure', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, ...parameters })
-    });
+    // 直接Pureエージェントを呼び出し
+    const { POST: pureHandler } = await import('../agents/pure/route');
     
-    if (response.ok) {
-      const data = await response.json();
+    const mockRequest = {
+      json: async () => ({ message, ...parameters })
+    } as NextRequest;
+    
+    const response = await pureHandler(mockRequest);
+    const data = await response.json();
+    
+    if (data.success) {
       return {
         success: true,
         response: data.message,
