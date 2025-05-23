@@ -3,7 +3,7 @@ import { unifiedOrchestratorAgent } from '@/mastra/agents/orchestratorAgent';
 
 /**
  * Chat API (軽量版)
- * MASTRAエージェントは/api/agentで実行し、_http_commonエラーを回避
+ * 新しい統合エージェントAPIを使用してHTTP_COMMONSエラーを回避
  */
 export const runtime = "nodejs";
 
@@ -11,62 +11,63 @@ export async function POST(req: NextRequest) {
   try {
     const { message, symbol, timeframe } = await req.json();
     
-    console.log('💬 メインチャット - 統合オーケストレーター処理:', { message, symbol, timeframe });
+    console.log('💬 メインチャット - 統合エージェントAPI処理:', { message, symbol, timeframe });
     
-    // 統合オーケストレーターエージェントで意図分析・委任判断
-    const orchestratorResponse = await unifiedOrchestratorAgent.analyzeAndDelegate(message, {
-      symbol,
-      timeframe,
+    // 統合エージェントAPIに委任（自動フォールバック機能付き）
+    const agentResponse = await fetch('http://localhost:3000/api/agents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        symbol,
+        timeframe,
+        strategy: 'auto' // 自動選択でMASTRA→Pureフォールバック
+      })
     });
-    
-    console.log('🎯 オーケストレーター委任結果:', orchestratorResponse);
-    
-    // 委任先エージェントに応じて実際の処理を実行
-    let executionResult = null;
-    
-    switch (orchestratorResponse.targetAgent) {
-      case 'ui':
-        // UI操作エージェントAPIに委任
-        executionResult = await executeUIOperation(message, orchestratorResponse.parameters);
-        break;
-        
-      case 'trading':
-        // Trading Agentに委任
-        executionResult = await executeTradingAnalysis(message, orchestratorResponse.parameters);
-        break;
-        
-      case 'research':
-        // Research Agentに委任
-        executionResult = await executeResearch(message, orchestratorResponse.parameters);
-        break;
-        
-      case 'backtest':
-        // Backtest Agentに委任
-        executionResult = await executeBacktest(message, orchestratorResponse.parameters);
-        break;
-        
-      default:
-        // 一般的な回答
-        executionResult = {
-          success: true,
-          response: orchestratorResponse.response,
-          type: 'general'
-        };
+
+    if (agentResponse.ok) {
+      const agentData = await agentResponse.json();
+      
+      console.log('🎯 統合エージェント応答:', agentData);
+      
+      return NextResponse.json({
+        success: true,
+        orchestrator: {
+          targetAgent: 'unified',
+          reasoning: `統合エージェントAPI経由で${agentData.mode}モード実行`,
+          action: 'unified_agent_delegation',
+          mastraUsed: agentData.mode === 'mastra'
+        },
+        execution: {
+          success: agentData.success,
+          response: agentData.response || agentData.message,
+          executedOperations: agentData.executedOperations,
+          type: 'unified_agent_control'
+        },
+        response: agentData.response || agentData.message,
+        timestamp: new Date().toISOString(),
+        mode: `unified_${agentData.mode}_delegation`
+      });
+    } else {
+      // 統合エージェントが失敗した場合のフォールバック
+      console.log('⚠️ 統合エージェントエラー、UI操作エージェントにフォールバック');
+      
+      const fallbackResult = await executeUIOperation(message, { symbol, timeframe });
+      
+      return NextResponse.json({
+        success: true,
+        orchestrator: {
+          targetAgent: 'ui',
+          reasoning: '統合エージェント失敗によりUI操作エージェントにフォールバック',
+          action: 'fallback_ui_operation',
+          mastraUsed: false
+        },
+        execution: fallbackResult,
+        response: fallbackResult?.response || 'フォールバック処理が完了しました',
+        timestamp: new Date().toISOString(),
+        mode: 'fallback_ui_operation'
+      });
     }
-    
-    return NextResponse.json({
-      success: true,
-      orchestrator: {
-        targetAgent: orchestratorResponse.targetAgent,
-        reasoning: orchestratorResponse.reasoning,
-        action: orchestratorResponse.action,
-        mastraUsed: orchestratorResponse.mastraUsed
-      },
-      execution: executionResult,
-      response: executionResult?.response || orchestratorResponse.response,
-      timestamp: new Date().toISOString(),
-      mode: orchestratorResponse.mastraUsed ? 'mastra_orchestrator_with_delegation' : 'fallback_orchestrator_with_delegation'
-    });
     
   } catch (error) {
     console.error('❌ メインチャットAPIエラー:', error);
@@ -80,10 +81,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// UI操作実行関数
+// UI操作実行関数（レガシーフォールバック用）
 async function executeUIOperation(message: string, parameters: any) {
   try {
-    const response = await fetch('http://localhost:3000/api/agent-pure', {
+    const response = await fetch('http://localhost:3000/api/agents/pure', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, ...parameters })
