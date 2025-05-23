@@ -3,14 +3,15 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
+import { z } from "zod";
 
 // 使用するAIモデルを環境変数から取得
 const aiModel = AI_MODEL;
-import { Memory } from "@mastra/memory";
-import type { MastraMemory } from "@mastra/core";
-import { z } from "zod";
+// import { Memory } from "@mastra/memory";
+// import type { MastraMemory } from "@mastra/core";
+// import { z } from "zod";
 import { TIMEFRAMES, type Timeframe } from "@/constants/chart";
-import { SupabaseVector } from "../adapters/SupabaseVector";
+// import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { chartAnalysisTool } from "../tools/chartAnalysisTool";
@@ -18,18 +19,18 @@ import { marketDataTool } from "../tools/marketDataTool";
 import { tradingExecutionTool } from "../tools/tradingExecutionTool";
 import { entrySuggestionTool } from "../tools/entrySuggestionTool";
 
-// メモリ設定（Mastra v0.7 仕様）
-const memory = new Memory({
-  // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
-  storage: SupabaseVector as any,
-  options: {
-    lastMessages: 40,
-    semanticRecall: {
-      topK: 5,
-      messageRange: 2,
-    },
-  },
-}) as unknown as MastraMemory;
+// メモリ設定（Mastra v0.7 仕様） - 一時的に無効化
+// const memory = new Memory({
+//   // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
+//   storage: SupabaseVector as any,
+//   options: {
+//     lastMessages: 40,
+//     semanticRecall: {
+//       topK: 5,
+//       messageRange: 2,
+//     },
+//   },
+// }) as unknown as MastraMemory;
 
 // TIMEFRAMESをZodのenumで使用できるように変換
 const timeframeEnum = z.enum(TIMEFRAMES as [Timeframe, ...Timeframe[]]);
@@ -118,5 +119,5 @@ export const tradingAgent = new Agent({
   },
 
   // メモリ設定
-  memory: memory,
+  // memory: memory,
 });

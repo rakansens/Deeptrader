@@ -7,25 +7,25 @@ import { AI_MODEL } from "@/lib/env";
 // 環境変数からAIモデルを取得
 const aiModel = AI_MODEL;
 
-import { Memory } from "@mastra/memory";
-import type { MastraMemory, MastraStorage } from "@mastra/core";
-import { SupabaseVector } from "../adapters/SupabaseVector";
+// import { Memory } from "@mastra/memory";
+// import type { MastraMemory, MastraStorage } from "@mastra/core";
+// import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { backtestTool } from "../tools/backtestTool";
 
-// メモリ設定（新 API：オブジェクト 1 つで渡す）
-const memory = new Memory({
-  // FIXME: narrow `any` once SupabaseVector adapter implements full MastraStorage interface
-  storage: SupabaseVector as any,
-  options: {
-    lastMessages: 40,
-    semanticRecall: {
-      topK: 5,
-      messageRange: 2,
-    },
-  },
-}) as unknown as MastraMemory;
+// メモリ設定（新 API：オブジェクト 1 つで渡す） - 一時的に無効化
+// const memory = new Memory({
+//   // FIXME: narrow `any` once SupabaseVector adapter implements full MastraStorage interface
+//   storage: SupabaseVector as any,
+//   options: {
+//     lastMessages: 40,
+//     semanticRecall: {
+//       topK: 5,
+//       messageRange: 2,
+//     },
+//   },
+// }) as unknown as MastraMemory;
 
 /**
  * バックテストエージェント
@@ -41,5 +41,5 @@ export const backtestAgent = new Agent({
   tools: {
     backtestTool,
   },
-  memory,
+  // memory,
 });

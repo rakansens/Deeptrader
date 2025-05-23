@@ -3,9 +3,9 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env.server";
-import { Memory } from "@mastra/memory";
-import type { MastraMemory } from "@mastra/core";
-import { SupabaseVector } from "../adapters/SupabaseVector";
+// import { Memory } from "@mastra/memory";
+// import type { MastraMemory } from "@mastra/core";
+// import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // 委任ツールのインポート
 import { delegateTradingTool } from "../tools/delegationTools";
@@ -16,17 +16,17 @@ import { delegateBacktestTool } from "../tools/delegationTools";
 // 使用するAIモデル
 const aiModel = AI_MODEL;
 
-// メモリ設定（Mastra v0.10 仕様）
-const memory = new Memory({
-  storage: SupabaseVector as any,
-  options: {
-    lastMessages: 50,
-    semanticRecall: {
-      topK: 10,
-      messageRange: 3,
-    },
-  },
-}) as unknown as MastraMemory;
+// メモリ設定（Mastra v0.10 仕様） - 一時的に無効化
+// const memory = new Memory({
+//   storage: SupabaseVector as any,
+//   options: {
+//     lastMessages: 50,
+//     semanticRecall: {
+//       topK: 10,
+//       messageRange: 3,
+//     },
+//   },
+// }) as unknown as MastraMemory;
 
 /**
  * オーケストラエージェント（高度版）
@@ -91,8 +91,8 @@ export const orchestratorAgent = new Agent({
     delegateBacktestTool,
   },
 
-  // メモリ設定（会話履歴と学習機能）
-  memory: memory,
+  // メモリ設定（会話履歴と学習機能） - 一時的に無効化
+  // memory: memory,
 });
 
 // 個別の委任ツールもエクスポート（テスト用）

@@ -4,9 +4,9 @@ import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 import { AI_MODEL } from "@/lib/env";
 
-import { Memory } from "@mastra/memory";
-import type { MastraMemory } from "@mastra/core";
-import { SupabaseVector } from "../adapters/SupabaseVector";
+// import { Memory } from "@mastra/memory";
+// import type { MastraMemory } from "@mastra/core";
+// import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { newsAnalysisTool } from "../tools/newsAnalysisTool";
@@ -15,18 +15,18 @@ import { marketSentimentTool } from "../tools/marketSentimentTool";
 import { evaluationTool } from "../tools/evaluationTool";
 import { openInterestTool } from "../tools/openInterestTool";
 
-// ──────────── メモリ設定（Mastra v0.7 API） ────────────
-const memory = new Memory({
-  // FIXME: SupabaseVector が MastraStorage を完全実装していないので any キャスト
-  storage: SupabaseVector as any,
-  options: {
-    lastMessages: 40,
-    semanticRecall: {
-      topK: 5,
-      messageRange: 2,
-    },
-  },
-}) as unknown as MastraMemory;
+// ──────────── メモリ設定（Mastra v0.7 API） - 一時的に無効化 ────────────
+// const memory = new Memory({
+//   // FIXME: SupabaseVector が MastraStorage を完全実装していないので any キャスト
+//   storage: SupabaseVector as any,
+//   options: {
+//     lastMessages: 40,
+//     semanticRecall: {
+//       topK: 5,
+//       messageRange: 2,
+//     },
+//   },
+// }) as unknown as MastraMemory;
 // ───────────────────────────────────────────────────────
 
 // 環境変数から AI モデルを取得
@@ -76,5 +76,5 @@ export const researchAgent = new Agent({
   },
 
   // メモリ設定
-  memory,
+  // memory,
 });

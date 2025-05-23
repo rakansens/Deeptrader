@@ -6,26 +6,26 @@ import { AI_MODEL } from "@/lib/env";
 
 // 環境変数からAIモデルを取得
 const aiModel = AI_MODEL;
-import { Memory } from "@mastra/memory";
-import type { MastraMemory } from "@mastra/core";
-import { SupabaseVector } from "../adapters/SupabaseVector";
+// import { Memory } from "@mastra/memory";
+// import type { MastraMemory } from "@mastra/core";
+// import { SupabaseVector } from "../adapters/SupabaseVector";
 
 // ツールのインポート
 import { toggleIndicatorTool } from "../tools/toggleIndicatorTool";
 import { changeTimeframeTool } from "../tools/changeTimeframeTool";
 
-// メモリ設定（Mastra v0.7 仕様）
-const memory = new Memory({
-  // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
-  storage: SupabaseVector as any,
-  options: {
-    lastMessages: 40,
-    semanticRecall: {
-      topK: 5,
-      messageRange: 2,
-    },
-  },
-}) as unknown as MastraMemory;
+// メモリ設定（Mastra v0.7 仕様） - 一時的に無効化
+// const memory = new Memory({
+//   // FIXME: tighten `any` once SupabaseVector fully implements MastraStorage
+//   storage: SupabaseVector as any,
+//   options: {
+//     lastMessages: 40,
+//     semanticRecall: {
+//       topK: 5,
+//       messageRange: 2,
+//     },
+//   },
+// }) as unknown as MastraMemory;
 
 /**
  * UIコントロールエージェント
@@ -46,5 +46,5 @@ export const uiControlAgent = new Agent({
     toggleIndicatorTool,
     changeTimeframeTool,
   },
-  memory,
+  // memory,
 });
