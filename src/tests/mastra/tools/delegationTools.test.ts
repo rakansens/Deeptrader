@@ -30,8 +30,10 @@ jest.mock('@ai-sdk/openai', () => ({
 }), { virtual: true });
 
 // 環境変数モック
-jest.mock('@/lib/env.server', () => ({
-  AI_MODEL: 'gpt-4o'
+jest.mock('@/config/server', () => ({
+  serverEnv: {
+    AI_MODEL: 'gpt-4o'
+  }
 }), { virtual: true });
 
 // データベースアダプターモック

@@ -2,7 +2,7 @@
 // エージェント共通ユーティリティ - ロジック重複削除と再利用性向上
 // undefinedメッセージの防御的処理追加でTypeErrorを回避
 
-import { UIOperation, WebSocketCommand, AgentError } from './types';
+import { UIOperation, AgentError } from './types';
 
 // レスポンス生成ユーティリティ
 export function createSuccessResponse(data: {
@@ -151,57 +151,19 @@ export async function executeUIOperationViaWebSocket(operation: UIOperation): Pr
     const response = await fetch('http://127.0.0.1:8080/ui-operation', operationRequest);
     
     if (response.ok) {
-      console.log('✅ UI操作送信成功:', operation.description);
+      const result = await response.json();
+      console.log('✅ UI操作送信成功:', operation.description, result);
       return true;
     } else {
-      console.log('⚠️ UI操作送信失敗:', response.status, operation.description);
+      const errorData = await response.json();
+      console.log('⚠️ UI操作送信失敗:', response.status, operation.description, errorData);
       return false;
     }
     
   } catch (error) {
     console.log('⚠️ Socket.IO UI操作実行エラー:', error);
     
-    // フォールバック: WebSocket直接接続
-    return executeWebSocketFallback(operation);
-  }
-}
-
-// WebSocketフォールバック実行
-async function executeWebSocketFallback(operation: UIOperation): Promise<boolean> {
-  try {
-    const { default: WebSocket } = await import('ws');
-    
-    const ws = new WebSocket('ws://127.0.0.1:8080');
-    
-    return new Promise<boolean>((resolve) => {
-      ws.on('open', () => {
-        const command: WebSocketCommand = {
-          id: `agents_${Date.now()}`,
-          type: 'ui_operation',
-          operation: operation.type,
-          payload: operation.payload,
-          timestamp: new Date().toISOString(),
-          source: 'agents_api',
-          description: operation.description
-        };
-        
-        console.log('🔄 フォールバック WebSocket UI操作:', operation.description);
-        ws.send(JSON.stringify(command));
-        
-        setTimeout(() => {
-          ws.close();
-          resolve(true);
-        }, 500);
-      });
-      
-      ws.on('error', (error) => {
-        console.log('⚠️ フォールバック WebSocket エラー:', error.message);
-        resolve(false);
-      });
-    });
-    
-  } catch (fallbackError) {
-    console.log('⚠️ フォールバック WebSocket実行エラー:', fallbackError);
+    // フォールバック: 元のWebSocket実装は削除
     return false;
   }
 }

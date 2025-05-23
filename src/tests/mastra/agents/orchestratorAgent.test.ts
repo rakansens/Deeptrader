@@ -20,8 +20,10 @@ jest.mock('@ai-sdk/openai', () => ({
   openai: (model: string) => `openai-${model}` 
 }), { virtual: true });
 
-jest.mock('@/lib/env.server', () => ({
-  AI_MODEL: 'gpt-4o'
+jest.mock('@/config/server', () => ({
+  serverEnv: {
+    AI_MODEL: 'gpt-4o'
+  }
 }), { virtual: true });
 
 jest.mock('@/mastra/adapters/SupabaseVector', () => ({

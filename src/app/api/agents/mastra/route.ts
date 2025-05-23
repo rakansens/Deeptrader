@@ -5,8 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   AgentRequest, 
   AgentResponse, 
-  UIOperation,
-  WebSocketCommand
+  UIOperation
 } from '../shared/types';
 import {
   createSuccessResponse, 
@@ -85,8 +84,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
 // サーバーサイドからWebSocket UI操作を実行
 async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: string) {
   try {
-    const { default: WebSocket } = await import('ws');
-    
     const message = userMessage.toLowerCase();
     let operation: string | null = null;
     let payload: any = null;
@@ -107,27 +104,27 @@ async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: s
     }
     
     if (operation && payload) {
-      const ws = new WebSocket('ws://127.0.0.1:8080');
-      
-      ws.on('open', () => {
-        const command: WebSocketCommand = {
-          id: `mastra_${Date.now()}`,
+      // Socket.IOサーバーのHTTP POST /ui-operationエンドポイントを使用
+      const response = await fetch('http://127.0.0.1:8080/ui-operation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           type: 'ui_operation',
-          operation: operation as any,
+          operation: operation,
           payload,
-          timestamp: new Date().toISOString(),
-          source: 'mastra_server_agent'
-        };
-        
-        logAgentActivity('MASTRA Agent', 'WebSocket UI操作送信', { operation, payload });
-        ws.send(JSON.stringify(command));
-        
-        setTimeout(() => ws.close(), 1000);
+          description: `MASTRAエージェントによる${operation}実行`,
+          source: 'mastra_server_agent',
+          timestamp: new Date().toISOString()
+        })
       });
       
-      ws.on('error', (error) => {
-        logAgentActivity('MASTRA Agent', 'WebSocket UI操作エラー', error.message, false);
-      });
+      if (response.ok) {
+        const result = await response.json();
+        logAgentActivity('MASTRA Agent', 'UI操作実行成功', { operation, payload, result });
+      } else {
+        const errorData = await response.json();
+        logAgentActivity('MASTRA Agent', 'UI操作実行失敗', { operation, payload, error: errorData }, false);
+      }
     }
   } catch (error) {
     logAgentActivity('MASTRA Agent', 'UI操作実行エラー', error, false);
