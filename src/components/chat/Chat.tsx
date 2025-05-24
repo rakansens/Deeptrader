@@ -1,3 +1,7 @@
+// src/components/chat/Chat.tsx
+// チャット入力クリア処理修正 - 送信後の入力欄残留問題を解決
+// 非同期処理の統一と重複送信防止で安定性向上
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -128,68 +132,72 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
   });
 
   // メッセージ送信の共通ロジック
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     stopListening(); // 音声入力を停止
 
     if (!input.trim()) return;
+    if (isSendingRef.current) return; // 重複送信防止
 
-    const text = input; // 現在の入力を保存
+    const text = input.trim(); // 現在の入力を保存
+    
+    // 入力欄を即座にクリア
+    setInput("");
 
-    // 入力欄をクリア（同期的に実行）
-    flushSync(() => {
-      setInput("");
-    });
-
-    // メッセージを送信（非同期処理を次のイベントループに遅延させる）
-    isSendingRef.current = true;
-    setTimeout(() => {
-      sendMessage(text).finally(() => {
-        isSendingRef.current = false;
-      });
-    }, 0);
+    try {
+      isSendingRef.current = true;
+      await sendMessage(text);
+    } catch (error) {
+      logger.error("メッセージ送信エラー:", error);
+    } finally {
+      isSendingRef.current = false;
+    }
   };
 
   // サンプルメッセージを直接送信するための関数
-  const suggestMessage = (text: string) => {
+  const suggestMessage = async (text: string) => {
     if (!text.trim()) return;
+    if (isSendingRef.current) return; // 重複送信防止
     
     // 入力欄にテキストをセット（UIに反映するため）
     setInput(text);
     
-    // すぐにメッセージを送信
-    isSendingRef.current = true;
-    setTimeout(() => {
+    // 少し遅延してからクリアと送信
+    setTimeout(async () => {
       // 入力欄をクリア
-      flushSync(() => {
-        setInput("");
-      });
+      setInput("");
       
-      // メッセージを送信
-      sendMessage(text).finally(() => {
+      try {
+        isSendingRef.current = true;
+        await sendMessage(text);
+      } catch (error) {
+        logger.error("サジェストメッセージ送信エラー:", error);
+      } finally {
         isSendingRef.current = false;
-      });
-    }, 100);
+      }
+    }, 50);
   };
 
   // 画像ファイル選択時の処理
-  const handleFileChange = (file: File) => {
+  const handleFileChange = async (file: File) => {
     if (!file) return;
+    if (isSendingRef.current) return; // 重複送信防止
 
-    const text = input;
+    const text = input.trim();
+    
+    // 入力欄をクリア
+    setInput("");
 
-    flushSync(() => {
-      setInput("");
-    });
-
-    setUploading(true);
-    sendMessage(text, file)
-      .catch((err) => {
-        logger.error("画像送信エラー", err);
-      })
-      .finally(() => {
-        setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      });
+    try {
+      setUploading(true);
+      isSendingRef.current = true;
+      await sendMessage(text, file);
+    } catch (err) {
+      logger.error("画像送信エラー", err);
+    } finally {
+      setUploading(false);
+      isSendingRef.current = false;
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const {

@@ -1,6 +1,7 @@
 // src/hooks/chat/use-chat.ts
 // チャット管理フック - AI SDK削除でmessage:undefinedエラーを修正
 // 直接チャットAPIにfetchでメッセージ送信するカスタム実装
+// 重複した入力クリア処理削除で入力欄残留問題を解決
 
 "use client";
 
@@ -128,11 +129,6 @@ export function useChat(): UseChat {
         type: "text",
       };
       setMessages(prev => [...prev, assistantMessage]);
-
-      // 入力をクリア
-      if (!imageFile) {
-        setInput("");
-      }
 
     } catch (err) {
       logger.error("メッセージ送信エラー:", err);
