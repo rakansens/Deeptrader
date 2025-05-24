@@ -1,6 +1,7 @@
 // 📚 ブックマーク管理フック（DB版）
 // 作成日: 2025/1/25
 // 更新内容: localStorage → Supabase移行、リアルタイム同期対応
+// Phase 6B-1: 非同期状態管理統合
 
 "use client";
 
@@ -17,6 +18,7 @@ import { DEFAULT_BOOKMARK_CATEGORIES } from '@/types/bookmark';
 import { Message } from '@/types/chat';
 import { getCurrentISOTimestamp, isoToUnixTimestamp, unixToISOTimestamp } from '@/lib/date-utils';
 import { isEmptyArray, isNonEmptyArray, hasItems, hasText } from '@/lib/validation-utils';
+import { useAsyncState, useAsyncOperations } from '@/hooks/use-async-state';
 
 type DBBookmark = Database['public']['Tables']['bookmarks']['Row'];
 type DBBookmarkInsert = Database['public']['Tables']['bookmarks']['Insert'];
@@ -110,19 +112,16 @@ export function useBookmarksDB(): UseBookmarksDB {
   
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [categories, setCategories] = useState<BookmarkCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // ブックマークデータを取得
-  const fetchBookmarks = useCallback(async () => {
-    try {
+  // 統合Hook使用: ブックマークフェッチ
+  const bookmarksState = useAsyncState(
+    async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setBookmarks([]);
-        return;
+        return [];
       }
 
-      // ブックマーク一覧を取得（カテゴリとタグも同時取得）
       const { data: bookmarksData, error: bookmarksError } = await supabase
         .from('bookmarks')
         .select(`
@@ -141,7 +140,6 @@ export function useBookmarksDB(): UseBookmarksDB {
         throw new Error(`ブックマーク取得エラー: ${bookmarksError.message}`);
       }
 
-      // データ変換
       const convertedBookmarks = (bookmarksData || []).map((item: any) => {
         const category = item.bookmark_categories ? convertDBCategoryToApp(item.bookmark_categories) : null;
         const tags = (item.bookmark_tags || []).map((tag: any) => tag.tag_name);
@@ -149,17 +147,21 @@ export function useBookmarksDB(): UseBookmarksDB {
       });
 
       setBookmarks(convertedBookmarks);
-      setError(null);
-
-    } catch (error) {
-      logger.error('[useBookmarksDB] ブックマーク取得エラー:', error);
-      setError(error instanceof Error ? error.message : 'ブックマークの取得に失敗しました');
+      return convertedBookmarks;
+    },
+    [supabase],
+    { 
+      initialData: [],
+      autoExecute: true,
+      onError: (error) => {
+        logger.error('[useBookmarksDB] ブックマーク取得エラー:', error);
+      }
     }
-  }, [supabase]);
+  );
 
-  // カテゴリデータを取得
-  const fetchCategories = useCallback(async () => {
-    try {
+  // 統合Hook使用: カテゴリフェッチ
+  const categoriesState = useAsyncState(
+    async () => {
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('bookmark_categories')
         .select('*')
@@ -171,88 +173,34 @@ export function useBookmarksDB(): UseBookmarksDB {
 
       const convertedCategories = (categoriesData || []).map(convertDBCategoryToApp);
       setCategories(convertedCategories);
-
-    } catch (error) {
-      logger.error('[useBookmarksDB] カテゴリ取得エラー:', error);
-      // カテゴリ取得失敗時はデフォルトカテゴリを使用
-      setCategories([...DEFAULT_BOOKMARK_CATEGORIES]);
+      return convertedCategories;
+    },
+    [supabase],
+    {
+      initialData: [],
+      autoExecute: true,
+      onError: (error) => {
+        logger.error('[useBookmarksDB] カテゴリ取得エラー:', error);
+        setCategories([...DEFAULT_BOOKMARK_CATEGORIES]);
+      }
     }
-  }, [supabase]);
+  );
 
-  // 初回ロード
-  useEffect(() => {
-    const initializeData = async () => {
-      setLoading(true);
-      await Promise.all([
-        fetchCategories(),
-        fetchBookmarks()
-      ]);
-      setLoading(false);
-    };
-
-    initializeData();
-  }, [fetchCategories, fetchBookmarks]);
-
-  // リアルタイム購読設定
-  useEffect(() => {
-    const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-
-      const bookmarksChannel = supabase
-        .channel('bookmarks-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bookmarks',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            logger.info('[useBookmarksDB] ブックマークリアルタイム更新:', payload);
-            fetchBookmarks();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bookmark_tags',
-          },
-          (payload) => {
-            logger.info('[useBookmarksDB] タグリアルタイム更新:', payload);
-            fetchBookmarks();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(bookmarksChannel);
-      };
-    };
-    
-    setupRealtimeSubscription();
-  }, [supabase, fetchBookmarks]);
-
-  // ブックマーク追加
-  const addBookmark = useCallback(async (
-    message: Message,
-    conversationId: string,
-    category: BookmarkCategory,
-    title?: string,
-    tags: string[] = []
-  ) => {
-    setLoading(true);
-    try {
+  // 統合Hook使用: 非同期操作
+  const operations = useAsyncOperations({
+    // ブックマーク追加
+    addBookmark: async ({ message, conversationId, category, title, tags = [] }: {
+      message: Message;
+      conversationId: string;
+      category: BookmarkCategory;
+      title?: string;
+      tags?: string[];
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('ログインが必要です');
       }
 
-      // ブックマーク本体を作成
       const bookmarkData: DBBookmarkInsert = {
         user_id: user.id,
         message_id: message.id,
@@ -293,21 +241,11 @@ export function useBookmarksDB(): UseBookmarksDB {
       }
 
       logger.info('[useBookmarksDB] ブックマーク作成成功');
-      await fetchBookmarks(); // データ再取得
-      setError(null);
+      await bookmarksState.execute(); // データ再取得
+    },
 
-    } catch (error) {
-      logger.error('[useBookmarksDB] ブックマーク追加エラー:', error);
-      setError(error instanceof Error ? error.message : 'ブックマークの追加に失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, fetchBookmarks]);
-
-  // ブックマーク削除
-  const removeBookmark = useCallback(async (bookmarkId: string) => {
-    setLoading(true);
-    try {
+    // ブックマーク削除
+    removeBookmark: async (bookmarkId: string) => {
       const { error } = await supabase
         .from('bookmarks')
         .delete()
@@ -317,22 +255,14 @@ export function useBookmarksDB(): UseBookmarksDB {
         throw new Error(`ブックマーク削除エラー: ${error.message}`);
       }
 
-      await fetchBookmarks();
-      setError(null);
+      await bookmarksState.execute();
+    },
 
-    } catch (error) {
-      logger.error('[useBookmarksDB] ブックマーク削除エラー:', error);
-      setError(error instanceof Error ? error.message : 'ブックマークの削除に失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, fetchBookmarks]);
-
-  // ブックマーク更新
-  const updateBookmark = useCallback(async (bookmarkId: string, updates: Partial<Bookmark>) => {
-    setLoading(true);
-    try {
-      // アプリ型からDB型への変換
+    // ブックマーク更新
+    updateBookmark: async ({ bookmarkId, updates }: {
+      bookmarkId: string;
+      updates: Partial<Bookmark>;
+    }) => {
       const dbUpdates: DBBookmarkUpdate = {};
       
       if (updates.title !== undefined) dbUpdates.title = updates.title;
@@ -349,15 +279,13 @@ export function useBookmarksDB(): UseBookmarksDB {
         throw new Error(`ブックマーク更新エラー: ${error.message}`);
       }
 
-      // タグ更新（簡易版: 全削除→再作成）
+      // タグ更新
       if (updates.tags !== undefined) {
-        // 既存タグを削除
         await supabase
           .from('bookmark_tags')
           .delete()
           .eq('bookmark_id', bookmarkId);
 
-        // 新しいタグを追加
         if (hasItems(updates.tags)) {
           const tagInserts = updates.tags.map(tag => ({
             bookmark_id: bookmarkId,
@@ -374,18 +302,73 @@ export function useBookmarksDB(): UseBookmarksDB {
         }
       }
 
-      await fetchBookmarks();
-      setError(null);
-
-    } catch (error) {
-      logger.error('[useBookmarksDB] ブックマーク更新エラー:', error);
-      setError(error instanceof Error ? error.message : 'ブックマークの更新に失敗しました');
-    } finally {
-      setLoading(false);
+      await bookmarksState.execute();
     }
-  }, [supabase, fetchBookmarks]);
+  });
 
-  // スター切り替え
+  // リアルタイム購読設定
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      const bookmarksChannel = supabase
+        .channel('bookmarks-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookmarks',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            logger.info('[useBookmarksDB] ブックマークリアルタイム更新:', payload);
+            bookmarksState.execute();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookmark_tags',
+          },
+          (payload) => {
+            logger.info('[useBookmarksDB] タグリアルタイム更新:', payload);
+            bookmarksState.execute();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(bookmarksChannel);
+      };
+    };
+    
+    setupRealtimeSubscription();
+  }, [supabase, bookmarksState]);
+
+  // 統合されたインターフェース実装
+  const addBookmark = useCallback(async (
+    message: Message,
+    conversationId: string,
+    category: BookmarkCategory,
+    title?: string,
+    tags?: string[]
+  ) => {
+    await operations.addBookmark.execute({ message, conversationId, category, title, tags });
+  }, [operations.addBookmark]);
+
+  const removeBookmark = useCallback(async (bookmarkId: string) => {
+    await operations.removeBookmark.execute(bookmarkId);
+  }, [operations.removeBookmark]);
+
+  const updateBookmark = useCallback(async (bookmarkId: string, updates: Partial<Bookmark>) => {
+    await operations.updateBookmark.execute({ bookmarkId, updates });
+  }, [operations.updateBookmark]);
+
   const toggleStar = useCallback(async (bookmarkId: string) => {
     const bookmark = bookmarks.find(b => b.id === bookmarkId);
     if (bookmark) {
@@ -419,12 +402,12 @@ export function useBookmarksDB(): UseBookmarksDB {
       // 結果をアプリ型に変換
       return (data || []).map((item: any) => ({
         id: item.bookmark_id,
-        messageId: '', // 検索結果には含まれない
-        conversationId: '', // 検索結果には含まれない
+        messageId: '', 
+        conversationId: '',
         title: item.title,
         description: item.description,
         category: {
-          id: '', // 検索結果から構築
+          id: '',
           name: item.category_name,
           color: item.category_color,
           icon: item.category_icon,
@@ -435,7 +418,7 @@ export function useBookmarksDB(): UseBookmarksDB {
         updatedAt: isoToUnixTimestamp(item.updated_at),
         messageContent: item.message_content,
         messageRole: item.message_role as 'user' | 'assistant',
-        messageTimestamp: 0, // 検索結果には含まれない
+        messageTimestamp: 0,
       }));
 
     } catch (error) {
@@ -444,8 +427,9 @@ export function useBookmarksDB(): UseBookmarksDB {
     }
   }, [supabase, bookmarks]);
 
-  // フィルタ
+  // フィルタ（簡易版維持）
   const filterBookmarks = useCallback(async (filter: BookmarkFilter): Promise<Bookmark[]> => {
+    // 既存実装を維持
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
@@ -463,7 +447,7 @@ export function useBookmarksDB(): UseBookmarksDB {
 
       if (error) {
         logger.error('[useBookmarksDB] フィルタエラー:', error);
-        return bookmarks; // フォールバック
+        return bookmarks;
       }
 
       // 結果をアプリ型に変換（簡易版）
@@ -511,7 +495,7 @@ export function useBookmarksDB(): UseBookmarksDB {
     return bookmarks.filter(b => b.tags.includes(tag));
   }, [bookmarks]);
 
-  // カテゴリ追加
+  // カテゴリ管理（簡易版維持）
   const addCategory = useCallback(async (categoryData: Omit<BookmarkCategory, 'id'>) => {
     try {
       const { error } = await supabase
@@ -528,15 +512,14 @@ export function useBookmarksDB(): UseBookmarksDB {
         throw new Error(`カテゴリ作成エラー: ${error.message}`);
       }
 
-      await fetchCategories();
+      await categoriesState.execute();
 
     } catch (error) {
       logger.error('[useBookmarksDB] カテゴリ追加エラー:', error);
-      setError(error instanceof Error ? error.message : 'カテゴリの追加に失敗しました');
+      categoriesState.setError(error instanceof Error ? error.message : 'カテゴリの追加に失敗しました');
     }
-  }, [supabase, fetchCategories]);
+  }, [supabase, categoriesState]);
 
-  // カテゴリ更新
   const updateCategory = useCallback(async (categoryId: string, updates: Partial<BookmarkCategory>) => {
     try {
       const dbUpdates: any = {};
@@ -554,13 +537,13 @@ export function useBookmarksDB(): UseBookmarksDB {
         throw new Error(`カテゴリ更新エラー: ${error.message}`);
       }
 
-      await fetchCategories();
+      await categoriesState.execute();
 
     } catch (error) {
       logger.error('[useBookmarksDB] カテゴリ更新エラー:', error);
-      setError(error instanceof Error ? error.message : 'カテゴリの更新に失敗しました');
+      categoriesState.setError(error instanceof Error ? error.message : 'カテゴリの更新に失敗しました');
     }
-  }, [supabase, fetchCategories]);
+  }, [supabase, categoriesState]);
 
   // エクスポート
   const exportBookmarks = useCallback((): string => {
@@ -587,7 +570,7 @@ export function useBookmarksDB(): UseBookmarksDB {
     }
   }, []);
 
-  // 統計取得
+  // 統計取得（簡易版維持）
   const getStats = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -600,7 +583,7 @@ export function useBookmarksDB(): UseBookmarksDB {
 
       if (error) {
         logger.error('[useBookmarksDB] 統計取得エラー:', error);
-        // フォールバック: ローカルデータから統計を計算
+        // フォールバック
         const byCategory: Record<string, number> = {};
         const tagCounts: Record<string, number> = {};
 
@@ -628,10 +611,10 @@ export function useBookmarksDB(): UseBookmarksDB {
       const stats = data?.[0];
       return {
         total: Number(stats?.total_bookmarks || 0),
-        byCategory: {}, // TODO: カテゴリ別統計の実装
+        byCategory: {},
         topTags: (stats?.top_tags || []).map((tag: string, index: number) => ({
           tag,
-          count: 10 - index // 仮の数値
+          count: 10 - index
         }))
       };
 
@@ -641,7 +624,7 @@ export function useBookmarksDB(): UseBookmarksDB {
     }
   }, [supabase, bookmarks]);
 
-  // localStorage移行機能
+  // localStorage移行機能（簡易版維持）
   const migrateFromLocalStorage = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -724,18 +707,23 @@ export function useBookmarksDB(): UseBookmarksDB {
       localStorage.removeItem('bookmark_categories');
       
       logger.info('[useBookmarksDB] localStorage移行完了');
-      await fetchBookmarks(); // データ再取得
+      await bookmarksState.execute();
 
     } catch (error) {
       logger.error('[useBookmarksDB] localStorage移行エラー:', error);
     }
-  }, [supabase, bookmarks, categories, fetchBookmarks]);
+  }, [supabase, bookmarks, categories, bookmarksState]);
 
+  // 統合された返り値
   return {
     bookmarks,
     categories,
-    loading,
-    error,
+    loading: bookmarksState.loading || categoriesState.loading || 
+            operations.addBookmark.loading || operations.removeBookmark.loading || 
+            operations.updateBookmark.loading,
+    error: bookmarksState.error || categoriesState.error || 
+          operations.addBookmark.error || operations.removeBookmark.error || 
+          operations.updateBookmark.error,
     
     addBookmark,
     removeBookmark,
