@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { safeGetBoolean, safeSetBoolean } from "@/lib/local-storage-utils";
 
 export interface UseSidebar {
   sidebarOpen: boolean;
@@ -12,12 +13,9 @@ export interface UseSidebar {
  */
 export function useSidebar(initial = true): UseSidebar {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
-    // ローカルストレージから状態を読み込む
+    // 統一ユーティリティでローカルストレージから状態を読み込む
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarOpen');
-      if (saved !== null) {
-        return saved === 'true';
-      }
+      return safeGetBoolean('sidebarOpen', initial);
     }
     return initial;
   });
@@ -25,9 +23,9 @@ export function useSidebar(initial = true): UseSidebar {
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => {
       const newState = !prev;
-      // 状態変更時にlocalStorageに保存
+      // 統一ユーティリティで状態変更時にlocalStorageに保存
       if (typeof window !== 'undefined') {
-        localStorage.setItem('sidebarOpen', String(newState));
+        safeSetBoolean('sidebarOpen', newState);
       }
       return newState;
     });

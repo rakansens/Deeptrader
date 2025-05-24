@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { fetchMessages, addMessage } from '@/infrastructure/supabase/db-service';
 import type { Message } from '@/types/chat';
 import { logger } from '@/lib/logger';
+import { safeGetJson, safeSetJson } from "@/lib/local-storage-utils";
 
 /**
  * ローカルストレージとSupabaseへのメッセージ同期を行うフック
@@ -13,13 +14,22 @@ export function useChatMessages(
   const [messages, setMessages] = useState<Message[]>([]);
   const lastSynced = useRef(0);
 
+  // 選択された会話のメッセージを読み込む
+  useEffect(() => {
+    if (selectedId) {
+      const stored = safeGetJson<Message[]>(`messages_${selectedId}`, [], `messages for ${selectedId}`);
+      setMessages(stored);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedId]);
+
   // 選択中の会話が変わったら保存済みメッセージを読み込む
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(`messages_${selectedId}`);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<Message>[];
-        const msgs = parsed.map((m) => ({
+      const stored = safeGetJson<Partial<Message>[]>(`messages_${selectedId}`, [], `messages for ${selectedId}`);
+      if (stored.length > 0) {
+        const msgs = stored.map((m) => ({
           id: m.id ?? crypto.randomUUID(),
           role: m.role as Message['role'],
           content: m.content ?? '',
@@ -61,11 +71,7 @@ export function useChatMessages(
 
   // メッセージ更新時に永続化
   useEffect(() => {
-    try {
-      localStorage.setItem(`messages_${selectedId}`, JSON.stringify(messages));
-    } catch {
-      // ignore write errors
-    }
+    safeSetJson(`messages_${selectedId}`, messages, `messages for ${selectedId}`);
 
     messages.forEach((m, idx) => {
       if (idx >= lastSynced.current) {
@@ -75,6 +81,13 @@ export function useChatMessages(
     });
     lastSynced.current = messages.length;
   }, [messages, selectedId]);
+
+  // メッセージ配列をlocalStorageに保存
+  const saveMessages = useCallback((msgs: Message[]) => {
+    if (selectedId) {
+      safeSetJson(`messages_${selectedId}`, msgs, `messages for ${selectedId}`);
+    }
+  }, [selectedId]);
 
   return { messages, setMessages } as const;
 }

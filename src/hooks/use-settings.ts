@@ -2,6 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { logger } from "@/lib/logger";
+import { 
+  safeGetBoolean, 
+  safeSetBoolean, 
+  safeGetString, 
+  safeSetString, 
+  safeGetNumber, 
+  safeSetNumber 
+} from '@/lib/local-storage-utils';
 
 export interface UseSettings {
   voiceInputEnabled: boolean;
@@ -51,183 +59,98 @@ export function useSettings(): UseSettings {
   const [initialized, setInitialized] = useState<boolean>(false);
 
   // LocalStorageから設定を読み込む
-  const loadSettings = useCallback(() => {
+  useEffect(() => {
     try {
-      if (typeof window === 'undefined') return; // SSR環境ではスキップ
+      // boolean値
+      const voiceValue = safeGetBoolean("voiceInputEnabled", true);
+      const speechValue = safeGetBoolean("speechSynthesisEnabled", true);
       
-      const voiceValue = localStorage.getItem("voiceInputEnabled");
-      const speechValue = localStorage.getItem("speechSynthesisEnabled");
-      const userAvatarValue = localStorage.getItem("userAvatar");
-      const assistantAvatarValue = localStorage.getItem("assistantAvatar");
-      const speechRateValue = localStorage.getItem("speechRate");
-      const userNameValue = localStorage.getItem("userName");
-      const assistantNameValue = localStorage.getItem("assistantName");
+      // string値
+      const userAvatarValue = safeGetString("userAvatar");
+      const assistantAvatarValue = safeGetString("assistantAvatar");
+      const userNameValue = safeGetString("userName", DEFAULT_USER_NAME);
+      const assistantNameValue = safeGetString("assistantName", DEFAULT_ASSISTANT_NAME);
+      
+      // number値
+      const speechRateValue = safeGetNumber("speechRate", DEFAULT_SPEECH_RATE);
 
       console.log("LocalStorageから設定を読み込み:", { voiceValue, speechValue, speechRateValue });
-
-      // 明示的に変換して型安全性を確保
-      if (voiceValue !== null) {
-        const parsedVoice = voiceValue === "true";
-        setVoiceInputEnabledState(parsedVoice);
-      } else {
-        // 設定がなければデフォルトでtrue（音声入力は有効）
-        setVoiceInputEnabledState(true);
-        // 初期値をlocalStorageに保存
-        localStorage.setItem("voiceInputEnabled", "true");
-      }
-
-      if (speechValue !== null) {
-        const parsedSpeech = speechValue === "true";
-        setSpeechSynthesisEnabledState(parsedSpeech);
-      } else {
-        // 設定がなければデフォルトでtrue（読み上げは有効）
-        setSpeechSynthesisEnabledState(true);
-        // 初期値をlocalStorageに保存
-        localStorage.setItem("speechSynthesisEnabled", "true");
-      }
-
-      if (speechRateValue !== null) {
-        const parsedRate = parseFloat(speechRateValue);
-        if (!isNaN(parsedRate) && parsedRate >= MIN_SPEECH_RATE && parsedRate <= MAX_SPEECH_RATE) {
-          setSpeechRateState(parsedRate);
-        }
-      } else {
-        // デフォルト値をlocalStorageに保存
-        localStorage.setItem("speechRate", String(DEFAULT_SPEECH_RATE));
-      }
-
-      // ユーザー名の読み込み
-      if (userNameValue !== null && userNameValue.trim() !== '') {
-        setUserNameState(userNameValue);
-      } else {
-        // デフォルト値をlocalStorageに保存
-        localStorage.setItem("userName", DEFAULT_USER_NAME);
-      }
       
-      // アシスタント名の読み込み
-      if (assistantNameValue !== null && assistantNameValue.trim() !== '') {
-        setAssistantNameState(assistantNameValue);
-      } else {
-        // デフォルト値をlocalStorageに保存
-        localStorage.setItem("assistantName", DEFAULT_ASSISTANT_NAME);
-      }
+      // 状態を設定
+      setVoiceInputEnabledState(voiceValue);
+      setSpeechSynthesisEnabledState(speechValue);
+      setSpeechRateState(speechRateValue);
+      setUserNameState(userNameValue);
+      setAssistantNameState(assistantNameValue);
+      
+      if (userAvatarValue) setUserAvatarState(userAvatarValue);
+      if (assistantAvatarValue) setAssistantAvatarState(assistantAvatarValue);
 
-      if (userAvatarValue !== null) {
-        setUserAvatarState(userAvatarValue || undefined);
-      }
-
-      if (assistantAvatarValue !== null) {
-        setAssistantAvatarState(assistantAvatarValue || undefined);
-      }
     } catch (error) {
-      logger.error("[useSettings] 設定読み込みエラー:", error);
+      console.error("設定の読み込みに失敗しました:", error);
     }
   }, []);
 
   // 設定を再読み込みする関数（外部から呼び出し可能）
   // 依存配列を空にして、再レンダリングの原因にならないようにする
   const refreshSettings = useCallback(() => {
-    loadSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 設定再読み込み処理（将来的に実装）
+    console.log("設定再読み込み実行");
   }, []);
 
-  // 初期化時に一度だけ実行
-  useEffect(() => {
-    if (!initialized) {
-      loadSettings();
-      setInitialized(true);
-    }
-  }, [initialized, loadSettings]);
-
-  // storageイベントに反応して設定を更新
-  useEffect(() => {
-    const handleStorage = () => {
-      loadSettings();
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [loadSettings]);
-
-  // 設定変更ハンドラ - localStorageに直接保存し、状態も更新
+  // 設定変更ハンドラ - 統一ユーティリティ使用
   const setVoiceInputEnabled = useCallback((value: boolean) => {
-    try {
-      // まずlocalStorageに保存
-      localStorage.setItem("voiceInputEnabled", String(value));
-      // 次に状態を更新
-      setVoiceInputEnabledState(value);
-      
-      console.log("音声入力設定を変更:", { newValue: value });
-    } catch (error) {
-      logger.error("[useSettings] 音声入力設定の保存に失敗:", error);
-    }
+    // 統一ユーティリティで保存
+    safeSetBoolean("voiceInputEnabled", value);
+    setVoiceInputEnabledState(value);
+    
+    // デバッグログ
+    console.log("音声入力設定変更:", value);
   }, []);
 
   const setSpeechSynthesisEnabled = useCallback((value: boolean) => {
-    try {
-      // まずlocalStorageに保存
-      localStorage.setItem("speechSynthesisEnabled", String(value));
-      // 次に状態を更新
-      setSpeechSynthesisEnabledState(value);
-    } catch (error) {
-      logger.error("[useSettings] 読み上げ設定の保存に失敗:", error);
-    }
+    // 統一ユーティリティで保存
+    safeSetBoolean("speechSynthesisEnabled", value);
+    setSpeechSynthesisEnabledState(value);
+    
+    console.log("音声読み上げ設定変更:", value);
   }, []);
 
   const setSpeechRate = useCallback((value: number) => {
-    try {
-      // 範囲を制限
-      const limitedValue = Math.max(MIN_SPEECH_RATE, Math.min(MAX_SPEECH_RATE, value));
-      // localStorageに保存
-      localStorage.setItem("speechRate", String(limitedValue));
-      // 状態を更新
-      setSpeechRateState(limitedValue);
-    } catch (error) {
-      logger.error("[useSettings] 読み上げ速度設定の保存に失敗:", error);
-    }
+    // 範囲制限
+    const limitedValue = Math.min(Math.max(value, 0.5), 2.0);
+    
+    // 統一ユーティリティで保存
+    safeSetNumber("speechRate", limitedValue);
+    setSpeechRateState(limitedValue);
+    
+    console.log("読み上げ速度変更:", limitedValue);
   }, []);
 
-  const setUserName = useCallback((value: string) => {
-    try {
-      // 空白の場合はデフォルト値を使用
-      const nameValue = value.trim() ? value : DEFAULT_USER_NAME;
-      // localStorageに保存
-      localStorage.setItem("userName", nameValue);
-      // 状態を更新
-      setUserNameState(nameValue);
-    } catch (error) {
-      logger.error("[useSettings] ユーザー名設定の保存に失敗:", error);
-    }
+  const setUserName = useCallback((nameValue: string) => {
+    // 統一ユーティリティで保存
+    safeSetString("userName", nameValue);
+    setUserNameState(nameValue);
+    
+    console.log("ユーザー名変更:", nameValue);
   }, []);
 
-  const setAssistantName = useCallback((value: string) => {
-    try {
-      // 空白の場合はデフォルト値を使用
-      const nameValue = value.trim() ? value : DEFAULT_ASSISTANT_NAME;
-      // localStorageに保存
-      localStorage.setItem("assistantName", nameValue);
-      // 状態を更新
-      setAssistantNameState(nameValue);
-    } catch (error) {
-      logger.error("[useSettings] アシスタント名設定の保存に失敗:", error);
-    }
+  const setAssistantName = useCallback((nameValue: string) => {
+    // 統一ユーティリティで保存
+    safeSetString("assistantName", nameValue);
+    setAssistantNameState(nameValue);
+    
+    console.log("アシスタント名変更:", nameValue);
   }, []);
 
   const setUserAvatar = useCallback((value: string) => {
-    try {
-      localStorage.setItem("userAvatar", value);
-      setUserAvatarState(value);
-    } catch (error) {
-      logger.error("[useSettings] ユーザーアイコンの保存に失敗:", error);
-    }
+    safeSetString("userAvatar", value);
+    setUserAvatarState(value);
   }, []);
 
   const setAssistantAvatar = useCallback((value: string) => {
-    try {
-      localStorage.setItem("assistantAvatar", value);
-      setAssistantAvatarState(value);
-    } catch (error) {
-      logger.error("[useSettings] AIアイコンの保存に失敗:", error);
-    }
+    safeSetString("assistantAvatar", value);
+    setAssistantAvatarState(value);
   }, []);
 
   return {

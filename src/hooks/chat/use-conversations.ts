@@ -4,6 +4,13 @@ import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/utils/supabase";
 import type { Conversation } from "@/types/chat";
 import { logger } from "@/lib/logger";
+import { 
+  safeGetJson, 
+  safeSetJson, 
+  safeGetString, 
+  safeSetString, 
+  safeRemoveItem 
+} from "@/lib/local-storage-utils";
 
 export interface UseConversations {
   conversations: Conversation[];
@@ -26,29 +33,23 @@ export function useConversations(): UseConversations {
   // 初期化時にlocalStorageからデータを読み込む
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("conversations");
-      const sel = localStorage.getItem("selectedConversation");
-      if (stored) {
-        const parsed = JSON.parse(stored) as Conversation[];
-        if (parsed.length) {
-          setConversations(parsed);
-        }
-      }
-      if (sel) {
-        setSelectedId(sel);
-      }
-    } catch {
-      // ignore parse errors
+      const stored = safeGetJson<Conversation[]>("conversations", [], "conversations");
+      const sel = safeGetString("selectedConversation");
+      
+      setConversations(stored);
+      setSelectedId(sel || '');
+    } catch (error) {
+      logger.error("会話データの読み込みに失敗:", error);
     }
   }, []);
 
   // 状態変更時にlocalStorageへ保存
   useEffect(() => {
-    localStorage.setItem("conversations", JSON.stringify(conversations));
+    safeSetJson("conversations", conversations, "conversations");
   }, [conversations]);
 
   useEffect(() => {
-    localStorage.setItem("selectedConversation", selectedId);
+    safeSetString("selectedConversation", selectedId);
   }, [selectedId]);
 
   const selectConversation = (id: string) => {
@@ -95,7 +96,7 @@ export function useConversations(): UseConversations {
       
       // 新しい会話用のメッセージ配列を初期化
       try {
-        localStorage.setItem(`messages_${id}`, JSON.stringify([]));
+        safeSetJson(`messages_${id}`, [], `messages for ${id}`);
       } catch {
         // ignore write errors
       }
@@ -120,9 +121,9 @@ export function useConversations(): UseConversations {
     });
     // 対応するメッセージをlocalStorageから削除
     try {
-      localStorage.removeItem(`messages_${id}`);
-    } catch {
-      // ignore remove errors
+      safeRemoveItem(`messages_${id}`);
+    } catch (error) {
+      logger.error("メッセージデータの削除に失敗:", error);
     }
   };
 
