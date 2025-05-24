@@ -8,6 +8,7 @@ import { UIOperation, AgentError } from './types';
 import { fetchWithTimeout } from '@/lib/fetch';
 import { isValidInput, hasText, isEmptyArray } from '@/lib/validation-utils';
 import { parseSuccessResponse, parseErrorResponse } from '@/lib/async-utils';
+import { LOCAL_UI_API_URL } from '@/constants/network';
 
 // レスポンス生成は共通ライブラリを再エクスポート
 export { 
@@ -115,7 +116,7 @@ export async function executeUIOperationViaWebSocket(operation: UIOperation): Pr
     console.log('🎯→🖥️ エージェント→Socket.IO UI操作:', operation.description);
     
     try {
-      const response = await fetchWithTimeout('http://127.0.0.1:8080/ui-operation', {
+      const response = await fetchWithTimeout(`${LOCAL_UI_API_URL}/ui-operation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
