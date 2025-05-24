@@ -2,14 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { logger } from "@/lib/logger";
-import { 
-  safeGetBoolean, 
-  safeSetBoolean, 
-  safeGetString, 
-  safeSetString, 
-  safeGetNumber, 
-  safeSetNumber 
-} from '@/lib/local-storage-utils';
+import { useUserPreferences } from "./use-user-preferences";
 
 export interface UseSettings {
   voiceInputEnabled: boolean;
@@ -26,60 +19,63 @@ export interface UseSettings {
   setUserName: (v: string) => void;
   assistantName: string;
   setAssistantName: (v: string) => void;
-  refreshSettings: () => void; // 設定を再読み込みするための関数を追加
+  refreshSettings: () => void;
 }
 
-// 音声読み上げ速度のデフォルト値と範囲
+// デフォルト値と範囲
 export const DEFAULT_SPEECH_RATE = 1.0;
 export const MIN_SPEECH_RATE = 0.5;
 export const MAX_SPEECH_RATE = 2.0;
-
-// 名前のデフォルト値
 export const DEFAULT_USER_NAME = "あなた";
 export const DEFAULT_ASSISTANT_NAME = "DeepTrader AI";
 
 /**
  * 音声入力と読み上げ設定を管理するフック
+ * DBベース実装（user_preferencesテーブル使用）
  */
 export function useSettings(): UseSettings {
-  // デフォルト値として、音声入力と読み上げは有効に設定
-  const [voiceInputEnabled, setVoiceInputEnabledState] =
-    useState<boolean>(true);
-  const [speechSynthesisEnabled, setSpeechSynthesisEnabledState] =
-    useState<boolean>(true);
-  const [userAvatar, setUserAvatarState] = useState<string | undefined>(
-    undefined,
-  );
-  const [assistantAvatar, setAssistantAvatarState] = useState<
-    string | undefined
-  >(undefined);
+  const { 
+    audioSettings, 
+    themeSettings, 
+    updateAudioSettings, 
+    updateThemeSettings, 
+    setPreference,
+    getPreference,
+    isLoading 
+  } = useUserPreferences();
+  
+  // ローカル状態（DBから読み込み完了まで使用）
+  const [voiceInputEnabled, setVoiceInputEnabledState] = useState<boolean>(true);
+  const [speechSynthesisEnabled, setSpeechSynthesisEnabledState] = useState<boolean>(true);
+  const [userAvatar, setUserAvatarState] = useState<string | undefined>(undefined);
+  const [assistantAvatar, setAssistantAvatarState] = useState<string | undefined>(undefined);
   const [speechRate, setSpeechRateState] = useState<number>(DEFAULT_SPEECH_RATE);
   const [userName, setUserNameState] = useState<string>(DEFAULT_USER_NAME);
   const [assistantName, setAssistantNameState] = useState<string>(DEFAULT_ASSISTANT_NAME);
-  const [initialized, setInitialized] = useState<boolean>(false);
 
-  // LocalStorageから設定を読み込む
+  // DBから設定を読み込み
   useEffect(() => {
-    try {
-      // boolean値
-      const voiceValue = safeGetBoolean("voiceInputEnabled", true);
-      const speechValue = safeGetBoolean("speechSynthesisEnabled", true);
-      
-      // string値
-      const userAvatarValue = safeGetString("userAvatar");
-      const assistantAvatarValue = safeGetString("assistantAvatar");
-      const userNameValue = safeGetString("userName", DEFAULT_USER_NAME);
-      const assistantNameValue = safeGetString("assistantName", DEFAULT_ASSISTANT_NAME);
-      
-      // number値
-      const speechRateValue = safeGetNumber("speechRate", DEFAULT_SPEECH_RATE);
+    if (isLoading) return;
 
-      console.log("LocalStorageから設定を読み込み:", { voiceValue, speechValue, speechRateValue });
+    try {
+      // 音声設定（audioSettingsから取得）
+      setVoiceInputEnabledState(audioSettings.voice_enabled);
+      setSpeechSynthesisEnabledState(getPreference('audio', 'speech_enabled') ?? true);
+      setSpeechRateState(getPreference('audio', 'speech_rate') ?? DEFAULT_SPEECH_RATE);
+      
+      // テーマ設定（個別に取得）
+      const userAvatarValue = getPreference('theme', 'user_avatar');
+      const assistantAvatarValue = getPreference('theme', 'assistant_avatar');
+      const userNameValue = getPreference('theme', 'user_name') ?? DEFAULT_USER_NAME;
+      const assistantNameValue = getPreference('theme', 'assistant_name') ?? DEFAULT_ASSISTANT_NAME;
+
+      console.log("DBから設定を読み込み:", { 
+        voiceEnabled: audioSettings.voice_enabled, 
+        speechEnabled: getPreference('audio', 'speech_enabled'),
+        speechRate: getPreference('audio', 'speech_rate') 
+      });
       
       // 状態を設定
-      setVoiceInputEnabledState(voiceValue);
-      setSpeechSynthesisEnabledState(speechValue);
-      setSpeechRateState(speechRateValue);
       setUserNameState(userNameValue);
       setAssistantNameState(assistantNameValue);
       
@@ -87,71 +83,59 @@ export function useSettings(): UseSettings {
       if (assistantAvatarValue) setAssistantAvatarState(assistantAvatarValue);
 
     } catch (error) {
-      console.error("設定の読み込みに失敗しました:", error);
+      logger.error("DB設定の読み込みに失敗しました:", error);
     }
-  }, []);
+  }, [audioSettings, themeSettings, getPreference, isLoading]);
 
-  // 設定を再読み込みする関数（外部から呼び出し可能）
-  // 依存配列を空にして、再レンダリングの原因にならないようにする
+  // 設定を再読み込みする関数
   const refreshSettings = useCallback(() => {
-    // 設定再読み込み処理（将来的に実装）
     console.log("設定再読み込み実行");
+    // preferencesは自動的に更新されるため、特別な処理は不要
   }, []);
 
-  // 設定変更ハンドラ - 統一ユーティリティ使用
-  const setVoiceInputEnabled = useCallback((value: boolean) => {
-    // 統一ユーティリティで保存
-    safeSetBoolean("voiceInputEnabled", value);
+  // 設定変更ハンドラ - DB保存
+  const setVoiceInputEnabled = useCallback(async (value: boolean) => {
     setVoiceInputEnabledState(value);
-    
-    // デバッグログ
+    await updateAudioSettings({ voice_enabled: value });
     console.log("音声入力設定変更:", value);
-  }, []);
+  }, [updateAudioSettings]);
 
-  const setSpeechSynthesisEnabled = useCallback((value: boolean) => {
-    // 統一ユーティリティで保存
-    safeSetBoolean("speechSynthesisEnabled", value);
+  const setSpeechSynthesisEnabled = useCallback(async (value: boolean) => {
     setSpeechSynthesisEnabledState(value);
-    
+    await setPreference('audio', 'speech_enabled', value);
     console.log("音声読み上げ設定変更:", value);
-  }, []);
+  }, [setPreference]);
 
-  const setSpeechRate = useCallback((value: number) => {
-    // 範囲制限
-    const limitedValue = Math.min(Math.max(value, 0.5), 2.0);
-    
-    // 統一ユーティリティで保存
-    safeSetNumber("speechRate", limitedValue);
+  const setSpeechRate = useCallback(async (value: number) => {
+    const limitedValue = Math.min(Math.max(value, MIN_SPEECH_RATE), MAX_SPEECH_RATE);
     setSpeechRateState(limitedValue);
-    
+    await setPreference('audio', 'speech_rate', limitedValue);
     console.log("読み上げ速度変更:", limitedValue);
-  }, []);
+  }, [setPreference]);
 
-  const setUserName = useCallback((nameValue: string) => {
-    // 統一ユーティリティで保存
-    safeSetString("userName", nameValue);
+  const setUserName = useCallback(async (nameValue: string) => {
     setUserNameState(nameValue);
-    
+    await setPreference('theme', 'user_name', nameValue);
     console.log("ユーザー名変更:", nameValue);
-  }, []);
+  }, [setPreference]);
 
-  const setAssistantName = useCallback((nameValue: string) => {
-    // 統一ユーティリティで保存
-    safeSetString("assistantName", nameValue);
+  const setAssistantName = useCallback(async (nameValue: string) => {
     setAssistantNameState(nameValue);
-    
+    await setPreference('theme', 'assistant_name', nameValue);
     console.log("アシスタント名変更:", nameValue);
-  }, []);
+  }, [setPreference]);
 
-  const setUserAvatar = useCallback((value: string) => {
-    safeSetString("userAvatar", value);
+  const setUserAvatar = useCallback(async (value: string) => {
     setUserAvatarState(value);
-  }, []);
+    await setPreference('theme', 'user_avatar', value);
+    console.log("ユーザーアバター変更:", value);
+  }, [setPreference]);
 
-  const setAssistantAvatar = useCallback((value: string) => {
-    safeSetString("assistantAvatar", value);
+  const setAssistantAvatar = useCallback(async (value: string) => {
     setAssistantAvatarState(value);
-  }, []);
+    await setPreference('theme', 'assistant_avatar', value);
+    console.log("アシスタントアバター変更:", value);
+  }, [setPreference]);
 
   return {
     voiceInputEnabled,
