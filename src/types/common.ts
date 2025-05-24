@@ -27,7 +27,7 @@ export interface Rect {
 /** WebSocketストリーム情報の共通型 */
 export interface StreamInfo {
   ws: WebSocket;
-  listeners: Set<Function>;
+  listeners: Set<(...args: any[]) => void>;
   refs: number;
   pingTimer?: NodeJS.Timeout;
   retryCount: number;

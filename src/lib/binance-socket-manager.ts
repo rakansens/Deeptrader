@@ -1,18 +1,9 @@
 import { clientEnv } from '@/config';
+import type { StreamInfo } from '@/types';
 
 const RECONNECT_DELAY = 1000; // ms – wait 1 s before trying to reconnect
 
 export type Listener = (data: unknown) => void
-
-interface StreamInfo {
-  ws: WebSocket
-  listeners: Set<Listener>
-  refs: number
-  pingTimer?: NodeJS.Timeout
-  retryCount: number // exponential‑back‑off counter
-  reconnectTimer?: NodeJS.Timeout
-  keepAlive?: NodeJS.Timeout // キープアライブタイマー
-}
 
 export class BinanceSocketManager {
   private streams = new Map<string, StreamInfo>()

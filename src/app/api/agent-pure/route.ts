@@ -1,6 +1,8 @@
 // src/app/api/agent-pure/route.ts
 // MASTRA完全回避、純粋WebSocket自然言語UIコントロールエージェント
+// Phase 5A: UIOperation型を@/types/commonに統合
 import { NextRequest, NextResponse } from 'next/server';
+import type { UIOperation } from '@/types';
 
 export const runtime = "nodejs";
 
@@ -220,9 +222,9 @@ function generateNaturalResponse(userMessage: string, executedOperations: UIOper
   }
 }
 
-// UI操作の型定義
-interface UIOperation {
-  type: 'change_symbol' | 'change_timeframe' | 'change_theme' | 'toggle_indicator';
-  payload: any;
-  description: string;
-} 
+// UI操作の型定義（@/types/commonに移動）
+// interface UIOperation {
+//   type: 'change_symbol' | 'change_timeframe' | 'change_theme' | 'toggle_indicator';
+//   payload: any;
+//   description: string;
+// } 

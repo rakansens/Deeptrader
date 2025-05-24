@@ -96,15 +96,29 @@ async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: a
     if (agentResponse?.mastraResponse) {
       const mastraResp = agentResponse.mastraResponse;
       
-      // 可能な構造をチェック
-      if (mastraResp.toolResults) {
-        toolResults = mastraResp.toolResults;
-      } else if (mastraResp.toolCalls) {
-        toolResults = mastraResp.toolCalls;
-      } else if (mastraResp.toolInvocations) {
-        toolResults = mastraResp.toolInvocations;
-      } else if (mastraResp.tools) {
-        toolResults = mastraResp.tools;
+      // 1. 直接のtoolResults
+      if (mastraResp.toolResults && mastraResp.toolResults.length > 0) {
+        toolResults = [...toolResults, ...mastraResp.toolResults];
+      }
+      
+      // 2. steps配列内のtoolResults（MASTRAの実際の構造）
+      if (mastraResp.steps && Array.isArray(mastraResp.steps)) {
+        for (const step of mastraResp.steps) {
+          if (step.toolResults && Array.isArray(step.toolResults)) {
+            toolResults = [...toolResults, ...step.toolResults];
+          }
+        }
+      }
+      
+      // 3. その他の可能な構造
+      if (mastraResp.toolCalls) {
+        toolResults = [...toolResults, ...mastraResp.toolCalls];
+      }
+      if (mastraResp.toolInvocations) {
+        toolResults = [...toolResults, ...mastraResp.toolInvocations];
+      }
+      if (mastraResp.tools) {
+        toolResults = [...toolResults, ...mastraResp.tools];
       }
       
       console.log('🔍 抽出されたツール結果:', toolResults);
