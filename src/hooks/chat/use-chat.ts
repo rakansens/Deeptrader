@@ -124,18 +124,34 @@ export function useChat(): UseChat {
         const ext = imageFile.name.split('.').pop() || 'png';
         const fileName = `${crypto.randomUUID()}.${ext}`;
         const supabase = createClient();
-        const { error: upErr } = await supabase.storage
-          .from('chat-images')
-          .upload(fileName, imageFile);
+        
+        try {
+          const { error: upErr } = await supabase.storage
+            .from('chat-images')
+            .upload(fileName, imageFile);
 
-        if (upErr) {
-          logger.error("画像アップロード失敗:", upErr);
-          setError("画像のアップロードに失敗しました。");
+          if (upErr) {
+            logger.error("画像アップロード失敗:", upErr);
+            const errorMsg = upErr.message?.includes('Bucket not found') 
+              ? "ストレージバケットが見つかりません。管理者にお問い合わせください。"
+              : `画像のアップロードに失敗しました: ${upErr.message}`;
+            setError(errorMsg);
+            return;
+          }
+          
+          const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(fileName);
+          imageUrl = (urlData as any)?.publicUrl || (urlData as any)?.publicURL || "";
+          
+          if (!imageUrl) {
+            logger.error("画像URL取得失敗");
+            setError("画像URLの生成に失敗しました。");
+            return;
+          }
+        } catch (uploadError) {
+          logger.error("画像アップロード例外:", uploadError);
+          setError("画像アップロード中にエラーが発生しました。ネットワーク接続を確認してください。");
           return;
         }
-        
-        const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(fileName);
-        imageUrl = (urlData as any)?.publicUrl || (urlData as any)?.publicURL || "";
       }
 
       // チャットAPIに送信

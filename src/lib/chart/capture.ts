@@ -64,6 +64,14 @@ export async function captureViaHtml2Canvas(
       quality: 0.95,
       useCORS: true,
       allowTaint: false,
+      removeContainer: false,
+      ignoreElements: (element: Element) => {
+        if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE') {
+          return true;
+        }
+        return element.hasAttribute('data-html2canvas-ignore');
+      },
+      logging: false,
     };
     const canvas = await html2canvas(element, options)
     
