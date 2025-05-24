@@ -149,6 +149,7 @@ export interface OrchestratorResponse {
   reasoning: string;
   response: string;
   mastraUsed: boolean;
+  mastraResponse?: any;
 }
 
 // 統合オーケストレーターエージェント
@@ -185,13 +186,18 @@ export class UnifiedOrchestratorAgent {
           }
         ]);
         
+        // 🔍 MASTRA完全応答をデバッグ出力
+        console.log('🔍 MASTRAエージェント完全応答:', JSON.stringify(response, null, 2));
+        
         return {
           targetAgent: this.extractTargetAgent(response.text || ''),
           action: 'mastra_delegated',
           parameters: { ...context },
           reasoning: 'MASTRAオーケストレーターによる実際のLLM委任判断',
           response: response.text || 'MASTRAによる処理が完了しました',
-          mastraUsed: true // ✅ MASTRA使用フラグをtrueに設定
+          mastraUsed: true, // ✅ MASTRA使用フラグをtrueに設定
+          // 🎯 MASTRA完全応答を含める
+          mastraResponse: response
         };
         
       } catch (mastraError) {

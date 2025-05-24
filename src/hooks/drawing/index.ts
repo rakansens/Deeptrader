@@ -1,9 +1,11 @@
 // src/hooks/drawing/index.ts  
-// 描画フック統一エクスポート - Phase 2B統合
+// 描画フック統一エクスポート - Phase 2B統合 + Phase 5A型統合
+
+// 🎨 共通型（統合）
+export type { Point } from '@/types';
 
 // 🎨 描画ツール（統合）
 export {
-  type Point,
   previewBox,
   drawBox,
   previewArrow,

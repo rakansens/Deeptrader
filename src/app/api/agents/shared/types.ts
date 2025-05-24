@@ -1,5 +1,8 @@
 // src/app/api/agents/shared/types.ts
 // エージェント共通型定義 - 構造整理により重複削除と型安全性向上
+// Phase 5A: UIOperation型を@/types/commonに統合
+
+import type { UIOperation } from '@/types';
 
 // 基本的なAPI要求の型定義
 export interface AgentRequest {
@@ -22,6 +25,7 @@ export interface AgentResponse {
   agent?: string;
   executedOperations?: UIOperation[];
   totalOperations?: number;
+  source?: 'mastra' | 'pure' | 'websocket' | 'api';
 }
 
 // オーケストレーター応答型（既存より移行）
@@ -34,12 +38,12 @@ export interface OrchestratorResponse {
   mastraUsed: boolean;
 }
 
-// UI操作の型定義（agent-pure.tsより移行）
-export interface UIOperation {
-  type: 'change_symbol' | 'change_timeframe' | 'change_theme' | 'toggle_indicator';
-  payload: Record<string, any>;
-  description: string;
-}
+// UI操作の型定義（@/types/commonに移動）
+// export interface UIOperation {
+//   type: 'change_symbol' | 'change_timeframe' | 'change_theme' | 'toggle_indicator';
+//   payload: any;
+//   description: string;
+// }
 
 // 実行結果の型定義
 export interface ExecutionResult {

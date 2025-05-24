@@ -43,6 +43,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
         targetAgent: response.targetAgent
       });
       
+      // 🔍 MASTRA応答構造をデバッグ
+      console.log('🔍 MASTRA完全応答構造:', JSON.stringify(response, null, 2));
+      
       // WebSocket経由でUI操作も実行（実際のUI変更）
       await executeUIOperationsIfNeeded(message, response);
 
@@ -87,16 +90,54 @@ async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: a
   try {
     console.log('🎯 UI操作実行チェック:', { userMessage, agentResponse });
     
-    // エージェントがツールを使用してUI操作コマンドを生成した場合
-    if (agentResponse && agentResponse.toolResults) {
-      for (const toolResult of agentResponse.toolResults) {
-        if (toolResult.toolName === 'generateUIOperationTool' && toolResult.result?.uiOperation) {
-          const uiOperation = toolResult.result.uiOperation;
-          console.log('🎯 エージェント生成のUI操作実行:', uiOperation);
-          
-          await executeUIOperation(uiOperation);
-          return; // UI操作が実行されたので終了
-        }
+    // MASTRA応答からツール実行結果を取得（複数の構造に対応）
+    let toolResults: any[] = [];
+    
+    if (agentResponse?.mastraResponse) {
+      const mastraResp = agentResponse.mastraResponse;
+      
+      // 可能な構造をチェック
+      if (mastraResp.toolResults) {
+        toolResults = mastraResp.toolResults;
+      } else if (mastraResp.toolCalls) {
+        toolResults = mastraResp.toolCalls;
+      } else if (mastraResp.toolInvocations) {
+        toolResults = mastraResp.toolInvocations;
+      } else if (mastraResp.tools) {
+        toolResults = mastraResp.tools;
+      }
+      
+      console.log('🔍 抽出されたツール結果:', toolResults);
+    }
+    
+    // 従来の形式もチェック
+    if (agentResponse?.toolResults) {
+      toolResults = [...toolResults, ...agentResponse.toolResults];
+    }
+    
+    // ツール実行結果からUI操作を探す
+    for (const toolResult of toolResults) {
+      console.log('🔍 ツール結果チェック:', toolResult);
+      
+      // generateUIOperationToolの実行結果を探す
+      if (
+        (toolResult.toolName === 'generateUIOperationTool' || 
+         toolResult.type === 'generateUIOperationTool' ||
+         toolResult.name === 'generateUIOperationTool') && 
+        toolResult.result?.uiOperation
+      ) {
+        const uiOperation = toolResult.result.uiOperation;
+        console.log('🎯 エージェント生成のUI操作実行:', uiOperation);
+        
+        await executeUIOperation(uiOperation);
+        return; // UI操作が実行されたので終了
+      }
+      
+      // UI操作が直接含まれている場合
+      if (toolResult.uiOperation) {
+        console.log('🎯 直接UI操作実行:', toolResult.uiOperation);
+        await executeUIOperation(toolResult.uiOperation);
+        return;
       }
     }
     
