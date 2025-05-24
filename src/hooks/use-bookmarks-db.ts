@@ -16,6 +16,7 @@ import type {
 import { DEFAULT_BOOKMARK_CATEGORIES } from '@/types/bookmark';
 import { Message } from '@/types/chat';
 import { getCurrentISOTimestamp, isoToUnixTimestamp, unixToISOTimestamp } from '@/lib/date-utils';
+import { isEmptyArray, isNonEmptyArray, hasItems, hasText } from '@/lib/validation-utils';
 
 type DBBookmark = Database['public']['Tables']['bookmarks']['Row'];
 type DBBookmarkInsert = Database['public']['Tables']['bookmarks']['Insert'];
@@ -276,7 +277,7 @@ export function useBookmarksDB(): UseBookmarksDB {
       }
 
       // タグがある場合は追加
-      if (tags.length > 0 && createdBookmark) {
+      if (hasItems(tags) && createdBookmark) {
         const tagInserts = tags.map(tag => ({
           bookmark_id: createdBookmark.id,
           tag_name: tag,
@@ -357,7 +358,7 @@ export function useBookmarksDB(): UseBookmarksDB {
           .eq('bookmark_id', bookmarkId);
 
         // 新しいタグを追加
-        if (updates.tags.length > 0) {
+        if (hasItems(updates.tags)) {
           const tagInserts = updates.tags.map(tag => ({
             bookmark_id: bookmarkId,
             tag_name: tag,
@@ -394,7 +395,7 @@ export function useBookmarksDB(): UseBookmarksDB {
 
   // 検索（データベース検索）
   const searchBookmarks = useCallback(async (query: string): Promise<Bookmark[]> => {
-    if (!query.trim()) return bookmarks;
+    if (!hasText(query)) return bookmarks;
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -655,7 +656,7 @@ export function useBookmarksDB(): UseBookmarksDB {
       }
 
       const oldBookmarks = JSON.parse(storedBookmarks) as Bookmark[];
-      if (oldBookmarks.length === 0) {
+      if (isEmptyArray(oldBookmarks)) {
         logger.info('[useBookmarksDB] localStorage移行: 空データ');
         return;
       }
@@ -663,7 +664,7 @@ export function useBookmarksDB(): UseBookmarksDB {
       logger.info(`[useBookmarksDB] localStorage移行開始: ${oldBookmarks.length}件`);
 
       // 既存データがある場合は移行しない
-      if (bookmarks.length > 0) {
+      if (isNonEmptyArray(bookmarks)) {
         logger.info('[useBookmarksDB] 既存データがあるため移行をスキップ');
         return;
       }
@@ -698,7 +699,7 @@ export function useBookmarksDB(): UseBookmarksDB {
           }
 
           // タグ移行
-          if (oldBookmark.tags.length > 0 && createdBookmark) {
+          if (hasItems(oldBookmark.tags) && createdBookmark) {
             const tagInserts = oldBookmark.tags.map(tag => ({
               bookmark_id: createdBookmark.id,
               tag_name: tag,
@@ -758,4 +759,4 @@ export function useBookmarksDB(): UseBookmarksDB {
     getStats,
     migrateFromLocalStorage
   };
-} 
+}

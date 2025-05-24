@@ -6,6 +6,8 @@
 
 import { UIOperation, AgentError } from './types';
 import { fetchWithTimeout } from '@/lib/fetch';
+import { isValidInput, hasText, isEmptyArray } from '@/lib/validation-utils';
+import { parseSuccessResponse, parseErrorResponse } from '@/lib/async-utils';
 
 // レスポンス生成は共通ライブラリを再エクスポート
 export { 
@@ -21,8 +23,8 @@ export {
 export function analyzeNaturalLanguageForUI(message: string): UIOperation[] {
   const operations: UIOperation[] = [];
   
-  // メッセージの防御的チェック
-  if (!message || typeof message !== 'string' || message.trim() === '') {
+  // メッセージの防御的チェック（統合バリデーション使用）
+  if (!isValidInput(message)) {
     console.log('⚠️ analyzeNaturalLanguageForUI: 無効なメッセージ', { message, type: typeof message });
     return operations;
   }
@@ -128,11 +130,11 @@ export async function executeUIOperationViaWebSocket(operation: UIOperation): Pr
       });
       
       if (response.ok) {
-        const result = await response.json().catch(() => ({ success: true }));
+        const result = await parseSuccessResponse(response);
         console.log('✅ UI操作送信成功:', operation.description, result);
         return true;
       } else {
-        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        const errorData = await parseErrorResponse(response);
         console.log('⚠️ UI操作送信失敗:', response.status, operation.description, errorData);
         return false;
       }
@@ -158,7 +160,7 @@ export async function executeUIOperationViaWebSocket(operation: UIOperation): Pr
 
 // 自然言語レスポンス生成
 export function generateNaturalResponse(userMessage: string, executedOperations: UIOperation[]): string {
-  if (executedOperations.length === 0) {
+  if (isEmptyArray(executedOperations)) {
     return `「${userMessage}」について理解できませんでした。銘柄変更（ETH、BTC等）、タイムフレーム変更（1h、4h、1d等）、テーマ変更（ダーク、ライト）などの操作に対応しています。`;
   }
   
@@ -175,8 +177,8 @@ export function generateNaturalResponse(userMessage: string, executedOperations:
 export function extractParameters(message: string, context?: any): Record<string, any> {
   const params: Record<string, any> = {};
   
-  // メッセージの防御的チェック
-  if (!message || typeof message !== 'string') {
+  // メッセージの防御的チェック（統合バリデーション使用）
+  if (!hasText(message)) {
     console.log('⚠️ extractParameters: 無効なメッセージ', { message, type: typeof message });
     return { ...context };
   }

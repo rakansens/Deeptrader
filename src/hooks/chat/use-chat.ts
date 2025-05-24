@@ -15,6 +15,7 @@ import { logger } from "@/lib/logger";
 import { CHAT_API_ENDPOINT } from "@/constants/network";
 import { getErrorMessage } from "@/lib/error-utils";
 import { safeGetJson, safeSetJson } from "@/lib/local-storage-utils";
+import { isNonEmptyArray, isEmptyArray, hasText, isValidInput } from '@/lib/validation-utils';
 
 export interface UseChat {
   messages: Message[];
@@ -100,8 +101,7 @@ export function useChat(): UseChat {
 
   // カスタムsendMessage実装（画像対応など）
   const sendMessage = useCallback(async (text: string, imageFile?: File) => {
-    // 入力バリデーション
-    if (!text.trim() && !imageFile) return;
+    if (!isValidInput(text) && !imageFile) return;
 
     setError(null);
     setLoading(true);
@@ -200,7 +200,7 @@ export function useChat(): UseChat {
       setMessages(prev => [...prev, assistantMessage]);
 
       // 送信成功時に履歴に追加（テキストメッセージのみ）
-      if (!imageFile && text.trim()) {
+      if (!imageFile && hasText(text)) {
         const newHistory = [...messageHistory, text.trim()];
         saveMessageHistory(newHistory);
       }
@@ -249,7 +249,7 @@ export function useChat(): UseChat {
 
   // 送信履歴ナビゲーション機能
   const navigateHistory = useCallback((direction: 'up' | 'down') => {
-    if (messageHistory.length === 0) return;
+    if (isEmptyArray(messageHistory)) return;
 
     if (direction === 'up') {
       // 初回の↑キーでは現在の入力を保存

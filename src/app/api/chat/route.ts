@@ -3,9 +3,11 @@ import { unifiedOrchestratorAgent } from '@/mastra/agents/orchestratorAgent';
 import { 
   createSuccessNextResponse, 
   createErrorNextResponse,
-  createSuccessResponse 
+  createSuccessResponse,
+  createErrorResponse
 } from '@/lib/api-response';
 import { ensureError } from '@/lib/error-utils';
+import { isValidInput } from '@/lib/validation-utils';
 
 /**
  * Chat API (軽量版)
@@ -22,8 +24,8 @@ export async function POST(req: NextRequest) {
     
     console.log('💬 メインチャット - 統合エージェントAPI処理:', { message, symbol, timeframe });
     
-    // メッセージの防御的チェック（強化版）
-    if (!message || typeof message !== 'string' || message.trim() === '') {
+    // メッセージバリデーション（統合ユーティリティ使用）
+    if (!isValidInput(message)) {
       console.log('❌ メインチャット: 無効なメッセージ受信', { 
         message, 
         type: typeof message,

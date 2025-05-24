@@ -172,7 +172,7 @@ export function useBookmarks(): UseBookmarks {
     }
   }, [supabase]);
 
-  // localStorage移行機能
+  // localStorage移行機能（一度だけ実行）
   const migrateFromLocalStorage = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -187,7 +187,7 @@ export function useBookmarks(): UseBookmarks {
       }
 
       const oldBookmarks = JSON.parse(storedBookmarks) as Bookmark[];
-      if (isEmptyArray(oldBookmarks)) {
+      if (oldBookmarks.length === 0) {
         logger.info('[useBookmarks] localStorage移行: 空データ');
         return;
       }
@@ -195,7 +195,7 @@ export function useBookmarks(): UseBookmarks {
       logger.info(`[useBookmarks] localStorage移行開始: ${oldBookmarks.length}件`);
 
       // 既存データがある場合は移行しない
-      if (isNonEmptyArray(bookmarks)) {
+      if (bookmarks.length > 0) {
         logger.info('[useBookmarks] 既存データがあるため移行をスキップ');
         return;
       }
@@ -215,7 +215,7 @@ export function useBookmarks(): UseBookmarks {
             is_starred: oldBookmark.isStarred,
             message_content: oldBookmark.messageContent,
             message_role: oldBookmark.messageRole,
-            message_timestamp: unixToISOTimestamp(oldBookmark.messageTimestamp),
+            message_timestamp: new Date(oldBookmark.messageTimestamp).toISOString(),
           };
 
           const { data: createdBookmark, error: bookmarkError } = await supabase
@@ -230,7 +230,7 @@ export function useBookmarks(): UseBookmarks {
           }
 
           // タグ移行
-          if (hasItems(oldBookmark.tags) && createdBookmark) {
+          if (oldBookmark.tags.length > 0 && createdBookmark) {
             const tagInserts = oldBookmark.tags.map(tag => ({
               bookmark_id: createdBookmark.id,
               tag_name: tag,
@@ -260,7 +260,7 @@ export function useBookmarks(): UseBookmarks {
     } catch (error) {
       logger.error('[useBookmarks] localStorage移行エラー:', error);
     }
-  }, [supabase, bookmarks, categories, fetchBookmarks]);
+  }, [supabase]); // 依存配列を最小限に
 
   // 初回ロード
   useEffect(() => {
@@ -271,13 +271,22 @@ export function useBookmarks(): UseBookmarks {
         fetchBookmarks()
       ]);
       setLoading(false);
-      
-      // 初回ロード後にlocalStorage移行を実行
-      await migrateFromLocalStorage();
     };
 
     initializeData();
-  }, [fetchCategories, fetchBookmarks, migrateFromLocalStorage]);
+  }, [fetchCategories, fetchBookmarks]); // migrateFromLocalStorageを削除
+
+  // localStorage移行（一度だけ実行）
+  useEffect(() => {
+    const runMigration = async () => {
+      // データが読み込まれてから移行実行
+      if (!loading && categories.length > 0) {
+        await migrateFromLocalStorage();
+      }
+    };
+
+    runMigration();
+  }, [loading, categories.length, migrateFromLocalStorage]); // 一度だけ実行するための条件
 
   // リアルタイム購読設定
   useEffect(() => {

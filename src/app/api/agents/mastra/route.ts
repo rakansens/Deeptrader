@@ -17,6 +17,7 @@ import {
 } from '../shared/utils';
 import { fetchWithTimeout } from '@/lib/fetch';
 import { getErrorMessage, ensureError } from '@/lib/error-utils';
+import { parseSuccessResponse, parseErrorResponse } from '@/lib/async-utils';
 
 export const runtime = "nodejs";
 
@@ -179,14 +180,14 @@ async function executeUIOperation(uiOperation: any) {
       });
       
       if (response.ok) {
-        const result = await response.json().catch(() => ({ success: true }));
+        const result = await parseSuccessResponse(response);
         logAgentActivity('MASTRA Agent', 'UI操作実行成功', { 
           operation: uiOperation.operation, 
           payload: uiOperation.payload, 
           result 
         });
       } else {
-        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        const errorData = await parseErrorResponse(response);
         logAgentActivity('MASTRA Agent', 'UI操作実行失敗', { 
           operation: uiOperation.operation, 
           payload: uiOperation.payload, 

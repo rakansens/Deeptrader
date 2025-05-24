@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Message } from "@/types";
 import { logger } from "@/lib/logger";
 import { CHAT_API_ENDPOINT, UPLOAD_API_ENDPOINT, IMAGE_ANALYSIS_API_ENDPOINT, CHART_SCREENSHOT_API_ENDPOINT, CHART_ANALYSIS_API_ENDPOINT } from "@/constants/network";
+import { isValidInput } from '@/lib/validation-utils';
 
 /**
  * チャットAPIとのやり取りを管理するフック
@@ -18,7 +19,7 @@ export function useChatApi() {
    * メッセージを送信し、AIからの応答を取得する
    */
   const handleSubmit = useCallback(async () => {
-    if (!input.trim() || isLoading) return;
+    if (!isValidInput(input) || isLoading) return;
 
     // 一意のIDを生成
     const messageId = Date.now().toString();
