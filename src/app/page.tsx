@@ -1,6 +1,7 @@
 // src/app/page.tsx 
 // メインページコンポーネント - Socket.IOクライアント追加でUI操作エージェント連携
 // サーバーからのUI操作イベントを受信してWindowイベントに変換
+// indicator名マッピング追加（bollinger_bands→boll）でエージェント連携完了
 
 "use client";
 
@@ -194,18 +195,31 @@ export default function Home() {
 
     const handleWebSocketIndicatorToggle = (event: any) => {
       const { indicator, enabled } = event.detail;
-      // toggleIndicatorを直接呼び出さずに、setIndicatorsを使用
+      
+      // indicator名のマッピング（エージェント名 → UI内部名）
+      const indicatorMapping: { [key: string]: string } = {
+        'bollinger_bands': 'boll',
+        'moving_average': 'ma',
+        'rsi': 'rsi',
+        'macd': 'macd'
+      };
+      
+      const mappedIndicator = indicatorMapping[indicator.toLowerCase()] || indicator.toLowerCase();
+      
       setIndicators((prevIndicators) => {
-        const key = indicator.toLowerCase() as keyof typeof prevIndicators;
+        const key = mappedIndicator as keyof typeof prevIndicators;
         if (key === "ma" || key === "rsi" || key === "macd" || key === "boll") {
-          return {
+          const newIndicators = {
             ...prevIndicators,
             [key]: typeof enabled === "boolean" ? enabled : !prevIndicators[key],
           };
+          console.log('📊 Indicators状態更新:', newIndicators);
+          return newIndicators;
         }
+        console.log('⚠️ 未知のインジケーター:', { original: indicator, mapped: mappedIndicator });
         return prevIndicators;
       });
-      console.log('WebSocketからインジケーター切り替え:', indicator, enabled);
+      console.log('WebSocketからインジケーター切り替え:', indicator, '→', mappedIndicator, enabled);
     };
 
     const handleWebSocketSymbolChange = (event: any) => {
