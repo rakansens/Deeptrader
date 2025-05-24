@@ -10,12 +10,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:unit": "jest --testPathPattern=src",
-    "test:integration": "node tests/integration/test-ui-agent-integration.mjs",
-    "test:websocket": "node tests/websocket/websocket-ui-client.mjs",
-    "test:eth-switch": "node tests/integration/test-eth-switch.mjs",
     "socket:start": "node socket-io-server.mjs",
-    "socket:test": "node tests/scripts/send-ui-command.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
