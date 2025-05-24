@@ -1,7 +1,7 @@
 // src/hooks/chat/use-chat.ts
-// チャット管理フック - AI SDK削除でmessage:undefinedエラーを修正
-// 直接チャットAPIにfetchでメッセージ送信するカスタム実装
-// 入力状態管理をuse-chatに統一 - 責任の明確化とリファクタリング完了
+// チャット管理フック - SRP準拠のクリーンアーキテクチャ
+// ビジネスロジック層として、メッセージ送信・API通信・状態管理を担当
+// UI層(Chat.tsx)との責任分離により、保守性とテスタビリティを向上
 
 "use client";
 
@@ -26,7 +26,7 @@ export interface UseChat {
   removeConversation: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
-  sendMessage: (text?: string, imageFile?: File) => Promise<void>;
+  sendMessage: (text: string, imageFile?: File) => Promise<void>;
   sendImageMessage: (dataUrl: string, prompt?: string) => Promise<void>;
 }
 
@@ -63,17 +63,9 @@ export function useChat(): UseChat {
   };
 
   // カスタムsendMessage実装（画像対応など）
-  const sendMessage = useCallback(async (textParam?: string, imageFile?: File) => {
-    // 現在の入力値を先に取得して保存
-    const currentInput = input.trim();
-    const text = textParam ? textParam.trim() : currentInput;
-    
-    if (!text && !imageFile) return;
-
-    // 入力フィールドを即座にクリア（textParamが指定されていない場合のみ）
-    if (!textParam) {
-      setInput("");
-    }
+  const sendMessage = useCallback(async (text: string, imageFile?: File) => {
+    // 入力バリデーション
+    if (!text.trim() && !imageFile) return;
 
     setError(null);
     setLoading(true);
@@ -82,7 +74,7 @@ export function useChat(): UseChat {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: text,
+      content: text.trim(),
       timestamp: Date.now(),
       type: "text",
     };
@@ -115,7 +107,7 @@ export function useChat(): UseChat {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: imageFile ? `${text}\n\n[画像: ${imageUrl}]` : text,
+          message: imageFile ? `${text.trim()}\n\n[画像: ${imageUrl}]` : text.trim(),
           symbol: "BTCUSDT", // デフォルト値
           timeframe: "1h", // デフォルト値
         }),
@@ -155,7 +147,7 @@ export function useChat(): UseChat {
     } finally {
       setLoading(false);
     }
-  }, [input, setInput, setError, setLoading, setMessages]);
+  }, []);
 
   const sendImageMessage = useCallback(async (dataUrl: string, promptText = 'このチャートを分析してください') => {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {

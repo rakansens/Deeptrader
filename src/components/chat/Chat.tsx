@@ -1,6 +1,7 @@
 // src/components/chat/Chat.tsx
-// チャットUI管理コンポーネント - 入力状態管理をuse-chatに統一
-// UI イベントハンドリングに責任を限定し、設計をクリーンに整理
+// チャットUIコンポーネント - SRP準拠のプレゼンテーション層
+// UI イベントハンドリング・入力状態クリア・ユーザー操作のみを担当
+// ビジネスロジック層(use-chat.ts)との責任分離により、設計をクリーンに整理
 
 "use client";
 
@@ -141,9 +142,8 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
 
     try {
       isSendingRef.current = true;
-      // 現在のinput値を明示的に渡して、確実に入力をクリア
-      setInput(""); // UI で即座に入力欄をクリア
-      await sendMessage(currentInput); // 保存した値を送信
+      setInput(""); // UI責任で入力をクリア
+      await sendMessage(currentInput); // 値を明確に渡す
     } catch (error) {
       logger.error("メッセージ送信エラー:", error);
     } finally {
@@ -158,7 +158,7 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     
     try {
       isSendingRef.current = true;
-      await sendMessage(text); // textParamを明示的に渡すので、use-chat内では入力がクリアされない
+      await sendMessage(text);
     } catch (error) {
       logger.error("サジェストメッセージ送信エラー:", error);
     } finally {
@@ -174,7 +174,9 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     try {
       setUploading(true);
       isSendingRef.current = true;
-      await sendMessage(undefined, file); // textParamにundefinedを渡すことで、use-chat内で入力がクリアされる
+      const inputText = input.trim() || "画像をアップロードしました"; // デフォルトテキスト
+      setInput(""); // UI責任で入力をクリア
+      await sendMessage(inputText, file);
     } catch (err) {
       logger.error("画像送信エラー", err);
     } finally {
