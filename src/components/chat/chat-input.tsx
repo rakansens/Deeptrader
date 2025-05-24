@@ -11,6 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ArrowUpIcon, ImagePlus, Loader2, Mic, MicOff, TrendingUp } from "lucide-react";
+import CommandCompletion from "./command-completion";
+import { commandToText } from "@/lib/commands";
 
 interface ChatInputProps {
   input: string;
@@ -50,12 +52,21 @@ export function ChatInput({
   const [dragging, setDragging] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
 
+  // コマンド補完の状態管理
+  const [showCommandCompletion, setShowCommandCompletion] = useState(false);
+
   // デバッグ用：音声入力設定の状態をログ出力
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log('ChatInput - voiceInputEnabled:', voiceInputEnabled);
     }
   }, [voiceInputEnabled]);
+
+  // コマンド補完の表示制御
+  useEffect(() => {
+    const shouldShow = input.startsWith('/') && input.length > 0 && !loading;
+    setShowCommandCompletion(shouldShow);
+  }, [input, loading]);
 
   /**
    * ファイルをアップロードする共通処理
@@ -331,6 +342,29 @@ export function ChatInput({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {/* コマンド補完 */}
+      <CommandCompletion
+        input={input}
+        onSelectCommand={(command) => {
+          // コマンドが実際のテキストかどうかチェック
+          if (command.startsWith('/')) {
+            // コマンド形式の場合はそのまま設定
+            setInput(command);
+          } else {
+            // 既に変換済みテキストの場合は設定して送信
+            setInput(command);
+            // 少し遅延を入れて送信
+            setTimeout(() => {
+              onSendMessage();
+            }, 50);
+          }
+          setShowCommandCompletion(false);
+        }}
+        isVisible={showCommandCompletion}
+        onClose={() => setShowCommandCompletion(false)}
+        textAreaRef={textAreaRef || { current: null }}
+      />
     </div>
   );
 }

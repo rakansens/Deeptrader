@@ -5,7 +5,7 @@
 
 "use client";
 
-import { getBrowserSupabase } from "@/lib/supabase-browser";
+import { createClient } from "@/utils/supabase";
 import { useEffect, useState, useCallback } from "react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
@@ -123,7 +123,7 @@ export function useChat(): UseChat {
         // 画像アップロード処理
         const ext = imageFile.name.split('.').pop() || 'png';
         const fileName = `${crypto.randomUUID()}.${ext}`;
-        const supabase = getBrowserSupabase();
+        const supabase = createClient();
         const { error: upErr } = await supabase.storage
           .from('chat-images')
           .upload(fileName, imageFile);

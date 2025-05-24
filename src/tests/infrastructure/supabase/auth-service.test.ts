@@ -6,7 +6,7 @@ import {
   getServerSideUser,
   resetPassword,
 } from "@/infrastructure/supabase/auth-service";
-import { createBrowserClient } from '@/utils/supabase/client-entry';
+import { createClient } from '@/utils/supabase';
 
 // モックの設定
 const mockSupabase = { 
@@ -19,8 +19,8 @@ const mockSupabase = {
   }
 };
 
-jest.mock("@/utils/supabase/client-entry", () => ({
-  createBrowserClient: jest.fn().mockReturnValue(mockSupabase)
+jest.mock("@/utils/supabase", () => ({
+  createClient: jest.fn(() => mockSupabase),
 }));
 
 describe("auth-service", () => {

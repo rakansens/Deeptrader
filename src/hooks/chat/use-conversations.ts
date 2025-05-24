@@ -1,8 +1,7 @@
 "use client";
 
-import { getBrowserSupabase } from "@/lib/supabase-browser";
-
-import { useEffect, useState } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createClient } from "@/utils/supabase";
 import type { Conversation } from "@/types/chat";
 import { logger } from "@/lib/logger";
 
@@ -63,7 +62,7 @@ export function useConversations(): UseConversations {
       const conv = { id, title: `会話 ${conversations.length + 1}` };
       
       // Supabaseに会話レコードを作成 (v2 API用に修正)
-      const supabase = getBrowserSupabase();
+      const supabase = createClient();
       const {
         data: { session },
         error: sessionErr,

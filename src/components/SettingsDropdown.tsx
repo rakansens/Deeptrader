@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useSettings, MIN_SPEECH_RATE, MAX_SPEECH_RATE, DEFAULT_USER_NAME, DEFAULT_ASSISTANT_NAME } from '@/hooks/use-settings';
 import {
   DropdownMenu,
@@ -27,7 +28,7 @@ import {
   Volume1
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBrowserSupabase } from '@/lib/supabase-browser';
+import { createClient } from '@/utils/supabase';
 import { logger } from '@/lib/logger';
 import {
   Avatar,
@@ -50,22 +51,26 @@ export function SettingsDropdown({ className }: { className?: string }) {
   const [assistantAvatarDialogOpen, setAssistantAvatarDialogOpen] = useState(false);
   const [speechSettingsDialogOpen, setSpeechSettingsDialogOpen] = useState(false);
   
+  // 新しいDB設定フックを使用
   const {
-    voiceInputEnabled,
-    setVoiceInputEnabled,
-    speechSynthesisEnabled,
-    setSpeechSynthesisEnabled,
+    audioSettings,
+    updateAudioSettings,
+    isLoading: preferencesLoading,
+    error: preferencesError
+  } = useUserPreferences();
+  
+  // アバター設定は一時的に従来のフックを併用
+  const {
     userAvatar,
     setUserAvatar,
     assistantAvatar,
     setAssistantAvatar,
-    speechRate,
-    setSpeechRate,
     userName,
     setUserName,
     assistantName,
     setAssistantName
   } = useSettings();
+  
   const { toast } = useToast();
   
   // ファイル入力用の参照
@@ -79,17 +84,71 @@ export function SettingsDropdown({ className }: { className?: string }) {
   // 設定用の一時的な値
   const [tempUserAvatar, setTempUserAvatar] = useState(userAvatar || "");
   const [tempAssistantAvatar, setTempAssistantAvatar] = useState(assistantAvatar || "");
-  const [tempSpeechRate, setTempSpeechRate] = useState(speechRate);
+  const [tempSpeechRate, setTempSpeechRate] = useState(1.0);
   const [tempUserName, setTempUserName] = useState(userName);
   const [tempAssistantName, setTempAssistantName] = useState(assistantName);
+  
+  // 初回ロード時にLocalStorageからDBに移行
+  const [migrationCompleted, setMigrationCompleted] = useState(false);
+  
+  useEffect(() => {
+    if (!migrationCompleted && !preferencesLoading) {
+      const migrateFromLocalStorage = async () => {
+        try {
+          const oldVoiceEnabled = localStorage.getItem("voiceInputEnabled");
+          const oldSpeechEnabled = localStorage.getItem("speechSynthesisEnabled");
+          const oldSpeechRate = localStorage.getItem("speechRate");
+          
+          // LocalStorageにデータがあり、DBに設定がない場合は移行
+          if (oldVoiceEnabled !== null) {
+            await updateAudioSettings({
+              voice_enabled: oldVoiceEnabled === "true"
+            });
+            logger.info('[SettingsDropdown] 音声入力設定をDBに移行しました');
+            localStorage.removeItem("voiceInputEnabled");
+          }
+          
+          if (oldSpeechEnabled !== null) {
+            const speechEnabled = oldSpeechEnabled === "true";
+            const rate = oldSpeechRate ? parseFloat(oldSpeechRate) : 1.0;
+            
+            await updateAudioSettings({
+              volume_level: speechEnabled ? rate : 0.0,
+              alert_sound: "chime" // デフォルト値
+            });
+            logger.info('[SettingsDropdown] 読み上げ設定をDBに移行しました');
+            localStorage.removeItem("speechSynthesisEnabled");
+            if (oldSpeechRate) localStorage.removeItem("speechRate");
+          }
+          
+          setMigrationCompleted(true);
+          
+          toast({
+            title: "設定を移行しました",
+            description: "設定がデータベースに保存され、デバイス間で同期されます",
+          });
+        } catch (error) {
+          logger.error('[SettingsDropdown] 設定移行エラー:', error);
+        }
+      };
+      
+      migrateFromLocalStorage();
+    }
+  }, [migrationCompleted, preferencesLoading, updateAudioSettings]);
   
   useEffect(() => {
     setTempUserAvatar(userAvatar || "");
     setTempAssistantAvatar(assistantAvatar || "");
-    setTempSpeechRate(speechRate);
     setTempUserName(userName);
     setTempAssistantName(assistantName);
-  }, [userAvatar, assistantAvatar, speechRate, userName, assistantName]);
+    // volume_levelから読み上げ速度を復元
+    setTempSpeechRate(audioSettings.volume_level > 0 ? audioSettings.volume_level : 1.0);
+  }, [userAvatar, assistantAvatar, userName, assistantName, audioSettings.volume_level]);
+  
+  // 音声入力とスピーチシンセシスの状態を計算
+  const voiceInputEnabled = audioSettings.voice_enabled;
+  const speechSynthesisEnabled = audioSettings.volume_level > 0;
+  const speechRate = audioSettings.volume_level > 0 ? audioSettings.volume_level : 1.0;
   
   // スピーチレートを読みやすい形式で表示する関数
   const formatSpeechRate = (rate: number) => {
@@ -129,7 +188,7 @@ export function SettingsDropdown({ className }: { className?: string }) {
       const fileName = `avatar_${isUser ? 'user' : 'assistant'}_${Date.now()}.${ext}`;
       
       // Supabaseにアップロード
-      const supabase = getBrowserSupabase();
+      const supabase = createClient();
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file);
@@ -179,30 +238,50 @@ export function SettingsDropdown({ className }: { className?: string }) {
     }
   };
   
-  const toggleVoiceInput = () => {
+  const toggleVoiceInput = async () => {
     const newValue = !voiceInputEnabled;
-    setVoiceInputEnabled(newValue);
-    localStorage.setItem("voiceInputEnabled", String(newValue));
-    
-    toast({
-      title: newValue ? "音声入力を有効化" : "音声入力を無効化",
-      description: newValue 
-        ? "チャット画面のマイクボタンを使用できます" 
-        : "音声入力は無効になりました",
-    });
+    try {
+      await updateAudioSettings({
+        voice_enabled: newValue
+      });
+      
+      toast({
+        title: newValue ? "音声入力を有効化" : "音声入力を無効化",
+        description: newValue 
+          ? "チャット画面のマイクボタンを使用できます" 
+          : "音声入力は無効になりました",
+      });
+    } catch (error) {
+      logger.error('[SettingsDropdown] 音声入力設定エラー:', error);
+      toast({
+        title: "設定エラー",
+        description: "音声入力設定の更新に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
   
-  const toggleSpeechSynthesis = () => {
+  const toggleSpeechSynthesis = async () => {
     const newValue = !speechSynthesisEnabled;
-    setSpeechSynthesisEnabled(newValue);
-    localStorage.setItem("speechSynthesisEnabled", String(newValue));
-    
-    toast({
-      title: newValue ? "読み上げ機能を有効化" : "読み上げ機能を無効化",
-      description: newValue 
-        ? "メッセージの横にあるスピーカーアイコンをクリックすると読み上げます" 
-        : "読み上げ機能は無効になりました",
-    });
+    try {
+      await updateAudioSettings({
+        volume_level: newValue ? tempSpeechRate : 0.0
+      });
+      
+      toast({
+        title: newValue ? "読み上げ機能を有効化" : "読み上げ機能を無効化",
+        description: newValue 
+          ? "メッセージの横にあるスピーカーアイコンをクリックすると読み上げます" 
+          : "読み上げ機能は無効になりました",
+      });
+    } catch (error) {
+      logger.error('[SettingsDropdown] 読み上げ設定エラー:', error);
+      toast({
+        title: "設定エラー",
+        description: "読み上げ設定の更新に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
   
   // アバターと名前を保存
@@ -230,14 +309,25 @@ export function SettingsDropdown({ className }: { className?: string }) {
     setAssistantAvatarDialogOpen(false);
   };
   
-  const saveSpeechRate = () => {
-    setSpeechRate(tempSpeechRate);
-    setSpeechSettingsDialogOpen(false);
-    
-    toast({
-      title: "音声設定を保存しました",
-      description: `読み上げ速度を${formatSpeechRate(tempSpeechRate)}に変更しました`,
-    });
+  const saveSpeechRate = async () => {
+    try {
+      await updateAudioSettings({
+        volume_level: tempSpeechRate
+      });
+      setSpeechSettingsDialogOpen(false);
+      
+      toast({
+        title: "音声設定を保存しました",
+        description: `読み上げ速度を${formatSpeechRate(tempSpeechRate)}に変更しました`,
+      });
+    } catch (error) {
+      logger.error('[SettingsDropdown] 読み上げ速度設定エラー:', error);
+      toast({
+        title: "設定エラー",
+        description: "読み上げ速度設定の更新に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

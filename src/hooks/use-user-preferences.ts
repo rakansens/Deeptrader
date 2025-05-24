@@ -5,8 +5,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getBrowserSupabase } from "@/lib/supabase-browser";
 import { logger } from "@/lib/logger";
+import { createClient } from '@/utils/supabase';
 import type { Database } from "@/types/supabase";
 
 type UserPreference = Database['public']['Tables']['user_preferences']['Row'];
@@ -113,7 +113,7 @@ const DEFAULT_TRADING_SETTINGS: UserTradingSettings = {
  * ユーザー設定をデータベースで管理するフック
  */
 export function useUserPreferences(): UseUserPreferences {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   
   // 状態管理
   const [preferences, setPreferences] = useState<UserPreference[]>([]);

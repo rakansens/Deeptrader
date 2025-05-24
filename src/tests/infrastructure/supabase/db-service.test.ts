@@ -5,12 +5,12 @@ import {
   fetchMessages,
   insertTradingHistory,
 } from "@/infrastructure/supabase/db-service";
-import { createBrowserClient } from '@/utils/supabase/client-entry';
+import { createClient } from '@/utils/supabase';
 
 // モックの設定
 const mockSupabase = { from: jest.fn() };
-jest.mock("@/utils/supabase/client-entry", () => ({
-  createBrowserClient: jest.fn().mockReturnValue(mockSupabase)
+jest.mock("@/utils/supabase", () => ({
+  createClient: jest.fn(() => mockSupabase),
 }));
 
 describe("db-service", () => {
