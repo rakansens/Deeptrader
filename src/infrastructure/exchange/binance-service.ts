@@ -2,6 +2,7 @@ import type { BinanceKline, BinanceKlineObject } from '@/types/binance';
 import type { OrderBookEntry } from '@/types';
 import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
+import { DEFAULT_API_LIMIT, SMALL_API_LIMIT, HTTP_FETCH_TIMEOUT } from '@/constants/network';
 
 /**
  * Binance APIの基本URL
@@ -52,7 +53,7 @@ export function klineTupleToObject(k: BinanceKline): BinanceKlineObject {
 export async function fetchKlines(
   symbol: string,
   interval: string,
-  limit = 100,
+  limit = DEFAULT_API_LIMIT,
 ): Promise<BinanceKlineObject[]> {
   const url = new URL('/api/v3/klines', BASE_URL);
   url.searchParams.set('symbol', symbol);
@@ -75,14 +76,14 @@ export async function fetchKlines(
  */
 export async function fetchOrderBook(
   symbol: string,
-  limit = 20,
+  limit = SMALL_API_LIMIT,
 ): Promise<{ bids: OrderBookEntry[]; asks: OrderBookEntry[] }> {
   const url = new URL('/api/v3/depth', BASE_URL)
   url.searchParams.set('symbol', symbol)
   url.searchParams.set('limit', String(limit))
 
   // Binance API access can sometimes be slow; limit waiting time to improve UX
-  const res = await fetchWithTimeout(url.toString(), { timeout: 5000 })
+  const res = await fetchWithTimeout(url.toString(), { timeout: HTTP_FETCH_TIMEOUT })
   if (!res.ok) {
     throw new Error(`Failed to fetch order book: ${res.status} ${res.statusText}`)
   }

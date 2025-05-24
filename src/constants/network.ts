@@ -79,4 +79,58 @@ export const CHART_ANALYSIS_API_ENDPOINT = '/api/chart-analysis';
 export const GUEST_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 /** デフォルト精度（浮動小数点比較用） */
-export const DEFAULT_PRECISION = 6; 
+export const DEFAULT_PRECISION = 6;
+
+// =============================================================================
+// 🌐 API・HTTP関連定数
+// =============================================================================
+
+/** APIクエリ制限: デフォルト */
+export const DEFAULT_API_LIMIT = 100;
+
+/** APIクエリ制限: 小 */
+export const SMALL_API_LIMIT = 20;
+
+/** HTTPステータスコード: Bad Request */
+export const HTTP_STATUS_BAD_REQUEST = 400;
+
+/** HTTPステータスコード: Internal Server Error */
+export const HTTP_STATUS_INTERNAL_ERROR = 500;
+
+/** 最大リトライ回数 */
+export const MAX_RETRY_COUNT = 5;
+
+/** 再接続基本遅延時間（ミリ秒） */
+export const RECONNECT_BASE_DELAY = 1000; // 1秒
+
+// =============================================================================
+// ⚡ WebSocketレート制限関連
+// =============================================================================
+
+/** WebSocketストリーム固有レート制限期間（ミリ秒） */
+export const WS_RATE_LIMIT_STREAM_SPECIFIC = 100; // 100ms
+
+/** WebSocket通常レート制限期間（ミリ秒） */
+export const WS_RATE_LIMIT_NORMAL = 200; // 200ms
+
+/** WebSocketレディステート: OPEN */
+export const WS_READY_STATE_OPEN = 1;
+
+// =============================================================================
+// 🎨 UI・チャート関連定数
+// =============================================================================
+
+/** デフォルト描画線幅 */
+export const DEFAULT_STROKE_WIDTH = 2;
+
+/** デフォルト消しゴムサイズ */
+export const DEFAULT_ERASER_SIZE = 30;
+
+/** チャートキャプチャスケール */
+export const CHART_CAPTURE_SCALE = 1.5;
+
+/** オーダーブックデフォルト深度 */
+export const DEFAULT_ORDERBOOK_DEPTH = 20;
+
+/** リトライカウント初期値 */
+export const INITIAL_RETRY_COUNT = 0; 

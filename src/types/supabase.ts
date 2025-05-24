@@ -596,6 +596,35 @@ export type Database = {
           created_at?: string | null
         }
       }
+      user_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          category: 'audio' | 'theme' | 'chart' | 'notifications' | 'trading'
+          preference_key: string
+          preference_value: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category: 'audio' | 'theme' | 'chart' | 'notifications' | 'trading'
+          preference_key: string
+          preference_value: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          category?: 'audio' | 'theme' | 'chart' | 'notifications' | 'trading'
+          preference_key?: string
+          preference_value?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
     }
     Views: {
       admin_users: {

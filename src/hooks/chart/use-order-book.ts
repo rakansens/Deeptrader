@@ -12,6 +12,8 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { clientEnv } from '@/config';
 import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 import type { ConnectionStatus } from "./use-binance-socket";
+import { hubSdk } from '@/lib/hub-sdk';
+import { DEFAULT_ORDERBOOK_DEPTH } from '@/constants/network';
 
 export interface UseOrderBookResult {
   bids: OrderBookEntry[];
@@ -36,7 +38,7 @@ function updateLevels(
   return arr.slice(0, depth);
 }
 
-export function useOrderBook(symbol: string, depth = 20): UseOrderBookResult {
+export function useOrderBook(symbol: string, depth = DEFAULT_ORDERBOOK_DEPTH): UseOrderBookResult {
   const [bids, setBids] = useState<OrderBookEntry[]>([]);
   const [asks, setAsks] = useState<OrderBookEntry[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");

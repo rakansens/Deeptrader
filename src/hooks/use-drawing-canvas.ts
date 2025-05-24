@@ -7,6 +7,7 @@ import { DRAWING_MODES } from '@/types/chart';
 import useTextInput from '@/hooks/drawing/use-text-input';
 import useEraser from '@/hooks/drawing/use-eraser';
 import usePointerEvents from '@/hooks/drawing/use-pointer-events';
+import { DEFAULT_STROKE_WIDTH, DEFAULT_ERASER_SIZE } from '@/constants/network';
 
 export interface UseDrawingCanvasProps {
   enabled?: boolean;
@@ -19,10 +20,10 @@ export interface UseDrawingCanvasProps {
 export function useDrawingCanvas(
   {
     enabled = true,
-    color = '#ef4444',
-    strokeWidth = 2,
+    color = '#3b82f6',
+    strokeWidth = DEFAULT_STROKE_WIDTH,
     mode = DRAWING_MODES.FREEHAND,
-    eraserSize = 30,
+    eraserSize = DEFAULT_ERASER_SIZE,
   }: UseDrawingCanvasProps,
   ref: React.Ref<DrawingCanvasHandle>,
 ) {

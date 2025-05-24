@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { WS_HUB_PORT, WS_PING_INTERVAL, WS_MAX_RECONNECT_DELAY, DEFAULT_BINANCE_WS_URL } from '@/constants/network';
+import { WS_HUB_PORT, WS_PING_INTERVAL, WS_MAX_RECONNECT_DELAY, DEFAULT_BINANCE_WS_URL, WS_RATE_LIMIT_STREAM_SPECIFIC, WS_RATE_LIMIT_NORMAL, WS_READY_STATE_OPEN } from '@/constants/network';
 
 // シンプルなログ関数
 const logger = {
@@ -131,7 +131,7 @@ async function allow(ip: string, userId: string, stream?: string) {
   if (!rateLimits.has(key)) {
     rateLimits.set(key, { 
       count: 1, 
-      expire: now + (streamSpecific ? 100 : 200)
+      expire: now + (streamSpecific ? WS_RATE_LIMIT_STREAM_SPECIFIC : WS_RATE_LIMIT_NORMAL)
     });
     return true;
   }

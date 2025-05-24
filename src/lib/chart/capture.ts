@@ -5,6 +5,8 @@ import html2canvas from 'html2canvas'
 import type { IChartApi } from 'lightweight-charts'
 import type { WindowWithChart } from '@/types'
 import { logger } from '@/lib/logger'
+import { Point } from '@/types'
+import { CHART_CAPTURE_SCALE } from '@/constants/network'
 
 // =============================================================================
 // 🔗 アクティブチャート管理 (旧: chart-capture-service.ts)
@@ -57,13 +59,13 @@ export async function captureViaHtml2Canvas(
 ): Promise<string | null> {
   try {
     await new Promise(r => setTimeout(r, 100))
-    const canvas = await html2canvas(element, {
-      allowTaint: true,
+    const options = {
+      scale: CHART_CAPTURE_SCALE,
+      quality: 0.95,
       useCORS: true,
-      scale: 1.5,
-      logging: false,
-      backgroundColor: null
-    })
+      allowTaint: false,
+    };
+    const canvas = await html2canvas(element, options)
     
     const MAX_WIDTH = 800
     if (canvas.width > MAX_WIDTH) {
