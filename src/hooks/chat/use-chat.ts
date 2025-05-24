@@ -14,6 +14,7 @@ import type { Conversation, Message } from "@/types/chat";
 import { logger } from "@/lib/logger";
 import { CHAT_API_ENDPOINT } from "@/constants/network";
 import { getErrorMessage } from "@/lib/error-utils";
+import { safeGetJson, safeSetJson } from "@/lib/local-storage-utils";
 
 export interface UseChat {
   messages: Message[];
@@ -72,12 +73,9 @@ export function useChat(): UseChat {
   // 送信履歴の初期化 - localStorage から読み込み
   useEffect(() => {
     try {
-      const storedHistory = localStorage.getItem("chatMessageHistory");
-      if (storedHistory) {
-        const history = JSON.parse(storedHistory);
-        if (Array.isArray(history)) {
-          setMessageHistory(history.slice(-100)); // 最大100件に制限
-        }
+      const storedHistory = safeGetJson("chatMessageHistory", [], "chat message history");
+      if (Array.isArray(storedHistory)) {
+        setMessageHistory(storedHistory.slice(-100)); // 最大100件に制限
       }
     } catch (error) {
       console.error("送信履歴の読み込みに失敗:", getErrorMessage(error));
@@ -88,7 +86,7 @@ export function useChat(): UseChat {
   const saveMessageHistory = useCallback((history: string[]) => {
     try {
       const limitedHistory = history.slice(-100); // 最大100件
-      localStorage.setItem("chatMessageHistory", JSON.stringify(limitedHistory));
+      safeSetJson("chatMessageHistory", limitedHistory, "chat message history");
       setMessageHistory(limitedHistory);
     } catch (error) {
       console.error("送信履歴の保存に失敗:", getErrorMessage(error));
@@ -107,16 +105,6 @@ export function useChat(): UseChat {
 
     setError(null);
     setLoading(true);
-
-    // ユーザーメッセージを即座に追加
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: text.trim(),
-      timestamp: Date.now(),
-      type: "text",
-    };
-    setMessages(prev => [...prev, userMessage]);
 
     try {
       let imageUrl = "";
@@ -156,6 +144,20 @@ export function useChat(): UseChat {
         }
       }
 
+      // 画像アップロード完了後にユーザーメッセージを追加
+      const userMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: text.trim(),
+        timestamp: Date.now(),
+        type: imageFile ? "image" : "text",
+        ...(imageFile && { 
+          imageUrl: imageUrl,
+          prompt: text.trim() || "このチャートを分析してください"
+        })
+      };
+      setMessages(prev => [...prev, userMessage]);
+
       // チャットAPIに送信
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -174,11 +176,24 @@ export function useChat(): UseChat {
 
       const data = await response.json();
       
+      // APIレスポンスからメッセージ内容を柔軟に取得
+      const responseContent = data.response || data.message || data.text || data.content || "応答を受信できませんでした";
+      
+      // デバッグ用ログ（開発環境のみ）
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📨 APIレスポンス受信:', { 
+          success: data.success,
+          response: data.response,
+          message: data.message, 
+          extractedContent: responseContent
+        });
+      }
+      
       // アシスタントメッセージを追加
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: data.response || "応答を受信できませんでした",
+        content: responseContent,
         timestamp: Date.now(),
         type: "text",
       };
