@@ -3,6 +3,7 @@
 // order.ts + orderbook.ts + chart-analysis.ts統合版
 
 import { z } from 'zod';
+import type { IndicatorResult } from './indicator';
 
 // =============================================================================
 // 📊 オーダーブック関連

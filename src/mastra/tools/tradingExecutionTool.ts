@@ -3,7 +3,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { placeOrder } from '@/infrastructure/exchange/bitget-service';
-import { orderSideSchema, orderTypeSchema } from '@/types/order';
+import { orderSideSchema, orderTypeSchema } from '@/types/trading';
 
 /**
  * 取引実行ツール

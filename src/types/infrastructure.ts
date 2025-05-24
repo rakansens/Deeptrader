@@ -1,6 +1,6 @@
 // src/types/infrastructure.ts
 import type { Json } from "./supabase";
-import type { OrderSide, OrderType } from "./order";
+import type { OrderSide, OrderType } from "./trading";
 
 /** ティッカー情報 */
 export interface Ticker {

@@ -142,7 +142,10 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
 
     try {
       isSendingRef.current = true;
-      setInput(""); // UI責任で入力をクリア
+      // flushSyncで同期的に入力欄をクリア
+      flushSync(() => {
+        setInput(""); 
+      });
       await sendMessage(currentInput); // 値を明確に渡す
     } catch (error) {
       logger.error("メッセージ送信エラー:", error);
@@ -175,7 +178,10 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
       setUploading(true);
       isSendingRef.current = true;
       const inputText = input.trim() || "画像をアップロードしました"; // デフォルトテキスト
-      setInput(""); // UI責任で入力をクリア
+      // flushSyncで同期的に入力欄をクリア
+      flushSync(() => {
+        setInput("");
+      });
       await sendMessage(inputText, file);
     } catch (err) {
       logger.error("画像送信エラー", err);
