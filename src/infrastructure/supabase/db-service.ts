@@ -1,4 +1,4 @@
-import { getBrowserSupabase } from "@/lib/supabase-browser";
+import { createClient } from "@/utils/supabase";
 
 import type { Database } from "@/types";
 import { logger } from "@/lib/logger";
@@ -9,22 +9,22 @@ const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
 /**
  * 会話を作成
  */
-export async function createConversation(userId: string) {
-  const supabase = getBrowserSupabase();
+export async function createConversation(userId: string): Promise<string> {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("conversations")
     .insert({ user_id: userId })
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data.id;
 }
 
 /**
  * 会話一覧を取得
  */
 export async function fetchConversations(userId: string) {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("conversations")
     .select("*")
@@ -44,9 +44,9 @@ export async function addMessage(
   type: "text" | "image" = "text",
   prompt?: string,
   imageUrl?: string,
-) {
+): Promise<string> {
   try {
-    const supabase = getBrowserSupabase();
+    const supabase = createClient();
     // ユーザーIDを取得
     const { data: authData } = await supabase.auth.getUser();
     // ユーザーIDがない場合はゲストIDを使用
@@ -70,12 +70,12 @@ export async function addMessage(
       // テーブルが存在しない場合は静かに失敗
       if (error.code === '42P01') { // relation does not exist
         logger.warn('chat_messages テーブルが存在しません。メッセージは保存されません。');
-        return;
+        return '';
       }
       throw error;
     }
     
-    return data;
+    return data.id;
   } catch (err) {
     logger.error('メッセージ追加エラー:', err);
     throw err; // エラーを上位に伝播させる
@@ -87,7 +87,7 @@ export async function addMessage(
  */
 export async function fetchMessages(conversationId: string) {
   try {
-    const supabase = getBrowserSupabase();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
@@ -117,7 +117,7 @@ export type TradingHistoryInsert =
  * 取引履歴を追加
  */
 export async function insertTradingHistory(data: TradingHistoryInsert) {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { error } = await supabase.from("trading_history").insert(data);
   if (error) throw error;
 }

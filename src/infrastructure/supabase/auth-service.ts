@@ -1,5 +1,4 @@
-import { getBrowserSupabase } from "@/lib/supabase-browser";
-
+import { createClient } from "@/utils/supabase";
 import { createServerClient, createServiceRoleClient, createRouteHandlerClient } from "@/utils/supabase/server-entry";
 import type { User } from "@supabase/supabase-js";
 
@@ -9,7 +8,7 @@ import type { User } from "@supabase/supabase-js";
  * @param password - パスワード
  */
 export async function signUp(email: string, password: string) {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;
   return data.user;
@@ -21,7 +20,7 @@ export async function signUp(email: string, password: string) {
  * @param password - パスワード
  */
 export async function signIn(email: string, password: string) {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -34,7 +33,7 @@ export async function signIn(email: string, password: string) {
  * サインアウト（クライアントサイド用）
  */
 export async function signOut() {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
@@ -43,7 +42,7 @@ export async function signOut() {
  * 現在のユーザーを取得（クライアントサイド用）
  */
 export async function getCurrentUser(): Promise<User | null> {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error) throw error;
   return data.user;
@@ -108,7 +107,11 @@ export async function getServiceRoleUser(userId: string): Promise<User | null> {
  * @param email - メールアドレス
  */
 export async function resetPassword(email: string) {
-  const supabase = getBrowserSupabase();
+  const supabase = createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email);
   if (error) throw error;
+}
+
+export async function getSession() {
+  const supabase = createClient();
 }

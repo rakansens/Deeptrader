@@ -117,6 +117,9 @@ dependencies:
   '@tanstack/react-query':
     specifier: ^5.0.0
     version: 5.76.2(react@18.3.1)
+  '@types/marked':
+    specifier: ^6.0.0
+    version: 6.0.0
   ai:
     specifier: ^2.2.29
     version: 2.2.37(react@18.3.1)(solid-js@1.9.7)(svelte@4.2.20)(vue@3.5.14)
@@ -141,6 +144,9 @@ dependencies:
   geist:
     specifier: ^1.2.1
     version: 1.4.2(next@14.2.0)
+  highlight.js:
+    specifier: ^11.11.1
+    version: 11.11.1
   html2canvas:
     specifier: ^1.4.1
     version: 1.4.1
@@ -162,6 +168,9 @@ dependencies:
   lucide-react:
     specifier: ^0.358.0
     version: 0.358.0(react@18.3.1)
+  marked:
+    specifier: ^15.0.12
+    version: 15.0.12
   next:
     specifier: 14.2.0
     version: 14.2.0(@babel/core@7.27.1)(@opentelemetry/api@1.9.0)(react-dom@18.3.1)(react@18.3.1)
@@ -7593,6 +7602,13 @@ packages:
       '@types/node': 20.6.2
     dev: true
 
+  /@types/marked@6.0.0:
+    resolution: {integrity: sha512-jmjpa4BwUsmhxcfsgUit/7A9KbrC48Q0q8KvnY107ogcjGgTFDlIL3RpihNpx2Mu1hM4mdFQjoVc4O6JoGKHsA==}
+    deprecated: This is a stub types definition. marked provides its own type definitions, so you do not need this installed.
+    dependencies:
+      marked: 15.0.12
+    dev: false
+
   /@types/memcached@2.2.10:
     resolution: {integrity: sha512-AM9smvZN55Gzs2wRrqeMHVP7KE8KWgCJO/XL5yCly2xF6EKa4YlbpK+cLSAH4NG/Ah64HrlegmGqW8kYws7Vxg==}
     dependencies:
@@ -10598,6 +10614,11 @@ packages:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
     dev: false
 
+  /highlight.js@11.11.1:
+    resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
+    engines: {node: '>=12.0.0'}
+    dev: false
+
   /hono-openapi@0.4.8(hono@4.7.10)(openapi-types@12.1.3)(zod@3.25.23):
     resolution: {integrity: sha512-LYr5xdtD49M7hEAduV1PftOMzuT8ZNvkyWfh1DThkLsIr4RkvDb12UxgIiFbwrJB6FLtFXLoOZL9x4IeDk2+VA==}
     peerDependencies:
@@ -12001,6 +12022,12 @@ packages:
     dependencies:
       tmpl: 1.0.5
     dev: true
+
+  /marked@15.0.12:
+    resolution: {integrity: sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA==}
+    engines: {node: '>= 18'}
+    hasBin: true
+    dev: false
 
   /math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}

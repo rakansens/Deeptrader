@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   Avatar,
@@ -8,13 +8,16 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
 import { useSettings } from "@/hooks/use-settings";
 import { speakText, stopSpeech } from "@/lib/speech-utils";
 import { Volume2, VolumeX, Copy as CopyIcon, CheckCircle, Maximize2, Minimize2 } from "lucide-react";
 import TypingIndicator from "./typing-indicator";
+import { Message } from "../../types/chat";
+import { Button } from "../ui/button";
+import { useToast } from "../../hooks/use-toast";
+import { containsMarkdown, parseMarkdownSafe } from "../../lib/markdown";
 
 export interface MessageBubbleProps {
   role: ChatRole;
@@ -157,6 +160,18 @@ export function MessageBubble({
     
     // テキストの場合
     if (typeof children === 'string') {
+      // マークダウン記法が含まれているかチェック
+      if (containsMarkdown(children)) {
+        // マークダウンをHTMLに変換
+        const htmlContent = parseMarkdownSafe(children);
+        return (
+          <div 
+            className="markdown-content w-full"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
+        );
+      }
+      
       // テキストが長い場合にチャート分析かどうかを判断
       const isChartAnalysis = children.includes('###') || children.includes('SMA') || children.includes('RSI') || children.includes('MACD');
       
