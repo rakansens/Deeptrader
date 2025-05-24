@@ -52,6 +52,9 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     toggleSidebar,
     sendMessage,
     sendImageMessage,
+    navigateHistory,
+    resetHistoryNavigation,
+    messageHistory,
   } = useChat();
   const { toast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
@@ -371,6 +374,9 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
           toggleListening={toggleListening}
           recordingTime={recordingTime}
           textAreaRef={textAreaRef}
+          navigateHistory={navigateHistory}
+          resetHistoryNavigation={resetHistoryNavigation}
+          messageHistory={messageHistory}
         />
       </div>
     </div>

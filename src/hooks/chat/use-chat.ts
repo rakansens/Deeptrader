@@ -29,6 +29,10 @@ export interface UseChat {
   toggleSidebar: () => void;
   sendMessage: (text: string, imageFile?: File) => Promise<void>;
   sendImageMessage: (dataUrl: string, prompt?: string) => Promise<void>;
+  // 送信履歴機能
+  navigateHistory: (direction: 'up' | 'down') => void;
+  resetHistoryNavigation: () => void;
+  messageHistory: string[];
 }
 
 /**
@@ -40,6 +44,11 @@ export function useChat(): UseChat {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // 送信履歴機能
+  const [messageHistory, setMessageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [originalInput, setOriginalInput] = useState("");
 
   const {
     conversations,
@@ -57,6 +66,32 @@ export function useChat(): UseChat {
     // TODO: 会話切り替え時のメッセージクリア実装
     setMessages([]);
   }, [selectedId]);
+
+  // 送信履歴の初期化 - localStorage から読み込み
+  useEffect(() => {
+    try {
+      const storedHistory = localStorage.getItem("chatMessageHistory");
+      if (storedHistory) {
+        const history = JSON.parse(storedHistory);
+        if (Array.isArray(history)) {
+          setMessageHistory(history.slice(-100)); // 最大100件に制限
+        }
+      }
+    } catch (error) {
+      console.error("送信履歴の読み込みに失敗:", error);
+    }
+  }, []);
+
+  // 送信履歴をlocalStorageに保存
+  const saveMessageHistory = useCallback((history: string[]) => {
+    try {
+      const limitedHistory = history.slice(-100); // 最大100件
+      localStorage.setItem("chatMessageHistory", JSON.stringify(limitedHistory));
+      setMessageHistory(limitedHistory);
+    } catch (error) {
+      console.error("送信履歴の保存に失敗:", error);
+    }
+  }, []);
 
   const newConversation = async () => {
     const id = await createConversation();
@@ -104,7 +139,7 @@ export function useChat(): UseChat {
       }
 
       // チャットAPIに送信
-      const response = await fetch(CHAT_API_ENDPOINT, {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -131,6 +166,16 @@ export function useChat(): UseChat {
       };
       setMessages(prev => [...prev, assistantMessage]);
 
+      // 送信成功時に履歴に追加（テキストメッセージのみ）
+      if (!imageFile && text.trim()) {
+        const newHistory = [...messageHistory, text.trim()];
+        saveMessageHistory(newHistory);
+      }
+      
+      // 履歴ナビゲーション状態をリセット
+      setHistoryIndex(-1);
+      setOriginalInput("");
+
     } catch (err) {
       logger.error("メッセージ送信エラー:", err);
       const errorMessage = err instanceof Error ? err.message : "不明なエラーが発生しました";
@@ -148,7 +193,7 @@ export function useChat(): UseChat {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageHistory, saveMessageHistory]);
 
   const sendImageMessage = useCallback(async (dataUrl: string, promptText = 'このチャートを分析してください') => {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {
@@ -169,6 +214,45 @@ export function useChat(): UseChat {
     }
   }, [sendMessage]);
 
+  // 送信履歴ナビゲーション機能
+  const navigateHistory = useCallback((direction: 'up' | 'down') => {
+    if (messageHistory.length === 0) return;
+
+    if (direction === 'up') {
+      // 初回の↑キーでは現在の入力を保存
+      if (historyIndex === -1) {
+        setOriginalInput(input);
+        setHistoryIndex(messageHistory.length - 1);
+        setInput(messageHistory[messageHistory.length - 1]);
+      } else if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInput(messageHistory[newIndex]);
+      }
+    } else { // down
+      if (historyIndex === -1) return;
+      
+      if (historyIndex < messageHistory.length - 1) {
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setInput(messageHistory[newIndex]);
+      } else {
+        // 最後まで来たら元の入力に戻す
+        setHistoryIndex(-1);
+        setInput(originalInput);
+        setOriginalInput("");
+      }
+    }
+  }, [messageHistory, historyIndex, input, originalInput]);
+
+  // 履歴状態をリセット（入力変更時）
+  const resetHistoryNavigation = useCallback(() => {
+    if (historyIndex !== -1) {
+      setHistoryIndex(-1);
+      setOriginalInput("");
+    }
+  }, [historyIndex]);
+
   return {
     messages,
     input,
@@ -185,6 +269,9 @@ export function useChat(): UseChat {
     toggleSidebar,
     sendMessage,
     sendImageMessage,
+    navigateHistory,
+    resetHistoryNavigation,
+    messageHistory,
   };
 }
 

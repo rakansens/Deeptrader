@@ -5,7 +5,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getBrowserSupabase } from "@/lib/supabase-browser";
 import { logger } from "@/lib/logger";
 import type { Database } from "@/types/supabase";
 
@@ -113,7 +113,7 @@ const DEFAULT_TRADING_SETTINGS: UserTradingSettings = {
  * ユーザー設定をデータベースで管理するフック
  */
 export function useUserPreferences(): UseUserPreferences {
-  const supabase = createClientComponentClient<Database>();
+  const supabase = getBrowserSupabase();
   
   // 状態管理
   const [preferences, setPreferences] = useState<UserPreference[]>([]);

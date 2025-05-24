@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { WS_HUB_PORT, WS_PING_INTERVAL, WS_MAX_RECONNECT_DELAY, DEFAULT_BINANCE_WS_URL, WS_RATE_LIMIT_STREAM_SPECIFIC, WS_RATE_LIMIT_NORMAL, WS_READY_STATE_OPEN } from '@/constants/network';
+import { WS_HUB_PORT, DEFAULT_BINANCE_WS_URL, WS_READY_STATE_OPEN } from '@/constants/network';
+import { WS_PING_INTERVAL, WS_MAX_RECONNECT_DELAY, WS_RATE_LIMIT_STREAM_SPECIFIC, WS_RATE_LIMIT_NORMAL } from '@/constants/timeouts';
 
 // シンプルなログ関数
 const logger = {

@@ -1,8 +1,8 @@
 // src/constants/network.ts
-// ネットワーク・WebSocket関連定数集約 - Phase 5B Constants集約
+// ネットワーク・HTTP・API関連定数 - Phase 5B整理後
 
 // =============================================================================
-// 🔌 WebSocket関連定数
+// 🔌 WebSocket関連
 // =============================================================================
 
 /** UIコマンド WebSocketサーバーポート */
@@ -11,36 +11,11 @@ export const UI_COMMAND_WS_PORT = 8080;
 /** WebSocket Hub サーバーポート */
 export const WS_HUB_PORT = 8080;
 
-/** WebSocket ping間隔（ミリ秒） */
-export const WS_PING_INTERVAL = 30_000; // 30秒
-
-/** WebSocket 最大再接続遅延（ミリ秒） */
-export const WS_MAX_RECONNECT_DELAY = 30_000; // 30秒
-
-/** WebSocket 接続遅延時間（ミリ秒） */
-export const WS_CLOSE_DELAY = 5_000; // 5秒
+/** WebSocketレディステート: OPEN */
+export const WS_READY_STATE_OPEN = 1;
 
 // =============================================================================
-// ⏱️ タイムアウト関連定数
-// =============================================================================
-
-/** HTTP fetch タイムアウト（ミリ秒） */
-export const HTTP_FETCH_TIMEOUT = 5_000; // 5秒
-
-/** UI操作 fetch タイムアウト（ミリ秒） */
-export const UI_OPERATION_TIMEOUT = 3_000; // 3秒
-
-/** Toastメッセージ削除遅延（ミリ秒） */
-export const TOAST_REMOVE_DELAY = 5_000; // 5秒
-
-/** スクリーンショット通知表示時間（ミリ秒） */
-export const SCREENSHOT_TOAST_DURATION = 5_000; // 5秒
-
-/** チャートデータ保存間隔（ミリ秒） */
-export const CHART_SAVE_INTERVAL = 5_000; // 5秒
-
-// =============================================================================
-// 🌐 デフォルトURL・エンドポイント
+// 🌐 URL・エンドポイント
 // =============================================================================
 
 /** ローカル WebSocket URL */
@@ -72,17 +47,7 @@ export const CHART_SCREENSHOT_API_ENDPOINT = '/api/chart-screenshot';
 export const CHART_ANALYSIS_API_ENDPOINT = '/api/chart-analysis';
 
 // =============================================================================
-// 🔢 その他システム定数
-// =============================================================================
-
-/** ゲストユーザー UUID */
-export const GUEST_USER_ID = '00000000-0000-0000-0000-000000000000';
-
-/** デフォルト精度（浮動小数点比較用） */
-export const DEFAULT_PRECISION = 6;
-
-// =============================================================================
-// 🌐 API・HTTP関連定数
+// 🌐 API・HTTP関連
 // =============================================================================
 
 /** APIクエリ制限: デフォルト */
@@ -98,39 +63,4 @@ export const HTTP_STATUS_BAD_REQUEST = 400;
 export const HTTP_STATUS_INTERNAL_ERROR = 500;
 
 /** 最大リトライ回数 */
-export const MAX_RETRY_COUNT = 5;
-
-/** 再接続基本遅延時間（ミリ秒） */
-export const RECONNECT_BASE_DELAY = 1000; // 1秒
-
-// =============================================================================
-// ⚡ WebSocketレート制限関連
-// =============================================================================
-
-/** WebSocketストリーム固有レート制限期間（ミリ秒） */
-export const WS_RATE_LIMIT_STREAM_SPECIFIC = 100; // 100ms
-
-/** WebSocket通常レート制限期間（ミリ秒） */
-export const WS_RATE_LIMIT_NORMAL = 200; // 200ms
-
-/** WebSocketレディステート: OPEN */
-export const WS_READY_STATE_OPEN = 1;
-
-// =============================================================================
-// 🎨 UI・チャート関連定数
-// =============================================================================
-
-/** デフォルト描画線幅 */
-export const DEFAULT_STROKE_WIDTH = 2;
-
-/** デフォルト消しゴムサイズ */
-export const DEFAULT_ERASER_SIZE = 30;
-
-/** チャートキャプチャスケール */
-export const CHART_CAPTURE_SCALE = 1.5;
-
-/** オーダーブックデフォルト深度 */
-export const DEFAULT_ORDERBOOK_DEPTH = 20;
-
-/** リトライカウント初期値 */
-export const INITIAL_RETRY_COUNT = 0; 
+export const MAX_RETRY_COUNT = 5; 

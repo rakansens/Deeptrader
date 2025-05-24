@@ -6,7 +6,7 @@ import type { IChartApi } from 'lightweight-charts'
 import type { WindowWithChart } from '@/types'
 import { logger } from '@/lib/logger'
 import { Point } from '@/types'
-import { CHART_CAPTURE_SCALE } from '@/constants/network'
+import { CHART_CAPTURE_SCALE } from '@/constants/ui'
 
 // =============================================================================
 // 🔗 アクティブチャート管理 (旧: chart-capture-service.ts)

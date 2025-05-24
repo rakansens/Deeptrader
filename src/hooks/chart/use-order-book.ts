@@ -13,7 +13,7 @@ import { clientEnv } from '@/config';
 import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 import type { ConnectionStatus } from "./use-binance-socket";
 import { hubSdk } from '@/lib/hub-sdk';
-import { DEFAULT_ORDERBOOK_DEPTH } from '@/constants/network';
+import { DEFAULT_ORDERBOOK_DEPTH } from '@/constants/ui';
 
 export interface UseOrderBookResult {
   bids: OrderBookEntry[];

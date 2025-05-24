@@ -24,6 +24,9 @@ interface ChatInputProps {
   toggleListening: () => void;
   recordingTime: number;
   textAreaRef?: React.RefObject<HTMLTextAreaElement>;
+  navigateHistory: (direction: 'up' | 'down') => void;
+  resetHistoryNavigation: () => void;
+  messageHistory: string[];
 }
 
 export function ChatInput({
@@ -38,6 +41,9 @@ export function ChatInput({
   toggleListening,
   recordingTime,
   textAreaRef,
+  navigateHistory,
+  resetHistoryNavigation,
+  messageHistory,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -167,6 +173,8 @@ export function ChatInput({
             console.log('🔄 ChatInput onChange:', e.target.value);
           }
           setInput(e.target.value);
+          // 入力変更時に履歴ナビゲーション状態をリセット
+          resetHistoryNavigation();
         }}
         onCompositionStart={() => {
           if (process.env.NODE_ENV === 'development') {
@@ -195,6 +203,21 @@ export function ChatInput({
           if (process.env.NODE_ENV === 'development') {
             console.log('⌨️ KeyDown:', e.key, 'isComposing:', isComposing);
           }
+          
+          // 履歴ナビゲーション（↑/↓キー）
+          if (e.key === "ArrowUp" && !isComposing && !loading) {
+            e.preventDefault();
+            navigateHistory('up');
+            return;
+          }
+          
+          if (e.key === "ArrowDown" && !isComposing && !loading) {
+            e.preventDefault();
+            navigateHistory('down');
+            return;
+          }
+          
+          // 通常の送信処理
           if (e.key === "Enter" && !e.shiftKey && !isComposing && !loading) {
             e.preventDefault();
             if (process.env.NODE_ENV === 'development') {
@@ -205,6 +228,33 @@ export function ChatInput({
         }}
         ref={textAreaRef}
       />
+
+      {/* 文字数カウント表示 */}
+      <div className="flex justify-between items-center mt-1 px-1">
+        <div className="text-xs text-muted-foreground">
+          {input.length > 0 && (
+            <span className={cn(
+              "transition-colors duration-200",
+              input.length > 2000 ? "text-red-500" : 
+              input.length > 1500 ? "text-yellow-500" : 
+              "text-muted-foreground"
+            )}>
+              {input.length.toLocaleString()} 文字
+              {input.length > 2000 && " (制限に近づいています)"}
+            </span>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
+          {messageHistory.length > 0 && (
+            <span>履歴: {messageHistory.length}件</span>
+          )}
+          {input.trim() && input.includes('\n') ? (
+            <span>Shift+Enter で改行</span>
+          ) : (
+            <span>↑↓ で履歴</span>
+          )}
+        </div>
+      </div>
 
       {/* 明示的にshowVoiceInputを評価して表示・非表示を制御 */}
       {showVoiceInput && (

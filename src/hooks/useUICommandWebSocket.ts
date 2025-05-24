@@ -5,7 +5,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
 import type { Timeframe } from '@/constants/chart';
-import { LOCAL_WS_URL, WS_CLOSE_DELAY } from '@/constants/network';
+import { LOCAL_WS_URL } from '@/constants/network';
+import { WS_CLOSE_DELAY } from '@/constants/timeouts';
 
 export interface UICommand {
   type: string;

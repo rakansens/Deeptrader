@@ -7,7 +7,7 @@ import { DRAWING_MODES } from '@/types/chart';
 import useTextInput from '@/hooks/drawing/use-text-input';
 import useEraser from '@/hooks/drawing/use-eraser';
 import usePointerEvents from '@/hooks/drawing/use-pointer-events';
-import { DEFAULT_STROKE_WIDTH, DEFAULT_ERASER_SIZE } from '@/constants/network';
+import { DEFAULT_STROKE_WIDTH, DEFAULT_ERASER_SIZE } from '@/constants/ui';
 
 export interface UseDrawingCanvasProps {
   enabled?: boolean;

@@ -2,7 +2,7 @@
 
 // Inspired by react-hot-toast library
 import * as React from 'react';
-import { TOAST_REMOVE_DELAY } from "@/constants/network"
+import { TOAST_REMOVE_DELAY } from "@/constants/timeouts"
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 

@@ -2,7 +2,8 @@ import type { BinanceKline, BinanceKlineObject } from '@/types/binance';
 import type { OrderBookEntry } from '@/types';
 import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
-import { DEFAULT_API_LIMIT, SMALL_API_LIMIT, HTTP_FETCH_TIMEOUT } from '@/constants/network';
+import { DEFAULT_API_LIMIT, SMALL_API_LIMIT } from '@/constants/network';
+import { HTTP_FETCH_TIMEOUT } from '@/constants/timeouts';
 
 /**
  * Binance APIの基本URL
