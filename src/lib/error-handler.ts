@@ -2,6 +2,8 @@
 // 統一エラーハンドラー - Phase 1: エラー処理標準化
 
 import { AppConfig } from '@/config';
+import { logger } from './logger';
+import { getCurrentISOTimestamp } from './date-utils';
 
 // エラー型定義
 export enum ErrorType {
@@ -52,7 +54,7 @@ export class ErrorHandler {
       message,
       details,
       context,
-      timestamp: new Date().toISOString(),
+      timestamp: getCurrentISOTimestamp(),
       stack: AppConfig.development.enableDebugLogs ? new Error().stack : undefined
     };
   }

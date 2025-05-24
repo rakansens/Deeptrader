@@ -15,6 +15,7 @@ import type {
 } from '@/types/bookmark';
 import { DEFAULT_BOOKMARK_CATEGORIES } from '@/types/bookmark';
 import { Message } from '@/types/chat';
+import { getCurrentISOTimestamp, isoToUnixTimestamp, unixToISOTimestamp } from '@/lib/date-utils';
 
 type DBBookmark = Database['public']['Tables']['bookmarks']['Row'];
 type DBBookmarkInsert = Database['public']['Tables']['bookmarks']['Insert'];
@@ -84,11 +85,11 @@ function convertDBBookmarkToApp(
     },
     tags,
     isStarred: dbBookmark.is_starred || false,
-    createdAt: new Date(dbBookmark.created_at!).getTime(),
-    updatedAt: new Date(dbBookmark.updated_at!).getTime(),
+    createdAt: isoToUnixTimestamp(dbBookmark.created_at!),
+    updatedAt: isoToUnixTimestamp(dbBookmark.updated_at!),
     messageContent: dbBookmark.message_content,
     messageRole: dbBookmark.message_role as 'user' | 'assistant',
-    messageTimestamp: new Date(dbBookmark.message_timestamp).getTime(),
+    messageTimestamp: isoToUnixTimestamp(dbBookmark.message_timestamp),
   };
 }
 
@@ -261,7 +262,7 @@ export function useBookmarksDB(): UseBookmarksDB {
         is_starred: false,
         message_content: message.content,
         message_role: message.role,
-        message_timestamp: new Date(message.timestamp).toISOString(),
+        message_timestamp: unixToISOTimestamp(message.timestamp),
       };
 
       const { data: createdBookmark, error: bookmarkError } = await supabase
@@ -429,8 +430,8 @@ export function useBookmarksDB(): UseBookmarksDB {
         },
         tags: item.tags || [],
         isStarred: item.is_starred,
-        createdAt: new Date(item.created_at).getTime(),
-        updatedAt: new Date(item.updated_at).getTime(),
+        createdAt: isoToUnixTimestamp(item.created_at),
+        updatedAt: isoToUnixTimestamp(item.updated_at),
         messageContent: item.message_content,
         messageRole: item.message_role as 'user' | 'assistant',
         messageTimestamp: 0, // 検索結果には含まれない
@@ -479,8 +480,8 @@ export function useBookmarksDB(): UseBookmarksDB {
         },
         tags: item.tags || [],
         isStarred: item.is_starred,
-        createdAt: new Date(item.created_at).getTime(),
-        updatedAt: new Date(item.updated_at).getTime(),
+        createdAt: isoToUnixTimestamp(item.created_at),
+        updatedAt: isoToUnixTimestamp(item.updated_at),
         messageContent: item.message_content,
         messageRole: item.message_role as 'user' | 'assistant',
         messageTimestamp: 0,
@@ -682,7 +683,7 @@ export function useBookmarksDB(): UseBookmarksDB {
             is_starred: oldBookmark.isStarred,
             message_content: oldBookmark.messageContent,
             message_role: oldBookmark.messageRole,
-            message_timestamp: new Date(oldBookmark.messageTimestamp).toISOString(),
+            message_timestamp: unixToISOTimestamp(oldBookmark.messageTimestamp),
           };
 
           const { data: createdBookmark, error: bookmarkError } = await supabase

@@ -4,6 +4,7 @@
  */
 
 import { AppConfig } from '@/config';
+import { getCurrentISOTimestamp, compareTimestamps } from './date-utils';
 
 // ログレベル定義
 export enum LogLevel {
@@ -71,7 +72,7 @@ class Logger {
       const metrics: PerformanceMetrics = {
         executionTime,
         memoryUsage: endMemory,
-        timestamp: new Date().toISOString(),
+        timestamp: getCurrentISOTimestamp(),
         operation,
         success: true
       };
@@ -109,10 +110,11 @@ class Logger {
 
   // 基本ログメソッド
   private log(level: LogLevel, message: string, context?: LogContext, error?: any) {
+    const timestamp = getCurrentISOTimestamp();
     const entry: LogEntry = {
       level,
       message,
-      timestamp: new Date().toISOString(),
+      timestamp,
       context,
       error,
       stack: error?.stack
@@ -243,7 +245,7 @@ class Logger {
       logs = logs.filter(l => l.context?.component === component);
     }
     
-    return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return logs.sort((a, b) => compareTimestamps(a.timestamp, b.timestamp));
   }
 
   // 🧹 ログ・メトリクスクリア

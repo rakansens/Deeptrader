@@ -42,6 +42,28 @@ const nextConfig = {
       type: 'asset/source',
     });
 
+    // -------- 1.7) 🚀 ネイティブバイナリファイル(.node)を適切に処理 --------
+    config.module.rules.unshift({
+      test: /\.node$/,
+      loader: 'file-loader',
+      options: {
+        name: '[name].[ext]',
+        outputPath: 'static/native/',
+        publicPath: '/_next/static/native/',
+      },
+    });
+
+    // -------- 1.8) 🚀 libsql関連モジュールをサーバーサイドで外部化 --------
+    if (isServer) {
+      config.externals = config.externals || [];
+      if (Array.isArray(config.externals)) {
+        config.externals.push('@libsql/darwin-arm64');
+        config.externals.push('@libsql/linux-x64');
+        config.externals.push('@libsql/win32-x64');
+        config.externals.push('libsql');
+      }
+    }
+
     // -------- 2) 🚀 ai/test解決: MASTRAが参照するai/testをfallbackで処理 --------
     config.resolve.fallback = {
       ...config.resolve.fallback,

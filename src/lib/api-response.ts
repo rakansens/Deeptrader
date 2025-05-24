@@ -2,9 +2,11 @@
 // 共通APIレスポンス生成ユーティリティ - Phase 6A-3統合
 // 全APIルートで一貫したレスポンス形式を提供
 // Phase 6A-4: エラーハンドリング統合
+// Phase 6A-7: 日付・時間処理統合
 
 import { NextResponse } from 'next/server';
 import { getErrorMessage, getErrorStack } from './error-utils';
+import { getCurrentISOTimestamp } from './date-utils';
 
 // 成功レスポンス用の型定義
 export interface SuccessResponseData {
@@ -31,7 +33,7 @@ export interface ErrorResponseData {
 export function createSuccessResponse(data: SuccessResponseData) {
   return {
     success: true,
-    timestamp: new Date().toISOString(),
+    timestamp: getCurrentISOTimestamp(),
     ...data
   };
 }
@@ -52,7 +54,7 @@ export function createErrorResponse(
     success: false,
     error: errorMessage,
     details: details || '不明なエラーが発生しました',
-    timestamp: new Date().toISOString(),
+    timestamp: getCurrentISOTimestamp(),
     mode,
     source,
     ...(errorStack && { stack: errorStack })

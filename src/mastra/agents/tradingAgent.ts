@@ -133,5 +133,6 @@ export const tradingAgent = new Agent({
   },
 
   // 🚀 メモリ設定を復活（既存Supabaseテーブル統合版）
+  // 一時的にコメントアウト（libsql問題回避）
   memory: memory,
 });

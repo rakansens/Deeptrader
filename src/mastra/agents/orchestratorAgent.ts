@@ -5,10 +5,89 @@
 import { Mastra } from '@mastra/core';
 import { z } from 'zod';
 import { getErrorMessage, getErrorStack } from '@/lib/error-utils';
+import { setDelegationHandler } from '../tools/delegationTools';
+import type { DelegationRequest, DelegationResponse } from '../tools/delegationTools';
 
 // MASTRAが使用できない場合のフォールバック
 let mastraAgent: any = null;
 let mastraAvailable = false;
+
+// 🔗 委任ハンドラーセットアップ関数
+async function setupDelegationHandler() {
+  try {
+    // 専門エージェントをインポート
+    const { tradingAgent } = await import('./tradingAgent');
+    const { researchAgent } = await import('./researchAgent');
+    const { backtestAgent } = await import('./backtestAgent');
+    const { uiControlAgent } = await import('./uiControlAgent');
+
+    // 委任ハンドラー実装
+    const delegationHandler = async (request: DelegationRequest): Promise<DelegationResponse> => {
+      const startTime = Date.now();
+      
+      try {
+        console.log(`🎯 ${request.agentType}エージェントに委任実行:`, request.message);
+        
+        let agent;
+        switch (request.agentType) {
+          case 'trading':
+            agent = tradingAgent;
+            break;
+          case 'research':
+            agent = researchAgent;
+            break;
+          case 'backtest':
+            agent = backtestAgent;
+            break;
+          case 'ui':
+            agent = uiControlAgent;
+            break;
+          default:
+            throw new Error(`未対応のエージェントタイプ: ${request.agentType}`);
+        }
+
+        // 専門エージェントに実際のリクエストを送信
+        const response = await agent.generate([
+          {
+            role: 'user',
+            content: `${request.message}\n\nコンテキスト: ${JSON.stringify(request.context || {})}`
+          }
+        ]);
+
+        const executionTime = Date.now() - startTime;
+        console.log(`✅ ${request.agentType}エージェント応答完了 (${executionTime}ms)`);
+
+        return {
+          success: true,
+          agentType: request.agentType,
+          response: response.text || '専門エージェントから応答を取得しました',
+          executionTime,
+          requestId: request.requestId
+        };
+
+      } catch (error) {
+        const executionTime = Date.now() - startTime;
+        console.error(`❌ ${request.agentType}エージェント実行エラー:`, error);
+        
+        return {
+          success: false,
+          agentType: request.agentType,
+          error: getErrorMessage(error),
+          executionTime,
+          requestId: request.requestId
+        };
+      }
+    };
+
+    // グローバル委任ハンドラーとして設定
+    setDelegationHandler(delegationHandler);
+    console.log('✅ 委任ハンドラーが正常に設定されました');
+    
+  } catch (error) {
+    console.error('❌ 委任ハンドラーセットアップエラー:', getErrorMessage(error));
+    throw error;
+  }
+}
 
 // MASTRA初期化の試行（詳細デバッグ版）
 async function initializeMastraAgent() {
@@ -45,6 +124,11 @@ async function initializeMastraAgent() {
     console.log('🧠 ステップ4: OpenAIモデル初期化');
     const model = openai("gpt-4o");
     console.log('✅ OpenAIモデル初期化成功');
+    
+    // ステップ4.5: 委任ハンドラー設定
+    console.log('🔗 ステップ4.5: 委任ハンドラー設定');
+    await setupDelegationHandler();
+    console.log('✅ 委任ハンドラー設定完了');
     
     // ステップ5: MASTRAエージェント作成
     console.log('🤖 ステップ5: MASTRAエージェント作成');

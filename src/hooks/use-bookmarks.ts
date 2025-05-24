@@ -11,6 +11,9 @@ import type {
 } from '@/types/bookmark';
 import { DEFAULT_BOOKMARK_CATEGORIES } from '@/types/bookmark';
 import { Message } from '@/types/chat';
+import { safeGetJson, safeSetJson } from '@/lib/local-storage-utils';
+import { getCurrentISOTimestamp, isoToUnixTimestamp, unixToISOTimestamp } from '@/lib/date-utils';
+import { isEmptyArray, isNonEmptyArray, hasItems, hasText } from '@/lib/validation-utils';
 
 type DBBookmark = Database['public']['Tables']['bookmarks']['Row'];
 type DBBookmarkInsert = Database['public']['Tables']['bookmarks']['Insert'];
@@ -76,11 +79,11 @@ function convertDBBookmarkToApp(
     },
     tags,
     isStarred: dbBookmark.is_starred || false,
-    createdAt: new Date(dbBookmark.created_at!).getTime(),
-    updatedAt: new Date(dbBookmark.updated_at!).getTime(),
+    createdAt: isoToUnixTimestamp(dbBookmark.created_at!),
+    updatedAt: isoToUnixTimestamp(dbBookmark.updated_at!),
     messageContent: dbBookmark.message_content,
     messageRole: dbBookmark.message_role as 'user' | 'assistant',
-    messageTimestamp: new Date(dbBookmark.message_timestamp).getTime(),
+    messageTimestamp: isoToUnixTimestamp(dbBookmark.message_timestamp),
   };
 }
 
@@ -184,7 +187,7 @@ export function useBookmarks(): UseBookmarks {
       }
 
       const oldBookmarks = JSON.parse(storedBookmarks) as Bookmark[];
-      if (oldBookmarks.length === 0) {
+      if (isEmptyArray(oldBookmarks)) {
         logger.info('[useBookmarks] localStorage移行: 空データ');
         return;
       }
@@ -192,7 +195,7 @@ export function useBookmarks(): UseBookmarks {
       logger.info(`[useBookmarks] localStorage移行開始: ${oldBookmarks.length}件`);
 
       // 既存データがある場合は移行しない
-      if (bookmarks.length > 0) {
+      if (isNonEmptyArray(bookmarks)) {
         logger.info('[useBookmarks] 既存データがあるため移行をスキップ');
         return;
       }
@@ -212,7 +215,7 @@ export function useBookmarks(): UseBookmarks {
             is_starred: oldBookmark.isStarred,
             message_content: oldBookmark.messageContent,
             message_role: oldBookmark.messageRole,
-            message_timestamp: new Date(oldBookmark.messageTimestamp).toISOString(),
+            message_timestamp: unixToISOTimestamp(oldBookmark.messageTimestamp),
           };
 
           const { data: createdBookmark, error: bookmarkError } = await supabase
@@ -227,7 +230,7 @@ export function useBookmarks(): UseBookmarks {
           }
 
           // タグ移行
-          if (oldBookmark.tags.length > 0 && createdBookmark) {
+          if (hasItems(oldBookmark.tags) && createdBookmark) {
             const tagInserts = oldBookmark.tags.map(tag => ({
               bookmark_id: createdBookmark.id,
               tag_name: tag,
@@ -346,7 +349,7 @@ export function useBookmarks(): UseBookmarks {
         is_starred: false,
         message_content: message.content,
         message_role: message.role,
-        message_timestamp: new Date(message.timestamp).toISOString(),
+        message_timestamp: unixToISOTimestamp(message.timestamp),
       };
 
       const { data: createdBookmark, error: bookmarkError } = await supabase
@@ -360,7 +363,7 @@ export function useBookmarks(): UseBookmarks {
       }
 
       // タグがある場合は追加
-      if (tags.length > 0 && createdBookmark) {
+      if (hasItems(tags) && createdBookmark) {
         const tagInserts = tags.map(tag => ({
           bookmark_id: createdBookmark.id,
           tag_name: tag,
@@ -423,16 +426,16 @@ export function useBookmarks(): UseBookmarks {
       if (updates.isStarred !== undefined) dbUpdates.is_starred = updates.isStarred;
       if (updates.category) dbUpdates.category_id = updates.category.id;
 
-      const { error } = await supabase
+      // updated_atを設定
+      dbUpdates.updated_at = getCurrentISOTimestamp();
+
+      const { error: updateError } = await supabase
         .from('bookmarks')
         .update(dbUpdates)
         .eq('id', bookmarkId);
 
-      if (error) {
-        throw new Error(`ブックマーク更新エラー: ${error.message}`);
-      }
+      if (updateError) throw updateError;
 
-      // タグ更新（簡易版: 全削除→再作成）
       if (updates.tags !== undefined) {
         // 既存タグを削除
         await supabase
@@ -441,7 +444,7 @@ export function useBookmarks(): UseBookmarks {
           .eq('bookmark_id', bookmarkId);
 
         // 新しいタグを追加
-        if (updates.tags.length > 0) {
+        if (hasItems(updates.tags)) {
           const tagInserts = updates.tags.map(tag => ({
             bookmark_id: bookmarkId,
             tag_name: tag,
@@ -478,7 +481,7 @@ export function useBookmarks(): UseBookmarks {
 
   // 検索（同期版、互換性のため）
   const searchBookmarks = useCallback((query: string): Bookmark[] => {
-    if (!query.trim()) return bookmarks;
+    if (!hasText(query)) return bookmarks;
     
     const lowerQuery = query.toLowerCase();
     return bookmarks.filter(bookmark => 
@@ -505,7 +508,7 @@ export function useBookmarks(): UseBookmarks {
       filtered = filtered.filter(b => b.messageRole === filter.messageRole);
     }
 
-    if (filter.tags && filter.tags.length > 0) {
+    if (hasItems(filter.tags)) {
       filtered = filtered.filter(b => 
         filter.tags!.some(tag => b.tags.includes(tag))
       );
