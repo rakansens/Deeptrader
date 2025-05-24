@@ -172,7 +172,7 @@ async function executeUIOperation(uiOperation: any) {
     console.log('🎯 UI操作実行:', uiOperation);
     
     try {
-      const response = await fetchWithTimeout('http://127.0.0.1:8080/ui-operation', {
+      const response = await fetchWithTimeout('http://127.0.0.1:8080/ui-command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(uiOperation),

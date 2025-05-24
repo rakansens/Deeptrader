@@ -15,7 +15,6 @@ import type { Conversation, Message } from "@/types/chat";
 import { logger } from "@/lib/logger";
 import { CHAT_API_ENDPOINT } from "@/constants/network";
 import { getErrorMessage } from "@/lib/error-utils";
-import { safeGetJson, safeSetJson } from "@/lib/local-storage-utils";
 import { isNonEmptyArray, isEmptyArray, hasText, isValidInput } from '@/lib/validation-utils';
 
 export interface UseChat {
@@ -78,16 +77,7 @@ export function useChat(): UseChat {
       }
 
       try {
-        // まずlocalStorageから読み込み（高速表示）
-        const stored = safeGetJson<Message[]>(`messages_${selectedId}`, [], `messages for ${selectedId}`);
-        console.log(`🔍 [useChat] localStorage読み込み結果 - ${stored.length}件:`, stored.map(m => ({ role: m.role, content: m.content?.substring(0, 20) + '...' })));
-        
-        if (stored.length > 0) {
-          setMessages(stored);
-          console.log('🔍 [useChat] localStorageからメッセージを設定');
-        }
-
-        // DBからメッセージを取得（正確なデータ）
+        // DBからメッセージを取得
         console.log(`🔍 [useChat] DB読み込み開始 - conversation_id: ${selectedId}`);
         const dbMessages = await fetchMessages(selectedId);
         console.log(`🔍 [useChat] DB読み込み結果 - ${dbMessages?.length || 0}件:`, dbMessages?.map(m => ({ role: m.role, content: m.content?.substring(0, 20) + '...' })));
@@ -104,15 +94,15 @@ export function useChat(): UseChat {
           }));
           console.log(`🔍 [useChat] 変換されたメッセージ ${messages.length}件をセット`);
           setMessages(messages);
-          // localStorageも更新
-          safeSetJson(`messages_${selectedId}`, messages, `messages for ${selectedId}`);
-          console.log('🔍 [useChat] localStorageも更新完了');
         } else {
-          console.log('🔍 [useChat] DBからのメッセージが空または取得失敗');
+          console.log('🔍 [useChat] DBにメッセージが無いため、空配列をセット');
+          setMessages([]);
         }
       } catch (error) {
         logger.error('メッセージ読み込みエラー:', error);
         console.error('🔍 [useChat] メッセージ読み込みエラー:', error);
+        // エラー時はメッセージをクリア
+        setMessages([]);
       }
     };
 
@@ -122,10 +112,14 @@ export function useChat(): UseChat {
 
   // 送信履歴の初期化 - localStorage から読み込み
   useEffect(() => {
+    // 送信履歴はlocalStorageのまま（これは会話とは独立した機能）
     try {
-      const storedHistory = safeGetJson("chatMessageHistory", [], "chat message history");
-      if (Array.isArray(storedHistory)) {
-        setMessageHistory(storedHistory.slice(-100)); // 最大100件に制限
+      const storedHistory = localStorage.getItem("chatMessageHistory");
+      if (storedHistory) {
+        const parsed = JSON.parse(storedHistory);
+        if (Array.isArray(parsed)) {
+          setMessageHistory(parsed.slice(-100)); // 最大100件に制限
+        }
       }
     } catch (error) {
       console.error("送信履歴の読み込みに失敗:", getErrorMessage(error));
@@ -136,7 +130,7 @@ export function useChat(): UseChat {
   const saveMessageHistory = useCallback((history: string[]) => {
     try {
       const limitedHistory = history.slice(-100); // 最大100件
-      safeSetJson("chatMessageHistory", limitedHistory, "chat message history");
+      localStorage.setItem("chatMessageHistory", JSON.stringify(limitedHistory));
       setMessageHistory(limitedHistory);
     } catch (error) {
       console.error("送信履歴の保存に失敗:", getErrorMessage(error));
@@ -275,10 +269,6 @@ export function useChat(): UseChat {
       } catch (dbError) {
         logger.warn('[useChat] アシスタントメッセージのDB保存に失敗:', dbError);
       }
-
-      // localStorageにも保存（バックアップ）
-      const allMessages = [...messages, userMessage, assistantMessage];
-      safeSetJson(`messages_${selectedId}`, allMessages, `messages for ${selectedId}`);
 
       // 送信成功時に履歴に追加（テキストメッセージのみ）
       if (!imageFile && hasText(text)) {

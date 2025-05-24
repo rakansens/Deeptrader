@@ -85,11 +85,28 @@ export const useUICommandWebSocket = () => {
 
         case 'toggle_indicator':
           if (payload.indicator) {
+            // インジケーター名のマッピング
+            const indicatorMapping: { [key: string]: string } = {
+              'bollinger_bands': 'boll',
+              'bollinger': 'boll',
+              'bb': 'boll',
+              'moving_average': 'ma',
+              'sma': 'ma',
+              'ema': 'ma',
+              'rsi': 'rsi',
+              'macd': 'macd'
+            };
+            
+            const mappedIndicator = indicatorMapping[payload.indicator.toLowerCase()] || payload.indicator.toLowerCase();
+            
             // グローバルイベントでインジケーター切り替えを通知
             window.dispatchEvent(new CustomEvent('indicatorToggle', { 
-              detail: { indicator: payload.indicator, enabled: payload.enabled } 
+              detail: { 
+                indicator: mappedIndicator, 
+                enabled: payload.enabled 
+              } 
             }));
-            logger.info(`インジケーター切り替え実行: ${payload.indicator} = ${payload.enabled}`);
+            logger.info(`インジケーター切り替え実行: ${payload.indicator} → ${mappedIndicator} = ${payload.enabled}`);
           }
           break;
 

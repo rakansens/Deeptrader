@@ -147,7 +147,7 @@ export const generateUIOperationTool = createTool({
     payload: z.object({
       timeframe: z.string().optional().describe('変更先の時間足（1m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M）'),
       symbol: z.string().optional().describe('変更先の銘柄（BTCUSDT, ETHUSDT等）'),
-      indicator: z.string().optional().describe('操作対象のインジケーター（rsi, macd, ma, boll）'),
+      indicator: z.string().optional().describe('操作対象のインジケーター（rsi, macd, ma, boll, bollinger_bands）'),
       enabled: z.boolean().optional().describe('インジケーターの有効/無効状態')
     }).describe('操作の詳細パラメーター')
   }),
