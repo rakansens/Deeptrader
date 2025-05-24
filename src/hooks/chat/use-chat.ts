@@ -11,6 +11,7 @@ import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
 import type { Conversation, Message } from "@/types/chat";
 import { logger } from "@/lib/logger";
+import { CHAT_API_ENDPOINT } from "@/constants/network";
 
 export interface UseChat {
   messages: Message[];
@@ -103,7 +104,7 @@ export function useChat(): UseChat {
       }
 
       // チャットAPIに送信
-      const response = await fetch("/api/chat", {
+      const response = await fetch(CHAT_API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
