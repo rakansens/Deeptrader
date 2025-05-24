@@ -16,9 +16,7 @@
     "test:eth-switch": "node tests/integration/test-eth-switch.mjs",
     "socket:start": "node socket-io-server.mjs",
     "socket:test": "node tests/scripts/send-ui-command.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "websocket": "node src/server/ui-websocket-server.mjs",
-    "dev:all": "concurrently \"npm run dev\" \"npm run websocket\""
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
