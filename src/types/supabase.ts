@@ -600,7 +600,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
-          category: 'audio' | 'theme' | 'chart' | 'notifications' | 'trading'
+          category: string
           preference_key: string
           preference_value: Json
           created_at: string | null
@@ -609,7 +609,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
-          category: 'audio' | 'theme' | 'chart' | 'notifications' | 'trading'
+          category: string
           preference_key: string
           preference_value: Json
           created_at?: string | null
@@ -618,9 +618,59 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
-          category?: 'audio' | 'theme' | 'chart' | 'notifications' | 'trading'
+          category?: string
           preference_key?: string
           preference_value?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      uploaded_files: {
+        Row: {
+          id: string
+          user_id: string
+          file_name: string
+          original_name: string
+          file_type: string
+          file_size: number
+          mime_type: string
+          storage_bucket: string
+          storage_path: string
+          public_url: string | null
+          is_active: boolean | null
+          metadata: Json | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          file_name: string
+          original_name: string
+          file_type: string
+          file_size: number
+          mime_type: string
+          storage_bucket?: string
+          storage_path: string
+          public_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          file_name?: string
+          original_name?: string
+          file_type?: string
+          file_size?: number
+          mime_type?: string
+          storage_bucket?: string
+          storage_path?: string
+          public_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
           created_at?: string | null
           updated_at?: string | null
         }

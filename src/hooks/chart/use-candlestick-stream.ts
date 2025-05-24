@@ -5,6 +5,7 @@ import {
   UTCTimestamp,
 } from "lightweight-charts";
 import { safeLoadJson, safeSaveJson } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/fetch";
 import { upsertSeries } from "@/lib/chart";
 import { hubSdk } from "@/lib/hub-sdk";
 import type { BinanceKline, BinanceKlineMessage } from "@/types";
@@ -92,17 +93,17 @@ export function useCandlestickStream(
   );
 
   useEffect(() => {
-    const controller = new AbortController();
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`,
-          { signal: controller.signal },
+          { timeout: 10000 }, // 10秒タイムアウト
         );
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         const raw = (await res.json()) as BinanceKline[];
+        
         const cs: CandlestickData<UTCTimestamp>[] = [];
         const vs: HistogramData<UTCTimestamp>[] = [];
         raw.forEach((d) => {
@@ -121,21 +122,18 @@ export function useCandlestickStream(
             color: parseFloat(close) >= parseFloat(open) ? "#26a69a" : "#ef5350",
           });
         });
-        if (!controller.signal.aborted) {
-          setCandles(cs);
-          setVolumes(vs);
-          persist(cs, vs, true);
-        }
+        
+        setCandles(cs);
+        setVolumes(vs);
+        persist(cs, vs, true);
       } catch (e) {
-        if (!controller.signal.aborted) {
-          setError((e as Error).message);
-        }
+        setError((e as Error).message);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        setLoading(false);
       }
     }
+    
     load();
-    return () => controller.abort();
   }, [symbol, interval, persist]);
 
   const handleMessage = useCallback(

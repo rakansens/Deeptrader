@@ -12,12 +12,14 @@ import type { ReactNode } from "react";
 import type { ChatRole } from "@/types";
 import { useSettings } from "@/hooks/use-settings";
 import { speakText, stopSpeech } from "@/lib/speech-utils";
-import { Volume2, VolumeX, Copy as CopyIcon, CheckCircle, Maximize2, Minimize2 } from "lucide-react";
+import { Volume2, VolumeX, Copy as CopyIcon, CheckCircle, Maximize2, Minimize2, Bookmark } from "lucide-react";
 import TypingIndicator from "./typing-indicator";
 import { Message } from "../../types/chat";
 import { Button } from "../ui/button";
 import { useToast } from "../../hooks/use-toast";
 import { containsMarkdown, parseMarkdownSafe } from "../../lib/markdown";
+import { useBookmarks } from "../../hooks/use-bookmarks";
+import { DEFAULT_BOOKMARK_CATEGORIES } from "../../types/bookmark";
 
 export interface MessageBubbleProps {
   role: ChatRole;
@@ -35,6 +37,10 @@ export interface MessageBubbleProps {
   prompt?: string;
   /** Supabaseにアップロードした画像のURL */
   imageUrl?: string;
+  /** メッセージオブジェクト（ブックマーク用） */
+  message?: Message;
+  /** 会話ID（ブックマーク用） */
+  conversationId?: string;
 }
 
 export function MessageBubble({
@@ -47,6 +53,8 @@ export function MessageBubble({
   type = 'text',
   prompt,
   imageUrl,
+  message,
+  conversationId,
 }: MessageBubbleProps) {
   const date = timestamp ? new Date(timestamp) : new Date();
   const formattedDate = new Intl.DateTimeFormat("ja-JP", {
@@ -59,6 +67,36 @@ export function MessageBubble({
   // コピー状態管理
   const [isCopied, setIsCopied] = useState(false);
   const { speechSynthesisEnabled, userName, assistantName } = useSettings();
+
+  // ブックマーク機能
+  const { isBookmarked, addBookmark, removeBookmark, getBookmarkByMessageId } = useBookmarks();
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
+  // ブックマーク状態をチェック
+  const messageIsBookmarked = message ? isBookmarked(message.id) : false;
+
+  // ブックマーク切り替え処理
+  const handleToggleBookmark = async () => {
+    if (!message || !conversationId) return;
+    
+    setBookmarkLoading(true);
+    try {
+      if (messageIsBookmarked) {
+        const bookmark = getBookmarkByMessageId(message.id);
+        if (bookmark) {
+          await removeBookmark(bookmark.id);
+        }
+      } else {
+        // デフォルトカテゴリを使用してブックマーク追加
+        const defaultCategory = DEFAULT_BOOKMARK_CATEGORIES[0];
+        await addBookmark(message, conversationId, defaultCategory);
+      }
+    } catch (error) {
+      console.error('ブックマーク操作エラー:', error);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
 
   // 画像メッセージ用の表示処理
   const isImage = type === 'image';
@@ -327,6 +365,30 @@ export function MessageBubble({
               >
                 {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
                 <span>{isSpeaking ? '停止' : '読み上げ'}</span>
+              </button>
+            )}
+
+            {/* ブックマークボタン - テキストメッセージかつmessage/conversationIdが存在する場合のみ表示 */}
+            {!isImage && !typing && typeof children === 'string' && message && conversationId && (
+              <button
+                onClick={handleToggleBookmark}
+                disabled={bookmarkLoading}
+                className={cn(
+                  'p-1 rounded',
+                  messageIsBookmarked 
+                    ? 'text-yellow-600 dark:text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                  messageIsBookmarked || bookmarkLoading
+                    ? 'opacity-100'
+                    : 'opacity-0 group-hover:opacity-100',
+                  'transition-all duration-200 ease-in-out',
+                  'flex items-center text-xs gap-1'
+                )}
+                aria-label={messageIsBookmarked ? "ブックマークを削除" : "ブックマークに追加"}
+                title={messageIsBookmarked ? "ブックマークを削除" : "ブックマークに追加"}
+              >
+                <Bookmark className={cn("h-3 w-3", messageIsBookmarked && "fill-current")} />
+                <span>{messageIsBookmarked ? 'ブックマーク済み' : 'ブックマーク'}</span>
               </button>
             )}
           </div>

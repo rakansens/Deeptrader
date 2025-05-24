@@ -1,8 +1,10 @@
 // src/app/api/agents/shared/utils.ts
 // エージェント共通ユーティリティ - ロジック重複削除と再利用性向上
 // undefinedメッセージの防御的処理追加でTypeErrorを回避
+// Phase 6A-2: fetchWithTimeout統合によるAbortController重複解消
 
 import { UIOperation, AgentError } from './types';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 // レスポンス生成ユーティリティ
 export function createSuccessResponse(data: {
@@ -132,33 +134,22 @@ export function analyzeNaturalLanguageForUI(message: string): UIOperation[] {
 // WebSocket操作実行ユーティリティ
 export async function executeUIOperationViaWebSocket(operation: UIOperation): Promise<boolean> {
   try {
-    // Socket.IO経由でのHTTP POST試行（タイムアウト付き）
-    const operationRequest = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'ui_operation',
-        operation: operation.type,
-        payload: operation.payload,
-        description: operation.description,
-        source: 'agents_api',
-        timestamp: new Date().toISOString()
-      })
-    };
-    
     console.log('🎯→🖥️ エージェント→Socket.IO UI操作:', operation.description);
     
-    // 5秒タイムアウト付きでfetch実行
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
     try {
-      const response = await fetch('http://127.0.0.1:8080/ui-operation', {
-        ...operationRequest,
-        signal: controller.signal
+      const response = await fetchWithTimeout('http://127.0.0.1:8080/ui-operation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'ui_operation',
+          operation: operation.type,
+          payload: operation.payload,
+          description: operation.description,
+          source: 'agents_api',
+          timestamp: new Date().toISOString()
+        }),
+        timeout: 5000 // 5秒タイムアウト
       });
-      
-      clearTimeout(timeoutId);
       
       if (response.ok) {
         const result = await response.json().catch(() => ({ success: true }));
@@ -170,10 +161,8 @@ export async function executeUIOperationViaWebSocket(operation: UIOperation): Pr
         return false;
       }
     } catch (fetchError) {
-      clearTimeout(timeoutId);
-      
       const errorInstance = fetchError as Error;
-      if (errorInstance.name === 'AbortError') {
+      if (errorInstance.message.includes('timed out')) {
         console.log('⚠️ Socket.IO UI操作タイムアウト:', operation.description);
       } else {
         console.log('⚠️ Socket.IO UI操作ネットワークエラー:', errorInstance.message);

@@ -1,6 +1,7 @@
 // src/app/api/agents/mastra/route.ts
 // MASTRAエージェント専用APIエンドポイント（構造整理版）
 // ハードコード削除 - エージェント自身がUI操作判断する真のインテリジェント実装
+// Phase 6A-2: fetchWithTimeout統合によるAbortController重複解消
 
 import { NextRequest, NextResponse } from 'next/server';
 import { 
@@ -13,6 +14,7 @@ import {
   extractParameters,
   logAgentActivity
 } from '../shared/utils';
+import { fetchWithTimeout } from '@/lib/fetch';
 
 export const runtime = "nodejs";
 
@@ -166,19 +168,13 @@ async function executeUIOperation(uiOperation: any) {
   try {
     console.log('🎯 UI操作実行:', uiOperation);
     
-    // Socket.IOサーバーのHTTP POST /ui-operationエンドポイントを使用（タイムアウト付き）
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
     try {
-      const response = await fetch('http://127.0.0.1:8080/ui-operation', {
+      const response = await fetchWithTimeout('http://127.0.0.1:8080/ui-operation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(uiOperation),
-        signal: controller.signal
+        timeout: 3000 // 3秒タイムアウト
       });
-      
-      clearTimeout(timeoutId);
       
       if (response.ok) {
         const result = await response.json().catch(() => ({ success: true }));
@@ -196,7 +192,6 @@ async function executeUIOperation(uiOperation: any) {
         }, false);
       }
     } catch (fetchError) {
-      clearTimeout(timeoutId);
       const errorInstance = fetchError as Error;
       logAgentActivity('MASTRA Agent', 'WebSocket UI操作エラー', errorInstance.message, false);
     }

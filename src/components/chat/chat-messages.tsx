@@ -24,6 +24,7 @@ interface ChatMessagesProps {
   assistantAvatar?: string;
   setInput: (value: string) => void;
   sendMessage: (text: string) => void;
+  selectedId?: string;
 }
 
 // 提案をカテゴリー別に整理
@@ -66,6 +67,7 @@ export function ChatMessages({
   assistantAvatar,
   setInput,
   sendMessage,
+  selectedId,
 }: ChatMessagesProps) {
   useEffect(() => {
     if (listRef.current) {
@@ -126,6 +128,8 @@ export function ChatMessages({
             type={m.type}
             prompt={m.prompt}
             imageUrl={m.imageUrl}
+            message={m}
+            conversationId={selectedId}
           >
             {m.content}
           </MessageBubble>

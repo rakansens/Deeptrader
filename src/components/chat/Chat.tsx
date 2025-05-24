@@ -359,6 +359,7 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
               assistantAvatar={assistantAvatar}
               setInput={setInput}
               sendMessage={suggestMessage}
+              selectedId={selectedId}
             />
           </div>
         </div>
