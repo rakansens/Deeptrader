@@ -1,9 +1,7 @@
 import { clientEnv } from '@/config';
-import type { StreamInfo } from '@/types';
+import type { StreamInfo, Listener } from '@/types';
 
 const RECONNECT_DELAY = 1000; // ms – wait 1 s before trying to reconnect
-
-export type Listener = (data: unknown) => void
 
 export class BinanceSocketManager {
   private streams = new Map<string, StreamInfo>()

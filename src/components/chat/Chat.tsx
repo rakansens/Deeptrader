@@ -1,6 +1,6 @@
 // src/components/chat/Chat.tsx
-// チャット入力クリア処理修正 - 送信後の入力欄残留問題を解決
-// 非同期処理の統一と重複送信防止で安定性向上
+// チャットUI管理コンポーネント - 入力状態管理をuse-chatに統一
+// UI イベントハンドリングに責任を限定し、設計をクリーンに整理
 
 "use client";
 
@@ -138,14 +138,9 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     if (!input.trim()) return;
     if (isSendingRef.current) return; // 重複送信防止
 
-    const text = input.trim(); // 現在の入力を保存
-    
-    // 入力欄を即座にクリア
-    setInput("");
-
     try {
       isSendingRef.current = true;
-      await sendMessage(text);
+      await sendMessage(); // textParamを渡さないことで、use-chat内で自動的に入力がクリアされる
     } catch (error) {
       logger.error("メッセージ送信エラー:", error);
     } finally {
@@ -158,23 +153,14 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     if (!text.trim()) return;
     if (isSendingRef.current) return; // 重複送信防止
     
-    // 入力欄にテキストをセット（UIに反映するため）
-    setInput(text);
-    
-    // 少し遅延してからクリアと送信
-    setTimeout(async () => {
-      // 入力欄をクリア
-      setInput("");
-      
-      try {
-        isSendingRef.current = true;
-        await sendMessage(text);
-      } catch (error) {
-        logger.error("サジェストメッセージ送信エラー:", error);
-      } finally {
-        isSendingRef.current = false;
-      }
-    }, 50);
+    try {
+      isSendingRef.current = true;
+      await sendMessage(text); // textParamを明示的に渡すので、use-chat内では入力がクリアされない
+    } catch (error) {
+      logger.error("サジェストメッセージ送信エラー:", error);
+    } finally {
+      isSendingRef.current = false;
+    }
   };
 
   // 画像ファイル選択時の処理
@@ -182,15 +168,10 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     if (!file) return;
     if (isSendingRef.current) return; // 重複送信防止
 
-    const text = input.trim();
-    
-    // 入力欄をクリア
-    setInput("");
-
     try {
       setUploading(true);
       isSendingRef.current = true;
-      await sendMessage(text, file);
+      await sendMessage(undefined, file); // textParamにundefinedを渡すことで、use-chat内で入力がクリアされる
     } catch (err) {
       logger.error("画像送信エラー", err);
     } finally {

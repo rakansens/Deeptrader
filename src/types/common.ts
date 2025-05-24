@@ -37,6 +37,9 @@ export interface StreamInfo {
   directConnection?: boolean;
 }
 
+/** WebSocketリスナー関数の型 */
+export type Listener = (data: unknown) => void;
+
 // =============================================================================
 // 🎯 UI操作関連
 // =============================================================================

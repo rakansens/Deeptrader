@@ -1,7 +1,7 @@
 // src/hooks/chat/use-chat.ts
 // チャット管理フック - AI SDK削除でmessage:undefinedエラーを修正
 // 直接チャットAPIにfetchでメッセージ送信するカスタム実装
-// 重複した入力クリア処理削除で入力欄残留問題を解決
+// 入力状態管理をuse-chatに統一 - 責任の明確化とリファクタリング完了
 
 "use client";
 
@@ -66,6 +66,11 @@ export function useChat(): UseChat {
   const sendMessage = useCallback(async (textParam?: string, imageFile?: File) => {
     const text = (textParam ?? input).trim();
     if (!text && !imageFile) return;
+
+    // 送信前に入力をクリア（textParamが指定されていない場合のみ）
+    if (!textParam) {
+      setInput("");
+    }
 
     setError(null);
     setLoading(true);

@@ -1,7 +1,5 @@
 import { clientEnv } from '@/config'
-import type { StreamInfo } from '@/types'
-
-export type Listener = (data: unknown) => void
+import type { StreamInfo, Listener } from '@/types'
 
 export class HubSocketManager {
   private streams = new Map<string, StreamInfo>()

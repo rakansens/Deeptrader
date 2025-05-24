@@ -441,8 +441,8 @@ export class SupabaseVectorIntegrated {
   }
 }
 
-// 🔄 後方互換性のため既存インターフェース統合
-export const SupabaseVector = {
+// 🔄 後方互換性のため既存インターフェース統合（重複排除）
+export const LegacySupabaseVector = {
   async add(docs: any[]): Promise<void> {
     const storage = new SupabaseVectorIntegrated();
     for (const doc of docs) {
