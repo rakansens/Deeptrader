@@ -1,56 +1,56 @@
 // src/mastra/adapters/SupabaseVectorIntegrated.ts
-// 既存memoriesテーブル活用MASTRA統合版（外部キー制約対応）
+// 既存memoriesテーブル活用MASTRA統合版（外部キー制約対応）+ Phase 5A型統合
 // 作成日: 2025-01-23
 // 機能: 既存Supabaseテーブルを活用してMASTRAメモリ機能を統合実装（FK制約対応）
 
 import { createServiceRoleClient } from "@/utils/supabase/server-entry";
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@/lib/logger';
-import type { Json } from '@/types';
+import type { Json, MastraMessage, StorageDocument, SearchResult, SemanticSearchOptions, MemoryOptions } from '@/types';
 
-// 🔧 MASTRA Memory インターフェース型定義
-interface MastraMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: string;
-  threadId?: string;
-  resourceId?: string;
-  metadata?: Record<string, any>;
-}
-
-interface StorageDocument {
-  id: string;
-  content: string;
-  embedding?: number[];
-  metadata: Record<string, any>;
-  timestamp: string;
-  threadId?: string;
-  resourceId?: string;
-}
-
-interface SearchResult {
-  id: string;
-  content: string;
-  metadata: Record<string, any>;
-  score: number;
-  timestamp: string;
-}
-
-interface SemanticSearchOptions {
-  topK?: number;
-  threshold?: number;
-  threadId?: string;
-  resourceId?: string;
-}
-
-interface MemoryOptions {
-  lastMessages?: number;
-  semanticRecall?: {
-    topK: number;
-    messageRange: number;
-  };
-}
+// 🔧 MASTRA Memory インターフェース型定義（@/types/commonに移動）
+// interface MastraMessage {
+//   id: string;
+//   role: 'user' | 'assistant' | 'system';
+//   content: string;
+//   timestamp: string;
+//   threadId?: string;
+//   resourceId?: string;
+//   metadata?: Record<string, any>;
+// }
+// 
+// interface StorageDocument {
+//   id: string;
+//   content: string;
+//   embedding?: number[];
+//   metadata: Record<string, any>;
+//   timestamp: string;
+//   threadId?: string;
+//   resourceId?: string;
+// }
+// 
+// interface SearchResult {
+//   id: string;
+//   content: string;
+//   metadata: Record<string, any>;
+//   score: number;
+//   timestamp: string;
+// }
+// 
+// interface SemanticSearchOptions {
+//   topK?: number;
+//   threshold?: number;
+//   threadId?: string;
+//   resourceId?: string;
+// }
+// 
+// interface MemoryOptions {
+//   lastMessages?: number;
+//   semanticRecall?: {
+//     topK: number;
+//     messageRange: number;
+//   };
+// }
 
 /**
  * 既存memoriesテーブル活用MASTRA統合ストレージアダプター

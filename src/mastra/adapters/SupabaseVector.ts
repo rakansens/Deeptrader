@@ -1,55 +1,11 @@
 // src/mastra/adapters/SupabaseVector.ts
 // Supabase + pgvectorを使用したMastra完全ストレージアダプタ
-// MASTRA v0.10 MastraStorage インターフェース完全実装
+// MASTRA v0.10 MastraStorage インターフェース完全実装 + Phase 5A型統合
 
 import { createServiceRoleClient } from "@/utils/supabase/server-entry";
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@/lib/logger';
-import type { Json } from '@/types';
-
-// 🔧 MASTRA Memory インターフェース型定義
-interface MastraMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: string;
-  threadId?: string;
-  resourceId?: string;
-  metadata?: Record<string, any>;
-}
-
-interface StorageDocument {
-  id: string;
-  content: string;
-  embedding?: number[];
-  metadata: Record<string, any>;
-  timestamp: string;
-  threadId?: string;
-  resourceId?: string;
-}
-
-interface SearchResult {
-  id: string;
-  content: string;
-  metadata: Record<string, any>;
-  score: number;
-  timestamp: string;
-}
-
-interface SemanticSearchOptions {
-  topK?: number;
-  threshold?: number;
-  threadId?: string;
-  resourceId?: string;
-}
-
-interface MemoryOptions {
-  lastMessages?: number;
-  semanticRecall?: {
-    topK: number;
-    messageRange: number;
-  };
-}
+import type { Json, MastraMessage, StorageDocument, SearchResult, SemanticSearchOptions, MemoryOptions } from '@/types';
 
 /**
  * MASTRA v0.10 完全対応 SupabaseVector ストレージアダプター

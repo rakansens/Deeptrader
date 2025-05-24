@@ -13,7 +13,8 @@ interface ClientInfo {
   ip: string;
 }
 
-interface StreamInfo {
+// 🔧 Phase 5A: 命名衝突解決（@/types/commonのStreamInfoと区別）
+interface HubStreamInfo {
   ws: WebSocket;
   clients: Set<ClientInfo>;
   retries: number;
@@ -39,7 +40,7 @@ try {
 }
 
 // ストリーム管理
-const streams = new Map<string, StreamInfo>();
+const streams = new Map<string, HubStreamInfo>();
 
 function broadcast(symbol: string, data: Buffer) {
   const info = streams.get(symbol);
@@ -49,8 +50,8 @@ function broadcast(symbol: string, data: Buffer) {
   }
 }
 
-function connectBinance(stream: string): StreamInfo {
-  const info: StreamInfo = {
+function connectBinance(stream: string): HubStreamInfo {
+  const info: HubStreamInfo = {
     // @ts-expect-error: will be set below in the connect function
     ws: null,
     clients: new Set(),

@@ -1,10 +1,6 @@
 import type { IChartApi } from 'lightweight-charts'
+import type { WindowWithChart } from '@/types'
 import { getChartCardElement, captureViaHtml2Canvas, captureViaNativeApi } from '@/lib/chart'
-
-interface WindowWithChart extends Window {
-  __getChartElement?: () => HTMLElement
-  __chartInstance?: IChartApi
-}
 
 jest.mock('html2canvas', () => ({
   __esModule: true,
