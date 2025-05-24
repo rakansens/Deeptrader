@@ -1,5 +1,6 @@
 // src/mastra/tools/delegationTools.ts
 // 循環依存解決版 - インターフェースベースの委任ツール
+// UI操作生成ツール追加でエージェントによる真のインテリジェント判断を実現
 
 import { Tool, createTool } from '@mastra/core/tools';
 import { errorHandler, ErrorType } from '@/lib/error-handler';
@@ -134,6 +135,52 @@ export const delegateUiControlTool = createTool({
   }
 });
 
+// 🎯 UI操作生成ツール（エージェントが具体的なUI操作を判断）
+export const generateUIOperationTool = createTool({
+  id: 'generate_ui_operation',
+  description: 'ユーザーの自然言語要求を分析して具体的なUI操作コマンドを生成します',
+  inputSchema: z.object({
+    userMessage: z.string().describe('ユーザーからの自然言語での要求'),
+    currentSymbol: z.string().optional().describe('現在の表示銘柄'),
+    currentTimeframe: z.string().optional().describe('現在の時間足'),
+    operation: z.enum(['change_timeframe', 'change_symbol', 'toggle_indicator']).describe('実行する操作タイプ'),
+    payload: z.object({
+      timeframe: z.string().optional().describe('変更先の時間足（1m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M）'),
+      symbol: z.string().optional().describe('変更先の銘柄（BTCUSDT, ETHUSDT等）'),
+      indicator: z.string().optional().describe('操作対象のインジケーター（rsi, macd, ma, boll）'),
+      enabled: z.boolean().optional().describe('インジケーターの有効/無効状態')
+    }).describe('操作の詳細パラメーター')
+  }),
+  execute: async ({ context }) => {
+    const { userMessage, currentSymbol, currentTimeframe, operation, payload } = context;
+    
+    // UI操作コマンドを構造化して返す
+    const uiOperation = {
+      type: 'ui_operation',
+      operation,
+      payload,
+      description: `${operation}の実行`,
+      source: 'mastra_agent_generated',
+      timestamp: new Date().toISOString(),
+      userMessage,
+      context: {
+        currentSymbol,
+        currentTimeframe
+      }
+    };
+    
+    console.log('🎯 エージェント生成UI操作:', uiOperation);
+    
+    return {
+      success: true,
+      agentType: 'ui',
+      response: `UI操作コマンドを生成しました: ${operation}`,
+      uiOperation, // 生成されたUI操作コマンド
+      requestId: `ui_gen_${Date.now()}`
+    };
+  }
+});
+
 // 📊 バックテストエージェント委任ツール
 export const delegateBacktestTool = createTool({
   id: 'delegate_backtest',
@@ -159,7 +206,8 @@ export const allDelegationTools = {
   delegateTradingTool,
   delegateResearchTool,
   delegateUiControlTool,
-  delegateBacktestTool
+  delegateBacktestTool,
+  generateUIOperationTool
 } as const;
 
 // 🧪 設定検証

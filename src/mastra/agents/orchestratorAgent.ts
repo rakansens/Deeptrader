@@ -1,5 +1,6 @@
 // src/mastra/agents/orchestratorAgent.ts
 // MASTRAオーケストレーターエージェント（軽量版・依存関係循環解決）
+// UI操作生成ツール統合 - エージェントが直接UI操作判断
 
 // MASTRAが使用できない場合のフォールバック
 let mastraAgent: any = null;
@@ -48,7 +49,7 @@ async function initializeMastraAgent() {
       instructions: `あなたはDeeptrader AI システムの中央制御エージェントです。
 
 ## あなたの役割
-ユーザーからの質問や要求を分析し、最も適切な専門エージェントに委任することです。
+ユーザーからの質問や要求を分析し、最も適切な専門エージェントに委任するか、UI操作を直接実行することです。
 
 ## 利用可能な専門エージェント
 1. **トレーディングアドバイザー**: 市場分析、チャート分析、売買戦略、トレード判断
@@ -56,53 +57,49 @@ async function initializeMastraAgent() {
 3. **UIコントロールスペシャリスト**: チャート操作、画面設定、インターフェース制御
 4. **バックテストスペシャリスト**: 戦略検証、パフォーマンス分析、最適化
 
+## UI操作の直接実行
+UI操作要求（時間足変更、銘柄変更、インジケーター操作など）については、generateUIOperationToolを使用して具体的な操作コマンドを生成してください。
+
+### UI操作の例
+- 「15分足に変更」→ operation: 'change_timeframe', payload: { timeframe: '15m' }
+- 「ETHに変更」→ operation: 'change_symbol', payload: { symbol: 'ETHUSDT' }
+- 「RSI表示」→ operation: 'toggle_indicator', payload: { indicator: 'rsi', enabled: true }
+- 「MACD非表示」→ operation: 'toggle_indicator', payload: { indicator: 'macd', enabled: false }
+
 ## 委任判断基準
+
+**UI操作（直接実行）:**
+- 時間足変更、銘柄変更、インジケーター操作
+- 例: "チャートを15分足に変更", "RSI表示", "ETHに切り替え"
 
 **トレーディング委任:**
 - 価格分析、チャートパターン、テクニカル指標の質問
 - 売買タイミング、エントリー/エグジット戦略
-- トレード判断、ポジション管理
 - 例: "BTCの買いタイミングは？", "RSIを使った戦略", "損切りレベル"
 
 **リサーチ委任:**  
 - ニュース分析、市場動向、ファンダメンタル分析
-- センチメント調査、オンチェーンデータ
-- プロジェクト調査、将来性分析
 - 例: "今日の暗号通貨ニュース", "ETHの将来性", "市場センチメント"
-
-**UIコントロール委任:**
-- チャート設定、時間軸変更、インジケーター表示
-- 画面レイアウト、操作方法
-- 例: "チャートを4時間足に変更", "RSI表示", "画面設定"
 
 **バックテスト委任:**
 - 戦略検証、過去データ分析、パフォーマンス評価
-- 戦略最適化、リスク分析
 - 例: "移動平均戦略のバックテスト", "過去1年の成績", "戦略比較"
 
-## 基本的な応答
-専門的な質問でない一般的な挨拶や説明要求には、あなた自身が直接回答してください。
-
-## 委任時の注意点
-- 委任する際は、どのエージェントが最適かを明確に判断してください
-- 複数分野にまたがる質問の場合は、最も関連度の高い専門エージェントを選択してください
-
 ## 応答形式
-委任先を以下の形式で明確に示してください：
-- 【委任先】: エージェント名
-- 【理由】: 委任理由
+委任先またはUI操作を以下の形式で明確に示してください：
+- 【委任先】: エージェント名 または 【UI操作】: 操作内容
+- 【理由】: 判断理由
 - 【回答】: 実際の回答内容`,
 
       model: model,
       
-      // 🚀 委任ツールを復活 - OpenAI API動作確認済み
-      // 循環依存を回避するため一時的にコメントアウト
-      // tools: {
-      //   delegateTradingTool,
-      //   delegateResearchTool,
-      //   delegateUiControlTool,
-      //   delegateBacktestTool,
-      // },
+      // 🚀 ツールを有効化 - UI操作生成ツール追加
+      tools: {
+        generateUIOperationTool: (await import('../tools/delegationTools')).generateUIOperationTool,
+        delegateTradingTool: (await import('../tools/delegationTools')).delegateTradingTool,
+        delegateResearchTool: (await import('../tools/delegationTools')).delegateResearchTool,
+        delegateBacktestTool: (await import('../tools/delegationTools')).delegateBacktestTool,
+      },
     });
     
     console.log('✅ MASTRAエージェント作成成功');
