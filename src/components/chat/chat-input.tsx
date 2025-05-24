@@ -23,6 +23,7 @@ interface ChatInputProps {
   isListening: boolean;
   toggleListening: () => void;
   recordingTime: number;
+  textAreaRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
 export function ChatInput({
@@ -36,6 +37,7 @@ export function ChatInput({
   isListening,
   toggleListening,
   recordingTime,
+  textAreaRef,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -157,7 +159,10 @@ export function ChatInput({
 
       <Textarea
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) => {
+          console.log('🔄 ChatInput onChange:', e.target.value);
+          setInput(e.target.value);
+        }}
         placeholder="メッセージを入力..."
         aria-label="メッセージ入力"
         className={cn(
@@ -173,6 +178,7 @@ export function ChatInput({
             onSendMessage();
           }
         }}
+        ref={textAreaRef}
       />
 
       {/* 明示的にshowVoiceInputを評価して表示・非表示を制御 */}

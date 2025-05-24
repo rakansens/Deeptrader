@@ -58,6 +58,7 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
   const isSendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null); // テキストエリア直接操作用
 
   // 音声入力フックを使用
   const {
@@ -145,6 +146,12 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     try {
       isSendingRef.current = true;
       console.log('🔄 入力クリア前 - input:', input);
+      
+      // DOM を直接クリア（確実性を高める）
+      if (textAreaRef.current) {
+        textAreaRef.current.value = "";
+        console.log('🎯 DOM直接クリア完了');
+      }
       
       // flushSyncで同期的に入力欄をクリア
       flushSync(() => {
@@ -324,6 +331,7 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
           isListening={isListening}
           toggleListening={toggleListening}
           recordingTime={recordingTime}
+          textAreaRef={textAreaRef}
         />
       </div>
     </div>
