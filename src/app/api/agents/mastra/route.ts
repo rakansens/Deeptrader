@@ -1,5 +1,6 @@
 // src/app/api/agents/mastra/route.ts
 // MASTRAエージェント専用APIエンドポイント（構造整理版）
+// 自然言語処理を大幅拡張 - 全時間足・インジケーター操作に対応
 
 import { NextRequest, NextResponse } from 'next/server';
 import { 
@@ -88,22 +89,87 @@ async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: s
     let operation: string | null = null;
     let payload: any = null;
     
-    // 簡易的なUI操作検出
+    // 銘柄変更の検出
     if (message.includes('eth') || message.includes('イーサ')) {
       operation = 'change_symbol';
       payload = { symbol: 'ETHUSDT' };
     } else if (message.includes('btc') || message.includes('ビット')) {
       operation = 'change_symbol';
       payload = { symbol: 'BTCUSDT' };
-    } else if (message.includes('4h') || message.includes('4時間')) {
+    } 
+    // 時間足変更の柔軟な検出
+    else if (message.includes('1m') || message.includes('1分')) {
       operation = 'change_timeframe';
-      payload = { timeframe: '4h' };
+      payload = { timeframe: '1m' };
+    } else if (message.includes('3m') || message.includes('3分')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '3m' };
+    } else if (message.includes('5m') || message.includes('5分')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '5m' };
+    } else if (message.includes('15m') || message.includes('15分')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '15m' };
+    } else if (message.includes('30m') || message.includes('30分')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '30m' };
     } else if (message.includes('1h') || message.includes('1時間')) {
       operation = 'change_timeframe';
       payload = { timeframe: '1h' };
+    } else if (message.includes('2h') || message.includes('2時間')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '2h' };
+    } else if (message.includes('4h') || message.includes('4時間')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '4h' };
+    } else if (message.includes('6h') || message.includes('6時間')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '6h' };
+    } else if (message.includes('8h') || message.includes('8時間')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '8h' };
+    } else if (message.includes('12h') || message.includes('12時間')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '12h' };
+    } else if (message.includes('1d') || message.includes('日足') || message.includes('1日')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '1d' };
+    } else if (message.includes('3d') || message.includes('3日')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '3d' };
+    } else if (message.includes('1w') || message.includes('週足') || message.includes('1週間')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '1w' };
+    } else if (message.includes('1mon') || message.includes('月足') || message.includes('1か月') || message.includes('1ヶ月')) {
+      operation = 'change_timeframe';
+      payload = { timeframe: '1M' };
+    }
+    // インジケーター操作の検出
+    else if (message.includes('rsi') && (message.includes('表示') || message.includes('オン'))) {
+      operation = 'toggle_indicator';
+      payload = { indicator: 'rsi', enabled: true };
+    } else if (message.includes('rsi') && (message.includes('非表示') || message.includes('オフ'))) {
+      operation = 'toggle_indicator';
+      payload = { indicator: 'rsi', enabled: false };
+    } else if (message.includes('macd') && (message.includes('表示') || message.includes('オン'))) {
+      operation = 'toggle_indicator';
+      payload = { indicator: 'macd', enabled: true };
+    } else if (message.includes('macd') && (message.includes('非表示') || message.includes('オフ'))) {
+      operation = 'toggle_indicator';
+      payload = { indicator: 'macd', enabled: false };
+    } else if (message.includes('移動平均') || message.includes('ma')) {
+      if (message.includes('表示') || message.includes('オン')) {
+        operation = 'toggle_indicator';
+        payload = { indicator: 'ma', enabled: true };
+      } else if (message.includes('非表示') || message.includes('オフ')) {
+        operation = 'toggle_indicator';
+        payload = { indicator: 'ma', enabled: false };
+      }
     }
     
     if (operation && payload) {
+      console.log('🎯 UI操作検出:', { operation, payload, originalMessage: userMessage });
+      
       // Socket.IOサーバーのHTTP POST /ui-operationエンドポイントを使用（タイムアウト付き）
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -137,6 +203,8 @@ async function executeUIOperationsIfNeeded(userMessage: string, agentResponse: s
         const errorInstance = fetchError as Error;
         logAgentActivity('MASTRA Agent', 'WebSocket UI操作エラー', errorInstance.message, false);
       }
+    } else {
+      console.log('🔍 UI操作未検出:', userMessage);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
