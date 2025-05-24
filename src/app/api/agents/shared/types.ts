@@ -4,6 +4,9 @@
 
 import type { UIOperation } from '@/types';
 
+// UIOperation型をre-export（他のagentファイルからも使用可能に）
+export type { UIOperation } from '@/types';
+
 // 基本的なAPI要求の型定義
 export interface AgentRequest {
   message: string;
@@ -37,13 +40,6 @@ export interface OrchestratorResponse {
   response: string;
   mastraUsed: boolean;
 }
-
-// UI操作の型定義（@/types/commonに移動）
-// export interface UIOperation {
-//   type: 'change_symbol' | 'change_timeframe' | 'change_theme' | 'toggle_indicator';
-//   payload: any;
-//   description: string;
-// }
 
 // 実行結果の型定義
 export interface ExecutionResult {

@@ -1,17 +1,7 @@
 import { clientEnv } from '@/config'
+import type { StreamInfo } from '@/types'
 
 export type Listener = (data: unknown) => void
-
-interface StreamInfo {
-  ws: WebSocket
-  listeners: Set<Listener>
-  refs: number
-  pingTimer?: NodeJS.Timeout
-  retryCount: number
-  reconnectTimer?: NodeJS.Timeout
-  closingTimer?: NodeJS.Timeout
-  directConnection?: boolean // 直接Binanceに接続しているかフラグ
-}
 
 export class HubSocketManager {
   private streams = new Map<string, StreamInfo>()

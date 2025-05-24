@@ -5,8 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   AgentRequest, 
-  AgentResponse, 
-  UIOperation
+  AgentResponse 
 } from '../shared/types';
 import {
   createSuccessResponse, 
