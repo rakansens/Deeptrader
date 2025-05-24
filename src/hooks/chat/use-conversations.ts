@@ -25,53 +25,131 @@ export interface UseConversations {
  * 会話リストの状態を管理するカスタムフック
  */
 export function useConversations(): UseConversations {
-  const [conversations, setConversations] = useState<Conversation[]>([
-    { id: "current", title: "現在の会話" },
-  ]);
-  const [selectedId, setSelectedId] = useState("current");
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [initialized, setInitialized] = useState(false);
+
+  // UUIDかどうかをチェックする関数
+  const isValidUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
 
   // 初期化時にlocalStorageからデータを読み込む
   useEffect(() => {
-    try {
-      const stored = safeGetJson<Conversation[]>("conversations", [], "conversations");
-      const sel = safeGetString("selectedConversation");
+    const initConversations = async () => {
+      if (initialized) return;
       
-      setConversations(stored);
-      setSelectedId(sel || '');
-    } catch (error) {
-      logger.error("会話データの読み込みに失敗:", error);
+      try {
+        const stored = safeGetJson<Conversation[]>("conversations", [], "conversations");
+        const sel = safeGetString("selectedConversation");
+        
+        // "current"のような無効なIDを除外
+        const validConversations = stored.filter(conv => isValidUUID(conv.id));
+        
+        // 既存の有効な会話があるかチェック
+        if (validConversations.length > 0 && sel && isValidUUID(sel)) {
+          setConversations(validConversations);
+          setSelectedId(sel);
+        } else {
+          // 有効な会話が無い場合は新規作成
+          logger.info('[useConversations] 有効な会話が無いため新規作成します');
+          const newId = await createInitialConversation();
+          if (newId) {
+            const newConv = { id: newId, title: "新しい会話" };
+            setConversations([newConv]);
+            setSelectedId(newId);
+          }
+        }
+      } catch (error) {
+        logger.error("会話データの読み込みに失敗:", error);
+        // エラー時も新規会話を作成
+        const newId = await createInitialConversation();
+        if (newId) {
+          const newConv = { id: newId, title: "新しい会話" };
+          setConversations([newConv]);
+          setSelectedId(newId);
+        }
+      } finally {
+        setInitialized(true);
+      }
+    };
+
+    initConversations();
+  }, [initialized]);
+
+  // 初期会話を作成する関数
+  const createInitialConversation = async (): Promise<string | null> => {
+    try {
+      const id = crypto.randomUUID();
+      const supabase = createClient();
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      if (userId) {
+        const { data, error } = await supabase
+          .from("conversations")
+          .insert({
+            id,
+            title: "新しい会話",
+            user_id: userId,
+          })
+          .select()
+          .single();
+          
+        if (error) {
+          logger.error('初期会話レコード作成エラー:', error);
+        } else {
+          logger.info(`[useConversations] 初期会話を作成しました: ${id}`);
+        }
+      }
+      
+      // メッセージ配列を初期化
+      safeSetJson(`messages_${id}`, [], `messages for ${id}`);
+      return id;
+    } catch (err) {
+      logger.error('初期会話作成エラー:', err);
+      return null;
     }
-  }, []);
+  };
 
   // 状態変更時にlocalStorageへ保存
   useEffect(() => {
-    safeSetJson("conversations", conversations, "conversations");
-  }, [conversations]);
+    if (initialized) {
+      console.log(`🔍 [useConversations] conversations保存 - ${conversations.length}件:`, conversations.map(c => ({ id: c.id, title: c.title })));
+      safeSetJson("conversations", conversations, "conversations");
+    }
+  }, [conversations, initialized]);
 
   useEffect(() => {
-    safeSetString("selectedConversation", selectedId);
-  }, [selectedId]);
+    if (initialized && selectedId) {
+      console.log(`🔍 [useConversations] selectedId保存: "${selectedId}"`);
+      safeSetString("selectedConversation", selectedId);
+    }
+  }, [selectedId, initialized]);
 
   const selectConversation = (id: string) => {
-    setSelectedId(id);
+    console.log(`🔍 [useConversations] selectConversation呼び出し - id: "${id}"`);
+    console.log(`🔍 [useConversations] 現在のselectedId: "${selectedId}"`);
+    console.log(`🔍 [useConversations] isValidUUID(${id}):`, isValidUUID(id));
+    
+    if (isValidUUID(id)) {
+      console.log(`🔍 [useConversations] 有効なUUIDのため、selectedIdを "${id}" に変更`);
+      setSelectedId(id);
+    } else {
+      logger.warn(`[useConversations] 無効な会話ID: ${id}`);
+      console.log(`🔍 [useConversations] 無効なUUIDのため選択をスキップ: ${id}`);
+    }
   };
 
   const newConversation = async () => {
     try {
-      // UUIDを生成
       const id = crypto.randomUUID();
       const conv = { id, title: `会話 ${conversations.length + 1}` };
       
-      // Supabaseに会話レコードを作成 (v2 API用に修正)
       const supabase = createClient();
-      const {
-        data: { session },
-        error: sessionErr,
-      } = await supabase.auth.getSession();
-
-      if (sessionErr) {
-        console.error("❌ セッション取得失敗:", sessionErr.message);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
       
       if (userId) {
@@ -87,23 +165,19 @@ export function useConversations(): UseConversations {
           
         if (error) {
           logger.error('会話レコード作成エラー:', error);
+        } else {
+          logger.info(`[useConversations] 新しい会話を作成しました: ${id}`);
         }
       }
       
-      // ローカルステートを更新
       setConversations((prev) => [...prev, conv]);
       setSelectedId(id);
       
-      // 新しい会話用のメッセージ配列を初期化
-      try {
-        safeSetJson(`messages_${id}`, [], `messages for ${id}`);
-      } catch {
-        // ignore write errors
-      }
+      safeSetJson(`messages_${id}`, [], `messages for ${id}`);
       return id;
     } catch (err) {
       logger.error('新規会話作成エラー:', err);
-      return Date.now().toString(); // フォールバック: エラー時は旧方式のIDを返す
+      return crypto.randomUUID(); // フォールバック
     }
   };
 
@@ -119,7 +193,7 @@ export function useConversations(): UseConversations {
       setSelectedId((s) => (s === id ? updated[0]?.id ?? "" : s));
       return updated;
     });
-    // 対応するメッセージをlocalStorageから削除
+    
     try {
       safeRemoveItem(`messages_${id}`);
     } catch (error) {

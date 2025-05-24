@@ -347,11 +347,27 @@ export function useBookmarks(): UseBookmarks {
         throw new Error('ログインが必要です');
       }
 
+      // 会話IDの存在確認（オプション、存在しない場合はNULL）
+      let validConversationId: string | null = null;
+      if (conversationId) {
+        const { data: conversation } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('id', conversationId)
+          .single();
+        
+        if (conversation) {
+          validConversationId = conversationId;
+        } else {
+          logger.warn(`[useBookmarks] 会話ID ${conversationId} が存在しません。NULLで作成します。`);
+        }
+      }
+
       // ブックマーク本体を作成
       const bookmarkData: DBBookmarkInsert = {
         user_id: user.id,
         message_id: message.id,
-        conversation_id: conversationId,
+        conversation_id: validConversationId, // 存在確認済みまたはNULL
         category_id: category.id,
         title: title || message.content.slice(0, 50) + (message.content.length > 50 ? '...' : ''),
         description: undefined,
@@ -368,6 +384,7 @@ export function useBookmarks(): UseBookmarks {
         .single();
 
       if (bookmarkError) {
+        logger.error('[useBookmarks] ブックマーク作成DB詳細エラー:', bookmarkError);
         throw new Error(`ブックマーク作成エラー: ${bookmarkError.message}`);
       }
 
@@ -392,7 +409,7 @@ export function useBookmarks(): UseBookmarks {
       setError(null);
 
     } catch (error) {
-      logger.error('[useBookmarks] ブックマーク追加エラー:', error);
+      logger.error('[useBookmarks] ブックマーク追加エラー:', [error]);
       setError(error instanceof Error ? error.message : 'ブックマークの追加に失敗しました');
     } finally {
       setLoading(false);

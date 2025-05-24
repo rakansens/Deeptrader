@@ -69,7 +69,7 @@ export function MessageBubble({
   const { speechSynthesisEnabled, userName, assistantName } = useSettings();
 
   // ブックマーク機能
-  const { isBookmarked, addBookmark, removeBookmark, getBookmarkByMessageId } = useBookmarks();
+  const { isBookmarked, addBookmark, removeBookmark, getBookmarkByMessageId, categories } = useBookmarks();
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   // ブックマーク状態をチェック
@@ -87,8 +87,14 @@ export function MessageBubble({
           await removeBookmark(bookmark.id);
         }
       } else {
-        // デフォルトカテゴリを使用してブックマーク追加
-        const defaultCategory = DEFAULT_BOOKMARK_CATEGORIES[0];
+        // DB版のカテゴリ配列から最初のカテゴリ（デフォルト）を使用
+        const defaultCategory = categories.length > 0 ? categories[0] : {
+          id: 'a7212d4c-3ef8-4072-ba84-0b0197deeb8f', // 市場洞察カテゴリのUUID
+          name: '市場洞察',
+          color: 'bg-blue-500',
+          icon: 'TrendingUp',
+          description: '相場分析や市場動向に関する重要な情報'
+        };
         await addBookmark(message, conversationId, defaultCategory);
       }
     } catch (error) {
@@ -291,7 +297,7 @@ export function MessageBubble({
                   ? "bg-primary text-neutral-900 dark:text-neutral-900 font-medium"
                   : "bg-muted text-foreground"),
               // パディングは画像の場合小さく
-              isImage ? "p-2" : "px-3 py-1.5",
+              isImage ? "p-2" : (typeof children === 'string' && containsMarkdown(children) ? "px-3 py-2" : "px-3 py-1.5"),
               typing && "motion-safe:animate-pulse",
               // 最大幅の制約をここで設定
               isImage ? "" : "w-full",

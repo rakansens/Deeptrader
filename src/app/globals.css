@@ -266,9 +266,11 @@
   color: #61aeee;
 }
 
-/* マークダウン用のスタイル */
+/* マークダウン用のスタイル - ChatGPTライクなタイトスペーシング */
 .markdown-content {
   line-height: 1.6;
+  font-size: 0.925rem; /* ChatGPTライクなサイズに調整 */
+  color: inherit;
 }
 
 .markdown-content h1,
@@ -277,43 +279,59 @@
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 1rem; /* 上マージンを縮小 (1.5rem → 1rem) */
+  margin-bottom: 0.375rem; /* 下マージンを縮小 (0.5rem → 0.375rem) */
   font-weight: 600;
+  line-height: 1.3; /* ヘッダーのライン高を縮小 */
 }
 
 .markdown-content h1 {
-  font-size: 1.5rem;
+  font-size: 1.375rem; /* 少し小さく (1.5rem → 1.375rem) */
 }
 
 .markdown-content h2 {
-  font-size: 1.25rem;
+  font-size: 1.125rem; /* 少し小さく (1.25rem → 1.125rem) */
 }
 
 .markdown-content h3 {
-  font-size: 1.125rem;
+  font-size: 1rem; /* 少し小さく (1.125rem → 1rem) */
+}
+
+.markdown-content h4 {
+  font-size: 0.9rem;
 }
 
 .markdown-content p {
-  margin-bottom: 1rem;
+  margin-bottom: 0.625rem; /* 段落間隔を縮小 (1rem → 0.625rem) */
+  line-height: 1.5; /* ライン高を少し縮小 */
 }
 
 .markdown-content ul,
 .markdown-content ol {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
+  margin-bottom: 0.75rem; /* リストマージンを縮小 (1rem → 0.75rem) */
+  padding-left: 1.25rem; /* 左パディングを縮小 (1.5rem → 1.25rem) */
+  margin-top: 0.375rem; /* 上マージンを追加 */
 }
 
 .markdown-content li {
+  margin-bottom: 0.125rem; /* リスト項目間隔を縮小 (0.25rem → 0.125rem) */
+  line-height: 1.4;
+}
+
+/* ネストされたリストの間隔をさらに縮小 */
+.markdown-content li > ul,
+.markdown-content li > ol {
+  margin-top: 0.125rem;
   margin-bottom: 0.25rem;
 }
 
 .markdown-content blockquote {
-  border-left: 4px solid #e5e5e5;
-  padding-left: 1rem;
-  margin: 1rem 0;
+  border-left: 3px solid #e5e5e5; /* ボーダーを細く */
+  padding-left: 0.75rem; /* パディングを縮小 (1rem → 0.75rem) */
+  margin: 0.75rem 0; /* マージンを縮小 (1rem → 0.75rem) */
   color: #6b7280;
   font-style: italic;
+  line-height: 1.5;
 }
 
 .dark .markdown-content blockquote {
@@ -324,19 +342,22 @@
 .markdown-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1rem 0;
+  margin: 0.75rem 0; /* マージンを縮小 (1rem → 0.75rem) */
+  font-size: 0.9rem; /* テーブルフォントサイズを小さく */
 }
 
 .markdown-content th,
 .markdown-content td {
   border: 1px solid #e5e5e5;
-  padding: 0.5rem;
+  padding: 0.375rem 0.5rem; /* パディングを調整 */
   text-align: left;
+  line-height: 1.4;
 }
 
 .markdown-content th {
   background-color: #f9f9f9;
   font-weight: 600;
+  font-size: 0.875rem;
 }
 
 .dark .markdown-content th,
@@ -349,10 +370,78 @@
 }
 
 .markdown-content pre {
-  margin: 1rem 0;
+  margin: 0.75rem 0; /* マージンを縮小 (1rem → 0.75rem) */
   overflow-x: auto;
+  font-size: 0.875rem; /* コードブロックフォントサイズを小さく */
 }
 
 .markdown-content code {
   font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  font-size: 0.875em; /* インラインコードサイズを調整 */
+}
+
+/* 強調表示の調整 */
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+/* 最初の要素の上マージンを削除 */
+.markdown-content > *:first-child {
+  margin-top: 0;
+}
+
+/* 最後の要素の下マージンを削除 */
+.markdown-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ChatGPTライクなより細かい調整 */
+.markdown-content hr {
+  margin: 0.75rem 0;
+  border: none;
+  border-top: 1px solid #e5e5e5;
+}
+
+.dark .markdown-content hr {
+  border-top-color: #4b5563;
+}
+
+/* コードブロックとテキストの間隔調整 */
+.markdown-content p + pre,
+.markdown-content pre + p {
+  margin-top: 0.5rem;
+}
+
+/* リスト項目内の段落のマージン調整 */
+.markdown-content li > p {
+  margin-bottom: 0.375rem;
+}
+
+.markdown-content li > p:last-child {
+  margin-bottom: 0;
+}
+
+/* 見出し直後の要素の上マージン調整 */
+.markdown-content h1 + *,
+.markdown-content h2 + *,
+.markdown-content h3 + *,
+.markdown-content h4 + *,
+.markdown-content h5 + *,
+.markdown-content h6 + * {
+  margin-top: 0.25rem;
+}
+
+/* リンクのスタイル */
+.markdown-content a {
+  color: hsl(var(--accent-blue));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-content a:hover {
+  opacity: 0.8;
 }

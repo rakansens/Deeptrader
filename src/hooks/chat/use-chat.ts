@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase";
 import { useEffect, useState, useCallback } from "react";
 import { useConversations } from "./use-conversations";
 import { useSidebar } from "./use-sidebar";
+import { addMessage, createConversation as createConversationDB, fetchMessages } from "@/infrastructure/supabase/db-service";
 import type { Conversation, Message } from "@/types/chat";
 import { logger } from "@/lib/logger";
 import { CHAT_API_ENDPOINT } from "@/constants/network";
@@ -65,10 +66,58 @@ export function useChat(): UseChat {
 
   const { sidebarOpen, toggleSidebar } = useSidebar(false);
 
-  // 会話変更時のメッセージリセット
+  // 会話変更時のメッセージ読み込み
   useEffect(() => {
-    // TODO: 会話切り替え時のメッセージクリア実装
-    setMessages([]);
+    const loadMessages = async () => {
+      console.log(`🔍 [useChat] loadMessages開始 - selectedId: "${selectedId}"`);
+      
+      if (!selectedId || selectedId === '') {
+        console.log('🔍 [useChat] selectedIdが空のため、メッセージをクリア');
+        setMessages([]);
+        return;
+      }
+
+      try {
+        // まずlocalStorageから読み込み（高速表示）
+        const stored = safeGetJson<Message[]>(`messages_${selectedId}`, [], `messages for ${selectedId}`);
+        console.log(`🔍 [useChat] localStorage読み込み結果 - ${stored.length}件:`, stored.map(m => ({ role: m.role, content: m.content?.substring(0, 20) + '...' })));
+        
+        if (stored.length > 0) {
+          setMessages(stored);
+          console.log('🔍 [useChat] localStorageからメッセージを設定');
+        }
+
+        // DBからメッセージを取得（正確なデータ）
+        console.log(`🔍 [useChat] DB読み込み開始 - conversation_id: ${selectedId}`);
+        const dbMessages = await fetchMessages(selectedId);
+        console.log(`🔍 [useChat] DB読み込み結果 - ${dbMessages?.length || 0}件:`, dbMessages?.map(m => ({ role: m.role, content: m.content?.substring(0, 20) + '...' })));
+        
+        if (dbMessages && dbMessages.length > 0) {
+          const messages: Message[] = dbMessages.map((m) => ({
+            id: String(m.id),
+            role: m.role as Message['role'],
+            content: m.content,
+            type: m.type as 'text' | 'image',
+            prompt: m.prompt || undefined,
+            imageUrl: m.image_url || undefined,
+            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
+          }));
+          console.log(`🔍 [useChat] 変換されたメッセージ ${messages.length}件をセット`);
+          setMessages(messages);
+          // localStorageも更新
+          safeSetJson(`messages_${selectedId}`, messages, `messages for ${selectedId}`);
+          console.log('🔍 [useChat] localStorageも更新完了');
+        } else {
+          console.log('🔍 [useChat] DBからのメッセージが空または取得失敗');
+        }
+      } catch (error) {
+        logger.error('メッセージ読み込みエラー:', error);
+        console.error('🔍 [useChat] メッセージ読み込みエラー:', error);
+      }
+    };
+
+    console.log(`🔍 [useChat] useEffect発火 - selectedId: "${selectedId}"`);
+    loadMessages();
   }, [selectedId]);
 
   // 送信履歴の初期化 - localStorage から読み込み
@@ -158,6 +207,21 @@ export function useChat(): UseChat {
       };
       setMessages(prev => [...prev, userMessage]);
 
+      // ユーザーメッセージをDBに保存
+      try {
+        await addMessage(
+          selectedId,
+          "user",
+          userMessage.content,
+          userMessage.type,
+          userMessage.prompt,
+          userMessage.imageUrl
+        );
+        logger.info('[useChat] ユーザーメッセージをDBに保存しました');
+      } catch (dbError) {
+        logger.warn('[useChat] ユーザーメッセージのDB保存に失敗:', dbError);
+      }
+
       // チャットAPIに送信
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -199,6 +263,23 @@ export function useChat(): UseChat {
       };
       setMessages(prev => [...prev, assistantMessage]);
 
+      // アシスタントメッセージをDBに保存
+      try {
+        await addMessage(
+          selectedId,
+          "assistant",
+          assistantMessage.content,
+          assistantMessage.type
+        );
+        logger.info('[useChat] アシスタントメッセージをDBに保存しました');
+      } catch (dbError) {
+        logger.warn('[useChat] アシスタントメッセージのDB保存に失敗:', dbError);
+      }
+
+      // localStorageにも保存（バックアップ）
+      const allMessages = [...messages, userMessage, assistantMessage];
+      safeSetJson(`messages_${selectedId}`, allMessages, `messages for ${selectedId}`);
+
       // 送信成功時に履歴に追加（テキストメッセージのみ）
       if (!imageFile && hasText(text)) {
         const newHistory = [...messageHistory, text.trim()];
@@ -226,7 +307,7 @@ export function useChat(): UseChat {
     } finally {
       setLoading(false);
     }
-  }, [messageHistory, saveMessageHistory]);
+  }, [messageHistory, saveMessageHistory, selectedId]);
 
   const sendImageMessage = useCallback(async (dataUrl: string, promptText = 'このチャートを分析してください') => {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {

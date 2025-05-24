@@ -214,6 +214,7 @@ export function useUserPreferences(): UseUserPreferences {
         throw new Error('ユーザーが認証されていません');
       }
       
+      // UPSERT処理（onConflictで一意制約に対応）
       const { error } = await supabase
         .from('user_preferences')
         .upsert({
@@ -222,6 +223,9 @@ export function useUserPreferences(): UseUserPreferences {
           preference_key: key,
           preference_value: JSON.stringify(value),
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,category,preference_key',  // 一意制約キーを指定
+          ignoreDuplicates: false // 重複時は更新
         });
       
       if (error) {
@@ -232,12 +236,12 @@ export function useUserPreferences(): UseUserPreferences {
       // ローカル状態を更新
       setPreferences(prev => {
         const existing = prev.find(p => 
-          p.category === category && p.preference_key === key
+          p.category === category && p.preference_key === key && p.user_id === user.id
         );
         
         if (existing) {
           return prev.map(p => 
-            p.category === category && p.preference_key === key
+            p.category === category && p.preference_key === key && p.user_id === user.id
               ? { ...p, preference_value: JSON.stringify(value), updated_at: new Date().toISOString() }
               : p
           );
@@ -254,11 +258,11 @@ export function useUserPreferences(): UseUserPreferences {
         }
       });
       
-      logger.info('[useUserPreferences] 設定を保存しました:', { category, key, value });
+      logger.info('[useUserPreferences] 設定を保存しました:', [{ category, key, value }]);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '設定保存に失敗しました';
-      logger.error('[useUserPreferences] 設定保存例外:', err);
+      logger.error('[useUserPreferences] 設定保存例外:', [err]);
       setError(errorMessage);
       throw err;
     }
