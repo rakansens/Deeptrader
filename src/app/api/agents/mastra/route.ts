@@ -2,6 +2,7 @@
 // MASTRAエージェント専用APIエンドポイント（構造整理版）
 // ハードコード削除 - エージェント自身がUI操作判断する真のインテリジェント実装
 // Phase 6A-2: fetchWithTimeout統合によるAbortController重複解消
+// Phase 6A-4: エラーハンドリング統合
 
 import { NextRequest, NextResponse } from 'next/server';
 import { 
@@ -15,6 +16,7 @@ import {
   logAgentActivity
 } from '../shared/utils';
 import { fetchWithTimeout } from '@/lib/fetch';
+import { getErrorMessage, ensureError } from '@/lib/error-utils';
 
 export const runtime = "nodejs";
 
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
       
       return NextResponse.json(
         createErrorResponse(
-          agentError instanceof Error ? agentError : new Error(String(agentError)),
+          ensureError(agentError),
           'MASTRAエージェントでエラーが発生しました',
           'mastra',
           'mastra'
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
     
     return NextResponse.json(
       createErrorResponse(
-        error instanceof Error ? error : new Error(String(error)),
+        ensureError(error),
         'エージェントAPIでエラーが発生しました',
         'api',
         'fallback'
@@ -192,11 +194,9 @@ async function executeUIOperation(uiOperation: any) {
         }, false);
       }
     } catch (fetchError) {
-      const errorInstance = fetchError as Error;
-      logAgentActivity('MASTRA Agent', 'WebSocket UI操作エラー', errorInstance.message, false);
+      logAgentActivity('MASTRA Agent', 'WebSocket UI操作エラー', getErrorMessage(fetchError), false);
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logAgentActivity('MASTRA Agent', 'UI操作実行エラー', errorMessage, false);
+    logAgentActivity('MASTRA Agent', 'UI操作実行エラー', getErrorMessage(error), false);
   }
 } 

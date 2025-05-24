@@ -1,8 +1,10 @@
 // src/lib/api-response.ts
 // 共通APIレスポンス生成ユーティリティ - Phase 6A-3統合
 // 全APIルートで一貫したレスポンス形式を提供
+// Phase 6A-4: エラーハンドリング統合
 
 import { NextResponse } from 'next/server';
+import { getErrorMessage, getErrorStack } from './error-utils';
 
 // 成功レスポンス用の型定義
 export interface SuccessResponseData {
@@ -43,8 +45,8 @@ export function createErrorResponse(
   source: 'mastra' | 'pure' | 'websocket' | 'api' = 'api',
   mode: 'mastra' | 'pure' | 'hybrid' | 'fallback' = 'fallback'
 ): ErrorResponseData & { success: false; timestamp: string } {
-  const errorMessage = error instanceof Error ? error.message : error;
-  const errorStack = error instanceof Error ? error.stack : undefined;
+  const errorMessage = getErrorMessage(error);
+  const errorStack = getErrorStack(error);
   
   return {
     success: false,

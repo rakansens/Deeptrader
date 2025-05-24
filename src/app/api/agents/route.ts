@@ -12,6 +12,7 @@ import {
   createErrorResponse,
   logAgentActivity
 } from './shared/utils';
+import { ensureError } from '@/lib/error-utils';
 
 export const runtime = "nodejs";
 
@@ -116,8 +117,17 @@ async function executeMASTRAAgent(requestData: AgentRequest): Promise<NextRespon
     return await mastraHandler(mockRequest);
     
   } catch (error) {
-    logAgentActivity('MASTRA Executor', 'MASTRAエージェント実行エラー', error, false);
-    throw error;
+    logAgentActivity('MASTRA Agent', 'MASTRAエラー', error, false);
+    
+    return NextResponse.json(
+      createErrorResponse(
+        ensureError(error),
+        'MASTRAエージェントでエラーが発生しました',
+        'api',
+        'mastra'
+      ),
+      { status: 500 }
+    );
   }
 }
 
@@ -135,13 +145,13 @@ async function executePureAgent(requestData: AgentRequest): Promise<NextResponse
     return await pureHandler(mockRequest);
     
   } catch (error) {
-    logAgentActivity('Pure Executor', 'Pureエージェント実行エラー', error, false);
+    logAgentActivity('Pure Agent', 'Pureエラー', error, false);
     
     return NextResponse.json(
       createErrorResponse(
-        error instanceof Error ? error : new Error(String(error)),
-        'Pure エージェント実行に失敗しました',
-        'pure',
+        ensureError(error),
+        'Pureエージェントでエラーが発生しました',
+        'api',
         'pure'
       ),
       { status: 500 }

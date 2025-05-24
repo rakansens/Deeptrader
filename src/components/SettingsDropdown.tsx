@@ -207,21 +207,21 @@ export function SettingsDropdown({ className }: { className?: string }) {
     try {
       const fileType = isUser ? 'avatar_user' : 'avatar_assistant';
       const result = await uploadFile(file, fileType);
-      
+        
       if (result.success && result.file?.public_url) {
-        // 状態を更新
-        if (isUser) {
+      // 状態を更新
+      if (isUser) {
           setTempUserAvatar(result.file.public_url);
           setUserAvatar(result.file.public_url);
-        } else {
+      } else {
           setTempAssistantAvatar(result.file.public_url);
           setAssistantAvatar(result.file.public_url);
-        }
-        
-        toast({
-          title: "アップロード完了",
-          description: "画像が正常にアップロードされました",
-        });
+      }
+      
+      toast({
+        title: "アップロード完了",
+        description: "画像が正常にアップロードされました",
+      });
       } else {
         throw new Error(result.error || "アップロードに失敗しました");
       }
@@ -249,13 +249,13 @@ export function SettingsDropdown({ className }: { className?: string }) {
       await updateAudioSettings({
         voice_enabled: newValue
       });
-      
-      toast({
-        title: newValue ? "音声入力を有効化" : "音声入力を無効化",
-        description: newValue 
-          ? "チャット画面のマイクボタンを使用できます" 
-          : "音声入力は無効になりました",
-      });
+    
+    toast({
+      title: newValue ? "音声入力を有効化" : "音声入力を無効化",
+      description: newValue 
+        ? "チャット画面のマイクボタンを使用できます" 
+        : "音声入力は無効になりました",
+    });
     } catch (error) {
       logger.error('[SettingsDropdown] 音声入力設定エラー:', error);
       toast({
@@ -272,13 +272,13 @@ export function SettingsDropdown({ className }: { className?: string }) {
       await updateAudioSettings({
         volume_level: newValue ? tempSpeechRate : 0.0
       });
-      
-      toast({
-        title: newValue ? "読み上げ機能を有効化" : "読み上げ機能を無効化",
-        description: newValue 
-          ? "メッセージの横にあるスピーカーアイコンをクリックすると読み上げます" 
-          : "読み上げ機能は無効になりました",
-      });
+    
+    toast({
+      title: newValue ? "読み上げ機能を有効化" : "読み上げ機能を無効化",
+      description: newValue 
+        ? "メッセージの横にあるスピーカーアイコンをクリックすると読み上げます" 
+        : "読み上げ機能は無効になりました",
+    });
     } catch (error) {
       logger.error('[SettingsDropdown] 読み上げ設定エラー:', error);
       toast({
@@ -319,12 +319,12 @@ export function SettingsDropdown({ className }: { className?: string }) {
       await updateAudioSettings({
         volume_level: tempSpeechRate
       });
-      setSpeechSettingsDialogOpen(false);
-      
-      toast({
-        title: "音声設定を保存しました",
-        description: `読み上げ速度を${formatSpeechRate(tempSpeechRate)}に変更しました`,
-      });
+    setSpeechSettingsDialogOpen(false);
+    
+    toast({
+      title: "音声設定を保存しました",
+      description: `読み上げ速度を${formatSpeechRate(tempSpeechRate)}に変更しました`,
+    });
     } catch (error) {
       logger.error('[SettingsDropdown] 読み上げ速度設定エラー:', error);
       toast({

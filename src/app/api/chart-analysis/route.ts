@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { chartAnalysisTool } from "@/mastra/tools/chartAnalysisTool";
 import type { ChartAnalysisExecute } from "@/mastra/tools/chartAnalysisTool";
 import { createSuccessNextResponse, createErrorNextResponse } from "@/lib/api-response";
+import { ensureError } from "@/lib/error-utils";
 
 export async function POST(
   request: Request,
@@ -28,7 +29,7 @@ export async function POST(
     return NextResponse.json(result);
   } catch (err) {
     return createErrorNextResponse(
-      err instanceof Error ? err : new Error("Unknown error"),
+      ensureError(err),
       "チャート分析中にエラーが発生しました",
       400
     );

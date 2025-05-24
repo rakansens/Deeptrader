@@ -2,6 +2,7 @@
 // チャット管理フック - SRP準拠のクリーンアーキテクチャ
 // ビジネスロジック層として、メッセージ送信・API通信・状態管理を担当
 // UI層(Chat.tsx)との責任分離により、保守性とテスタビリティを向上
+// Phase 6A-4: エラーハンドリング統合
 
 "use client";
 
@@ -12,6 +13,7 @@ import { useSidebar } from "./use-sidebar";
 import type { Conversation, Message } from "@/types/chat";
 import { logger } from "@/lib/logger";
 import { CHAT_API_ENDPOINT } from "@/constants/network";
+import { getErrorMessage } from "@/lib/error-utils";
 
 export interface UseChat {
   messages: Message[];
@@ -78,7 +80,7 @@ export function useChat(): UseChat {
         }
       }
     } catch (error) {
-      console.error("送信履歴の読み込みに失敗:", error);
+      console.error("送信履歴の読み込みに失敗:", getErrorMessage(error));
     }
   }, []);
 
@@ -89,7 +91,7 @@ export function useChat(): UseChat {
       localStorage.setItem("chatMessageHistory", JSON.stringify(limitedHistory));
       setMessageHistory(limitedHistory);
     } catch (error) {
-      console.error("送信履歴の保存に失敗:", error);
+      console.error("送信履歴の保存に失敗:", getErrorMessage(error));
     }
   }, []);
 
@@ -194,7 +196,7 @@ export function useChat(): UseChat {
 
     } catch (err) {
       logger.error("メッセージ送信エラー:", err);
-      const errorMessage = err instanceof Error ? err.message : "不明なエラーが発生しました";
+      const errorMessage = getErrorMessage(err);
       setError(errorMessage);
       
       // エラーメッセージを追加
@@ -224,7 +226,7 @@ export function useChat(): UseChat {
       
       await sendMessage(promptText, file);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '画像メッセージ送信中にエラーが発生しました';
+      const message = getErrorMessage(err);
       setError(message);
       logger.error("AIへの画像メッセージ送信失敗:", err);
     }

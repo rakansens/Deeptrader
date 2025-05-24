@@ -5,11 +5,13 @@ import {
   createErrorNextResponse,
   createSuccessResponse 
 } from '@/lib/api-response';
+import { ensureError } from '@/lib/error-utils';
 
 /**
  * Chat API (軽量版)
  * 新しい統合エージェントAPIを使用してHTTP_COMMONSエラーを回避
  * Phase 6A-3: APIレスポンス生成統合
+ * Phase 6A-4: エラーハンドリング統合
  */
 export const runtime = "nodejs";
 
@@ -97,7 +99,7 @@ export async function POST(req: NextRequest) {
     console.error('❌ メインチャットAPIエラー:', error);
     
     return createErrorNextResponse(
-      error instanceof Error ? error : new Error('Unknown error'),
+      ensureError(error),
       'メインチャットAPIでエラーが発生しました',
       500
     );

@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { WS_HUB_PORT, DEFAULT_BINANCE_WS_URL, WS_READY_STATE_OPEN } from '@/constants/network';
 import { WS_PING_INTERVAL, WS_MAX_RECONNECT_DELAY, WS_RATE_LIMIT_STREAM_SPECIFIC, WS_RATE_LIMIT_NORMAL } from '@/constants/timeouts';
+import { getErrorMessage } from '@/lib/error-utils';
 
 // シンプルなログ関数
 const logger = {
@@ -156,8 +157,7 @@ wss.on('connection', (ws: WebSocket, req: any) => {
       userId = token;
     } catch (err: unknown) {
       // トークン検証に失敗した場合は警告ログを出すが接続は維持
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      logger.warn(`Invalid token: ${errorMessage}`);
+      logger.warn(`Invalid token: ${getErrorMessage(err)}`);
     }
   }
   

@@ -2,6 +2,10 @@
 // MASTRAオーケストレーターエージェント（軽量版・依存関係循環解決）
 // UI操作生成ツール統合 - エージェントが直接UI操作判断
 
+import { Mastra } from '@mastra/core';
+import { z } from 'zod';
+import { getErrorMessage, getErrorStack } from '@/lib/error-utils';
+
 // MASTRAが使用できない場合のフォールバック
 let mastraAgent: any = null;
 let mastraAvailable = false;
@@ -118,26 +122,33 @@ UI操作要求（時間足変更、銘柄変更、インジケーター操作な
     console.log('🎉 MASTRA オーケストレーターエージェント初期化完全成功！');
     return mastraAgent;
     
-  } catch (error) {
-    console.error('❌ MASTRA初期化詳細エラー:');
-    console.error('エラーメッセージ:', error instanceof Error ? error.message : error);
-    console.error('エラースタック:', error instanceof Error ? error.stack : 'No stack trace');
+  } catch (error: unknown) {
+    console.error('エラーメッセージ:', getErrorMessage(error));
+    console.error('エラースタック:', getErrorStack(error));
     
-    // エラーの種類を分析
+    // エラータイプごとの詳細処理
     if (error instanceof Error) {
-      if (error.message.includes('Module not found')) {
-        console.error('🚨 モジュール不足エラー: ', error.message);
-      } else if (error.message.includes('OPENAI_API_KEY')) {
-        console.error('🔑 環境変数エラー: OPENAI_API_KEYを確認してください');
-      } else if (error.message.includes('ai/test')) {
-        console.error('🧪 ai/testエラー: Webpack設定を確認してください');
+      console.error('Mastraエージェント実行エラー詳細:', error);
+      
+      if (error.message.includes('fetch')) {
+        console.error('🌐 ネットワークエラー: ', getErrorMessage(error));
+      } else if (error.message.includes('ENOENT') || error.message.includes('MODULE_NOT_FOUND')) {
+        console.error('🚨 モジュール不足エラー: ', getErrorMessage(error));
+      } else if (error.message.includes('timeout')) {
+        console.error('⏰ タイムアウトエラー: ', getErrorMessage(error));
       } else {
-        console.error('❓ 不明なエラー: ', error.message);
+        console.error('❓ 不明なエラー: ', getErrorMessage(error));
       }
     }
-    
-    mastraAvailable = false;
-    return null;
+
+    // フォールバック応答
+    return {
+      success: false,
+      response: `申し訳ございません。エージェントの処理中にエラーが発生しました: ${getErrorMessage(error)}`,
+      targetAgent: 'general' as const,
+      mastraUsed: false,
+      error: getErrorMessage(error)
+    };
   }
 }
 

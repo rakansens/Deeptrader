@@ -722,6 +722,108 @@ export type Database = {
           updated_at?: string | null
         }
       }
+      bookmark_categories: {
+        Row: {
+          id: string
+          name: string
+          color: string
+          icon: string
+          description: string | null
+          is_default: boolean | null
+          display_order: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          color: string
+          icon: string
+          description?: string | null
+          is_default?: boolean | null
+          display_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          color?: string
+          icon?: string
+          description?: string | null
+          is_default?: boolean | null
+          display_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      bookmarks: {
+        Row: {
+          id: string
+          user_id: string
+          message_id: string
+          conversation_id: string | null
+          category_id: string | null
+          title: string
+          description: string | null
+          is_starred: boolean | null
+          message_content: string
+          message_role: string
+          message_timestamp: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          message_id: string
+          conversation_id?: string | null
+          category_id?: string | null
+          title: string
+          description?: string | null
+          is_starred?: boolean | null
+          message_content: string
+          message_role: string
+          message_timestamp: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          message_id?: string
+          conversation_id?: string | null
+          category_id?: string | null
+          title?: string
+          description?: string | null
+          is_starred?: boolean | null
+          message_content?: string
+          message_role?: string
+          message_timestamp?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      bookmark_tags: {
+        Row: {
+          id: string
+          bookmark_id: string
+          tag_name: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          bookmark_id: string
+          tag_name: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          bookmark_id?: string
+          tag_name?: string
+          created_at?: string | null
+        }
+      }
     }
     Views: {
       admin_users: {

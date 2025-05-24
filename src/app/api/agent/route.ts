@@ -1,9 +1,11 @@
 // src/app/api/agent/route.ts
 // MASTRAエージェント専用APIエンドポイント（完全サーバーサイド版）
 // Phase 6A-3: APIレスポンス生成統合
+// Phase 6A-4: エラーハンドリング統合
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createSuccessNextResponse, createErrorNextResponse } from '@/lib/api-response';
+import { ensureError } from '@/lib/error-utils';
 
 export const runtime = "nodejs"; // Node.js専用実行環境
 
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
       console.log('⚠️ MASTRAエージェントエラー:', agentError);
       
       return createErrorNextResponse(
-        agentError instanceof Error ? agentError : new Error('Unknown agent error'),
+        ensureError(agentError),
         'MASTRAエージェントでエラーが発生しました。WebSocketベースのUI操作機能は正常に動作しています。',
         500,
         'api',
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
     console.error('❌ Agent API Error:', error);
     
     return createErrorNextResponse(
-      error instanceof Error ? error : new Error('Unknown error'),
+      ensureError(error),
       'エージェントAPIでエラーが発生しました',
       500
     );

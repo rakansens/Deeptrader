@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase";
 import { logger } from "@/lib/logger";
 import type { Database } from "@/types/supabase";
+import { getErrorMessage } from '@/lib/error-utils';
 
 type Notification = Database['public']['Tables']['notifications']['Row'];
 type NotificationInsert = Database['public']['Tables']['notifications']['Insert'];
@@ -89,9 +90,8 @@ export function useNotifications(): UseNotifications {
       setError(null);
 
     } catch (error) {
-      logger.error('[useNotifications] 通知取得エラー:', error);
-      setError(error instanceof Error ? error.message : '通知の取得に失敗しました');
-    } finally {
+      console.error('通知の取得に失敗しました:', error);
+      setError(getErrorMessage(error));
       setIsLoading(false);
     }
   }, [supabase]);
@@ -162,8 +162,8 @@ export function useNotifications(): UseNotifications {
       return true;
 
     } catch (error) {
-      logger.error('[useNotifications] 通知作成エラー:', error);
-      setError(error instanceof Error ? error.message : '通知の作成に失敗しました');
+      console.error('通知の作成に失敗しました:', error);
+      setError(getErrorMessage(error));
       return false;
     }
   }, [supabase, fetchNotifications]);
@@ -192,8 +192,8 @@ export function useNotifications(): UseNotifications {
       return true;
 
     } catch (error) {
-      logger.error('[useNotifications] 既読更新エラー:', error);
-      setError(error instanceof Error ? error.message : '既読更新に失敗しました');
+      console.error('既読更新に失敗しました:', error);
+      setError(getErrorMessage(error));
       return false;
     }
   }, [supabase]);
@@ -218,8 +218,8 @@ export function useNotifications(): UseNotifications {
       return true;
 
     } catch (error) {
-      logger.error('[useNotifications] 一括既読エラー:', error);
-      setError(error instanceof Error ? error.message : '一括既読に失敗しました');
+      console.error('一括既読に失敗しました:', error);
+      setError(getErrorMessage(error));
       return false;
     }
   }, [supabase, fetchNotifications]);
@@ -241,8 +241,8 @@ export function useNotifications(): UseNotifications {
       return true;
 
     } catch (error) {
-      logger.error('[useNotifications] 通知削除エラー:', error);
-      setError(error instanceof Error ? error.message : '通知削除に失敗しました');
+      console.error('通知削除に失敗しました:', error);
+      setError(getErrorMessage(error));
       return false;
     }
   }, [supabase]);
@@ -263,8 +263,8 @@ export function useNotifications(): UseNotifications {
       return true;
 
     } catch (error) {
-      logger.error('[useNotifications] 通知完全削除エラー:', error);
-      setError(error instanceof Error ? error.message : '通知削除に失敗しました');
+      console.error('通知削除に失敗しました:', error);
+      setError(getErrorMessage(error));
       return false;
     }
   }, [supabase]);

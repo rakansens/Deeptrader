@@ -1,3 +1,7 @@
+// 📚 ブックマーク管理フック（DB版）
+// 作成日: 2025/1/25
+// 更新内容: localStorage → Supabase移行、リアルタイム同期対応
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -16,8 +20,9 @@ type DBBookmark = Database['public']['Tables']['bookmarks']['Row'];
 type DBBookmarkInsert = Database['public']['Tables']['bookmarks']['Insert'];
 type DBBookmarkUpdate = Database['public']['Tables']['bookmarks']['Update'];
 type DBBookmarkCategory = Database['public']['Tables']['bookmark_categories']['Row'];
+type DBBookmarkTag = Database['public']['Tables']['bookmark_tags']['Row'];
 
-interface UseBookmarks {
+interface UseBookmarksDB {
   bookmarks: Bookmark[];
   categories: BookmarkCategory[];
   loading: boolean;
@@ -30,8 +35,8 @@ interface UseBookmarks {
   toggleStar: (bookmarkId: string) => Promise<void>;
   
   // 検索・フィルタ
-  searchBookmarks: (query: string) => Bookmark[];
-  filterBookmarks: (filter: BookmarkFilter) => Bookmark[];
+  searchBookmarks: (query: string) => Promise<Bookmark[]>;
+  filterBookmarks: (filter: BookmarkFilter) => Promise<Bookmark[]>;
   
   // ユーティリティ
   isBookmarked: (messageId: string) => boolean;
@@ -40,19 +45,22 @@ interface UseBookmarks {
   getBookmarksByTag: (tag: string) => Bookmark[];
   
   // カテゴリ管理
-  addCategory: (category: Omit<BookmarkCategory, 'id'>) => void;
-  updateCategory: (categoryId: string, updates: Partial<BookmarkCategory>) => void;
+  addCategory: (category: Omit<BookmarkCategory, 'id'>) => Promise<void>;
+  updateCategory: (categoryId: string, updates: Partial<BookmarkCategory>) => Promise<void>;
   
   // エクスポート・インポート
   exportBookmarks: () => string;
   importBookmarks: (data: string) => Promise<void>;
   
   // 統計
-  getStats: () => {
+  getStats: () => Promise<{
     total: number;
     byCategory: Record<string, number>;
     topTags: Array<{ tag: string; count: number }>;
-  };
+  }>;
+  
+  // localStorage移行
+  migrateFromLocalStorage: () => Promise<void>;
 }
 
 // DB → アプリ型変換
@@ -95,12 +103,12 @@ function convertDBCategoryToApp(dbCategory: DBBookmarkCategory): BookmarkCategor
   };
 }
 
-export function useBookmarks(): UseBookmarks {
+export function useBookmarksDB(): UseBookmarksDB {
   const supabase = createClient();
   
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [categories, setCategories] = useState<BookmarkCategory[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // ブックマークデータを取得
@@ -142,7 +150,7 @@ export function useBookmarks(): UseBookmarks {
       setError(null);
 
     } catch (error) {
-      logger.error('[useBookmarks] ブックマーク取得エラー:', error);
+      logger.error('[useBookmarksDB] ブックマーク取得エラー:', error);
       setError(error instanceof Error ? error.message : 'ブックマークの取得に失敗しました');
     }
   }, [supabase]);
@@ -163,101 +171,11 @@ export function useBookmarks(): UseBookmarks {
       setCategories(convertedCategories);
 
     } catch (error) {
-      logger.error('[useBookmarks] カテゴリ取得エラー:', error);
+      logger.error('[useBookmarksDB] カテゴリ取得エラー:', error);
       // カテゴリ取得失敗時はデフォルトカテゴリを使用
       setCategories([...DEFAULT_BOOKMARK_CATEGORIES]);
     }
   }, [supabase]);
-
-  // localStorage移行機能
-  const migrateFromLocalStorage = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const STORAGE_KEY = 'chat_bookmarks';
-      const storedBookmarks = localStorage.getItem(STORAGE_KEY);
-      
-      if (!storedBookmarks) {
-        logger.info('[useBookmarks] localStorage移行: データなし');
-        return;
-      }
-
-      const oldBookmarks = JSON.parse(storedBookmarks) as Bookmark[];
-      if (oldBookmarks.length === 0) {
-        logger.info('[useBookmarks] localStorage移行: 空データ');
-        return;
-      }
-
-      logger.info(`[useBookmarks] localStorage移行開始: ${oldBookmarks.length}件`);
-
-      // 既存データがある場合は移行しない
-      if (bookmarks.length > 0) {
-        logger.info('[useBookmarks] 既存データがあるため移行をスキップ');
-        return;
-      }
-
-      // バッチ移行
-      for (const oldBookmark of oldBookmarks) {
-        try {
-          const category = categories.find(c => c.id === oldBookmark.category.id) || categories[0];
-          
-          const bookmarkData: DBBookmarkInsert = {
-            user_id: user.id,
-            message_id: oldBookmark.messageId,
-            conversation_id: oldBookmark.conversationId,
-            category_id: category.id,
-            title: oldBookmark.title,
-            description: oldBookmark.description,
-            is_starred: oldBookmark.isStarred,
-            message_content: oldBookmark.messageContent,
-            message_role: oldBookmark.messageRole,
-            message_timestamp: new Date(oldBookmark.messageTimestamp).toISOString(),
-          };
-
-          const { data: createdBookmark, error: bookmarkError } = await supabase
-            .from('bookmarks')
-            .insert(bookmarkData)
-            .select()
-            .single();
-
-          if (bookmarkError) {
-            logger.error(`ブックマーク移行エラー [${oldBookmark.id}]:`, bookmarkError);
-            continue;
-          }
-
-          // タグ移行
-          if (oldBookmark.tags.length > 0 && createdBookmark) {
-            const tagInserts = oldBookmark.tags.map(tag => ({
-              bookmark_id: createdBookmark.id,
-              tag_name: tag,
-            }));
-
-            const { error: tagsError } = await supabase
-              .from('bookmark_tags')
-              .insert(tagInserts);
-
-            if (tagsError) {
-              logger.warn(`タグ移行エラー [${oldBookmark.id}]:`, tagsError);
-            }
-          }
-
-        } catch (error) {
-          logger.error(`個別ブックマーク移行エラー [${oldBookmark.id}]:`, error);
-        }
-      }
-
-      // 移行完了後はlocalStorageをクリア
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem('bookmark_categories');
-      
-      logger.info('[useBookmarks] localStorage移行完了');
-      await fetchBookmarks(); // データ再取得
-
-    } catch (error) {
-      logger.error('[useBookmarks] localStorage移行エラー:', error);
-    }
-  }, [supabase, bookmarks, categories, fetchBookmarks]);
 
   // 初回ロード
   useEffect(() => {
@@ -268,13 +186,10 @@ export function useBookmarks(): UseBookmarks {
         fetchBookmarks()
       ]);
       setLoading(false);
-      
-      // 初回ロード後にlocalStorage移行を実行
-      await migrateFromLocalStorage();
     };
 
     initializeData();
-  }, [fetchCategories, fetchBookmarks, migrateFromLocalStorage]);
+  }, [fetchCategories, fetchBookmarks]);
 
   // リアルタイム購読設定
   useEffect(() => {
@@ -294,7 +209,7 @@ export function useBookmarks(): UseBookmarks {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            logger.info('[useBookmarks] ブックマークリアルタイム更新:', payload);
+            logger.info('[useBookmarksDB] ブックマークリアルタイム更新:', payload);
             fetchBookmarks();
           }
         )
@@ -306,7 +221,7 @@ export function useBookmarks(): UseBookmarks {
             table: 'bookmark_tags',
           },
           (payload) => {
-            logger.info('[useBookmarks] タグリアルタイム更新:', payload);
+            logger.info('[useBookmarksDB] タグリアルタイム更新:', payload);
             fetchBookmarks();
           }
         )
@@ -371,16 +286,16 @@ export function useBookmarks(): UseBookmarks {
           .insert(tagInserts);
 
         if (tagsError) {
-          logger.warn('[useBookmarks] タグ作成エラー:', tagsError);
+          logger.warn('[useBookmarksDB] タグ作成エラー:', tagsError);
         }
       }
 
-      logger.info('[useBookmarks] ブックマーク作成成功');
+      logger.info('[useBookmarksDB] ブックマーク作成成功');
       await fetchBookmarks(); // データ再取得
       setError(null);
 
     } catch (error) {
-      logger.error('[useBookmarks] ブックマーク追加エラー:', error);
+      logger.error('[useBookmarksDB] ブックマーク追加エラー:', error);
       setError(error instanceof Error ? error.message : 'ブックマークの追加に失敗しました');
     } finally {
       setLoading(false);
@@ -404,7 +319,7 @@ export function useBookmarks(): UseBookmarks {
       setError(null);
 
     } catch (error) {
-      logger.error('[useBookmarks] ブックマーク削除エラー:', error);
+      logger.error('[useBookmarksDB] ブックマーク削除エラー:', error);
       setError(error instanceof Error ? error.message : 'ブックマークの削除に失敗しました');
     } finally {
       setLoading(false);
@@ -452,7 +367,7 @@ export function useBookmarks(): UseBookmarks {
             .insert(tagInserts);
 
           if (tagsError) {
-            logger.warn('[useBookmarks] タグ更新エラー:', tagsError);
+            logger.warn('[useBookmarksDB] タグ更新エラー:', tagsError);
           }
         }
       }
@@ -461,7 +376,7 @@ export function useBookmarks(): UseBookmarks {
       setError(null);
 
     } catch (error) {
-      logger.error('[useBookmarks] ブックマーク更新エラー:', error);
+      logger.error('[useBookmarksDB] ブックマーク更新エラー:', error);
       setError(error instanceof Error ? error.message : 'ブックマークの更新に失敗しました');
     } finally {
       setLoading(false);
@@ -476,54 +391,106 @@ export function useBookmarks(): UseBookmarks {
     }
   }, [bookmarks, updateBookmark]);
 
-  // 検索（同期版、互換性のため）
-  const searchBookmarks = useCallback((query: string): Bookmark[] => {
+  // 検索（データベース検索）
+  const searchBookmarks = useCallback(async (query: string): Promise<Bookmark[]> => {
     if (!query.trim()) return bookmarks;
     
-    const lowerQuery = query.toLowerCase();
-    return bookmarks.filter(bookmark => 
-      bookmark.title.toLowerCase().includes(lowerQuery) ||
-      bookmark.messageContent.toLowerCase().includes(lowerQuery) ||
-      bookmark.tags.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
-      bookmark.category.name.toLowerCase().includes(lowerQuery)
-    );
-  }, [bookmarks]);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
 
-  // フィルタ（同期版、互換性のため）
-  const filterBookmarks = useCallback((filter: BookmarkFilter): Bookmark[] => {
-    let filtered = bookmarks;
+      const { data, error } = await supabase
+        .rpc('search_bookmarks', {
+          target_user_id: user.id,
+          search_query: query,
+          result_limit: 100
+        });
 
-    if (filter.category) {
-      filtered = filtered.filter(b => b.category.id === filter.category);
+      if (error) {
+        logger.error('[useBookmarksDB] 検索エラー:', error);
+        return bookmarks.filter(bookmark => 
+          bookmark.title.toLowerCase().includes(query.toLowerCase()) ||
+          bookmark.messageContent.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+
+      // 結果をアプリ型に変換
+      return (data || []).map((item: any) => ({
+        id: item.bookmark_id,
+        messageId: '', // 検索結果には含まれない
+        conversationId: '', // 検索結果には含まれない
+        title: item.title,
+        description: item.description,
+        category: {
+          id: '', // 検索結果から構築
+          name: item.category_name,
+          color: item.category_color,
+          icon: item.category_icon,
+        },
+        tags: item.tags || [],
+        isStarred: item.is_starred,
+        createdAt: new Date(item.created_at).getTime(),
+        updatedAt: new Date(item.updated_at).getTime(),
+        messageContent: item.message_content,
+        messageRole: item.message_role as 'user' | 'assistant',
+        messageTimestamp: 0, // 検索結果には含まれない
+      }));
+
+    } catch (error) {
+      logger.error('[useBookmarksDB] 検索処理エラー:', error);
+      return [];
     }
+  }, [supabase, bookmarks]);
 
-    if (filter.isStarred !== undefined) {
-      filtered = filtered.filter(b => b.isStarred === filter.isStarred);
+  // フィルタ
+  const filterBookmarks = useCallback(async (filter: BookmarkFilter): Promise<Bookmark[]> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .rpc('search_bookmarks', {
+          target_user_id: user.id,
+          search_query: filter.searchQuery || null,
+          category_filter: filter.category || null,
+          starred_filter: filter.isStarred || null,
+          role_filter: filter.messageRole || null,
+          tag_filter: filter.tags?.join(',') || null,
+          result_limit: 100
+        });
+
+      if (error) {
+        logger.error('[useBookmarksDB] フィルタエラー:', error);
+        return bookmarks; // フォールバック
+      }
+
+      // 結果をアプリ型に変換（簡易版）
+      return (data || []).map((item: any) => ({
+        id: item.bookmark_id,
+        messageId: '',
+        conversationId: '',
+        title: item.title,
+        description: item.description,
+        category: {
+          id: '',
+          name: item.category_name,
+          color: item.category_color,
+          icon: item.category_icon,
+        },
+        tags: item.tags || [],
+        isStarred: item.is_starred,
+        createdAt: new Date(item.created_at).getTime(),
+        updatedAt: new Date(item.updated_at).getTime(),
+        messageContent: item.message_content,
+        messageRole: item.message_role as 'user' | 'assistant',
+        messageTimestamp: 0,
+      }));
+
+    } catch (error) {
+      logger.error('[useBookmarksDB] フィルタ処理エラー:', error);
+      return [];
     }
-
-    if (filter.messageRole) {
-      filtered = filtered.filter(b => b.messageRole === filter.messageRole);
-    }
-
-    if (filter.tags && filter.tags.length > 0) {
-      filtered = filtered.filter(b => 
-        filter.tags!.some(tag => b.tags.includes(tag))
-      );
-    }
-
-    if (filter.dateRange) {
-      filtered = filtered.filter(b => 
-        b.createdAt >= filter.dateRange!.start && 
-        b.createdAt <= filter.dateRange!.end
-      );
-    }
-
-    if (filter.searchQuery) {
-      filtered = searchBookmarks(filter.searchQuery);
-    }
-
-    return filtered;
-  }, [bookmarks, searchBookmarks]);
+  }, [supabase, bookmarks]);
 
   // ユーティリティ関数
   const isBookmarked = useCallback((messageId: string): boolean => {
@@ -542,60 +509,55 @@ export function useBookmarks(): UseBookmarks {
     return bookmarks.filter(b => b.tags.includes(tag));
   }, [bookmarks]);
 
-  // カテゴリ管理（同期版、互換性のため）
-  const addCategory = useCallback((categoryData: Omit<BookmarkCategory, 'id'>) => {
-    // 非同期処理を同期APIでラップ
-    (async () => {
-      try {
-        const { error } = await supabase
-          .from('bookmark_categories')
-          .insert({
-            name: categoryData.name,
-            color: categoryData.color,
-            icon: categoryData.icon,
-            description: categoryData.description,
-            is_default: false,
-          });
+  // カテゴリ追加
+  const addCategory = useCallback(async (categoryData: Omit<BookmarkCategory, 'id'>) => {
+    try {
+      const { error } = await supabase
+        .from('bookmark_categories')
+        .insert({
+          name: categoryData.name,
+          color: categoryData.color,
+          icon: categoryData.icon,
+          description: categoryData.description,
+          is_default: false,
+        });
 
-        if (error) {
-          throw new Error(`カテゴリ作成エラー: ${error.message}`);
-        }
-
-        await fetchCategories();
-
-      } catch (error) {
-        logger.error('[useBookmarks] カテゴリ追加エラー:', error);
-        setError(error instanceof Error ? error.message : 'カテゴリの追加に失敗しました');
+      if (error) {
+        throw new Error(`カテゴリ作成エラー: ${error.message}`);
       }
-    })();
+
+      await fetchCategories();
+
+    } catch (error) {
+      logger.error('[useBookmarksDB] カテゴリ追加エラー:', error);
+      setError(error instanceof Error ? error.message : 'カテゴリの追加に失敗しました');
+    }
   }, [supabase, fetchCategories]);
 
-  const updateCategory = useCallback((categoryId: string, updates: Partial<BookmarkCategory>) => {
-    // 非同期処理を同期APIでラップ
-    (async () => {
-      try {
-        const dbUpdates: any = {};
-        if (updates.name !== undefined) dbUpdates.name = updates.name;
-        if (updates.color !== undefined) dbUpdates.color = updates.color;
-        if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
-        if (updates.description !== undefined) dbUpdates.description = updates.description;
+  // カテゴリ更新
+  const updateCategory = useCallback(async (categoryId: string, updates: Partial<BookmarkCategory>) => {
+    try {
+      const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.color !== undefined) dbUpdates.color = updates.color;
+      if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
 
-        const { error } = await supabase
-          .from('bookmark_categories')
-          .update(dbUpdates)
-          .eq('id', categoryId);
+      const { error } = await supabase
+        .from('bookmark_categories')
+        .update(dbUpdates)
+        .eq('id', categoryId);
 
-        if (error) {
-          throw new Error(`カテゴリ更新エラー: ${error.message}`);
-        }
-
-        await fetchCategories();
-
-      } catch (error) {
-        logger.error('[useBookmarks] カテゴリ更新エラー:', error);
-        setError(error instanceof Error ? error.message : 'カテゴリの更新に失敗しました');
+      if (error) {
+        throw new Error(`カテゴリ更新エラー: ${error.message}`);
       }
-    })();
+
+      await fetchCategories();
+
+    } catch (error) {
+      logger.error('[useBookmarksDB] カテゴリ更新エラー:', error);
+      setError(error instanceof Error ? error.message : 'カテゴリの更新に失敗しました');
+    }
   }, [supabase, fetchCategories]);
 
   // エクスポート
@@ -615,7 +577,7 @@ export function useBookmarks(): UseBookmarks {
       const importData = JSON.parse(data);
       if (importData.bookmarks && Array.isArray(importData.bookmarks)) {
         // TODO: バッチインポート機能の実装
-        logger.warn('[useBookmarks] インポート機能は今後実装予定');
+        logger.warn('[useBookmarksDB] インポート機能は今後実装予定');
         throw new Error('インポート機能は今後実装予定です');
       }
     } catch (err) {
@@ -623,33 +585,149 @@ export function useBookmarks(): UseBookmarks {
     }
   }, []);
 
-  // 統計
-  const getStats = useCallback(() => {
-    const byCategory: Record<string, number> = {};
-    const tagCounts: Record<string, number> = {};
+  // 統計取得
+  const getStats = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { total: 0, byCategory: {}, topTags: [] };
+      }
 
-    bookmarks.forEach(bookmark => {
-      // カテゴリ別統計
-      const categoryId = bookmark.category.id;
-      byCategory[categoryId] = (byCategory[categoryId] || 0) + 1;
+      const { data, error } = await supabase
+        .rpc('get_bookmark_stats', { target_user_id: user.id });
 
-      // タグ別統計
-      bookmark.tags.forEach(tag => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      });
-    });
+      if (error) {
+        logger.error('[useBookmarksDB] 統計取得エラー:', error);
+        // フォールバック: ローカルデータから統計を計算
+        const byCategory: Record<string, number> = {};
+        const tagCounts: Record<string, number> = {};
 
-    const topTags = Object.entries(tagCounts)
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+        bookmarks.forEach(bookmark => {
+          const categoryId = bookmark.category.id;
+          byCategory[categoryId] = (byCategory[categoryId] || 0) + 1;
 
-    return {
-      total: bookmarks.length,
-      byCategory,
-      topTags
-    };
-  }, [bookmarks]);
+          bookmark.tags.forEach(tag => {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          });
+        });
+
+        const topTags = Object.entries(tagCounts)
+          .map(([tag, count]) => ({ tag, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+
+        return {
+          total: bookmarks.length,
+          byCategory,
+          topTags
+        };
+      }
+
+      const stats = data?.[0];
+      return {
+        total: Number(stats?.total_bookmarks || 0),
+        byCategory: {}, // TODO: カテゴリ別統計の実装
+        topTags: (stats?.top_tags || []).map((tag: string, index: number) => ({
+          tag,
+          count: 10 - index // 仮の数値
+        }))
+      };
+
+    } catch (error) {
+      logger.error('[useBookmarksDB] 統計処理エラー:', error);
+      return { total: 0, byCategory: {}, topTags: [] };
+    }
+  }, [supabase, bookmarks]);
+
+  // localStorage移行機能
+  const migrateFromLocalStorage = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const STORAGE_KEY = 'chat_bookmarks';
+      const storedBookmarks = localStorage.getItem(STORAGE_KEY);
+      
+      if (!storedBookmarks) {
+        logger.info('[useBookmarksDB] localStorage移行: データなし');
+        return;
+      }
+
+      const oldBookmarks = JSON.parse(storedBookmarks) as Bookmark[];
+      if (oldBookmarks.length === 0) {
+        logger.info('[useBookmarksDB] localStorage移行: 空データ');
+        return;
+      }
+
+      logger.info(`[useBookmarksDB] localStorage移行開始: ${oldBookmarks.length}件`);
+
+      // 既存データがある場合は移行しない
+      if (bookmarks.length > 0) {
+        logger.info('[useBookmarksDB] 既存データがあるため移行をスキップ');
+        return;
+      }
+
+      // バッチ移行
+      for (const oldBookmark of oldBookmarks) {
+        try {
+          const category = categories.find(c => c.id === oldBookmark.category.id) || categories[0];
+          
+          const bookmarkData: DBBookmarkInsert = {
+            user_id: user.id,
+            message_id: oldBookmark.messageId,
+            conversation_id: oldBookmark.conversationId,
+            category_id: category.id,
+            title: oldBookmark.title,
+            description: oldBookmark.description,
+            is_starred: oldBookmark.isStarred,
+            message_content: oldBookmark.messageContent,
+            message_role: oldBookmark.messageRole,
+            message_timestamp: new Date(oldBookmark.messageTimestamp).toISOString(),
+          };
+
+          const { data: createdBookmark, error: bookmarkError } = await supabase
+            .from('bookmarks')
+            .insert(bookmarkData)
+            .select()
+            .single();
+
+          if (bookmarkError) {
+            logger.error(`ブックマーク移行エラー [${oldBookmark.id}]:`, bookmarkError);
+            continue;
+          }
+
+          // タグ移行
+          if (oldBookmark.tags.length > 0 && createdBookmark) {
+            const tagInserts = oldBookmark.tags.map(tag => ({
+              bookmark_id: createdBookmark.id,
+              tag_name: tag,
+            }));
+
+            const { error: tagsError } = await supabase
+              .from('bookmark_tags')
+              .insert(tagInserts);
+
+            if (tagsError) {
+              logger.warn(`タグ移行エラー [${oldBookmark.id}]:`, tagsError);
+            }
+          }
+
+        } catch (error) {
+          logger.error(`個別ブックマーク移行エラー [${oldBookmark.id}]:`, error);
+        }
+      }
+
+      // 移行完了後はlocalStorageをクリア
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('bookmark_categories');
+      
+      logger.info('[useBookmarksDB] localStorage移行完了');
+      await fetchBookmarks(); // データ再取得
+
+    } catch (error) {
+      logger.error('[useBookmarksDB] localStorage移行エラー:', error);
+    }
+  }, [supabase, bookmarks, categories, fetchBookmarks]);
 
   return {
     bookmarks,
@@ -676,6 +754,7 @@ export function useBookmarks(): UseBookmarks {
     exportBookmarks,
     importBookmarks,
     
-    getStats
+    getStats,
+    migrateFromLocalStorage
   };
 } 

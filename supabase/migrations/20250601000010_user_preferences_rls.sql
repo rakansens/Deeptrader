@@ -11,4 +11,4 @@ CREATE POLICY "ユーザーは自分の設定のみアクセス可能" ON public
 
 -- 管理者はすべての設定にアクセス可能
 CREATE POLICY "管理者はすべての設定にアクセス可能" ON public.user_preferences
-  FOR ALL USING (auth.uid() IN (SELECT id FROM public.admin_users)); 
+  FOR ALL USING (auth.uid() IN (SELECT id FROM public.admin_users));
