@@ -6,7 +6,7 @@ import { fetchKlines } from '@/infrastructure/exchange/binance-service';
 import { computeRSI } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
 import { logger } from '@/lib/logger';
-import type { BinanceKline } from '@/types/binance';
+import { parseKlineCloses, type BinanceKline } from '@/lib/market-data-utils';
 
 /**
  * RSIを用いてシンプルなエントリーポイントを提案するツール
@@ -44,7 +44,7 @@ export const entrySuggestionTool = createTool({
         k.ignore
       ]);
       
-      const closes = klines.map((k) => parseFloat(k[4]));
+      const closes = parseKlineCloses(klines as BinanceKline[]);
       const rsi = computeRSI(closes, 14);
       const lastPrice = closes[closes.length - 1];
       if (rsi === null) {

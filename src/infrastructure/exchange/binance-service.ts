@@ -4,6 +4,7 @@ import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 import { DEFAULT_API_LIMIT, SMALL_API_LIMIT } from '@/constants/network';
 import { HTTP_FETCH_TIMEOUT } from '@/constants/timeouts';
+import { parseOrderBookEntries } from '@/lib/market-data-utils';
 
 /**
  * Binance APIの基本URL
@@ -89,7 +90,7 @@ export async function fetchOrderBook(
     throw new Error(`Failed to fetch order book: ${res.status} ${res.statusText}`)
   }
   const data = (await res.json()) as { bids: [string, string][]; asks: [string, string][] }
-  const bids = data.bids.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }))
-  const asks = data.asks.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }))
+  const bids = parseOrderBookEntries(data.bids);
+  const asks = parseOrderBookEntries(data.asks);
   return { bids, asks }
 }

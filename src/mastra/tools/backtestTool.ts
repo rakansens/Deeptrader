@@ -7,6 +7,7 @@ import { fetchKlines, klineTupleToObject } from '@/infrastructure/exchange/binan
 import { computeSMA } from '@/lib/indicators';
 import { TIMEFRAMES } from '@/constants/chart';
 import type { BinanceKline } from '@/types/binance';
+import { parseKlineCloses } from '@/lib/market-data-utils';
 
 /**
  * 単純移動平均のクロスオーバー戦略でバックテストを行う
@@ -57,7 +58,7 @@ export const backtestTool = createTool({
       throw new Error('ローソク足データの取得に失敗しました');
     }
 
-    const closes = klines.map((k) => parseFloat(k[4]));
+    const closes = parseKlineCloses(klines as BinanceKline[]);
     let balance = initialBalance;
     let position: number | null = null;
     let trades = 0;

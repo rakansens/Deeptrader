@@ -14,6 +14,7 @@ import type { OrderBookEntry, BinanceDepthMessage } from "@/types";
 import type { ConnectionStatus } from "./use-binance-socket";
 import { hubSdk } from '@/lib/hub-sdk';
 import { DEFAULT_ORDERBOOK_DEPTH } from '@/constants/ui';
+import { parseOrderBookEntries } from '@/lib/market-data-utils';
 
 export interface UseOrderBookResult {
   bids: OrderBookEntry[];
@@ -84,8 +85,8 @@ export function useOrderBook(symbol: string, depth = DEFAULT_ORDERBOOK_DEPTH): U
 
         // Snapshot メッセージ (bids/asks) --- Partial Book Depth
         if (msg.bids && msg.asks) {
-          const snapBids = msg.bids.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
-          const snapAsks = msg.asks.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
+          const snapBids = parseOrderBookEntries(msg.bids);
+          const snapAsks = parseOrderBookEntries(msg.asks);
           console.log('Setting snapshot data:', { bidsCount: snapBids.length, asksCount: snapAsks.length });
           setBids(snapBids);
           setAsks(snapAsks);
@@ -94,12 +95,12 @@ export function useOrderBook(symbol: string, depth = DEFAULT_ORDERBOOK_DEPTH): U
 
         // 増分メッセージ (従来の depthUpdate)
         if (msg.b) {
-          const u = msg.b.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
+          const u = parseOrderBookEntries(msg.b);
           console.log('Updating bids with incremental data:', { count: u.length });
           setBids(prev => updateLevels(prev, u, true, depth));
         }
         if (msg.a) {
-          const u = msg.a.map(([p, q]) => ({ price: parseFloat(p), quantity: parseFloat(q) }));
+          const u = parseOrderBookEntries(msg.a);
           console.log('Updating asks with incremental data:', { count: u.length });
           setAsks(prev => updateLevels(prev, u, false, depth));
         }

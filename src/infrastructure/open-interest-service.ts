@@ -1,6 +1,8 @@
 import { serverEnv } from '@/config/server';
 import { fetchWithTimeout } from '@/lib/fetch';
 import type { OpenInterestData } from "@/types";
+import { HTTP_FETCH_TIMEOUT } from '@/constants/timeouts';
+import { safeParseNumber } from '@/lib/market-data-utils';
 
 /**
  * オープンインタレストデータサービス
@@ -28,7 +30,7 @@ export async function fetchOpenInterest(symbol: string): Promise<OpenInterestDat
   const item = data.data?.[0] ?? {};
   return {
     symbol: item.symbol ?? symbol,
-    price: Number(item.price ?? 0),
+    price: safeParseNumber(item.price),
     sumOpenInterestValue: Number(item.sumOpenInterestValue ?? 0),
     timestamp: item.timestamp
       ? new Date(Number(item.timestamp)).toISOString()
