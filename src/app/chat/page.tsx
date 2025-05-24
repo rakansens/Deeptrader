@@ -32,6 +32,7 @@ function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { voiceInputEnabled, userAvatar, assistantAvatar } = useSettings();
 
   // チャット状態とロジック
@@ -40,10 +41,80 @@ function ChatPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 送信履歴機能の状態
+  const [messageHistory, setMessageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [originalInput, setOriginalInput] = useState("");
+
   // 音声入力状態
   const [isListening, setIsListening] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcript, setTranscript] = useState("");
+
+  // 送信履歴の初期化 - localStorage から読み込み
+  useEffect(() => {
+    try {
+      const storedHistory = localStorage.getItem("chatMessageHistory");
+      if (storedHistory) {
+        const history = JSON.parse(storedHistory);
+        if (Array.isArray(history)) {
+          setMessageHistory(history.slice(-100)); // 最大100件に制限
+        }
+      }
+    } catch (error) {
+      console.error("送信履歴の読み込みに失敗:", error);
+    }
+  }, []);
+
+  // 送信履歴をlocalStorageに保存
+  const saveMessageHistory = (history: string[]) => {
+    try {
+      const limitedHistory = history.slice(-100); // 最大100件
+      localStorage.setItem("chatMessageHistory", JSON.stringify(limitedHistory));
+      setMessageHistory(limitedHistory);
+    } catch (error) {
+      console.error("送信履歴の保存に失敗:", error);
+    }
+  };
+
+  // 送信履歴ナビゲーション機能
+  const navigateHistory = (direction: 'up' | 'down') => {
+    if (messageHistory.length === 0) return;
+
+    if (direction === 'up') {
+      // 初回の↑キーでは現在の入力を保存
+      if (historyIndex === -1) {
+        setOriginalInput(input);
+        setHistoryIndex(messageHistory.length - 1);
+        setInput(messageHistory[messageHistory.length - 1]);
+      } else if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInput(messageHistory[newIndex]);
+      }
+    } else { // down
+      if (historyIndex === -1) return;
+      
+      if (historyIndex < messageHistory.length - 1) {
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setInput(messageHistory[newIndex]);
+      } else {
+        // 最後まで来たら元の入力に戻す
+        setHistoryIndex(-1);
+        setInput(originalInput);
+        setOriginalInput("");
+      }
+    }
+  };
+
+  // 履歴状態をリセット（入力変更時）
+  const resetHistoryNavigation = () => {
+    if (historyIndex !== -1) {
+      setHistoryIndex(-1);
+      setOriginalInput("");
+    }
+  };
 
   // Mastraストリーミングレスポンスを処理する関数
   const processMastraStream = async (response: Response): Promise<string> => {
@@ -135,6 +206,16 @@ function ChatPageContent() {
     setInput("");
     setIsLoading(true);
     setError(null);
+
+    // 送信成功時に履歴に追加
+    if (currentInput.trim()) {
+      const newHistory = [...messageHistory, currentInput.trim()];
+      saveMessageHistory(newHistory);
+    }
+    
+    // 履歴ナビゲーション状態をリセット
+    setHistoryIndex(-1);
+    setOriginalInput("");
 
     try {
       // Mastra API呼び出し
@@ -236,6 +317,11 @@ function ChatPageContent() {
     }
   }, [transcript]);
 
+  // 全体の会話文字数を計算
+  const totalConversationLength = messages.reduce((total, message) => {
+    return total + message.content.length;
+  }, 0);
+
   const handleBack = () => {
     router.push("/");
   };
@@ -306,6 +392,11 @@ function ChatPageContent() {
             isListening={isListening}
             toggleListening={toggleListening}
             recordingTime={recordingTime}
+            textAreaRef={textAreaRef}
+            navigateHistory={navigateHistory}
+            resetHistoryNavigation={resetHistoryNavigation}
+            messageHistory={messageHistory}
+            totalConversationLength={totalConversationLength}
           />
         </div>
       </div>

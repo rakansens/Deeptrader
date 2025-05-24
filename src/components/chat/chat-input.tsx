@@ -29,6 +29,8 @@ interface ChatInputProps {
   navigateHistory: (direction: 'up' | 'down') => void;
   resetHistoryNavigation: () => void;
   messageHistory: string[];
+  // 全体の会話文字数表示用
+  totalConversationLength?: number;
 }
 
 export function ChatInput({
@@ -46,6 +48,7 @@ export function ChatInput({
   navigateHistory,
   resetHistoryNavigation,
   messageHistory,
+  totalConversationLength,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -250,8 +253,16 @@ export function ChatInput({
               input.length > 1500 ? "text-yellow-500" : 
               "text-muted-foreground"
             )}>
-              {input.length.toLocaleString()} 文字
+              入力: {input.length.toLocaleString()} 文字
               {input.length > 2000 && " (制限に近づいています)"}
+            </span>
+          )}
+          {totalConversationLength !== undefined && totalConversationLength > 0 && (
+            <span className={cn(
+              "transition-colors duration-200 ml-3",
+              input.length > 0 && "border-l border-border pl-3"
+            )}>
+              会話全体: {totalConversationLength.toLocaleString()} 文字
             </span>
           )}
         </div>

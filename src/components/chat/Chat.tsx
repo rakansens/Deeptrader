@@ -285,6 +285,11 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     }
   }, [error, toast]);
 
+  // 全体の会話文字数を計算
+  const totalConversationLength = messages.reduce((total, message) => {
+    return total + message.content.length;
+  }, 0);
+
   // デバッグ用：input状態の変更を監視
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -378,6 +383,7 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
           navigateHistory={navigateHistory}
           resetHistoryNavigation={resetHistoryNavigation}
           messageHistory={messageHistory}
+          totalConversationLength={totalConversationLength}
         />
       </div>
     </div>

@@ -18,10 +18,7 @@ import { Settings, Upload, Image, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 
-
-
-
-import { getBrowserSupabase } from '@/lib/supabase-browser';
+import { createClient } from '@/utils/supabase';
 import {
   Avatar,
   AvatarFallback,
@@ -70,7 +67,7 @@ export function SettingsDialog() {
       const fileName = `avatar_${isUser ? 'user' : 'assistant'}_${Date.now()}.${ext}`;
       
       // Supabaseにアップロード
-      const supabase = getBrowserSupabase();
+      const supabase = createClient();
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file);
