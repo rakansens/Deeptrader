@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { hubSdk, type Listener } from "@/lib/hub-sdk";
+import { hubSdk } from "@/lib/hub-sdk";
+import type { Listener } from "@/types";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
