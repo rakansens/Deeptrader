@@ -42,9 +42,11 @@ import {
 import { DEFAULT_INDICATOR_SETTINGS } from "@/constants/chart";
 import type { IndicatorSettings } from "@/constants/chart";
 import ChartTabs from "@/components/chart/ChartTabs";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 
 export default function Home() {
+  const { getPreference, setPreference, isLoading } = useUserPreferences();
   const [timeframe, setTimeframe] = useState<Timeframe>(TIMEFRAMES[3]);
   const [symbol, setSymbol] = useState<SymbolValue>(SYMBOLS[0].value);
   const [indicators, setIndicators] = useState<{
@@ -112,10 +114,16 @@ export default function Home() {
 
   // クライアントサイドでのみ実行する初期化
   useEffect(() => {
-    // ローカルストレージからの読み込みはクライアントサイドでのみ行う
-    const savedColor = localStorage.getItem("drawingColor");
-    if (savedColor) {
-      setDrawingColor(savedColor);
+    if (isLoading) return;
+    
+    // DBから設定を読み込み
+    const savedColor = getPreference('chart', 'drawing_color') || DRAWING_COLORS[0].value;
+    setDrawingColor(savedColor);
+
+    // ウェルカムモーダルの表示状態をDBから読み込み
+    const hasSeenModal = getPreference('theme', 'has_seen_welcome_modal') || false;
+    if (!hasSeenModal) {
+      setShowWelcomeModal(true);
     }
 
     // Socket.IOクライアント接続
@@ -244,14 +252,13 @@ export default function Home() {
         socket.disconnect();
       }
     };
-  }, []); // 空の依存配列
+  }, [getPreference, isLoading]); // 依存配列に追加
 
-  const handleDrawingColorChange = useCallback((value: string) => {
+  const handleDrawingColorChange = useCallback(async (value: string) => {
     setDrawingColor(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("drawingColor", value);
-    }
-  }, []);
+    // DBに保存
+    await setPreference('chart', 'drawing_color', value);
+  }, [setPreference]);
 
   // 価格情報を更新するためのコールバック
   const handlePriceInfoUpdate = useCallback((info: {
@@ -262,17 +269,11 @@ export default function Home() {
     setPriceInfo(info);
   }, []);
 
-  useEffect(() => {
-    const hasSeenModal = localStorage.getItem("hasSeenWelcomeModal");
-    if (!hasSeenModal) {
-      setShowWelcomeModal(true);
-    }
-  }, []); // Empty dependency array to run only on mount
-
-  const handleCloseWelcomeModal = () => {
+  const handleCloseWelcomeModal = useCallback(async () => {
     setShowWelcomeModal(false);
-    localStorage.setItem("hasSeenWelcomeModal", "true");
-  };
+    // DBに保存
+    await setPreference('theme', 'has_seen_welcome_modal', true);
+  }, [setPreference]);
 
   // オーダーブックの表示/非表示を切り替える
   const handleOrderBookToggle = useCallback(() => {

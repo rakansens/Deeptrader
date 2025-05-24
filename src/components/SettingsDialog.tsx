@@ -121,21 +121,11 @@ export function SettingsDialog() {
   const applySettings = () => {
     logger.info('設定を保存します:', { 音声入力: localVoiceEnabled, 読み上げ: localSpeechEnabled });
 
-    // localStorageに直接書き込む
-    localStorage.setItem("voiceInputEnabled", String(localVoiceEnabled));
-    localStorage.setItem("speechSynthesisEnabled", String(localSpeechEnabled));
-    localStorage.setItem("userAvatar", localUserAvatar);
-    localStorage.setItem("assistantAvatar", localAssistantAvatar);
-
-    // useSettingsフックの状態も更新
+    // useSettingsフックの状態を更新（DBに保存される）
     setVoiceInputEnabled(localVoiceEnabled);
     setSpeechSynthesisEnabled(localSpeechEnabled);
     setUserAvatar(localUserAvatar);
     setAssistantAvatar(localAssistantAvatar);
-    
-    // 設定の保存を確認
-    const storedVoice = localStorage.getItem("voiceInputEnabled");
-    const storedSpeech = localStorage.getItem("speechSynthesisEnabled");
     
     toast({
       title: "設定を保存しました",
@@ -157,37 +147,11 @@ export function SettingsDialog() {
   // DialogがOpenになったら最新の値に更新
   useEffect(() => {
     if (open) {
-      // LocalStorageから直接読み込む（信頼性向上のため）
-      const storedVoice = localStorage.getItem("voiceInputEnabled");
-      const storedSpeech = localStorage.getItem("speechSynthesisEnabled");
-      const storedUserAvatar = localStorage.getItem("userAvatar");
-      const storedAssistantAvatar = localStorage.getItem("assistantAvatar");
-      
-      
-      // LocalStorageの値を優先
-      if (storedVoice !== null) {
-        setLocalVoiceEnabled(storedVoice === "true");
-      } else {
-        setLocalVoiceEnabled(voiceInputEnabled);
-      }
-      
-      if (storedSpeech !== null) {
-        setLocalSpeechEnabled(storedSpeech === "true");
-      } else {
-        setLocalSpeechEnabled(speechSynthesisEnabled);
-      }
-
-      if (storedUserAvatar !== null) {
-        setLocalUserAvatar(storedUserAvatar);
-      } else {
-        setLocalUserAvatar(userAvatar ?? "");
-      }
-
-      if (storedAssistantAvatar !== null) {
-        setLocalAssistantAvatar(storedAssistantAvatar);
-      } else {
-        setLocalAssistantAvatar(assistantAvatar ?? "");
-      }
+      // useSettingsの値を使用（DBから読み込まれた値）
+      setLocalVoiceEnabled(voiceInputEnabled);
+      setLocalSpeechEnabled(speechSynthesisEnabled);
+      setLocalUserAvatar(userAvatar ?? "");
+      setLocalAssistantAvatar(assistantAvatar ?? "");
     }
   }, [open, voiceInputEnabled, speechSynthesisEnabled, userAvatar, assistantAvatar]);
 
