@@ -46,7 +46,9 @@ export function ChatInput({
 
   // デバッグ用：音声入力設定の状態をログ出力
   useEffect(() => {
-    console.log('ChatInput - voiceInputEnabled:', voiceInputEnabled);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ChatInput - voiceInputEnabled:', voiceInputEnabled);
+    }
   }, [voiceInputEnabled]);
 
   /**
@@ -161,31 +163,43 @@ export function ChatInput({
       <Textarea
         value={input}
         onChange={(e) => {
-          console.log('🔄 ChatInput onChange:', e.target.value);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 ChatInput onChange:', e.target.value);
+          }
           setInput(e.target.value);
         }}
         onCompositionStart={() => {
-          console.log('🎌 IME入力開始');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🎌 IME入力開始');
+          }
           setIsComposing(true);
         }}
         onCompositionEnd={() => {
-          console.log('🎌 IME入力終了');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🎌 IME入力終了');
+          }
           setIsComposing(false);
         }}
-        placeholder="メッセージを入力..."
+        placeholder={loading ? "送信中..." : "メッセージを入力..."}
         aria-label="メッセージ入力"
+        disabled={loading}
         className={cn(
           "min-h-[80px] resize-none pr-12",
           "focus-visible:ring-primary",
           "bg-background/95 backdrop-blur-sm border-border shadow-sm",
           "transition-colors duration-200",
+          loading && "cursor-not-allowed opacity-60",
           showVoiceInput ? "pl-20" : "pl-4"
         )}
         onKeyDown={(e) => {
-          console.log('⌨️ KeyDown:', e.key, 'isComposing:', isComposing);
-          if (e.key === "Enter" && !e.shiftKey && !isComposing) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('⌨️ KeyDown:', e.key, 'isComposing:', isComposing);
+          }
+          if (e.key === "Enter" && !e.shiftKey && !isComposing && !loading) {
             e.preventDefault();
-            console.log('📤 Enterキーで送信実行');
+            if (process.env.NODE_ENV === 'development') {
+              console.log('📤 Enterキーで送信実行');
+            }
             onSendMessage();
           }
         }}
@@ -242,20 +256,28 @@ export function ChatInput({
               size="icon"
               onClick={onSendMessage}
               disabled={loading || !input.trim()}
-              aria-label="送信"
+              aria-label={loading ? "送信中..." : "送信"}
               className={cn(
                 "absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-md",
                 "bg-primary text-primary-foreground",
                 "transition-all duration-300",
-                "hover:bg-primary/90 disabled:opacity-50",
+                "hover:bg-primary/90",
+                loading && "cursor-not-allowed opacity-75",
+                !loading && "disabled:opacity-50",
                 "disabled:pointer-events-none"
               )}
             >
-              <ArrowUpIcon className="h-4 w-4" />
+              {loading ? (
+                <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+              ) : (
+                <ArrowUpIcon className="h-4 w-4" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" align="end" className="bg-background/95 backdrop-blur-sm border-border shadow-sm">
-            <p className="text-xs font-medium">送信</p>
+            <p className="text-xs font-medium">
+              {loading ? "送信中..." : !input.trim() ? "メッセージを入力してください" : "送信"}
+            </p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

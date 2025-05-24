@@ -5,37 +5,36 @@
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
 import type { Timeframe } from '@/constants/chart';
+import { LOCAL_WS_URL, WS_CLOSE_DELAY } from '@/constants/network';
 
-interface UICommand {
-  id: string;
-  type: 'ui_operation' | 'connection_established';
+export interface UICommand {
+  type: string;
   operation?: string;
   payload?: Record<string, any>;
-  timestamp: string;
-  message?: string;
+  timestamp: number;
 }
 
-export function useUICommandWebSocket() {
+export const useUICommandWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
-  const [lastCommand, setLastCommand] = useState<UICommand | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastMessage, setLastMessage] = useState<UICommand | null>(null);
+  const ws = useRef<WebSocket | null>(null);
+  const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // WebSocket接続
   const connect = () => {
     try {
-      const ws = new WebSocket('ws://localhost:8080');
-      wsRef.current = ws;
+      // if (ws.current?.readyState === WebSocket.OPEN) return;
+      
+      ws.current = new WebSocket(LOCAL_WS_URL);
 
-      ws.onopen = () => {
+      ws.current.onopen = () => {
         setIsConnected(true);
         logger.info('UI Command WebSocket接続完了');
       };
 
-      ws.onmessage = (event) => {
+      ws.current.onmessage = (event) => {
         try {
           const command: UICommand = JSON.parse(event.data);
-          setLastCommand(command);
+          setLastMessage(command);
 
           if (command.type === 'ui_operation' && command.operation && command.payload) {
             executeUICommand(command.operation, command.payload);
@@ -45,19 +44,19 @@ export function useUICommandWebSocket() {
         }
       };
 
-      ws.onclose = () => {
+      ws.current.onclose = () => {
         setIsConnected(false);
-        wsRef.current = null;
+        ws.current = null;
         logger.warn('UI Command WebSocket切断');
         
         // 自動再接続（5秒後）
-        reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeout.current = setTimeout(() => {
           logger.info('WebSocket自動再接続試行');
           connect();
-        }, 5000);
+        }, WS_CLOSE_DELAY);
       };
 
-      ws.onerror = (error) => {
+      ws.current.onerror = (error) => {
         logger.error('UI Command WebSocketエラー:', error);
         setIsConnected(false);
       };
@@ -132,14 +131,14 @@ export function useUICommandWebSocket() {
 
   // 手動切断
   const disconnect = () => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
+    if (reconnectTimeout.current) {
+      clearTimeout(reconnectTimeout.current);
+      reconnectTimeout.current = null;
     }
 
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+    if (ws.current) {
+      ws.current.close();
+      ws.current = null;
     }
     setIsConnected(false);
   };
@@ -155,8 +154,8 @@ export function useUICommandWebSocket() {
 
   return {
     isConnected,
-    lastCommand,
+    lastMessage,
     connect,
     disconnect,
   };
-} 
+}; 

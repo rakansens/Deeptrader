@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Message } from "@/types";
 import { logger } from "@/lib/logger";
+import { CHAT_API_ENDPOINT, UPLOAD_API_ENDPOINT, IMAGE_ANALYSIS_API_ENDPOINT, CHART_SCREENSHOT_API_ENDPOINT, CHART_ANALYSIS_API_ENDPOINT } from "@/constants/network";
 
 /**
  * チャットAPIとのやり取りを管理するフック
@@ -40,7 +41,7 @@ export function useChatApi() {
         message: input,
       });
 
-      const response = await fetch("/api/chat", {
+      const response = await fetch(CHAT_API_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +82,7 @@ export function useChatApi() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const uploadResponse = await fetch("/api/upload", {
+      const uploadResponse = await fetch(UPLOAD_API_ENDPOINT, {
         method: "POST",
         body: formData,
       });
@@ -108,7 +109,7 @@ export function useChatApi() {
       setIsLoading(true);
       setError(null);
 
-      const analysisResponse = await fetch("/api/image-analysis", {
+      const analysisResponse = await fetch(IMAGE_ANALYSIS_API_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +152,7 @@ export function useChatApi() {
       setError(null);
 
       // スクリーンショットAPIを呼び出し
-      const response = await fetch("/api/chart-screenshot", {
+      const response = await fetch(CHART_SCREENSHOT_API_ENDPOINT, {
         method: "GET",
       });
 
@@ -176,7 +177,7 @@ export function useChatApi() {
       setMessages((prev) => [...prev, screenshotMessage]);
 
       // チャート分析を自動的にリクエスト
-      const analysisResponse = await fetch("/api/chart-analysis", {
+      const analysisResponse = await fetch(CHART_ANALYSIS_API_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

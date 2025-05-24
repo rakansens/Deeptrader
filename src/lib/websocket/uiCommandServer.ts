@@ -1,6 +1,8 @@
 // src/lib/websocket/uiCommandServer.ts
 // WebSocketベースのUI操作命令サーバー（サーバーサイド専用）
+import { WebSocketServer, WebSocket } from 'ws';
 import { logger } from '@/lib/logger';
+import { UI_COMMAND_WS_PORT } from '@/constants/network';
 
 // UI操作命令の型定義
 export interface UICommand {
@@ -11,12 +13,15 @@ export interface UICommand {
   timestamp: string;
 }
 
-// WebSocketクライアント管理
-class UICommandServer {
-  private wss: any = null;
-  private clients: Set<any> = new Set();
+export class UICommandServer {
+  private wss: WebSocketServer | null = null;
+  private clients: Set<WebSocket> = new Set();
+  private isRunning = false;
 
-  initialize(port: number = 8080) {
+  /**
+   * WebSocketサーバーを初期化・開始
+   */
+  initialize(port: number = UI_COMMAND_WS_PORT) {
     // サーバーサイドでのみ実行
     if (typeof window !== 'undefined') {
       logger.warn('WebSocketサーバーはサーバーサイドでのみ実行されます');
@@ -32,7 +37,7 @@ class UICommandServer {
     import('ws').then(({ WebSocketServer }) => {
       this.wss = new WebSocketServer({ port });
 
-      this.wss.on('connection', (ws: any) => {
+      this.wss.on('connection', (ws: WebSocket) => {
         logger.info('UI WebSocketクライアント接続');
         this.clients.add(ws);
 

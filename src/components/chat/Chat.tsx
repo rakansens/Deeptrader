@@ -138,27 +138,42 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     stopListening(); // 音声入力を停止
 
     const currentInput = input.trim();
-    console.log('📝 送信前 - input:', input, 'currentInput:', currentInput, 'isSending:', isSendingRef.current);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📝 送信前 - input:', input, 'currentInput:', currentInput, 'isSending:', isSendingRef.current);
+    }
     
     if (!currentInput) {
-      console.log('❌ 入力が空のため送信キャンセル');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('❌ 入力が空のため送信キャンセル');
+      }
       return;
     }
     
     if (isSendingRef.current) {
-      console.log('❌ 重複送信防止：既に送信中');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('❌ 重複送信防止：既に送信中');
+      }
+      toast({
+        title: "⏳ 送信中です",
+        description: "前のメッセージの送信が完了するまでお待ちください",
+        variant: "default",
+      });
       return;
     }
 
     try {
       isSendingRef.current = true;
-      console.log('🔄 入力クリア前 - input:', input, 'textAreaRef:', !!textAreaRef.current);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 入力クリア前 - input:', input, 'textAreaRef:', !!textAreaRef.current);
+      }
       
       // DOM を直接クリア（確実性を高める）
       if (textAreaRef.current) {
         textAreaRef.current.value = "";
-        console.log('🎯 DOM直接クリア完了');
-      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 DOM直接クリア完了');
+        }
+      } else if (process.env.NODE_ENV === 'development') {
         console.log('⚠️ textAreaRef.current が null');
       }
       
@@ -167,16 +182,27 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
         setInput(""); 
       });
       
-      console.log('✅ 入力クリア後 - input:', input);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ 入力クリア後 - input:', input);
+      }
       await sendMessage(currentInput); // 値を明確に渡す
       
-      console.log('📤 メッセージ送信完了');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📤 メッセージ送信完了');
+      }
     } catch (error) {
       console.error('💥 メッセージ送信エラー:', error);
       logger.error("メッセージ送信エラー:", error);
+      toast({
+        title: "❌ 送信エラー",
+        description: "メッセージの送信に失敗しました。もう一度お試しください。",
+        variant: "destructive",
+      });
     } finally {
       isSendingRef.current = false;
-      console.log('🔓 送信ロック解除');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔓 送信ロック解除');
+      }
     }
   };
 
@@ -258,7 +284,9 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
 
   // デバッグ用：input状態の変更を監視
   useEffect(() => {
-    console.log('🔍 input状態変更:', input);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 input状態変更:', input);
+    }
   }, [input]);
 
   // 音声入力設定の変更を監視

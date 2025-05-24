@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { WS_HUB_PORT, WS_PING_INTERVAL, WS_MAX_RECONNECT_DELAY, DEFAULT_BINANCE_WS_URL } from '@/constants/network';
 
 // シンプルなログ関数
 const logger = {
@@ -23,7 +24,7 @@ interface HubStreamInfo {
 }
 
 // 環境変数から設定を取得するか、デフォルト値を使用
-const BINANCE_WS_BASE_URL = process.env.BINANCE_WS_BASE_URL || 'wss://stream.binance.com:9443';
+const BINANCE_WS_BASE_URL = process.env.BINANCE_WS_BASE_URL || DEFAULT_BINANCE_WS_URL;
 const HUB_JWT_SECRET = process.env.HUB_JWT_SECRET || 'change-me';
 
 // Redis や Kafka なしでも動作可能なように設定
@@ -69,7 +70,7 @@ function connectBinance(stream: string): HubStreamInfo {
     const schedulePing = () => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
-        info.pingTimer = setTimeout(schedulePing, 30000);
+        info.pingTimer = setTimeout(schedulePing, WS_PING_INTERVAL);
       }
     };
     const stopPing = () => {
@@ -89,7 +90,7 @@ function connectBinance(stream: string): HubStreamInfo {
       stopPing();
       if (info.clients.size > 0) {
         info.retries += 1;
-        const delay = Math.min(30000, 2 ** info.retries * 1000);
+        const delay = Math.min(WS_MAX_RECONNECT_DELAY, 2 ** info.retries * 1000);
         logger.warn(`Reconnecting to stream ${stream} in ${delay}ms (attempt ${info.retries})`);
         info.reconnectTimer = setTimeout(connect, delay);
       } else {
@@ -140,7 +141,7 @@ async function allow(ip: string, userId: string, stream?: string) {
   return entry.count <= 1;                // allow only the first request per window
 }
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: WS_HUB_PORT });
 
 wss.on('connection', (ws: WebSocket, req: any) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
@@ -224,4 +225,4 @@ wss.on('connection', (ws: WebSocket, req: any) => {
   });
 });
 
-logger.info('WebSocket Hub running on port 8080');
+logger.info(`WebSocket Hub running on port ${WS_HUB_PORT}`);
