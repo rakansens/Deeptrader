@@ -137,16 +137,24 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     stopListening(); // 音声入力を停止
 
     const currentInput = input.trim();
+    console.log('📝 送信前 - input:', input, 'currentInput:', currentInput);
+    
     if (!currentInput) return;
     if (isSendingRef.current) return; // 重複送信防止
 
     try {
       isSendingRef.current = true;
+      console.log('🔄 入力クリア前 - input:', input);
+      
       // flushSyncで同期的に入力欄をクリア
       flushSync(() => {
         setInput(""); 
       });
+      
+      console.log('✅ 入力クリア後 - input:', input);
       await sendMessage(currentInput); // 値を明確に渡す
+      
+      console.log('📤 メッセージ送信完了');
     } catch (error) {
       logger.error("メッセージ送信エラー:", error);
     } finally {
@@ -229,6 +237,11 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
       toast({ title: "エラー", description: error });
     }
   }, [error, toast]);
+
+  // デバッグ用：input状態の変更を監視
+  useEffect(() => {
+    console.log('🔍 input状態変更:', input);
+  }, [input]);
 
   // 音声入力設定の変更を監視
   useEffect(() => {
