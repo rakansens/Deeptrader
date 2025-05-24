@@ -135,12 +135,15 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
   const handleSendMessage = async () => {
     stopListening(); // 音声入力を停止
 
-    if (!input.trim()) return;
+    const currentInput = input.trim();
+    if (!currentInput) return;
     if (isSendingRef.current) return; // 重複送信防止
 
     try {
       isSendingRef.current = true;
-      await sendMessage(); // textParamを渡さないことで、use-chat内で自動的に入力がクリアされる
+      // 現在のinput値を明示的に渡して、確実に入力をクリア
+      setInput(""); // UI で即座に入力欄をクリア
+      await sendMessage(currentInput); // 保存した値を送信
     } catch (error) {
       logger.error("メッセージ送信エラー:", error);
     } finally {

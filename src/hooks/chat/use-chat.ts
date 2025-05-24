@@ -64,10 +64,13 @@ export function useChat(): UseChat {
 
   // カスタムsendMessage実装（画像対応など）
   const sendMessage = useCallback(async (textParam?: string, imageFile?: File) => {
-    const text = (textParam ?? input).trim();
+    // 現在の入力値を先に取得して保存
+    const currentInput = input.trim();
+    const text = textParam ? textParam.trim() : currentInput;
+    
     if (!text && !imageFile) return;
 
-    // 送信前に入力をクリア（textParamが指定されていない場合のみ）
+    // 入力フィールドを即座にクリア（textParamが指定されていない場合のみ）
     if (!textParam) {
       setInput("");
     }
@@ -152,7 +155,7 @@ export function useChat(): UseChat {
     } finally {
       setLoading(false);
     }
-  }, [input]);
+  }, [input, setInput, setError, setLoading, setMessages]);
 
   const sendImageMessage = useCallback(async (dataUrl: string, promptText = 'このチャートを分析してください') => {
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {

@@ -372,9 +372,9 @@ export const orchestratorAgent = unifiedOrchestratorAgent;
 
 // 🔄 委任ツールの後方互換エクスポート
 export { 
-  delegateTradingTool,
-  delegateResearchTool,
-  delegateUiControlTool,
-  delegateBacktestTool,
+    delegateTradingTool,
+    delegateResearchTool,
+    delegateUiControlTool,
+    delegateBacktestTool,
   allDelegationTools
 } from '../tools/delegationTools';
