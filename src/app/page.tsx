@@ -124,7 +124,12 @@ export default function Home() {
         const { io } = await import('socket.io-client');
         socket = io('http://127.0.0.1:8080', {
           transports: ['polling', 'websocket'],
-          timeout: 10000,
+          timeout: 20000,
+          reconnection: true,
+          reconnectionDelay: 1000,
+          reconnectionAttempts: 5,
+          autoConnect: true,
+          forceNew: false,
         });
 
         socket.on('connect', () => {
@@ -155,6 +160,18 @@ export default function Home() {
 
         socket.on('disconnect', (reason: string) => {
           console.log('❌ Socket.IOクライアント切断:', reason);
+          if (reason === 'io server disconnect') {
+            // サーバーから切断された場合は手動で再接続
+            socket.connect();
+          }
+        });
+
+        socket.on('reconnect', (attemptNumber: number) => {
+          console.log('🔄 Socket.IO再接続成功:', attemptNumber);
+        });
+
+        socket.on('reconnect_attempt', (attemptNumber: number) => {
+          console.log('🔄 Socket.IO再接続試行:', attemptNumber);
         });
 
         socket.on('connect_error', (error: any) => {
