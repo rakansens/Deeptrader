@@ -42,6 +42,7 @@ export function ChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   // デバッグ用：音声入力設定の状態をログ出力
   useEffect(() => {
@@ -163,6 +164,14 @@ export function ChatInput({
           console.log('🔄 ChatInput onChange:', e.target.value);
           setInput(e.target.value);
         }}
+        onCompositionStart={() => {
+          console.log('🎌 IME入力開始');
+          setIsComposing(true);
+        }}
+        onCompositionEnd={() => {
+          console.log('🎌 IME入力終了');
+          setIsComposing(false);
+        }}
         placeholder="メッセージを入力..."
         aria-label="メッセージ入力"
         className={cn(
@@ -173,8 +182,10 @@ export function ChatInput({
           showVoiceInput ? "pl-20" : "pl-4"
         )}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
+          console.log('⌨️ KeyDown:', e.key, 'isComposing:', isComposing);
+          if (e.key === "Enter" && !e.shiftKey && !isComposing) {
             e.preventDefault();
+            console.log('📤 Enterキーで送信実行');
             onSendMessage();
           }
         }}

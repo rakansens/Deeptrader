@@ -138,19 +138,28 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
     stopListening(); // 音声入力を停止
 
     const currentInput = input.trim();
-    console.log('📝 送信前 - input:', input, 'currentInput:', currentInput);
+    console.log('📝 送信前 - input:', input, 'currentInput:', currentInput, 'isSending:', isSendingRef.current);
     
-    if (!currentInput) return;
-    if (isSendingRef.current) return; // 重複送信防止
+    if (!currentInput) {
+      console.log('❌ 入力が空のため送信キャンセル');
+      return;
+    }
+    
+    if (isSendingRef.current) {
+      console.log('❌ 重複送信防止：既に送信中');
+      return;
+    }
 
     try {
       isSendingRef.current = true;
-      console.log('🔄 入力クリア前 - input:', input);
+      console.log('🔄 入力クリア前 - input:', input, 'textAreaRef:', !!textAreaRef.current);
       
       // DOM を直接クリア（確実性を高める）
       if (textAreaRef.current) {
         textAreaRef.current.value = "";
         console.log('🎯 DOM直接クリア完了');
+      } else {
+        console.log('⚠️ textAreaRef.current が null');
       }
       
       // flushSyncで同期的に入力欄をクリア
@@ -163,9 +172,11 @@ export default function Chat({ symbol, timeframe }: ChatProps) {
       
       console.log('📤 メッセージ送信完了');
     } catch (error) {
+      console.error('💥 メッセージ送信エラー:', error);
       logger.error("メッセージ送信エラー:", error);
     } finally {
       isSendingRef.current = false;
+      console.log('🔓 送信ロック解除');
     }
   };
 
