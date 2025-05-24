@@ -1,6 +1,9 @@
 // src/app/api/agent/route.ts
 // MASTRAエージェント専用APIエンドポイント（完全サーバーサイド版）
+// Phase 6A-3: APIレスポンス生成統合
+
 import { NextRequest, NextResponse } from 'next/server';
+import { createSuccessNextResponse, createErrorNextResponse } from '@/lib/api-response';
 
 export const runtime = "nodejs"; // Node.js専用実行環境
 
@@ -31,39 +34,32 @@ export async function POST(req: NextRequest) {
       // WebSocket経由でUI操作も実行（実際のUI変更）
       await executeUIOperationsIfNeeded(message, responseText);
 
-      return NextResponse.json({
-        success: true,
+      return createSuccessNextResponse({
         message: responseText,
-        timestamp: new Date().toISOString(),
         agent: 'orchestrator',
-        mode: 'server_side_mastra'
+        mode: 'mastra'
       });
       
     } catch (agentError) {
       console.log('⚠️ MASTRAエージェントエラー:', agentError);
       
-      const errorMessage = agentError instanceof Error ? agentError.message : 'Unknown error';
-      
-      return NextResponse.json({
-        success: false,
-        error: 'MASTRAエージェントでエラーが発生しました',
-        details: errorMessage,
-        fallback: 'WebSocketベースのUI操作機能は正常に動作しています。',
-        timestamp: new Date().toISOString()
-      }, { status: 500 });
+      return createErrorNextResponse(
+        agentError instanceof Error ? agentError : new Error('Unknown agent error'),
+        'MASTRAエージェントでエラーが発生しました。WebSocketベースのUI操作機能は正常に動作しています。',
+        500,
+        'api',
+        'mastra'
+      );
     }
     
   } catch (error) {
     console.error('❌ Agent API Error:', error);
     
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
-    return NextResponse.json({
-      success: false,
-      error: 'エージェントAPIでエラーが発生しました',
-      details: errorMessage,
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+    return createErrorNextResponse(
+      error instanceof Error ? error : new Error('Unknown error'),
+      'エージェントAPIでエラーが発生しました',
+      500
+    );
   }
 }
 

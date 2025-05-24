@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
+import { NotificationBadge } from "@/components/NotificationBadge";
+import { SettingsDropdown } from "@/components/SettingsDropdown";
 
 export function Navbar() {
   return (
@@ -12,6 +14,12 @@ export function Navbar() {
             <BarChart3 className="h-6 w-6" />
             <span className="hidden font-bold sm:inline-block">DeepTrader</span>
           </Link>
+        </div>
+        
+        {/* 右側のツールバー */}
+        <div className="ml-auto flex items-center space-x-2">
+          <NotificationBadge />
+          <SettingsDropdown />
         </div>
       </div>
     </header>

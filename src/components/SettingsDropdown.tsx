@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { useFileUpload } from '@/hooks/use-file-upload';
 import { useSettings, MIN_SPEECH_RATE, MAX_SPEECH_RATE, DEFAULT_USER_NAME, DEFAULT_ASSISTANT_NAME } from '@/hooks/use-settings';
 import {
   DropdownMenu,
@@ -28,7 +29,6 @@ import {
   Volume1
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@/utils/supabase';
 import { logger } from '@/lib/logger';
 import {
   Avatar,
@@ -59,12 +59,16 @@ export function SettingsDropdown({ className }: { className?: string }) {
     error: preferencesError
   } = useUserPreferences();
   
-  // アバター設定は一時的に従来のフックを併用
+  // 新しいファイルアップロードフックを使用
   const {
-    userAvatar,
-    setUserAvatar,
-    assistantAvatar,
-    setAssistantAvatar,
+    uploadFile,
+    getActiveUserAvatar,
+    isUploading: fileUploading,
+    error: fileError
+  } = useFileUpload();
+  
+  // アバター設定は一時的に従来のフックを併用（名前管理のみ）
+  const {
     userName,
     setUserName,
     assistantName,
@@ -77,19 +81,43 @@ export function SettingsDropdown({ className }: { className?: string }) {
   const userAvatarInputRef = useRef<HTMLInputElement>(null);
   const assistantAvatarInputRef = useRef<HTMLInputElement>(null);
   
-  // アップロード中状態の管理
-  const [userAvatarUploading, setUserAvatarUploading] = useState(false);
-  const [assistantAvatarUploading, setAssistantAvatarUploading] = useState(false);
+  // アバター状態管理（DBから取得）
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [assistantAvatar, setAssistantAvatar] = useState<string>("");
   
   // 設定用の一時的な値
-  const [tempUserAvatar, setTempUserAvatar] = useState(userAvatar || "");
-  const [tempAssistantAvatar, setTempAssistantAvatar] = useState(assistantAvatar || "");
+  const [tempUserAvatar, setTempUserAvatar] = useState("");
+  const [tempAssistantAvatar, setTempAssistantAvatar] = useState("");
   const [tempSpeechRate, setTempSpeechRate] = useState(1.0);
   const [tempUserName, setTempUserName] = useState(userName);
   const [tempAssistantName, setTempAssistantName] = useState(assistantName);
   
   // 初回ロード時にLocalStorageからDBに移行
   const [migrationCompleted, setMigrationCompleted] = useState(false);
+  
+  // アバター情報をDBから取得
+  useEffect(() => {
+    const loadAvatars = async () => {
+      try {
+        const userAvatarFile = await getActiveUserAvatar(true);
+        const assistantAvatarFile = await getActiveUserAvatar(false);
+        
+        if (userAvatarFile?.public_url) {
+          setUserAvatar(userAvatarFile.public_url);
+          setTempUserAvatar(userAvatarFile.public_url);
+        }
+        
+        if (assistantAvatarFile?.public_url) {
+          setAssistantAvatar(assistantAvatarFile.public_url);
+          setTempAssistantAvatar(assistantAvatarFile.public_url);
+        }
+      } catch (error) {
+        logger.error('[SettingsDropdown] アバター取得エラー:', error);
+      }
+    };
+    
+    loadAvatars();
+  }, [getActiveUserAvatar]);
   
   useEffect(() => {
     if (!migrationCompleted && !preferencesLoading) {
@@ -177,56 +205,33 @@ export function SettingsDropdown({ className }: { className?: string }) {
   // 画像ファイルをアップロード
   const uploadAvatar = async (file: File, isUser: boolean) => {
     try {
-      if (isUser) {
-        setUserAvatarUploading(true);
-      } else {
-        setAssistantAvatarUploading(true);
-      }
+      const fileType = isUser ? 'avatar_user' : 'avatar_assistant';
+      const result = await uploadFile(file, fileType);
       
-      // ファイル名を生成
-      const ext = file.name.split('.').pop() || 'png';
-      const fileName = `avatar_${isUser ? 'user' : 'assistant'}_${Date.now()}.${ext}`;
-      
-      // Supabaseにアップロード
-      const supabase = createClient();
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file);
+      if (result.success && result.file?.public_url) {
+        // 状態を更新
+        if (isUser) {
+          setTempUserAvatar(result.file.public_url);
+          setUserAvatar(result.file.public_url);
+        } else {
+          setTempAssistantAvatar(result.file.public_url);
+          setAssistantAvatar(result.file.public_url);
+        }
         
-      if (uploadError) {
-        throw new Error(`アップロードエラー: ${uploadError.message}`);
-      }
-      
-      // 公開URLを取得
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-        
-      // 状態を更新
-      if (isUser) {
-        // publicURLとpublicUrlのどちらかを使用（Supabase v1/v2の違いに対応）
-        setTempUserAvatar((urlData as any)?.publicUrl || (urlData as any)?.publicURL || "");
+        toast({
+          title: "アップロード完了",
+          description: "画像が正常にアップロードされました",
+        });
       } else {
-        setTempAssistantAvatar((urlData as any)?.publicUrl || (urlData as any)?.publicURL || "");
+        throw new Error(result.error || "アップロードに失敗しました");
       }
-      
-      toast({
-        title: "アップロード完了",
-        description: "画像が正常にアップロードされました",
-      });
     } catch (error) {
-      logger.error('アバターアップロードエラー:', error);
+      logger.error('[SettingsDropdown] アバターアップロードエラー:', error);
       toast({
         title: "アップロードエラー",
         description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
         variant: "destructive",
       });
-    } finally {
-      if (isUser) {
-        setUserAvatarUploading(false);
-      } else {
-        setAssistantAvatarUploading(false);
-      }
     }
   };
   
@@ -484,10 +489,10 @@ export function SettingsDropdown({ className }: { className?: string }) {
               type="button" 
               variant="outline" 
               className="w-full"
-              disabled={userAvatarUploading}
+              disabled={fileUploading}
               onClick={() => userAvatarInputRef.current?.click()}
             >
-              {userAvatarUploading ? (
+              {fileUploading ? (
                 <>アップロード中...</>
               ) : (
                 <>
@@ -558,10 +563,10 @@ export function SettingsDropdown({ className }: { className?: string }) {
               type="button" 
               variant="outline" 
               className="w-full"
-              disabled={assistantAvatarUploading}
+              disabled={fileUploading}
               onClick={() => assistantAvatarInputRef.current?.click()}
             >
-              {assistantAvatarUploading ? (
+              {fileUploading ? (
                 <>アップロード中...</>
               ) : (
                 <>

@@ -2,44 +2,20 @@
 // エージェント共通ユーティリティ - ロジック重複削除と再利用性向上
 // undefinedメッセージの防御的処理追加でTypeErrorを回避
 // Phase 6A-2: fetchWithTimeout統合によるAbortController重複解消
+// Phase 6A-3: APIレスポンス生成統合 - 共通ライブラリ使用
 
 import { UIOperation, AgentError } from './types';
 import { fetchWithTimeout } from '@/lib/fetch';
 
-// レスポンス生成ユーティリティ
-export function createSuccessResponse(data: {
-  message?: string;
-  response?: string;
-  mode: 'mastra' | 'pure' | 'hybrid' | 'fallback';
-  agent?: string;
-  executedOperations?: UIOperation[];
-}) {
-  return {
-    success: true,
-    timestamp: new Date().toISOString(),
-    ...data
-  };
-}
-
-export function createErrorResponse(
-  error: string | Error, 
-  details?: string, 
-  source: 'mastra' | 'pure' | 'websocket' | 'api' = 'api',
-  mode: 'mastra' | 'pure' | 'hybrid' | 'fallback' = 'fallback'
-) {
-  const errorMessage = error instanceof Error ? error.message : error;
-  const errorStack = error instanceof Error ? error.stack : undefined;
-  
-  return {
-    success: false,
-    error: errorMessage,
-    details: details || '不明なエラーが発生しました',
-    timestamp: new Date().toISOString(),
-    mode,
-    source,
-    ...(errorStack && { stack: errorStack })
-  };
-}
+// レスポンス生成は共通ライブラリを再エクスポート
+export { 
+  createSuccessResponse, 
+  createErrorResponse,
+  createSuccessNextResponse,
+  createErrorNextResponse,
+  type SuccessResponseData,
+  type ErrorResponseData
+} from '@/lib/api-response';
 
 // 自然言語解析ユーティリティ（agent-pure.tsより移行・改善）
 export function analyzeNaturalLanguageForUI(message: string): UIOperation[] {

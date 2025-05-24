@@ -675,6 +675,53 @@ export type Database = {
           updated_at?: string | null
         }
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          type: string
+          priority: number | null
+          data: Json | null
+          is_read: boolean | null
+          is_dismissed: boolean | null
+          read_at: string | null
+          expires_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          type: string
+          priority?: number | null
+          data?: Json | null
+          is_read?: boolean | null
+          is_dismissed?: boolean | null
+          read_at?: string | null
+          expires_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          type?: string
+          priority?: number | null
+          data?: Json | null
+          is_read?: boolean | null
+          is_dismissed?: boolean | null
+          read_at?: string | null
+          expires_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
     }
     Views: {
       admin_users: {

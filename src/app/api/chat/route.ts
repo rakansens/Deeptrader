@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unifiedOrchestratorAgent } from '@/mastra/agents/orchestratorAgent';
+import { 
+  createSuccessNextResponse, 
+  createErrorNextResponse,
+  createSuccessResponse 
+} from '@/lib/api-response';
 
 /**
  * Chat API (軽量版)
  * 新しい統合エージェントAPIを使用してHTTP_COMMONSエラーを回避
+ * Phase 6A-3: APIレスポンス生成統合
  */
 export const runtime = "nodejs";
 
@@ -22,12 +28,11 @@ export async function POST(req: NextRequest) {
         requestBody: JSON.stringify(requestBody)
       });
       
-      return NextResponse.json({
-        success: false,
-        error: 'メッセージが無効または空です',
-        details: 'チャットメッセージが正しく送信されていません。入力を確認してください。',
-        timestamp: new Date().toISOString()
-      }, { status: 400 });
+      return createErrorNextResponse(
+        'メッセージが無効または空です',
+        'チャットメッセージが正しく送信されていません。入力を確認してください。',
+        400
+      );
     }
 
     // 統合エージェントAPIに委任（自動フォールバック機能付き）
@@ -50,8 +55,7 @@ export async function POST(req: NextRequest) {
       if (agentData.success) {
         console.log('🎯 統合エージェント応答:', agentData);
         
-        return NextResponse.json({
-          success: true,
+        return createSuccessNextResponse({
           orchestrator: {
             targetAgent: 'unified',
             reasoning: `統合エージェントAPI経由で${agentData.mode}モード実行`,
@@ -65,8 +69,7 @@ export async function POST(req: NextRequest) {
             type: 'unified_agent_control'
           },
           response: agentData.response || agentData.message,
-          timestamp: new Date().toISOString(),
-          mode: `unified_${agentData.mode}_delegation`
+          mode: agentData.mode === 'mastra' ? 'mastra' : 'hybrid'
         });
       } else {
         throw new Error('統合エージェントが失敗');
@@ -77,8 +80,7 @@ export async function POST(req: NextRequest) {
       
       const fallbackResult = await executeUIOperation(message, { symbol, timeframe });
       
-      return NextResponse.json({
-        success: true,
+      return createSuccessNextResponse({
         orchestrator: {
           targetAgent: 'ui',
           reasoning: '統合エージェント失敗によりUI操作エージェントにフォールバック',
@@ -87,20 +89,18 @@ export async function POST(req: NextRequest) {
         },
         execution: fallbackResult,
         response: fallbackResult?.response || 'フォールバック処理が完了しました',
-        timestamp: new Date().toISOString(),
-        mode: 'fallback_ui_operation'
+        mode: 'fallback'
       });
     }
     
   } catch (error) {
     console.error('❌ メインチャットAPIエラー:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: 'メインチャットAPIでエラーが発生しました',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+    return createErrorNextResponse(
+      error instanceof Error ? error : new Error('Unknown error'),
+      'メインチャットAPIでエラーが発生しました',
+      500
+    );
   }
 }
 

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AgentResponse
       return NextResponse.json(createSuccessResponse({
         message: responseText,
         response: responseText,
-        mode: 'mastra',
+        mode: 'mastra' as const,
         agent: 'orchestrator'
       }));
       
